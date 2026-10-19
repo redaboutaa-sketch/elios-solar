@@ -18,7 +18,7 @@ export function SignInForm() {
   return (
     <form className="card p-6 space-y-4" onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); start(async () => {
       const r = await authClient.signIn.email({ email: String(fd.get("email")), password: String(fd.get("password")) });
-      if (r.error) { setError(r.error.message ?? "Identifiants incorrects."); return; }
+      if (r.error) { setError(authErrorFr(r.error, "Identifiants incorrects.")); return; }
       await afterSignInAction();
       router.push(safeNext(sp.get("next"))); router.refresh();
     }); }}>
@@ -41,7 +41,7 @@ export function SignUpForm() {
       const password = String(fd.get("password"));
       if (password.length < 10) { setError("Le mot de passe doit contenir au moins 10 caractères."); return; }
       const r = await authClient.signUp.email({ name: String(fd.get("name")), email: String(fd.get("email")), password });
-      if (r.error) { setError(r.error.message ?? "Inscription impossible."); return; }
+      if (r.error) { setError(authErrorFr(r.error, "Inscription impossible.")); return; }
       await afterSignInAction();
       router.push(safeNext(sp.get("next"))); router.refresh();
     }); }}>
@@ -86,4 +86,12 @@ export function ResetForm() {
 export function SignOutButton() {
   const router = useRouter();
   return <button type="button" className="btn-secondary" onClick={async () => { await authClient.signOut(); router.push("/"); router.refresh(); }}>Se déconnecter</button>;
+}
+
+/** Messages d'erreur d'authentification en français (le fournisseur renvoie des libellés anglais). */
+function authErrorFr(err: { status?: number; code?: string; message?: string }, fallback: string): string {
+  if (err.status === 429) return "Trop de tentatives : réessayez dans quelques minutes.";
+  if (err.code === "INVALID_EMAIL_OR_PASSWORD") return "E-mail ou mot de passe incorrect.";
+  if (err.code === "USER_ALREADY_EXISTS") return "Un compte existe déjà avec cet e-mail.";
+  return err.message && /[àâçéèêëîïôûùüÿœ]/i.test(err.message) ? err.message : fallback;
 }
