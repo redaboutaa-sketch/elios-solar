@@ -29,8 +29,8 @@ Légende : ✅ fait (codé + vérifié) · 🔄 en cours · ⏳ à faire · ⛔ 
 ## Incrément 5 — vérifications et exploitation
 - ✅ Tests d'intégration serveur (14) — voir test-report.md
 - ✅ Tests Playwright (11 scénarios × 2 viewports) + captures 390/1440
-- ✅ CI GitHub Actions (à observer au premier push) ; Dockerfile + Compose production ; scripts de sauvegarde/restauration (restauration non exécutée)
-- 🔄 Draft PR
+- ✅ CI GitHub Actions verte ; Dockerfile + Compose production ; scripts de sauvegarde/restauration (restauration non exécutée)
+- ✅ Draft PR #1
 
 ## Incrément 6
 - ⏳ Vue 3D (après stabilisation des règles)

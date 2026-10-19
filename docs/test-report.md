@@ -32,7 +32,8 @@ montant incohérent ; refus ⇒ libération du stock ; remboursement complet ⇒
 persisté et notifié ; revalidation d'une configuration sauvegardée et révocation du lien.
 
 ## Non exécuté / limites
-- CI GitHub Actions : workflow fourni, première exécution à vérifier sur GitHub après le push.
+- CI GitHub Actions : ✅ run 39239526279 (lint, typecheck, unitaires, migrations, seed, intégration, build, Playwright) en 2 min 24.
 - Tests Playwright exécutés contre le serveur de développement (Turbopack), pas contre l'image Docker.
 - Stripe : code présent, non testé faute de clés ; le fournisseur DEMO suit le même chemin (signature, idempotence).
-- Restauration de sauvegarde : script fourni, non exécuté sur ce VPS.
+- Sauvegarde/restauration : exécutées sur la base de dev (dump 190 Ko, restauration vérifiée en base isolée) ; non testées sur la pile Docker.
+- Pile Docker production : images construites, `compose.prod.yml` démarré sur 127.0.0.1:3401 (migrations, seed, santé 200, pages 200, `/admin` 307).
