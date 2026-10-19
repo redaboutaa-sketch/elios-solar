@@ -17,6 +17,7 @@ export const ADMIN_NAV: NavItem[] = [
       { href: "/admin/catalogue/stocks", label: "Stocks & délais" },
       { href: "/admin/catalogue/sur-mesure", label: "Sur mesure" },
       { href: "/admin/catalogue/grilles", label: "Grilles sur mesure" },
+      { href: "/admin/catalogue/validations", label: "Validation des références" },
     ],
   },
   { href: "/admin/conversations", label: "Conversations" },

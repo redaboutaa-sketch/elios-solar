@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
 import { DataStatus } from "@/generated/prisma/enums";
 import { DATA_STATUS_FR, DataStatusBadge, FAMILY_STATUS_FR, Flash, Options, PageTitle, Section, Table } from "@/components/admin/ui";
+import { SPEC_SOURCE_FR, formatSpecValue, reviewSpec, type SpecSource } from "@/domain/technical-spec";
+import { specTargetId } from "@/server/validation/targets";
 import { addFamilyDocumentAction, addFamilyMediaAction, removeFamilyDocumentAction, removeFamilyMediaAction, updateFamilyAction } from "@/server/actions/admin/catalog";
 
 export const metadata: Metadata = { title: "Édition de famille" };
@@ -16,7 +18,7 @@ export default async function FamilyEditPage(props: PageProps<"/admin/catalogue/
   await requireRole(["ADMIN", "MANAGER"]);
   const { id } = await props.params;
   const [family, medias] = await Promise.all([
-    prisma.productFamily.findUnique({ where: { id }, include: { media: { include: { media: true }, orderBy: { sortOrder: "asc" } }, documents: { include: { media: true }, orderBy: { createdAt: "asc" } } } }),
+    prisma.productFamily.findUnique({ where: { id }, include: { media: { include: { media: true }, orderBy: { sortOrder: "asc" } }, documents: { include: { media: true }, orderBy: { createdAt: "asc" } }, technicalSpecs: { orderBy: [{ key: "asc" }, { createdAt: "asc" }] } } }),
     prisma.media.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, path: true, alt: true, kind: true, mimeType: true } }),
   ]);
   if (!family) notFound();
@@ -88,6 +90,31 @@ export default async function FamilyEditPage(props: PageProps<"/admin/catalogue/
         </Section>
         <div className="sticky bottom-0 -mx-4 border-t border-sand-200 bg-sand-50/95 px-4 py-3 lg:-mx-8 lg:px-8"><button className="btn-primary" type="submit">Enregistrer la famille</button></div>
       </form>
+
+      {family.technicalSpecs.length > 0 && (
+        <Section title="Données techniques sourcées">
+          <Table caption="Données techniques par provenance">
+            <thead><tr><th>Donnée</th><th>Valeur</th><th>Provenance</th><th>Référence de la source</th><th>Affichage public</th></tr></thead>
+            <tbody>
+              {family.technicalSpecs.map((t) => {
+                const values = family.technicalSpecs.filter((x) => x.key === t.key).map((x) => ({ ...x, observedAt: x.observedAt?.toISOString().slice(0, 10) ?? null, source: x.source.toLowerCase() as SpecSource }));
+                const r = reviewSpec(values, t.key);
+                const src = t.source.toLowerCase() as SpecSource;
+                return (
+                  <tr key={t.id}>
+                    <td>{t.label}{r?.conflict ? <span className="ml-1 badge-warn">valeurs divergentes</span> : null}</td>
+                    <td>{formatSpecValue(t)}</td>
+                    <td><span className={src === "supplier_confirmed" ? "badge-ok" : src === "demo_seed" ? "badge-demo" : "badge bg-sand-100 text-stone-800 border border-sand-300"}>{SPEC_SOURCE_FR[src]}</span></td>
+                    <td className="text-xs">{t.sourceRef || "—"}</td>
+                    <td>{r?.confirmed ? formatSpecValue(r.confirmed) : <><span>à confirmer</span> · <Link className="underline" href={`/admin/catalogue/validations/nouveau?type=FAMILY_SPEC&cible=${encodeURIComponent(specTargetId(family.slug, t.key))}`}>ouvrir un dossier</Link></>}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </Table>
+          <p className="mt-2 text-xs text-stone-700">Seule une spécification fournisseur confirmée (via un dossier de validation sourcé) est présentée publiquement comme certaine.</p>
+        </Section>
+      )}
 
       <Section title="Médias de la fiche">
         <Table caption="Médias associés">

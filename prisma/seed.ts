@@ -11,6 +11,7 @@ import {
 } from "../src/server/catalog/demo-data";
 import { CONTENT_PAGES } from "../src/server/content/default-pages";
 import { seedDemoRenders } from "../src/server/media/demo-renders";
+import { seedReferenceValidations } from "../src/server/validation/seed";
 
 const up = (s: string) => s.toUpperCase();
 
@@ -139,6 +140,9 @@ export async function runSeed(prisma: PrismaClient) {
     const r = await seedDemoRenders(prisma);
     console.log(`Rendus : ${r.created} créés, ${r.skipped} existants, ${r.linked} associations, ${r.documents} document(s) démo`);
   }
+
+  const dossiers = await seedReferenceValidations(prisma);
+  if (dossiers) console.log(`Dossiers de validation : ${dossiers} créé(s) (à vérifier)`);
 
   const counts = { families: await prisma.productFamily.count(), variants: await prisma.variant.count(), closureRules: await prisma.closureCompatRule.count(), optionRules: await prisma.optionCompatRule.count() };
   console.log(`Seed terminé : ${JSON.stringify(counts)} (variantes créées : ${created})`);
