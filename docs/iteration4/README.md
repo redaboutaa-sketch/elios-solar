@@ -41,6 +41,10 @@ date et emplacement), `SUPPLIER_CONFIRMED` (document ou écrit fournisseur). Seu
 comme certaine ; deux confirmations contradictoires restent « à confirmer ». La validation d'une donnée technique ajoute une ligne
 `SUPPLIER_CONFIRMED` sans effacer les autres. Les écrans de validation et de famille affichent la provenance de chaque valeur.
 
+Même vérification appliquée à la 3D du sur-mesure : l'éclairage « inclus » de la gamme sur mesure n'est pas chiffré par le
+moteur et la référence observée est contradictoire (texte « rubans LED intégrés » mais option « LED - Sur mesure » vendue à part) ;
+la scène et la liste des éléments représentés ne montrent donc un éclairage que si l'option Bandes LED est choisie.
+
 ## Limites connues
 
 - Un devis demandé en invité n'est consultable que par l'e-mail de confirmation (pas en ligne).

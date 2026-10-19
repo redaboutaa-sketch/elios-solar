@@ -59,6 +59,15 @@ describe("vue 3D du sur mesure", () => {
     expect(m.toConfirm.some((t) => /Persienne/.test(t))).toBe(true);
   });
 
+  it("éclairage : aucun éclairage inclus supposé (non chiffré par le moteur) ; seule l'option choisie est représentée", () => {
+    const none = scene(custom({ options: [] }))!;
+    expect(none.lighting.gutter).toBe(false);
+    expect(none.lighting.blades).toBe(false);
+    expect(representedItems(catalog, none)).toContain("Éclairage : aucun");
+    const withLed = scene(custom({ options: [{ familySlug: "bandes-led", variantOption: "warm_white", qty: 1 }] }))!;
+    expect(withLed.lighting.gutter).toBe(true);
+  });
+
   it("accessoires et finition représentés ; bornes non confirmées signalées", () => {
     const m = scene(custom({ finishCode: "ANTHRACITE_WHITE_BLADES", options: [{ familySlug: "lampe-chauffante", variantOption: "1500W", qty: 2 }, { familySlug: "bandes-led", variantOption: "rgb", qty: 1 }] }))!;
     expect(m.heaters.count).toBe(2);

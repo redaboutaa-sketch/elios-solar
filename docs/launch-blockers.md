@@ -20,6 +20,7 @@ n'empêche de poursuivre la réalisation ; tout empêche la vente réelle.
 - [ ] Caractéristiques techniques validées (hauteurs, sections, charges vent/neige, surfaces) ; aujourd'hui `unknown`.
 - [ ] Matrice de compatibilité fournisseur : longueurs utiles des fermetures par dimension, poteau intermédiaire par gamme, cumul LED, persienne par implantation, cotes utiles vs commerciales.
 - [ ] Grille sur mesure fournisseur (bornes, pas, cellules, suppléments, validité) importée via Administration → Grilles sur mesure, statut « vérifié fournisseur », puis archivage de la grille **fictive** v1 ; sinon le sur-mesure reste en estimation + devis.
+- [ ] Sur mesure : éclairage inclus ou option (référence contradictoire) ; aujourd'hui non chiffré, représenté seulement si l'option est choisie.
 - [ ] Persiennes 5/6 m : composition des assemblages (modules, poteau, cotes utiles, fixations, couleurs) ; aujourd'hui sur devis.
 - [ ] Câble de store banne : longueur fournie **à confirmer par le fournisseur** — deux valeurs non confirmées coexistent (3 m = donnée fictive du seed ; 7,5 m = observation sur la fiche du site de référence) ; le site affiche « longueur à confirmer ». Dossier ouvert dans Administration → Catalogue → Validation des références. Rallonge 6 m : référence, prix, compatibilité électrique.
 - [ ] Dossiers de validation des références (persiennes 5/6 m, câble…) : à instruire avec un document ou un écrit fournisseur ; une validation ne rend jamais une référence achetable (prix, disponibilité et compatibilités validés requis en plus).

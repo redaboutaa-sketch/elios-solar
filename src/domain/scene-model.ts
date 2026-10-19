@@ -226,7 +226,9 @@ export function buildPergolaSceneModel(catalog: CatalogSnapshot, input: PergolaS
   posts.push({ id: "post-front-left", kind: "corner", xMm: 0, zMm: widthMm }, { id: "post-front-right", kind: "corner", xMm: lengthMm, zMm: widthMm });
 
   const ledStrip = input.options.find((o) => o.familySlug === "bandes-led" && o.qty > 0);
-  const included = family?.lightingIncluded ?? "none";
+  // Sur mesure : le moteur ne chiffre aucun éclairage inclus (inclusion non confirmée — la référence observée est
+  // contradictoire : texte « LED intégrées » mais option LED vendue à part) ; seule l'option choisie est représentée.
+  const included = overrides?.source === "custom" ? "none" : (family?.lightingIncluded ?? "none");
   const gutterLed = included === "gutter_led" || !!ledStrip;
   const ledColorChoice = ledStrip?.variantOption ?? input.options.find((o) => o.familySlug === "bandes-led")?.variantOption;
   const ledColor: LedColor = ledColorChoice === "rgb" ? "rgb" : "warm_white";
