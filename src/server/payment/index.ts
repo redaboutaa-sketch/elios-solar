@@ -4,11 +4,28 @@ import type { Order, Payment } from "@/generated/prisma/client";
 import type { PaymentProvider as ProviderName } from "@/generated/prisma/enums";
 import { markOrderFailed, markOrderPaid } from "@/server/order/service";
 import { logger } from "@/lib/logger";
+import type { InstallmentPlan } from "./installments-rules";
 
 export interface CheckoutResult { checkoutUrl: string; providerRef: string }
+export type PaymentMethod = "card" | "installments";
+export interface CheckoutOptions {
+  method: PaymentMethod;
+  /** Nombre d'échéances (paiement fractionné). */
+  installments?: number;
+  /** Moyen Stripe à imposer (`klarna` | `alma`) pour le paiement fractionné. */
+  stripePaymentMethod?: "klarna" | "alma" | null;
+  plan?: InstallmentPlan;
+}
 export interface PaymentProvider {
   readonly name: ProviderName;
-  createCheckout(order: Order, payment: Payment): Promise<CheckoutResult>;
+  createCheckout(order: Order, payment: Payment, options?: CheckoutOptions): Promise<CheckoutResult>;
+}
+
+export class PaymentError extends Error {
+  constructor(message: string, readonly code: string) {
+    super(message);
+    this.name = "PaymentError";
+  }
 }
 
 export function activeProviderName(): ProviderName {
@@ -20,21 +37,53 @@ export async function getProvider(): Promise<PaymentProvider> {
   return (await import("./demo")).demoProvider;
 }
 
-/** Crée le paiement et la session de paiement hébergée pour une commande en attente. */
-export async function startPayment(orderId: string): Promise<{ payment: Payment; checkoutUrl: string }> {
+export interface StartPaymentOptions { method?: PaymentMethod; installments?: number }
+
+/**
+ * Crée le paiement et la session de paiement hébergée pour une commande en attente.
+ * Paiement fractionné : l'éligibilité est revalidée ici à partir du montant de la commande
+ * (recalculé côté serveur), jamais à partir d'une valeur envoyée par le navigateur.
+ */
+export async function startPayment(orderId: string, opts: StartPaymentOptions = {}): Promise<{ payment: Payment; checkoutUrl: string }> {
   const order = await prisma.order.findUniqueOrThrow({ where: { id: orderId }, include: { payments: true } });
-  if (order.status !== "PENDING_PAYMENT") throw new Error("Commande non payable");
-  if (order.expiresAt && order.expiresAt < new Date()) throw new Error("Commande expirée");
-  const provider = await getProvider();
-  const reusable = order.payments.find((p) => p.provider === provider.name && (p.status === "CREATED" || p.status === "PENDING") && p.checkoutUrl);
+  if (order.status !== "PENDING_PAYMENT") throw new PaymentError("Commande non payable", "not_payable");
+  if (order.expiresAt && order.expiresAt < new Date()) throw new PaymentError("Commande expirée", "expired");
+  const method: PaymentMethod = opts.method === "installments" ? "installments" : "card";
+
+  let provider: PaymentProvider;
+  let options: CheckoutOptions = { method: "card" };
+  let planProvider: string | null = null;
+  if (method === "installments") {
+    const { getInstallmentSettings, installmentsOfferFor } = await import("./installments");
+    const settings = await getInstallmentSettings();
+    const country = ((order.shippingAddress as { countryCode?: string } | null)?.countryCode ?? "FR").toUpperCase();
+    const offer = await installmentsOfferFor(order.totalCents, country, settings);
+    if (!offer.eligible) throw new PaymentError(`Paiement fractionné indisponible pour cette commande : ${offer.reasons.join(" ; ")}.`, "installments_ineligible");
+    const plan = offer.plans.find((p) => p.count === opts.installments);
+    if (!plan) throw new PaymentError(`Nombre d'échéances non proposé (${offer.plans.map((p) => p.count).join(", ")} fois).`, "installments_count");
+    planProvider = settings.provider;
+    options = { method, installments: plan.count, stripePaymentMethod: offer.provider.stripePaymentMethod, plan };
+    if (offer.provider.stripePaymentMethod) {
+      if (activeProviderName() !== "STRIPE") throw new PaymentError("Le prestataire Stripe n'est pas actif : paiement fractionné impossible.", "stripe_inactive");
+      provider = (await import("./stripe")).stripeProvider;
+    } else {
+      provider = (await import("./installments-sim")).installmentsSimProvider;
+    }
+  } else {
+    provider = await getProvider();
+  }
+
+  const reusable = order.payments.find((p) => p.provider === provider.name && p.method === method && (p.installments ?? null) === (options.installments ?? null) && (p.status === "CREATED" || p.status === "PENDING") && p.checkoutUrl);
   if (reusable) return { payment: reusable, checkoutUrl: reusable.checkoutUrl! };
-  const payment = await prisma.payment.create({ data: { orderId, provider: provider.name, amountCents: order.totalCents, status: "CREATED" } });
-  const { checkoutUrl, providerRef } = await provider.createCheckout(order, payment);
+  // Changement de moyen de paiement : les tentatives précédentes non abouties sont closes.
+  await prisma.payment.updateMany({ where: { orderId, status: { in: ["CREATED", "PENDING"] } }, data: { status: "CANCELLED", failureReason: "remplacé par une nouvelle tentative de paiement" } });
+  const payment = await prisma.payment.create({ data: { orderId, provider: provider.name, amountCents: order.totalCents, status: "CREATED", method, installments: options.installments ?? null, planProvider, feesCents: options.plan?.feesCents ?? 0 } });
+  const { checkoutUrl, providerRef } = await provider.createCheckout(order, payment, options);
   const updated = await prisma.payment.update({ where: { id: payment.id }, data: { checkoutUrl, providerRef, status: "PENDING" } });
   return { payment: updated, checkoutUrl };
 }
 
-export type NormalizedEventType = "payment_succeeded" | "payment_failed" | "payment_cancelled" | "payment_expired" | "refund_succeeded" | "ignored";
+export type NormalizedEventType = "payment_succeeded" | "payment_failed" | "payment_cancelled" | "payment_expired" | "refund_succeeded" | "refund_pending" | "refund_failed" | "ignored";
 
 export interface IncomingEvent {
   provider: ProviderName;
@@ -45,6 +94,49 @@ export interface IncomingEvent {
   orderId?: string | null;
   amountCents?: number | null;
   payload: unknown;
+  /** Identifiant du PaymentIntent Stripe : permet de retrouver le paiement via la session Checkout déjà reçue. */
+  paymentIntentId?: string | null;
+  /** Identifiant du remboursement chez le prestataire (idempotence des remboursements). */
+  refundRef?: string | null;
+  /** `charge.refunded` : `amountCents` est le cumul remboursé, pas le montant de ce remboursement. */
+  cumulativeRefund?: boolean;
+  /** Détail libre (motif d'échec…) conservé pour l'administration. */
+  detail?: string | null;
+}
+
+/** Recalcule le statut du paiement (et de la commande) d'après les remboursements enregistrés. */
+async function recomputeRefundStatus(paymentId: string): Promise<"refunded" | "partially_refunded" | "none"> {
+  const payment = await prisma.payment.findUniqueOrThrow({ where: { id: paymentId }, include: { refunds: true } });
+  const succeeded = payment.refunds.filter((r) => r.status === "SUCCEEDED").reduce((s, r) => s + r.amountCents, 0);
+  if (succeeded >= payment.amountCents) {
+    await prisma.payment.update({ where: { id: paymentId }, data: { status: "REFUNDED" } });
+    await prisma.order.update({ where: { id: payment.orderId }, data: { status: "REFUNDED" } });
+    return "refunded";
+  }
+  if (succeeded > 0) {
+    await prisma.payment.update({ where: { id: paymentId }, data: { status: "PARTIALLY_REFUNDED" } });
+    await prisma.order.updateMany({ where: { id: payment.orderId, status: "REFUNDED" }, data: { status: "PAID" } });
+    return "partially_refunded";
+  }
+  if (payment.status === "REFUNDED" || payment.status === "PARTIALLY_REFUNDED") {
+    await prisma.payment.update({ where: { id: paymentId }, data: { status: "SUCCEEDED" } });
+    await prisma.order.updateMany({ where: { id: payment.orderId, status: "REFUNDED" }, data: { status: "PAID" } });
+  }
+  return "none";
+}
+
+async function findPaymentFor(ev: IncomingEvent): Promise<Payment | null> {
+  if (ev.providerRef) {
+    const p = await prisma.payment.findUnique({ where: { providerRef: ev.providerRef } });
+    if (p) return p;
+  }
+  if (ev.paymentIntentId) {
+    // La session Checkout (checkout.session.completed) déjà ingérée porte le PaymentIntent.
+    const known = await prisma.paymentEvent.findFirst({ where: { provider: ev.provider, paymentId: { not: null }, payload: { path: ["data", "object", "payment_intent"], equals: ev.paymentIntentId } }, orderBy: { receivedAt: "desc" } });
+    if (known?.paymentId) return prisma.payment.findUnique({ where: { id: known.paymentId } });
+  }
+  if (ev.orderId) return prisma.payment.findFirst({ where: { orderId: ev.orderId, provider: ev.provider }, orderBy: { createdAt: "desc" } });
+  return null;
 }
 
 /**
@@ -61,8 +153,10 @@ export async function ingestPaymentEvent(ev: IncomingEvent): Promise<{ outcome: 
 
   let outcome = "ignored";
   try {
-    const payment = ev.providerRef ? await prisma.payment.findUnique({ where: { providerRef: ev.providerRef } }) : ev.orderId ? await prisma.payment.findFirst({ where: { orderId: ev.orderId, provider: ev.provider }, orderBy: { createdAt: "desc" } }) : null;
-    if (!payment) {
+    const payment = ev.normalized === "ignored" ? null : await findPaymentFor(ev);
+    if (ev.normalized === "ignored") {
+      outcome = "ignored";
+    } else if (!payment) {
       outcome = "payment_not_found";
     } else if (ev.normalized === "payment_succeeded") {
       if (ev.amountCents != null && ev.amountCents !== payment.amountCents) {
@@ -74,17 +168,40 @@ export async function ingestPaymentEvent(ev: IncomingEvent): Promise<{ outcome: 
       }
     } else if (ev.normalized === "payment_failed" || ev.normalized === "payment_cancelled" || ev.normalized === "payment_expired") {
       const status = ev.normalized === "payment_failed" ? "FAILED" : ev.normalized === "payment_cancelled" ? "CANCELLED" : "EXPIRED";
-      await prisma.payment.update({ where: { id: payment.id }, data: { status } });
-      await markOrderFailed(payment.orderId, status === "FAILED" ? "PAYMENT_FAILED" : status === "CANCELLED" ? "CANCELLED" : "EXPIRED");
-      outcome = `order_${status.toLowerCase()}`;
-    } else if (ev.normalized === "refund_succeeded") {
-      const amount = ev.amountCents ?? payment.amountCents;
-      await prisma.refund.create({ data: { paymentId: payment.id, amountCents: amount, status: "SUCCEEDED", providerRef: ev.eventId, reason: "webhook" } });
-      const total = (await prisma.refund.aggregate({ where: { paymentId: payment.id, status: "SUCCEEDED" }, _sum: { amountCents: true } }))._sum.amountCents ?? 0;
-      const full = total >= payment.amountCents;
-      await prisma.payment.update({ where: { id: payment.id }, data: { status: full ? "REFUNDED" : "PARTIALLY_REFUNDED" } });
-      if (full) await prisma.order.update({ where: { id: payment.orderId }, data: { status: "REFUNDED" } });
-      outcome = full ? "refunded" : "partially_refunded";
+      if (payment.status === "SUCCEEDED" || payment.status === "REFUNDED" || payment.status === "PARTIALLY_REFUNDED") {
+        outcome = "ignored_after_success";
+      } else {
+        await prisma.payment.update({ where: { id: payment.id }, data: { status, failureReason: ev.detail ?? undefined } });
+        await markOrderFailed(payment.orderId, status === "FAILED" ? "PAYMENT_FAILED" : status === "CANCELLED" ? "CANCELLED" : "EXPIRED");
+        outcome = `order_${status.toLowerCase()}`;
+      }
+    } else if (ev.normalized === "refund_succeeded" || ev.normalized === "refund_pending") {
+      const refundRef = ev.refundRef ?? ev.eventId;
+      const known = await prisma.refund.findFirst({ where: { paymentId: payment.id, providerRef: refundRef } });
+      const targetStatus = ev.normalized === "refund_pending" ? "PENDING" : "SUCCEEDED";
+      if (known) {
+        if (known.status === "SUCCEEDED" || known.status === targetStatus) outcome = "refund_already_recorded";
+        else { await prisma.refund.update({ where: { id: known.id }, data: { status: targetStatus } }); outcome = targetStatus === "PENDING" ? "refund_pending" : await recomputeRefundStatus(payment.id); }
+      } else {
+        let amount = ev.amountCents ?? payment.amountCents;
+        if (ev.cumulativeRefund) {
+          const recorded = (await prisma.refund.aggregate({ where: { paymentId: payment.id, status: { in: ["SUCCEEDED", "PENDING"] } }, _sum: { amountCents: true } }))._sum.amountCents ?? 0;
+          amount = (ev.amountCents ?? 0) - recorded;
+        }
+        if (amount <= 0) outcome = "refund_already_recorded";
+        else {
+          await prisma.refund.create({ data: { paymentId: payment.id, amountCents: amount, status: targetStatus, providerRef: refundRef, reason: ev.detail ?? "webhook" } });
+          outcome = targetStatus === "PENDING" ? "refund_pending" : await recomputeRefundStatus(payment.id);
+        }
+      }
+    } else if (ev.normalized === "refund_failed") {
+      const refundRef = ev.refundRef ?? ev.eventId;
+      const known = await prisma.refund.findFirst({ where: { paymentId: payment.id, providerRef: refundRef } });
+      if (known) await prisma.refund.update({ where: { id: known.id }, data: { status: "FAILED", reason: ev.detail ?? known.reason } });
+      else await prisma.refund.create({ data: { paymentId: payment.id, amountCents: ev.amountCents ?? 0, status: "FAILED", providerRef: refundRef, reason: ev.detail ?? "échec signalé par le prestataire" } });
+      await recomputeRefundStatus(payment.id);
+      outcome = "refund_failed";
+      logger.warn({ paymentId: payment.id, refundRef, detail: ev.detail }, "remboursement échoué signalé par le prestataire");
     }
     await prisma.paymentEvent.update({ where: { id: record.id }, data: { paymentId: payment?.id ?? null, processedAt: new Date(), outcome } });
   } catch (err) {

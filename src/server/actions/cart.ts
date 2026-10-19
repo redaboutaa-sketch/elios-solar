@@ -5,7 +5,7 @@ import { getSession } from "@/lib/session";
 import { ensureGuestKey } from "@/server/guest";
 import { CartError, removeLine, setCartDelivery, updateLineQty } from "@/server/cart/service";
 import { createOrderFromCart, OrderError } from "@/server/order/service";
-import { startPayment } from "@/server/payment";
+import { PaymentError, startPayment } from "@/server/payment";
 import { rateLimit } from "@/server/rate-limit";
 import { prisma } from "@/lib/prisma";
 
@@ -60,10 +60,16 @@ export async function checkoutAction(_prev: CheckoutState, formData: FormData): 
   if (o.userId && parsed.data.marketingOptIn !== undefined) await prisma.user.update({ where: { id: o.userId }, data: { marketingOptIn: parsed.data.marketingOptIn } });
   try {
     const order = await createOrderFromCart({ owner: o, email: parsed.data.email, shippingAddress: parsed.data.shipping, billingAddress: parsed.data.billing, customerNotes: parsed.data.customerNotes });
-    const { checkoutUrl } = await startPayment(order.id);
+    // Moyen de paiement choisi : l'éligibilité au paiement fractionné est revalidée par startPayment
+    // à partir du total recalculé de la commande (jamais d'un montant envoyé par le navigateur).
+    const paymentMethod = get("paymentMethod") === "installments" ? "installments" : "card";
+    const installments = paymentMethod === "installments" ? Number(get("installments") ?? "") : undefined;
+    if (paymentMethod === "installments" && (!Number.isInteger(installments) || installments! < 2)) return { error: "Choisissez un nombre d'échéances valide." };
+    const { checkoutUrl } = await startPayment(order.id, { method: paymentMethod, installments });
     redirect(checkoutUrl);
   } catch (e) {
     if (e instanceof OrderError) return { error: e.message };
+    if (e instanceof PaymentError) return { error: `${e.message} Vous pouvez choisir le paiement par carte en une fois.` };
     if (e instanceof CartError) return { error: `${e.message} ${e.issues.map((i) => i.message).join(" ")}` };
     throw e;
   }

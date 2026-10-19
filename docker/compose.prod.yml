@@ -26,7 +26,7 @@ services:
     networks: [internal]
 
   migrate:
-    build: { context: .., dockerfile: Dockerfile, target: tools }
+    build: { context: .., dockerfile: Dockerfile, target: tools, args: { GIT_COMMIT: "${GIT_COMMIT:-unknown}" } }
     image: elios-solar/tools:${IMAGE_TAG:-latest}
     command: ["pnpm", "db:deploy"]
     env_file: [../.env.prod]
@@ -39,7 +39,7 @@ services:
     networks: [internal]
 
   app:
-    build: { context: .., dockerfile: Dockerfile, target: runner }
+    build: { context: .., dockerfile: Dockerfile, target: runner, args: { GIT_COMMIT: "${GIT_COMMIT:-unknown}", BUILD_TIME: "${BUILD_TIME:-unknown}" } }
     image: elios-solar/app:${IMAGE_TAG:-latest}
     container_name: elios-solar-app
     env_file: [../.env.prod]

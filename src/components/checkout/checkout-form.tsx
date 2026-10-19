@@ -29,9 +29,46 @@ function AddressFields({ p, d, errors }: { p: string; d?: D; errors: Errs }) {
   );
 }
 
-export function CheckoutForm({ defaults, provider }: { defaults: D; provider: "DEMO" | "STRIPE" | "INSTALLMENTS_SIM" }) {
+export interface InstallmentOfferView {
+  providerLabel: string;
+  simulated: boolean;
+  termsUrl: string | null;
+  plans: Array<{ count: number; firstCents: number; otherCents: number; feesCents: number; totalWithFeesCents: number; feesKind: "none_confirmed" | "fees" | "unconfirmed"; feesText: string }>;
+}
+
+const eur = (c: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(c / 100);
+
+function PaymentMethodBlock({ offer, choice, setChoice }: { offer: InstallmentOfferView | null; choice: string; setChoice: (v: string) => void }) {
+  return (
+    <section className="card p-5" aria-labelledby="payment-method-title">
+      <h2 id="payment-method-title" className="font-display text-xl mb-3">Moyen de paiement</h2>
+      <fieldset className="space-y-3">
+        <legend className="sr-only">Moyen de paiement</legend>
+        <label className="flex items-start gap-2 text-sm"><input type="radio" name="paymentChoice" value="card" checked={choice === "card"} onChange={() => setChoice("card")} className="mt-1" /> <span><strong>Carte / paiement en une fois</strong></span></label>
+        {offer?.plans.map((p) => (
+          <label key={p.count} className="flex items-start gap-2 text-sm">
+            <input type="radio" name="paymentChoice" value={`installments:${p.count}`} checked={choice === `installments:${p.count}`} onChange={() => setChoice(`installments:${p.count}`)} className="mt-1" />
+            <span>
+              <strong>Paiement en {p.count} fois via {offer.providerLabel}</strong>
+              <span className="block text-stone-700" data-testid={`plan-${p.count}`}>1re échéance {eur(p.firstCents)}, puis {p.count - 1} × {eur(p.otherCents)} · {p.feesKind === "none_confirmed" ? p.feesText : p.feesKind === "fees" ? `${p.feesText} — total ${eur(p.totalWithFeesCents)}` : p.feesText}</span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+      {offer && offer.plans.length > 0 && (
+        <p className="mt-3 text-xs text-stone-700">Paiement fractionné sous réserve d'acceptation par le prestataire.{offer.termsUrl && <> Voir les <a href={offer.termsUrl} target="_blank" rel="noopener noreferrer" className="underline">conditions du prestataire</a>.</>}{offer.simulated && " Mode test : simulateur, aucune transaction."}</p>
+      )}
+      <input type="hidden" name="paymentMethod" value={choice === "card" ? "card" : "installments"} />
+      <input type="hidden" name="installments" value={choice.startsWith("installments:") ? choice.split(":")[1] : ""} />
+    </section>
+  );
+}
+
+export function CheckoutForm({ defaults, provider, installmentOffer = null }: { defaults: D; provider: "DEMO" | "STRIPE" | "INSTALLMENTS_SIM"; installmentOffer?: InstallmentOfferView | null }) {
   const [state, action, pending] = useActionState<CheckoutState, FormData>(checkoutAction, null);
   const [billingSame, setBillingSame] = useState(true);
+  const [choice, setChoice] = useState("card");
+  const installments = choice !== "card";
   const errors = state?.fieldErrors;
   return (
     <form action={action} className="space-y-8" aria-describedby={state?.error ? "checkout-error" : undefined}>
@@ -46,10 +83,11 @@ export function CheckoutForm({ defaults, provider }: { defaults: D; provider: "D
         <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="acceptCgv" required className="mt-1" /> J'ai lu et j'accepte les <Link href="/cgv" className="underline" target="_blank">conditions générales de vente</Link> et la <Link href="/confidentialite" className="underline" target="_blank">politique de confidentialité</Link>.</label>
         <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="marketingOptIn" className="mt-1" /> Je souhaite recevoir des informations commerciales (facultatif, distinct de la commande).</label>
       </section>
+      <PaymentMethodBlock offer={installmentOffer} choice={choice} setChoice={setChoice} />
       {state?.error && <div id="checkout-error"><Notice tone="error">{state.error}</Notice></div>}
       <div className="card p-5">
-        {provider === "DEMO" ? <Notice tone="warn">Mode test : aucun paiement réel. Vous serez dirigé vers une page de paiement simulé clairement identifiée.</Notice> : <p className="text-sm text-stone-700">Paiement sécurisé par carte via notre prestataire (page hébergée). Aucune donnée de carte n'est stockée sur ce site.</p>}
-        <button type="submit" className="btn-accent w-full mt-4" disabled={pending}>{pending ? "Création de la commande…" : provider === "DEMO" ? "Continuer vers le paiement simulé" : "Procéder au paiement"}</button>
+        {installments ? <p className="text-sm text-stone-700">Vous serez dirigé vers la page hébergée du prestataire de paiement fractionné{installmentOffer?.simulated ? " (simulateur clairement identifié, aucune transaction)" : ""}.</p> : provider === "DEMO" ? <Notice tone="warn">Mode test : aucun paiement réel. Vous serez dirigé vers une page de paiement simulé clairement identifiée.</Notice> : <p className="text-sm text-stone-700">Paiement sécurisé par carte via notre prestataire (page hébergée). Aucune donnée de carte n'est stockée sur ce site.</p>}
+        <button type="submit" className="btn-accent w-full mt-4" disabled={pending}>{pending ? "Création de la commande…" : installments ? "Continuer vers le paiement fractionné" : provider === "DEMO" ? "Continuer vers le paiement simulé" : "Procéder au paiement"}</button>
       </div>
     </form>
   );

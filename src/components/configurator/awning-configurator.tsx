@@ -9,6 +9,7 @@ import { AwningArt } from "@/components/illustrations/pergola";
 import { IssueList, Notice } from "@/components/ui/alert";
 import { DemoBadge } from "@/components/ui/demo-badge";
 import { QuoteForm } from "./quote-form";
+import { AwningVisuals } from "./scene-3d/visuals";
 
 const CAB: Record<string, string> = { ANTHRACITE: "#3a3d41", WHITE: "#e9e6df" };
 const FAB: Record<string, [string, string]> = { GREY: ["gris", "#9a9a94"], BEIGE: ["beige", "#d9c7a5"] };
@@ -25,11 +26,13 @@ export function AwningConfigurator({ catalog, familySlug, initial = null, replac
   const [showQuote, setShowQuote] = useState(false);
   const [busy, start] = useTransition();
   const anemo = catalog.families.find((f) => f.slug === "anemometre");
+  const cable = catalog.families.find((f) => f.slug === "cable-alimentation");
+  const fam = catalog.families.find((f) => f.slug === familySlug);
   const setWidth = (w: number) => { const p = combos.filter((c) => c.widthMm === w).map((c) => c.projectionMm); setInput((i) => ({ ...i, widthMm: w, projectionMm: p.includes(i.projectionMm) ? i.projectionMm : (p[0] ?? i.projectionMm) })); };
   return (
     <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
       <div className="space-y-4 lg:sticky lg:top-24 self-start">
-        <div className="card overflow-hidden"><AwningArt cabinet={CAB[input.cabinetColor]} fabric={FAB[input.fabricCode]?.[1]} className="w-full h-auto" /></div>
+        <AwningVisuals catalog={catalog} input={input} art={<AwningArt cabinet={CAB[input.cabinetColor]} fabric={FAB[input.fabricCode]?.[1]} className="w-full h-auto" />} />
         <div className="card p-5"><p className="text-sm text-stone-700">Total {result.totals.isFinal ? "définitif" : "estimé"}</p><p className="text-3xl font-semibold">{formatEur(result.totals.totalGrossCents)}</p>{result.containsDemoData && <DemoBadge className="mt-1" />}</div>
       </div>
       <div className="space-y-6">
@@ -40,7 +43,7 @@ export function AwningConfigurator({ catalog, familySlug, initial = null, replac
             <fieldset><legend className="label">Couleur du coffre</legend>{Object.entries(CAB).map(([k, c]) => <label key={k} className="flex items-center gap-2 text-sm"><input type="radio" name="cab" checked={input.cabinetColor === k} onChange={() => setInput((i) => ({ ...i, cabinetColor: k }))} /><span className="size-4 rounded-full border" style={{ background: c }} aria-hidden="true" />{k === "WHITE" ? "Blanc" : "Anthracite"}</label>)}</fieldset>
             <fieldset><legend className="label">Toile</legend>{Object.entries(FAB).map(([k, [l, c]]) => <label key={k} className="flex items-center gap-2 text-sm"><input type="radio" name="fab" checked={input.fabricCode === k} onChange={() => setInput((i) => ({ ...i, fabricCode: k }))} /><span className="size-4 rounded-full border" style={{ background: c }} aria-hidden="true" />{l}</label>)}</fieldset>
             <fieldset><legend className="label">Fixation (supports inclus)</legend><label className="flex gap-2 text-sm"><input type="radio" name="br" checked={input.bracketMount === "wall"} onChange={() => setInput((i) => ({ ...i, bracketMount: "wall" }))} /> Murale</label><label className="flex gap-2 text-sm"><input type="radio" name="br" checked={input.bracketMount === "ceiling"} onChange={() => setInput((i) => ({ ...i, bracketMount: "ceiling" }))} /> Plafond</label></fieldset>
-            <fieldset><legend className="label">Options</legend>{anemo && <label className="flex gap-2 text-sm"><input type="checkbox" checked={input.options.some((o) => o.familySlug === "anemometre")} onChange={(e) => setInput((i) => ({ ...i, options: e.target.checked ? [{ familySlug: "anemometre", qty: 1 }] : [] }))} /> {anemo.name} — {anemo.shortDescription}</label>}<label className="flex gap-2 text-sm mt-1"><input type="checkbox" checked={input.installation === "professional"} onChange={(e) => setInput((i) => ({ ...i, installation: e.target.checked ? "professional" : "self" }))} /> Montage professionnel</label></fieldset>
+            <fieldset><legend className="label">Options</legend>{anemo && <label className="flex gap-2 text-sm"><input type="checkbox" checked={input.options.some((o) => o.familySlug === "anemometre")} onChange={(e) => setInput((i) => ({ ...i, options: e.target.checked ? [...i.options.filter((o) => o.familySlug !== "anemometre"), { familySlug: "anemometre", qty: 1 }] : i.options.filter((o) => o.familySlug !== "anemometre") }))} /> {anemo.name} — {anemo.shortDescription}</label>}{cable && <label className="flex gap-2 text-sm"><input type="checkbox" checked={input.options.some((o) => o.familySlug === "cable-alimentation")} onChange={(e) => setInput((i) => ({ ...i, options: e.target.checked ? [...i.options.filter((o) => o.familySlug !== "cable-alimentation"), { familySlug: "cable-alimentation", variantOption: "6m", qty: 1 }] : i.options.filter((o) => o.familySlug !== "cable-alimentation") }))} /> <span>Rallonge de câble 6 m <span className="block text-xs text-stone-700">Câble fourni {fam?.includedCableMm ? `${fam.includedCableMm / 1000} m` : ""} inclus. Rallonge : compatibilité électrique à confirmer, sur devis.</span></span></label>}<label className="flex gap-2 text-sm mt-1"><input type="checkbox" checked={input.installation === "professional"} onChange={(e) => setInput((i) => ({ ...i, installation: e.target.checked ? "professional" : "self" }))} /> Montage professionnel</label></fieldset>
           </div>
           <div><label className="label" htmlFor="cp-store">Code postal de livraison</label><input id="cp-store" className="input max-w-xs" inputMode="numeric" value={input.delivery.postalCode ?? ""} onChange={(e) => setInput((i) => ({ ...i, delivery: { countryCode: "FR", postalCode: e.target.value.replace(/\D/g, "").slice(0, 5) } }))} /></div>
         </section>

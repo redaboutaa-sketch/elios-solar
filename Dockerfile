@@ -16,7 +16,9 @@ RUN pnpm db:generate && pnpm exec next typegen && pnpm build
 
 # ---- image d'exécution de l'application web ----
 FROM base AS runner
-ENV NODE_ENV=production PORT=3400 HOSTNAME=0.0.0.0
+ARG GIT_COMMIT=unknown
+ARG BUILD_TIME=unknown
+ENV NODE_ENV=production PORT=3400 HOSTNAME=0.0.0.0 GIT_COMMIT=$GIT_COMMIT BUILD_TIME=$BUILD_TIME
 RUN groupadd -r app && useradd -r -g app -d /app app
 COPY --from=build --chown=app:app /app/.next/standalone ./
 COPY --from=build --chown=app:app /app/.next/static ./.next/static
@@ -29,6 +31,8 @@ CMD ["node", "server.js"]
 
 # ---- image outils : migrations, seed, worker e-mail, import, sauvegarde ----
 FROM deps AS tools
+ARG GIT_COMMIT=unknown
+ENV GIT_COMMIT=$GIT_COMMIT
 COPY . .
 RUN pnpm db:generate && apt-get update && apt-get install -y --no-install-recommends postgresql-client && rm -rf /var/lib/apt/lists/* \
   && groupadd -r app && useradd -r -g app -d /app app && chown -R app:app /app

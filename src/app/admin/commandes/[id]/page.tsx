@@ -8,6 +8,8 @@ import { PlanPreview } from "@/components/configurator/plan-preview";
 import { FULFILLMENT_FR, ORDER_STATUS_FR } from "@/components/account/order-detail";
 import { Flash, PageTitle, Section, Table, fmtDate } from "@/components/admin/ui";
 import { demoRefundAction, updateFulfillmentAction, updateOrderNotesAction } from "@/server/actions/admin/orders";
+import { simulateInstallmentsRefundAction } from "@/server/actions/admin/installments";
+import { paymentMethodLabel } from "@/components/checkout/payment-method-line";
 import type { EvaluationResult, PergolaStandardInput } from "@/domain/types";
 import type { FulfillmentStatus } from "@/generated/prisma/enums";
 
@@ -104,16 +106,24 @@ export default async function OrderAdminPage(props: PageProps<"/admin/commandes/
           {order.payments.map((p) => {
             const refunded = p.refunds.filter((r) => r.status === "SUCCEEDED").reduce((s, r) => s + r.amountCents, 0);
             const refundable = p.provider === "DEMO" && (p.status === "SUCCEEDED" || p.status === "PARTIALLY_REFUNDED") && refunded < p.amountCents;
+            const simRefundable = p.provider === "INSTALLMENTS_SIM" && (p.status === "SUCCEEDED" || p.status === "PARTIALLY_REFUNDED") && refunded < p.amountCents;
             return (
               <div key={p.id} className="rounded-lg border border-sand-200 p-4">
-                <p className="text-sm"><strong>{p.provider}</strong> · {p.status} · <Price cents={p.amountCents} showCents /> · réf. <span className="font-mono text-xs">{p.providerRef ?? "—"}</span> · {fmtDate(p.createdAt)}</p>
+                <p className="text-sm"><strong>{p.provider}</strong> · <span data-testid="admin-payment-method">{paymentMethodLabel(p)}</span>{p.feesCents > 0 && <> · frais <Price cents={p.feesCents} showCents /></>} · {p.status} · <Price cents={p.amountCents} showCents /> · réf. <span className="font-mono text-xs">{p.providerRef ?? "—"}</span> · {fmtDate(p.createdAt)}</p>
                 {p.failureReason && <p className="text-sm text-danger">{p.failureReason}</p>}
-                {p.refunds.length > 0 && <ul className="mt-2 text-sm">{p.refunds.map((r) => <li key={r.id}>Remboursement <Price cents={r.amountCents} showCents /> — {r.status} — {fmtDate(r.createdAt)}</li>)}</ul>}
+                {p.refunds.length > 0 && <ul className="mt-2 text-sm">{p.refunds.map((r) => <li key={r.id} className={r.status === "FAILED" ? "text-danger font-medium" : undefined}>Remboursement <Price cents={r.amountCents} showCents /> — {r.status === "FAILED" ? "ÉCHEC signalé par le prestataire : à traiter" : r.status}{r.reason && ` (${r.reason})`} — {fmtDate(r.createdAt)}</li>)}</ul>}
                 <h3 className="mt-3 text-sm font-medium">Événements</h3>
                 <Table caption="Événements de paiement">
                   <thead><tr><th>Reçu</th><th>Type</th><th>Identifiant</th><th>Résultat</th></tr></thead>
                   <tbody>{p.events.map((e) => <tr key={e.id}><td>{fmtDate(e.receivedAt)}</td><td>{e.type}</td><td className="font-mono text-xs">{e.eventId}</td><td>{e.outcome ?? "—"}</td></tr>)}{p.events.length === 0 && <tr><td colSpan={4} className="text-stone-700">Aucun événement.</td></tr>}</tbody>
                 </Table>
+                {simRefundable && (
+                  <form action={simulateInstallmentsRefundAction} className="mt-3 flex flex-wrap items-end gap-2">
+                    <input type="hidden" name="paymentId" value={p.id} />
+                    <div><label className="label" htmlFor={`sim-amount-${p.id}`}>Montant (€, vide = solde de {((p.amountCents - refunded) / 100).toFixed(2)} €)</label><input id={`sim-amount-${p.id}`} name="amount" inputMode="decimal" className="input w-48" /></div>
+                    <button className="btn-secondary" type="submit">Simuler un remboursement</button>
+                  </form>
+                )}
                 {refundable && (
                   <form action={demoRefundAction} className="mt-3 flex flex-wrap items-end gap-2">
                     <input type="hidden" name="paymentId" value={p.id} />

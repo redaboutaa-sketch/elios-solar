@@ -7,6 +7,7 @@ import { getSession } from "@/lib/session";
 import { getGuestKey } from "@/server/guest";
 import { getOrderForOwner } from "@/server/order/service";
 import { OrderDetail } from "@/components/account/order-detail";
+import { PaymentMethodLine } from "@/components/checkout/payment-method-line";
 
 export const metadata: Metadata = { title: "Confirmation de commande", robots: { index: false } };
 
@@ -15,6 +16,7 @@ export default async function ConfirmationPage(props: PageProps<"/commande/[id]/
   const [session, guestKey] = await Promise.all([getSession(), getGuestKey()]);
   const order = await getOrderForOwner(id, { userId: session?.user.id, guestKey });
   if (!order) notFound();
+  const usedPayment = order.payments.find((p) => p.status === "SUCCEEDED" || p.status === "REFUNDED" || p.status === "PARTIALLY_REFUNDED") ?? order.payments[0];
   const paid = order.status === "PAID" || order.status === "PROCESSING" || order.status === "SHIPPED" || order.status === "DELIVERED";
   return (
     <div className="container-x py-10 max-w-3xl">
@@ -23,6 +25,7 @@ export default async function ConfirmationPage(props: PageProps<"/commande/[id]/
       ) : (
         <><h1 className="font-display text-4xl">Paiement en attente de confirmation</h1><p className="mt-2 text-stone-700">Le retour du navigateur ne prouve pas le paiement : la commande {order.number} sera confirmée dès réception de la notification du prestataire. Statut actuel : {order.status}.</p>{order.status === "PENDING_PAYMENT" && <Link href={order.payments[0]?.checkoutUrl ?? "/panier"} className="btn-accent mt-4">Reprendre le paiement</Link>}</>
       )}
+      {usedPayment && <p className="mt-3 text-sm"><PaymentMethodLine payment={usedPayment} /></p>}
       <div className="mt-8"><OrderDetail order={order} /></div>
       <div className="mt-6 flex gap-2"><Link href={session ? "/compte/commandes" : "/compte/inscription"} className="btn-secondary">{session ? "Mes commandes" : "Créer un compte pour suivre ma commande"}</Link><Link href="/" className="btn-ghost">Retour à l'accueil</Link></div>
     </div>
