@@ -46,7 +46,8 @@ export async function createAccount(page: Page, email: string, password: string)
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel(/Mot de passe/).fill(password);
   await page.getByRole("button", { name: "Créer mon compte" }).click();
-  await page.waitForURL(/\/compte/);
+  // attendre la sortie de la page d'inscription (l'URL /compte/inscription correspond déjà à /compte)
+  await page.waitForURL((u) => u.pathname.startsWith("/compte") && !u.pathname.startsWith("/compte/inscription"), { timeout: 20_000 });
 }
 
 export async function fillCheckout(page: Page, email: string) {

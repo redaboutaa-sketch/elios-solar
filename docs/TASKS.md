@@ -55,5 +55,14 @@ Légende : ✅ fait (codé + vérifié) · 🔄 en cours · ⏳ à faire · ⛔ 
 - ✅ Chat de conseil (présence réelle, hors ligne, admin, assistant IA optionnel)
 - ✅ Paiement fractionné : adaptateur Stripe désactivé + simulateur identifié
 - ✅ Sauvegarde, restauration isolée, redéploiement Docker 3401, commit exposé
-- ⏳ Joindre l'image 3D au devis ; 3D du sur-mesure ; écran de validation des références
+- ✅ Joindre l'image 3D au devis ; 3D du sur-mesure ; écran de validation des références (itération 4)
 - ⛔ Données fournisseur (photos, notices, grille, assemblages, câble, délais réels), comptes Stripe/Alma/Klarna, SMTP, domaine
+
+## Itération 4 — recette et fonctions restantes (statuts : `docs/iteration4/README.md`)
+- ✅ Recette navigateur complète en une campagne contre Docker (sans relance), session admin réutilisée, clients isolés, job CI Docker
+- ✅ Anti-force brute : limite par IP conservée + verrou par compte ; contournement par X-Forwarded-For corrigé et testé
+- ✅ 3D du sur-mesure aux cotes saisies, bornes respectées, assemblages non confirmés signalés, repli 2D
+- ✅ Visualisation figée jointe au devis (PDF, compte, administration), contrôle des images, repli plan 2D
+- ✅ Écran de validation des références (versions de données, sources, divergences, conséquences, historique)
+- ✅ Données techniques sourcées ; câble « longueur à confirmer »
+- ⛔ Instruction des dossiers avec des documents fournisseur (câble, persiennes 5/6 m, prix, délais)

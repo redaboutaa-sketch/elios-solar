@@ -1,6 +1,6 @@
 # État réel du projet
 
-Mis à jour : 2026-10-19 (itération 3 : médiathèque, stocks/délais, grilles sur mesure, 3D, chat, paiement fractionné)
+Mis à jour : 2026-10-19 (itération 4 : recette complète contre Docker, anti-force brute, 3D du sur-mesure, visuel joint au devis, validation des références, données techniques sourcées — statuts : `docs/iteration4/README.md`)
 
 ## Où en est-on
 - Dépôt : `redaboutaa-sketch/elios-solar`, branche `feat/storefront-configurator` (depuis `main` = commit initial).
@@ -10,6 +10,7 @@ Mis à jour : 2026-10-19 (itération 3 : médiathèque, stocks/délais, grilles 
 - Paiement : mode DEMO (page de paiement simulé + webhook signé HMAC).
 - **Préproduction Docker à jour** : commit exposé par `GET /api/health` (`commit`, `builtAt`, `lastMigration`) et dans le bandeau de l'administration. Redéploiement : `export GIT_COMMIT=$(git rev-parse HEAD) BUILD_TIME=$(date -u +%FT%TZ); docker compose -f docker/compose.prod.yml --env-file .env.prod build migrate app && docker compose -f docker/compose.prod.yml --env-file .env.prod up -d && docker compose -f docker/compose.prod.yml --env-file .env.prod run --rm migrate pnpm db:seed`. Sauvegarde préalable dans `backups/preprod/` (non commité).
 - Préproduction Docker : `docker compose -f docker/compose.prod.yml --env-file .env.prod up -d` → http://127.0.0.1:3401 (images `elios-solar/app:preprod`, `elios-solar/tools:preprod`, migrations appliquées par le service `migrate`, seed démo exécuté, santé OK, worker e-mail actif). `.env.prod` local non commité.
+- Recette navigateur complète contre Docker : `scripts/e2e-docker.sh .env.prod` (une campagne, sans relance ; session admin unique via le projet `setup`, un client simulé distinct par parcours). Même campagne en CI (job `e2e-docker`).
 - Sauvegarde/restauration : `scripts/backup.sh` et `scripts/restore.sh` testés (dump + médias + checksums ; restauration vérifiée dans une base isolée `elios_solar_restore_check`).
 - Vérifications passées : typecheck ✅, lint ✅, unitaires 33/33 ✅, intégration 14/14 ✅, Playwright 26/26 ✅, build ✅ (détail : `docs/test-report.md`).
 - Audit comparatif v2 avec REA : `docs/gap-analysis-v2.md` (écarts, priorités, médias manquants).

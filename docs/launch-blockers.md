@@ -7,6 +7,7 @@ n'empêche de poursuivre la réalisation ; tout empêche la vente réelle.
 - [ ] Nom commercial définitif (ELIOS SOLAR est provisoire) ; logo et favicon autorisés.
 - [ ] Raison sociale, forme, SIRET, TVA, capital, RCS, adresse, téléphone, e-mail (Administration → Réglages).
 - [ ] Domaine de production et certificat (Traefik existant), `NEXT_PUBLIC_SITE_URL`, `BETTER_AUTH_URL`.
+- [ ] Derrière Traefik : vérifier que X-Forwarded-For est réécrit avec l'IP réelle (comportement par défaut pour une source non fiable) et, en cas de proxys en chaîne, renseigner `TRUSTED_PROXIES` ; ne jamais publier le port de l'application hors 127.0.0.1 (sinon la limite par IP devient contournable — le verrou par compte reste actif).
 
 ## Contenus et médias
 - [ ] Mentions légales, CGV (paiement, livraison, garanties, médiation), confidentialité (DPO) : textes validés juridiquement ; passer les pages en PUBLISHED.
@@ -20,7 +21,8 @@ n'empêche de poursuivre la réalisation ; tout empêche la vente réelle.
 - [ ] Matrice de compatibilité fournisseur : longueurs utiles des fermetures par dimension, poteau intermédiaire par gamme, cumul LED, persienne par implantation, cotes utiles vs commerciales.
 - [ ] Grille sur mesure fournisseur (bornes, pas, cellules, suppléments, validité) importée via Administration → Grilles sur mesure, statut « vérifié fournisseur », puis archivage de la grille **fictive** v1 ; sinon le sur-mesure reste en estimation + devis.
 - [ ] Persiennes 5/6 m : composition des assemblages (modules, poteau, cotes utiles, fixations, couleurs) ; aujourd'hui sur devis.
-- [ ] Câble de store banne : longueur fournie (conflit 3 m démo / 7,5 m observé), référence/prix/compatibilité de la rallonge 6 m.
+- [ ] Câble de store banne : longueur fournie **à confirmer par le fournisseur** — deux valeurs non confirmées coexistent (3 m = donnée fictive du seed ; 7,5 m = observation sur la fiche du site de référence) ; le site affiche « longueur à confirmer ». Dossier ouvert dans Administration → Catalogue → Validation des références. Rallonge 6 m : référence, prix, compatibilité électrique.
+- [ ] Dossiers de validation des références (persiennes 5/6 m, câble…) : à instruire avec un document ou un écrit fournisseur ; une validation ne rend jamais une référence achetable (prix, disponibilité et compatibilités validés requis en plus).
 - [ ] Stocks et délais réels par référence (import CSV/JSON ou flux fournisseur) ; aujourd'hui jeu de démonstration.
 - [ ] Variantes de store banne réellement fabriquées (dimensions, toiles, supports) et options.
 
