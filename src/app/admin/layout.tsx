@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireRole } from "@/lib/session";
 import { AdminMobileNav, AdminNav } from "@/components/admin/admin-nav";
 import { ROLE_FR } from "@/components/admin/ui";
+import { buildInfo } from "@/lib/build-info";
 import { touchPresence } from "@/server/chat/service";
 import { PresencePing } from "@/components/chat/presence-ping";
 
@@ -14,7 +15,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   await touchPresence(session.user.id).catch(() => undefined);
   return (
     <div className="flex min-h-dvh flex-col bg-sand-50 text-ink">
-      <div role="note" className="bg-anthracite px-4 py-1.5 text-center text-xs tracking-wide text-sand-50">Administration — préproduction</div>
+      <div role="note" className="bg-anthracite px-4 py-1.5 text-center text-xs tracking-wide text-sand-50">Administration — préproduction · version <span data-testid="build-commit">{buildInfo().shortCommit}</span></div>
       <header className="border-b border-sand-200 bg-white">
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 lg:px-6">
           <Link href="/admin" className="font-display text-lg">ELIOS SOLAR · Administration</Link>

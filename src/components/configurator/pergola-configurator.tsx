@@ -7,6 +7,7 @@ import { adaptStandardInput, evaluate } from "@/domain/engine";
 import { allSegments, layoutForFamily, segmentLabel } from "@/domain/layout";
 import { closureChoicesFor, optionChoicesFor } from "@/domain/helpers";
 import { formatEur } from "@/domain/money";
+import { AVAILABILITY_FR, formatLeadRange, leadRangeOf } from "@/domain/lead-time";
 import type { CatalogSnapshot, EvaluationResult, PergolaStandardInput, SegmentChoice } from "@/domain/types";
 import { addToCartAction, evaluateAction, saveConfigurationAction } from "@/server/actions/configurator";
 import { PlanPreview } from "./plan-preview";
@@ -14,6 +15,7 @@ import { PergolaArt, colorOf } from "@/components/illustrations/pergola";
 import { IssueList, Notice } from "@/components/ui/alert";
 import { DemoBadge } from "@/components/ui/demo-badge";
 import { QuoteForm } from "./quote-form";
+import { PergolaVisuals } from "./scene-3d/visuals";
 
 type Pending = ReturnType<typeof adaptStandardInput>["pending"];
 
@@ -77,8 +79,9 @@ export function PergolaConfigurator({ catalog, initial, existing, replaceLineId 
     <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
       {/* Colonne visuelle */}
       <div className="space-y-4 lg:sticky lg:top-24 self-start">
-        <div className="card overflow-hidden"><PergolaArt structure={colorOf(fin?.structureColor)} blades={colorOf(fin?.bladeColor)} mounting={input.mounting} lighting={!!family?.lightingIncluded && family.lightingIncluded !== "none" || input.options.some((o) => o.familySlug === "bandes-led")} closures={{ left: artFor(input.segments["left-1"]), right: artFor(input.segments["right-1"]), front: artFor(input.segments["front-1"]) }} className="w-full h-auto" title="Aperçu schématique de la configuration" /></div>
-        {layout && <div className="card p-3"><PlanPreview layout={layout} segments={input.segments} selected={selectedSegment} onSelect={(id) => { setSelectedSegment(id); document.getElementById("etape-ouvertures")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} finishSwatch={fin?.swatch} options={{ lighting: !!family?.lightingIncluded && family.lightingIncluded !== "none" || input.options.some((o) => o.familySlug === "bandes-led"), heaters: input.options.find((o) => o.familySlug === "lampe-chauffante")?.qty }} /></div>}
+        <PergolaVisuals catalog={catalog} input={input} result={result} selectedSegment={selectedSegment} onSelectSegment={(id) => { setSelectedSegment(id); document.getElementById("etape-ouvertures")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+          art={<PergolaArt structure={colorOf(fin?.structureColor)} blades={colorOf(fin?.bladeColor)} mounting={input.mounting} lighting={!!family?.lightingIncluded && family.lightingIncluded !== "none" || input.options.some((o) => o.familySlug === "bandes-led")} closures={{ left: artFor(input.segments["left-1"]), right: artFor(input.segments["right-1"]), front: artFor(input.segments["front-1"]) }} className="w-full h-auto" title="Aperçu schématique de la configuration" />}
+          plan={layout ? <PlanPreview layout={layout} segments={input.segments} selected={selectedSegment} onSelect={(id) => { setSelectedSegment(id); document.getElementById("etape-ouvertures")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} finishSwatch={fin?.swatch} options={{ lighting: !!family?.lightingIncluded && family.lightingIncluded !== "none" || input.options.some((o) => o.familySlug === "bandes-led"), heaters: input.options.find((o) => o.familySlug === "lampe-chauffante")?.qty }} /> : null} />
         <div className="card p-5 hidden lg:block" aria-live="polite">
           <p className="text-sm text-stone-700">Total estimé {result.totals.isFinal ? "(définitif)" : "(hors livraison)"}</p>
           <p className="text-3xl font-semibold">{formatEur(result.totals.totalGrossCents)} <span className="text-sm font-normal text-stone-700">TTC</span></p>
@@ -182,7 +185,7 @@ export function PergolaConfigurator({ catalog, initial, existing, replaceLineId 
                               <input type="radio" name={`seg-${seg.id}`} disabled={disabled} checked={selected} onChange={() => setSegment(seg.id, { closureFamilySlug: c.family.slug, option: c.variants[0]?.option })} className="mt-1" />
                               <span className="flex-1">
                                 <span className="font-medium">{c.family.name}</span>
-                                {c.variants[0] && !disabled && <span className="text-stone-700"> · {c.variants.length > 1 ? "à partir de " : ""}{formatEur(Math.min(...c.variants.map((v) => v.priceCents)))}{leadTimeOf(catalog, c.variants[0].sku) ? ` · délai indicatif ${leadTimeOf(catalog, c.variants[0].sku)} j` : ""} · <Link href={`/accessoires/${c.family.slug}`} className="underline" target="_blank" rel="noopener">voir la fiche</Link></span>}
+                                {c.variants[0] && !disabled && <span className="text-stone-700"> · {c.variants.length > 1 ? "à partir de " : ""}{formatEur(Math.min(...c.variants.map((v) => v.priceCents)))} · {leadTimeOf(catalog, c.variants[0].sku)}{assemblyNote(catalog, c.variants[0].sku)} · <Link href={`/accessoires/${c.family.slug}`} className="underline" target="_blank" rel="noopener">voir la fiche</Link></span>}
                                 {c.status === "unknown" && <span className="block text-xs text-warning">Compatibilité non confirmée — validée sur devis{c.reason ? ` (${c.reason})` : ""}.</span>}
                                 {disabled && <span className="block text-xs text-danger">Indisponible : {c.reason}</span>}
                               </span>
@@ -229,7 +232,7 @@ export function PergolaConfigurator({ catalog, initial, existing, replaceLineId 
                 <li key={o.family.slug} className="card p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={!!current} disabled={o.variants.length === 0} onChange={(e) => setOption(o.family.slug, variantOptions[0], e.target.checked ? 1 : 0)} /> {o.family.name}</label>
-                    {o.variants.length === 0 ? <span className="badge-err">indisponible pour cette configuration</span> : <span className="text-sm">{formatEur(Math.min(...o.variants.map((v) => v.priceCents)))}{o.variants.length > 1 && variantOptions.length <= 1 ? " et plus" : ""}{leadTimeOf(catalog, o.variants[0]!.sku) ? ` · ${leadTimeOf(catalog, o.variants[0]!.sku)} j` : ""}</span>}
+                    {o.variants.length === 0 ? <span className="badge-err">indisponible pour cette configuration</span> : <span className="text-sm">{formatEur(Math.min(...o.variants.map((v) => v.priceCents)))}{o.variants.length > 1 && variantOptions.length <= 1 ? " et plus" : ""} · {leadTimeOf(catalog, o.variants[0]!.sku)}</span>}
                   </div>
                   <p className="text-xs text-stone-700 mt-1">{o.family.shortDescription}{o.status === "unknown" && <span className="text-warning"> · compatibilité non confirmée : devis</span>}</p>
                   {current && (
@@ -298,8 +301,19 @@ function Step({ n, title, hint, id, children }: { n: number; title: string; hint
   );
 }
 
-function leadTimeOf(catalog: CatalogSnapshot, sku: string): number | null {
-  return catalog.variants.find((v) => v.sku === sku)?.leadTimeDays ?? null;
+/** Assemblage modulaire (persienne 5/6 m) : modules, poteau intermédiaire, cote utile ; sur devis tant que non confirmé. */
+function assemblyNote(catalog: CatalogSnapshot, sku: string): string {
+  const a = catalog.variants.find((x) => x.sku === sku)?.attributes;
+  if (!a || a.kind !== "side_closure" || a.assembly !== "modular") return "";
+  return ` · assemblage ${a.modules ?? 2} modules${a.intermediatePosts ? ` + ${a.intermediatePosts} poteau intermédiaire` : ""}${a.usableWidthMm ? `, cote utile ${a.usableWidthMm} mm` : ""}${a.validation !== "confirmed" ? " — à confirmer, sur devis" : ""}`;
+}
+
+/** Disponibilité + fourchette de délai d'une référence ; « à confirmer » si les données manquent. */
+function leadTimeOf(catalog: CatalogSnapshot, sku: string): string {
+  const v = catalog.variants.find((x) => x.sku === sku);
+  if (!v) return "délai à confirmer";
+  const avail = AVAILABILITY_FR[v.availability ?? "to_confirm"];
+  return `${avail.toLowerCase()} · ${formatLeadRange(leadRangeOf(v))}${v.leadSource === "demo" ? " (démo)" : ""}`;
 }
 
 function artFor(c: SegmentChoice | null | undefined): "glass" | "slats" | "screen" | undefined {
