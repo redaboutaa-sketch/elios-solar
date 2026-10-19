@@ -70,3 +70,31 @@ persisté et notifié ; revalidation d'une configuration sauvegardée et révoca
 - Stripe : code présent, non testé faute de clés ; le fournisseur DEMO suit le même chemin (signature, idempotence).
 - Sauvegarde/restauration : exécutées sur la base de dev (dump 190 Ko, restauration vérifiée en base isolée) ; non testées sur la pile Docker.
 - Pile Docker production : images construites, `compose.prod.yml` démarré sur 127.0.0.1:3401 (migrations, seed, santé 200, pages 200, `/admin` 307).
+
+## Itération 4 — recette complète contre Docker (2026-10-19)
+
+Version exécutée : commit `95936fb` (préproduction Docker 127.0.0.1:3401, `GET /api/health` → `commit`, migration
+`20261020090000_iteration4_specs_validations_quote_visuals`). Les commits suivants ne modifient que la documentation.
+
+| Contrôle | Résultat |
+|---|---|
+| `pnpm typecheck` | ✅ |
+| `pnpm lint` | ✅ 0 erreur (1 avertissement `<img>` antérieur, page Réalisations) |
+| Unitaires (`tests/unit`) | ✅ 133/133 |
+| Intégration (`tests/integration`, base de test) | ✅ 65/65 |
+| Build (images Docker `app` + `tools`) | ✅ |
+| **Recette navigateur complète contre Docker, une campagne** (`scripts/e2e-docker.sh .env.prod`) | ✅ **53/53** en 3,5 min — setup + 26 parcours × desktop 1440 / mobile 390, `retries: 0`, `failOnFlakyTests` |
+| Reproductibilité | ✅ deux campagnes consécutives sur la même instance (`5060a12`) : 53/53 puis 53/53 (quotas non réinitialisés) |
+| Worker e-mail | ✅ file d'attente : 129 envoyés, 0 échec (fournisseur `log`) |
+| Sauvegarde avant redéploiement | ✅ `backups/preprod/db_20261019_210933.dump` + médias + sommes de contrôle (non commités) |
+| Restauration isolée | ✅ PostgreSQL éphémère (tmpfs, 127.0.0.1:5499) : 292 variantes, migrations 4 → 5, câble converti en `DEMO_SEED` ; conteneur supprimé |
+
+Nouveaux parcours : 11 (3D du sur-mesure aux cotes saisies, valeurs limites, devis avec visualisation jointe au compte, au PDF et à
+l'administration ; sans WebGL : repli 2D et plan 2D joint), 12 (validation des références : dossier câble avec conflit et manques,
+dossier de test à vérifier puis rejeté, historique), 13 (anti-force brute : verrou par compte malgré la rotation d'IP, limite par IP,
+compte sain non bloqué). Échecs rencontrés et corrigés pendant la recette : course dans `createAccount` (visuel absent du compte en
+image de production), quotas par IP partagés entre parcours, éclairage non chiffré représenté dans la 3D du sur-mesure.
+Écart CI / Docker et corrections : `docs/iteration4/README.md`.
+
+Non exécuté : paiements réels (Stripe, Alma, Klarna), SMTP réel, assistant IA réel, flux de stock fournisseur réel — intégrations
+simulées ou désactivées.
