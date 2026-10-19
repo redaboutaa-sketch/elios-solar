@@ -61,12 +61,23 @@ export default async function SettingsPage(props: PageProps<"/admin/reglages">) 
           <div className="grid gap-4 md:grid-cols-2">
             <Field name="taxRate" label="TVA par défaut (%)" value={String((s?.defaultTaxRateBps ?? 2000) / 100)} hint="Appliquée aux nouveaux articles ; les commandes passées conservent leur taux." />
             <div className="space-y-2 self-end pb-2 text-sm">
+              <label className="block"><span className="label">Expédition des commandes multi-références</span><select name="shipmentPolicy" className="input" defaultValue={s?.shipmentPolicy ?? "GROUPED"}><option value="GROUPED">Groupée (une livraison au délai le plus long)</option><option value="SEPARATE">Séparée (chaque référence part dès disponibilité, si autorisé)</option></select></label>
               <label className="flex items-center gap-2"><input type="checkbox" name="indexable" className="h-4 w-4" defaultChecked={s?.indexable ?? false} /> Site indexable par les moteurs de recherche</label>
               <label className="flex items-center gap-2"><input type="checkbox" name="analyticsEnabled" className="h-4 w-4" defaultChecked={s?.analyticsEnabled ?? false} /> Mesure d'audience activée (soumise au consentement)</label>
             </div>
             <div className="md:col-span-2"><Field name="analyticsScriptUrl" label="URL du script de mesure d'audience" value={s?.analyticsScriptUrl} type="url" hint="https:// uniquement ; chargé seulement après consentement." /></div>
           </div>
           <p className="mt-3 text-xs text-stone-700">L'indexation dépend aussi de la variable d'environnement SITE_INDEXABLE (actuellement : {process.env.SITE_INDEXABLE === "true" ? "true" : "false"}).</p>
+        </Section>
+        <Section title="Chat">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="flex items-center gap-2 self-start text-sm"><input type="checkbox" name="chatEnabled" className="h-4 w-4" defaultChecked={s?.chatEnabled ?? true} /> Chat activé sur la boutique</label>
+            <div>
+              <label className="label" htmlFor="chatOfflineMessage">Message hors ligne</label>
+              <textarea id="chatOfflineMessage" name="chatOfflineMessage" className="input" rows={3} maxLength={500} defaultValue={s?.chatOfflineMessage ?? ""} aria-describedby="chatOfflineMessage-hint" />
+              <p id="chatOfflineMessage-hint" className="mt-1 text-xs text-stone-700">Affiché quand aucun conseiller n'est connecté depuis 5 minutes (vide = texte par défaut).</p>
+            </div>
+          </div>
         </Section>
         <button className="btn-primary" type="submit">Enregistrer les réglages</button>
       </form>

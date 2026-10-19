@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
 import { launchBlockers } from "@/server/admin/launch";
+import { countUnreadForAdvisors } from "@/server/chat/service";
 import { Price } from "@/components/ui/price";
 import { ORDER_STATUS_FR } from "@/components/account/order-detail";
 import { PageTitle, QUOTE_STATUS_FR, Section, Table, fmtDate } from "@/components/admin/ui";
@@ -11,7 +12,7 @@ export const metadata: Metadata = { title: "Tableau de bord" };
 
 export default async function AdminDashboard() {
   await requireRole(["ADMIN", "MANAGER"]);
-  const [paid, pending, newQuotes, newContacts, failedEmails, orders, quotes, blockers] = await Promise.all([
+  const [paid, pending, newQuotes, newContacts, failedEmails, orders, quotes, blockers, unreadChats] = await Promise.all([
     prisma.order.count({ where: { status: { in: ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"] } } }),
     prisma.order.count({ where: { status: "PENDING_PAYMENT" } }),
     prisma.quote.count({ where: { status: "NEW" } }),
@@ -20,6 +21,7 @@ export default async function AdminDashboard() {
     prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 5, select: { id: true, number: true, status: true, totalCents: true, createdAt: true, isDemo: true } }),
     prisma.quote.findMany({ orderBy: { createdAt: "desc" }, take: 5, select: { id: true, number: true, status: true, kind: true, createdAt: true } }),
     launchBlockers(),
+    countUnreadForAdvisors(),
   ]);
   const counters = [
     { label: "Commandes payées", value: paid, href: "/admin/commandes?statut=PAID" },
@@ -27,11 +29,12 @@ export default async function AdminDashboard() {
     { label: "Devis nouveaux", value: newQuotes, href: "/admin/devis?statut=NEW" },
     { label: "Contacts non traités", value: newContacts, href: "/admin/contacts" },
     { label: "E-mails en échec", value: failedEmails, href: "/admin/emails?statut=FAILED" },
+    { label: "Conversations non lues", value: unreadChats, href: "/admin/conversations?filtre=non-lues" },
   ];
   return (
     <div className="space-y-6">
       <PageTitle title="Tableau de bord" />
-      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
         {counters.map((c) => (
           <li key={c.label}>
             <Link href={c.href} className="block rounded-lg border border-sand-200 bg-white px-4 py-3 hover:border-stone-700">

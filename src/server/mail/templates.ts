@@ -36,6 +36,10 @@ export function renderTemplate(template: string, p: Record<string, unknown>): { 
       return { html: layout("Nouveau message de contact", `<p>De ${esc(p.name)} &lt;${esc(p.email)}&gt;${p.phone ? ` — ${esc(p.phone)}` : ""}</p><p>${esc(p.message)}</p>${p.preferredSlot ? `<p>Créneau souhaité : ${esc(p.preferredSlot)}</p>` : ""}`), text: `Contact de ${p.email}: ${p.message}` };
     case "contact-ack":
       return { html: layout("Nous avons bien reçu votre message", `<p>Bonjour ${esc(p.name)},</p><p>Merci pour votre message, nous revenons vers vous rapidement.</p>`), text: "Message reçu." };
+    case "chat-admin-notification":
+      return { html: layout(`Chat : nouveau message${p.offline ? " (hors ligne)" : ""}`, `<p>De ${esc(p.name)}${p.email ? ` &lt;${esc(p.email)}&gt;` : ""}${p.offline ? " — réponse attendue par e-mail" : ""}.</p><p style="white-space:pre-wrap;background:#f3efe8;padding:12px">${esc(p.body)}</p><p><a href="${site()}/admin/conversations/${esc(p.conversationId)}">Répondre dans l'administration</a></p>`), text: `Nouveau message de chat : ${p.body}\n${site()}/admin/conversations/${p.conversationId}` };
+    case "chat-advisor-reply":
+      return { html: layout("Un conseiller vous a répondu", `<p>Bonjour${p.name ? ` ${esc(p.name)}` : ""},</p><p>Voici la réponse à votre message :</p><p style="white-space:pre-wrap;background:#f3efe8;padding:12px">${esc(p.body)}</p><p>Pour poursuivre l'échange, rouvrez le chat sur <a href="${esc(p.url)}">${esc(p.url)}</a> ou répondez par le formulaire de contact.</p>`), text: `Réponse d'un conseiller : ${p.body}\n${p.url}` };
     case "account-export":
       return { html: layout("Export de vos données", `<p>Vos données personnelles sont jointes ci-dessous au format JSON.</p><pre style="font-size:11px;white-space:pre-wrap">${esc(p.json)}</pre>`), text: String(p.json) };
     default:

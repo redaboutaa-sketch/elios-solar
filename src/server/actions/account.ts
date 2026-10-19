@@ -9,6 +9,7 @@ import { claimGuestConfigurations, duplicateConfiguration, setShareRevoked } fro
 import { claimGuestOrders } from "@/server/order/service";
 import { enqueueEmail } from "@/server/mail/outbox";
 import { audit } from "@/server/audit";
+import { claimGuestConversations, exportConversations } from "@/server/chat/service";
 import { headers } from "next/headers";
 
 /** Après connexion : rattache panier, projets et commandes invité au compte. */
@@ -16,7 +17,7 @@ export async function afterSignInAction() {
   const session = await getSession();
   const guestKey = await getGuestKey();
   if (!session || !guestKey) return;
-  await Promise.all([mergeGuestCart(session.user.id, guestKey), claimGuestConfigurations(session.user.id, guestKey), claimGuestOrders(session.user.id, guestKey)]);
+  await Promise.all([mergeGuestCart(session.user.id, guestKey), claimGuestConfigurations(session.user.id, guestKey), claimGuestOrders(session.user.id, guestKey), claimGuestConversations(session.user.id, guestKey)]);
 }
 
 export async function duplicateProjectAction(formData: FormData) {
@@ -42,7 +43,8 @@ export async function exportDataAction() {
     prisma.configuration.findMany({ where: { ownerUserId: uid }, select: { id: true, title: true, input: true, createdAt: true } }),
     prisma.consent.findMany({ where: { userId: uid } }),
   ]);
-  const json = JSON.stringify({ exportedAt: new Date().toISOString(), user, addresses, orders, quotes, configurations, consents }, null, 2);
+  const conversations = await exportConversations(uid);
+  const json = JSON.stringify({ exportedAt: new Date().toISOString(), user, addresses, orders, quotes, configurations, consents, conversations }, null, 2);
   await enqueueEmail({ to: session.user.email, subject: "Export de vos données personnelles", template: "account-export", payload: { json } });
   await audit({ actorUserId: uid, action: "account.export", entity: "user", entityId: uid });
   redirect("/compte/donnees?export=1");
@@ -64,6 +66,7 @@ export async function deleteAccountAction(formData: FormData) {
     await tx.cart.deleteMany({ where: { userId: uid } });
     await tx.address.deleteMany({ where: { userId: uid } });
     await tx.consent.deleteMany({ where: { userId: uid } });
+    await tx.conversation.deleteMany({ where: { userId: uid } });
     await tx.user.delete({ where: { id: uid } });
   });
   await audit({ actorUserId: null, actorEmail: anon, action: "account.delete", entity: "user", entityId: uid });

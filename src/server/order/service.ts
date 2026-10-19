@@ -6,6 +6,8 @@ import { businessNumber } from "@/server/ids";
 import { enqueueEmail } from "@/server/mail/outbox";
 import { consumeReservations, expireReservations, releaseReservations, reserveStock, OutOfStockError } from "@/server/stock/service";
 import { logger } from "@/lib/logger";
+import { loadCatalog } from "@/server/catalog/load";
+import { estimateCartDelivery } from "@/server/stock/delivery";
 
 export const ORDER_TTL_MINUTES = 30;
 
@@ -44,6 +46,9 @@ export async function createOrderFromCart(opts: { owner: Owner; email: string; s
   const evaluation = await evaluateCart(cart);
   if (!evaluation.purchasable) throw new CartError("Une ligne du panier n'est plus valide : vérifiez votre panier.", evaluation.lines.flatMap((l) => l.result.issues.filter((i) => i.severity !== "info")));
   if (evaluation.shippingStatus !== "ok" || evaluation.shippingCents === null) throw new OrderError("La livraison vers cette adresse nécessite un devis.", "shipping_quote");
+  // Revalidation disponibilité et délai au moment du checkout (stock relu en base)
+  const leadEstimate = await estimateCartDelivery(evaluation, await loadCatalog());
+  if (leadEstimate.status === "blocked") throw new OrderError(`Disponibilité modifiée : ${leadEstimate.blocked.map((b) => `${b.label} (${b.reason})`).join(" ; ")}. Votre panier est conservé.`, "unavailable");
 
   const existing = await prisma.order.findFirst({ where: { cartId: cart.id, status: "PENDING_PAYMENT", expiresAt: { gt: new Date() }, totalCents: evaluation.totalCents }, include: { lines: true, payments: true } });
   if (existing) return existing;
@@ -73,7 +78,7 @@ export async function createOrderFromCart(opts: { owner: Owner; email: string; s
           totalCents: evaluation.totalCents,
           shippingAddress: opts.shippingAddress as never,
           billingAddress: billing as never,
-          delivery: { ...delivery, shippingLabel: evaluation.shippingLabel } as never,
+          delivery: { ...delivery, shippingLabel: evaluation.shippingLabel, estimate: { status: leadEstimate.status, policy: leadEstimate.policy, explanation: leadEstimate.explanation, shipments: leadEstimate.shipments, unknown: leadEstimate.unknown, computedAt: new Date().toISOString() } } as never,
           isDemo,
           containsDemoData: evaluation.containsDemoData,
           customerNotes: opts.customerNotes?.slice(0, 2000) ?? null,

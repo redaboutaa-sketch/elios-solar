@@ -4,7 +4,7 @@ import { assertRole } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/server/audit";
 import { invalidateCatalogCache } from "@/server/catalog/load";
-import { actorOf, back, fields, firstError, zBool, zOpt, zReq } from "@/server/admin/form";
+import { actorOf, back, fields, firstError, zBool, zOpt, zReq, zText } from "@/server/admin/form";
 
 const PATH = "/admin/reglages";
 const schema = z.object({
@@ -26,8 +26,11 @@ const schema = z.object({
   domain: zOpt(200).refine((v) => v === null || /^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(v), "Domaine invalide (ex. elios-solar.fr, sans https://)"),
   taxRate: z.preprocess((v) => String(v ?? "").replace(",", ".").trim(), z.string().regex(/^\d{1,2}(\.\d{1,2})?$/, "Taux de TVA invalide")).transform((v) => Math.round(Number(v) * 100)),
   indexable: zBool,
+  shipmentPolicy: z.enum(["GROUPED", "SEPARATE"]).default("GROUPED"),
   analyticsEnabled: zBool,
   analyticsScriptUrl: zOpt(500).refine((v) => v === null || /^https:\/\/[^\s"'<>]+$/.test(v), "URL https:// attendue"),
+  chatEnabled: zBool,
+  chatOfflineMessage: zText(500),
 });
 
 export async function updateSettingsAction(formData: FormData) {

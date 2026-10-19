@@ -7,7 +7,7 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import {
-  CLOSURE_COMPAT, DIMENSIONS, FAMILIES, FAMILY_CONTENT, FINISHES, INSTALLATION_RATES, OPTION_COMPAT, PROMOTIONS, SHIPPING_RULES, buildVariants,
+  CLOSURE_COMPAT, DEMO_PRICE_GRID, DIMENSIONS, FAMILIES, FAMILY_CONTENT, FINISHES, INSTALLATION_RATES, OPTION_COMPAT, PROMOTIONS, SHIPPING_RULES, buildVariants,
 } from "../src/server/catalog/demo-data";
 import { CONTENT_PAGES } from "../src/server/content/default-pages";
 
@@ -37,6 +37,7 @@ export async function runSeed(prisma: PrismaClient) {
       lightingIncluded: f.lightingIncluded ?? null,
       accessoryRails: f.accessoryRails ?? null,
       dividerThresholdMm: f.dividerThresholdMm ?? null,
+      includedCableMm: f.includedCableMm ?? null,
       mountings: (f.mountings ?? []).map((m) => (m === "wall" ? "WALL" : "FREESTANDING")) as never,
       specs: f.specs ?? [],
       faq: content.faq,
@@ -61,10 +62,15 @@ export async function runSeed(prisma: PrismaClient) {
       familyId, label: v.label, priceCents: v.priceCents, compareAtCents: v.compareAtCents ?? null, taxRateBps: v.taxRateBps, purchasable: v.purchasable,
       dataStatus: up(v.dataStatus) as never, stockMode: (v.stockMode === "stock" ? "STOCK" : "MADE_TO_ORDER") as never, stockQty: v.stockQty ?? null,
       leadTimeDays: v.leadTimeDays ?? null, weightGrams: v.weightGrams ?? null, attributes: v.attributes as never,
+      availability: up(v.availability ?? "to_confirm") as never, leadMinDays: v.leadMinDays ?? null, leadMaxDays: v.leadMaxDays ?? null,
+      leadUnit: up(v.leadUnit ?? "business_days") as never, leadSource: up(v.leadSource ?? "unknown") as never, leadUpdatedAt: new Date("2026-10-19T00:00:00Z"),
+      supplierDays: v.leadComponents?.supplier ?? null, preparationDays: v.leadComponents?.preparation ?? null, productionDays: v.leadComponents?.production ?? null, transportDays: v.leadComponents?.transport ?? null,
+      preorderAllowed: v.preorderAllowed ?? false, partialShipAllowed: v.partialShipAllowed ?? true,
+      stockSource: v.stockMode === "stock" ? "démonstration (aucune source connectée)" : "", stockUpdatedAt: v.stockMode === "stock" ? new Date("2026-10-19T00:00:00Z") : null,
     };
     if (existing) {
       // Un prix modifié par l'administration (SUPPLIER_VERIFIED) n'est jamais écrasé par le seed.
-      if (existing.dataStatus === "DEMO") await prisma.variant.update({ where: { sku: v.sku }, data });
+      if (existing.dataStatus === "DEMO" || existing.dataStatus === "UNKNOWN") await prisma.variant.update({ where: { sku: v.sku }, data });
     } else {
       await prisma.variant.create({ data: { sku: v.sku, ...data } });
       created += 1;
@@ -105,6 +111,23 @@ export async function runSeed(prisma: PrismaClient) {
   if ((await prisma.showroom.count()) === 0) {
     await prisma.showroom.create({ data: { name: "Showroom (à renseigner)", line1: "Adresse à renseigner", postalCode: "00000", city: "Ville", hours: "Horaires à renseigner", published: false, isDemo: true } });
   }
+  // Grille sur mesure FICTIVE : créée une seule fois, jamais écrasée (une grille importée prend une autre version)
+  const g = DEMO_PRICE_GRID;
+  const existingGrid = await prisma.priceGrid.findUnique({ where: { familySlug_version: { familySlug: g.familySlug, version: g.version } } });
+  if (!existingGrid) {
+    await prisma.priceGrid.create({
+      data: {
+        familySlug: g.familySlug, name: g.name, version: g.version, status: "PUBLISHED", mode: "TABLE", validFrom: g.validFrom ? new Date(g.validFrom) : null, validTo: null,
+        dataStatus: "DEMO", isDemo: true, source: "Grille fictive ELIOS SOLAR pour tester le moteur — aucune donnée commerciale",
+        widthMinMm: g.widthMm.min, widthMaxMm: g.widthMm.max, widthStepMm: g.widthMm.step, lengthMinMm: g.lengthMm.min, lengthMaxMm: g.lengthMm.max, lengthStepMm: g.lengthMm.step,
+        heightMinMm: g.heightMm.min, heightMaxMm: g.heightMm.max, heightStepMm: g.heightMm.step, mountings: g.mountings, finishCodes: g.finishCodes,
+        notes: "Zone 3,51–4 × 5,01–6 m adossée volontairement sans tarif (démonstration du parcours devis).",
+        cells: { create: g.cells.map((c) => ({ ...c })) },
+        surcharges: { create: g.surcharges.map((x, i) => ({ code: x.code, label: x.label, kind: x.kind, match: x.match, thresholdMm: x.thresholdMm ?? null, perStepMm: x.perStepMm ?? null, perStepCents: x.perStepCents ?? null, priceCents: x.priceCents, percentBps: x.percentBps, sortOrder: i })) },
+      },
+    });
+  }
+
   const counts = { families: await prisma.productFamily.count(), variants: await prisma.variant.count(), closureRules: await prisma.closureCompatRule.count(), optionRules: await prisma.optionCompatRule.count() };
   console.log(`Seed terminé : ${JSON.stringify(counts)} (variantes créées : ${created})`);
 }

@@ -1,5 +1,9 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { formatEur } from "@/domain/money";
+import { addToCartAction } from "@/server/actions/configurator";
+import { DemoBadge } from "@/components/ui/demo-badge";
 import { evaluate } from "@/domain/engine";
 import type { CatalogSnapshot, PergolaCustomInput, SideKey } from "@/domain/types";
 import { PlanPreview } from "./plan-preview";
@@ -13,6 +17,11 @@ export function CustomConfigurator({ catalog }: { catalog: CatalogSnapshot }) {
   const c = catalog.custom;
   const [input, setInput] = useState<PergolaCustomInput>({ kind: "pergola_custom", widthMm: 3500, lengthMm: 4500, heightMm: 2500, mounting: "wall", finishCode: "ANTHRACITE", sides: {}, options: [], installation: "self", delivery: { countryCode: "FR" } });
   const result = useMemo(() => evaluate(catalog, input), [catalog, input]);
+  const router = useRouter();
+  const [busy, start] = useTransition();
+  const [err, setErr] = useState<string | null>(null);
+  const priced = result.lines.some((l) => l.kind === "base");
+  const estimate = priced && !result.purchasable;
   const fin = catalog.finishes.find((f) => f.code === input.finishCode);
   const closures = catalog.families.filter((f) => f.kind === "side_closure");
   const num = (k: "widthMm" | "lengthMm" | "heightMm") => (e: React.ChangeEvent<HTMLInputElement>) => setInput((i) => ({ ...i, [k]: Number(e.target.value) || 0 }));
@@ -42,10 +51,30 @@ export function CustomConfigurator({ catalog }: { catalog: CatalogSnapshot }) {
             ))}
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {catalog.families.filter((f) => f.kind === "option" && f.slug !== "anemometre").map((f) => <label key={f.slug} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={input.options.some((o) => o.familySlug === f.slug)} onChange={(e) => setInput((i) => ({ ...i, options: e.target.checked ? [...i.options, { familySlug: f.slug, qty: 1 }] : i.options.filter((o) => o.familySlug !== f.slug) }))} /> {f.name}</label>)}
+            {catalog.families.filter((f) => f.kind === "option" && f.slug !== "anemometre" && f.slug !== "cable-alimentation").map((f) => <label key={f.slug} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={input.options.some((o) => o.familySlug === f.slug)} onChange={(e) => setInput((i) => ({ ...i, options: e.target.checked ? [...i.options, { familySlug: f.slug, qty: 1 }] : i.options.filter((o) => o.familySlug !== f.slug) }))} /> {f.name}</label>)}
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={input.installation === "professional"} onChange={(e) => setInput((i) => ({ ...i, installation: e.target.checked ? "professional" : "self" }))} /> Montage professionnel souhaité</label>
           </div>
           <div className="mt-4"><label className="label" htmlFor="notes">Précisions (terrain, contraintes, accès)</label><textarea id="notes" rows={3} className="input" value={input.notes ?? ""} onChange={(e) => setInput((i) => ({ ...i, notes: e.target.value }))} /></div>
+        </section>
+        <section className="card p-5" data-testid="custom-price" aria-live="polite">
+          {priced ? (
+            <>
+              <p className="text-sm text-stone-700">{estimate ? "Estimation indicative (non contractuelle)" : "Prix calculé depuis la grille fournisseur"}</p>
+              <p className="text-3xl font-semibold">{estimate ? "≈ " : ""}{formatEur(result.totals.totalGrossCents)} <span className="text-sm font-normal text-stone-700">TTC{result.totals.shippingGrossCents === null ? ", hors livraison" : ""}</span></p>
+              {result.containsDemoData && <DemoBadge label="grille fictive de démonstration" className="mt-1" />}
+              <table className="mt-3 w-full text-sm"><tbody>{result.lines.map((l) => <tr key={l.code} className="border-b border-sand-200"><td className="py-1.5">{l.label}{l.qty > 1 && ` × ${l.qty}`}</td><td className="py-1.5 text-right whitespace-nowrap">{formatEur(l.totalGrossCents)}</td></tr>)}</tbody></table>
+              {estimate && <p className="mt-2 text-xs text-stone-700">Cette estimation ne devient jamais automatiquement un prix ferme : notre équipe confirme le prix par devis après étude.</p>}
+            </>
+          ) : (
+            <p className="text-sm">Pas de prix calculable pour cette combinaison : le projet complet (cotes, fermetures, options, précisions) est conservé dans votre demande de devis.</p>
+          )}
+          {result.purchasable && (
+            <div className="mt-4 space-y-2">
+              <div><label className="label" htmlFor="cp-sm">Code postal de livraison</label><input id="cp-sm" className="input max-w-xs" inputMode="numeric" value={input.delivery.postalCode ?? ""} onChange={(e) => setInput((i) => ({ ...i, delivery: { countryCode: "FR", postalCode: e.target.value.replace(/\D/g, "").slice(0, 5) } }))} /></div>
+              <button type="button" className="btn-accent" disabled={busy} onClick={() => start(async () => { const r = await addToCartAction(input, null, null); if (r.ok) router.push("/panier"); else setErr(r.error); })}>Ajouter au panier</button>
+              {err && <p className="text-sm text-danger">{err}</p>}
+            </div>
+          )}
         </section>
         <IssueList issues={result.issues} />
         <section className="card p-5">

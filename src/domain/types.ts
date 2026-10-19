@@ -17,6 +17,9 @@ export type FamilyKind =
   | "service";
 
 export type LightingIncluded = "none" | "gutter_led" | "blade_led";
+/** Disponibilité commerciale d'une référence (saisie admin / import fournisseur). */
+export type Availability = "available" | "on_order" | "out_of_stock" | "to_confirm";
+export type LeadUnit = "business_days" | "calendar_days" | "weeks";
 
 export interface Finish {
   code: string; // ex. ANTHRACITE, WHITE, ANTHRACITE_WHITE_BLADES, BLACK
@@ -53,6 +56,8 @@ export interface Family {
   mountings?: Mounting[];
   /** Caractéristiques affichées (validées = statut) */
   specs?: Array<{ label: string; value: string; status: DataStatus }>;
+  /** store banne : longueur du câble d'alimentation fourni (mm) */
+  includedCableMm?: number;
   dataStatus: DataStatus;
 }
 
@@ -68,8 +73,21 @@ export interface Variant {
   dataStatus: DataStatus;
   stockMode: "stock" | "made_to_order";
   stockQty?: number | null;
+  /** délai indicatif historique (jours) ; remplacé par leadMinDays/leadMaxDays quand renseignés */
   leadTimeDays?: number | null;
   weightGrams?: number | null;
+  /* Disponibilité et délais par référence */
+  availability?: Availability;
+  leadMinDays?: number | null;
+  leadMaxDays?: number | null;
+  leadUnit?: LeadUnit;
+  /** origine de l'information de délai */
+  leadSource?: DataStatus;
+  leadUpdatedAt?: string | null;
+  /** décomposition du délai (jours, même unité que leadUnit) */
+  leadComponents?: { supplier?: number | null; preparation?: number | null; production?: number | null; transport?: number | null };
+  preorderAllowed?: boolean;
+  partialShipAllowed?: boolean;
   attributes: VariantAttributes;
 }
 
@@ -87,6 +105,20 @@ export type VariantAttributes =
       colorCode: string; // ANTHRACITE | WHITE | BLACK
       option?: string; // ex. sliding_frameless | sliding_framed | fixed | zip
       mounting?: Mounting; // persienne : kit différent selon implantation
+      /** panneau d'un seul tenant ou assemblage de modules */
+      assembly?: "monobloc" | "modular";
+      /** nombre de modules (assemblage) */
+      modules?: number;
+      /** longueur d'un module (mm) */
+      moduleLengthMm?: number;
+      /** cote utile couverte entre poteaux (mm) : ne pas déduire de la seule largeur nominale */
+      usableWidthMm?: number;
+      /** poteaux intermédiaires nécessaires à l'assemblage */
+      intermediatePosts?: number;
+      /** kit de fixation (libellé fournisseur) */
+      fixingKit?: string;
+      /** validation fournisseur de l'assemblage */
+      validation?: "confirmed" | "to_confirm";
     }
   | {
       kind: "option";
@@ -95,6 +127,11 @@ export type VariantAttributes =
       mounting?: Mounting;
       colorCode?: string;
       variantOption?: string; // ex. warm_white | rgb | 1500w | 2000w | medium | large
+      /** câbles : longueur, rôle (inclus ou rallonge), équipement compatible, prérequis */
+      cableLengthMm?: number;
+      cableRole?: "included" | "extension";
+      compatibleWith?: string[];
+      prerequisites?: string[];
     }
   | {
       kind: "awning";
@@ -179,7 +216,62 @@ export interface CatalogSnapshot {
     lengthMm: { min: number; max: number; step: number };
     heightMm: { min: number; max: number; step: number };
     dataStatus: DataStatus;
+    /** grilles tarifaires publiées (une par famille sur mesure) */
+    grids?: PriceGridSnapshot[];
   };
+  /** politique d'expédition multi-références */
+  shipmentPolicy?: "GROUPED" | "SEPARATE";
+}
+
+/* ------------------------------------------------------------------ */
+/* Grilles tarifaires sur mesure                                        */
+/* ------------------------------------------------------------------ */
+
+export type GridStatus = "draft" | "testing" | "published" | "archived";
+
+export interface PriceGridCell {
+  widthMinMm: number;
+  widthMaxMm: number;
+  lengthMinMm: number;
+  lengthMaxMm: number;
+  mounting: Mounting | "*";
+  finishCode: string | "*";
+  priceCents: Cents;
+}
+
+export type SurchargeKind = "finish" | "mounting" | "height_above" | "side_closure" | "option" | "percent";
+
+export interface PriceGridSurcharge {
+  code: string;
+  label: string;
+  kind: SurchargeKind;
+  /** valeur à apparier : code finition, implantation, slug de fermeture ou d'option, "*" */
+  match: string;
+  thresholdMm?: number | null;
+  perStepMm?: number | null;
+  perStepCents?: Cents | null;
+  priceCents: Cents;
+  percentBps: number;
+}
+
+export interface PriceGridSnapshot {
+  id: string;
+  familySlug: string;
+  name: string;
+  version: number;
+  status: GridStatus;
+  mode: "table" | "bands";
+  validFrom?: string | null;
+  validTo?: string | null;
+  dataStatus: DataStatus;
+  isDemo: boolean;
+  widthMm: { min: number; max: number; step: number };
+  lengthMm: { min: number; max: number; step: number };
+  heightMm: { min: number; max: number; step: number };
+  mountings: Mounting[];
+  finishCodes: string[];
+  cells: PriceGridCell[];
+  surcharges: PriceGridSurcharge[];
 }
 
 /* ------------------------------------------------------------------ */

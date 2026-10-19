@@ -57,7 +57,7 @@ export function parseCsv(input: string): string[][] {
 }
 
 /** Lignes brutes (objets) depuis un fichier CSV ou JSON ; `line` = numéro de ligne d'origine. */
-export function readRawRows(filename: string, text: string): Array<{ line: number; data: Record<string, unknown> }> {
+export function readRawRows(filename: string, text: string, required?: readonly string[]): Array<{ line: number; data: Record<string, unknown> }> {
   const trimmed = text.replace(/^﻿/, "").trim();
   if (/\.json$/i.test(filename) || trimmed.startsWith("[")) {
     const parsed: unknown = JSON.parse(trimmed);
@@ -68,7 +68,7 @@ export function readRawRows(filename: string, text: string): Array<{ line: numbe
   const rows = parseCsv(text);
   const header = rows[0]?.map((h) => h.trim());
   if (!header) throw new Error("Fichier vide");
-  const missing = IMPORT_COLUMNS.filter((c) => !header.includes(c) && c !== "compareAtCents" && c !== "stockQty" && c !== "leadTimeDays");
+  const missing = required ? required.filter((c) => !header.includes(c)) : IMPORT_COLUMNS.filter((c) => !header.includes(c) && c !== "compareAtCents" && c !== "stockQty" && c !== "leadTimeDays");
   if (missing.length) throw new Error(`Colonnes manquantes : ${missing.join(", ")}`);
   return rows.slice(1).map((cells, i) => ({ line: i + 2, data: Object.fromEntries(header.map((h, j) => [h, cells[j] ?? ""])) }));
 }

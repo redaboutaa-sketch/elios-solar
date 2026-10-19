@@ -5,6 +5,7 @@
  */
 import { allSegments, layoutForFamily, segmentLabel } from "./layout";
 import { applyBps, taxIncludedIn, type Cents } from "./money";
+import { activeGridFor, priceFromGrid } from "./pricing-grid";
 import type {
   AccessoryStandaloneInput,
   AwningInput,
@@ -28,7 +29,7 @@ import type {
   Variant,
 } from "./types";
 
-export const ENGINE_VERSION = "1.0.0";
+export const ENGINE_VERSION = "1.1.0";
 
 /* ------------------------------------------------------------------ */
 /* Utilitaires catalogue                                               */
@@ -110,6 +111,18 @@ class Builder {
   get blocked(): boolean {
     return this.issues.some((i) => i.severity === "blocking" || i.severity === "review");
   }
+}
+
+/** Référence en rupture sans précommande : achat bloqué, devis proposé. Jamais d'estimation inventée. */
+function checkAvailability(b: Builder, v: Variant, label: string, path?: string) {
+  if (v.availability === "out_of_stock" && !v.preorderAllowed) {
+    b.issue({ code: "variant_out_of_stock", severity: "blocking", message: `${label} : référence en rupture, sans précommande possible. Demandez un devis ou choisissez une autre référence.`, path, quoteSuggested: true });
+    return false;
+  }
+  if (v.availability === "to_confirm") {
+    b.issue({ code: "availability_to_confirm", severity: "info", message: `${label} : disponibilité et délai à confirmer par le fournisseur.`, path });
+  }
+  return true;
 }
 
 function applyPromotions(b: Builder, code: string | undefined, now: Date) {
@@ -269,6 +282,7 @@ function evaluatePergolaStandard(catalog: CatalogSnapshot, input: PergolaStandar
   if (!base.purchasable) {
     b.issue({ code: "variant_not_purchasable", severity: "review", message: "Référence en attente de validation fournisseur : disponible sur devis.", quoteSuggested: true, path: "familySlug" });
   }
+  checkAvailability(b, base, `${family.name} ${dim.label}`, "dimensionCode");
   b.line({
     kind: "base",
     code: `base:${family.slug}:${base.sku}`,
@@ -337,9 +351,22 @@ function evaluatePergolaStandard(catalog: CatalogSnapshot, input: PergolaStandar
       });
       continue;
     }
-    if (!variant.purchasable) {
+    const ca = variant.attributes.kind === "side_closure" ? variant.attributes : undefined;
+    if (ca?.assembly === "modular") {
+      const detail = `assemblage de ${ca.modules ?? "plusieurs"} modules${ca.moduleLengthMm ? ` de ${ca.moduleLengthMm / 1000} m` : ""}${ca.intermediatePosts ? `, ${ca.intermediatePosts} poteau${ca.intermediatePosts > 1 ? "x" : ""} intermédiaire${ca.intermediatePosts > 1 ? "s" : ""}` : ""}${ca.usableWidthMm ? `, cote utile ${ca.usableWidthMm} mm` : ""}`;
+      if (ca.validation !== "confirmed" || !variant.purchasable) {
+        b.issue({ code: "closure_assembly_to_confirm", severity: "review", message: `${label} : ${detail} — assemblage non confirmé par le fournisseur, validé sur devis.`, path: `segments.${segmentId}`, quoteSuggested: true });
+      } else {
+        b.issue({ code: "closure_assembly_info", severity: "info", message: `${label} : ${detail}.`, path: `segments.${segmentId}` });
+      }
+    } else if (!variant.purchasable) {
       b.issue({ code: "closure_not_purchasable", severity: "review", message: `${label} : référence disponible sur devis uniquement.`, path: `segments.${segmentId}`, quoteSuggested: true });
     }
+    if (ca?.usableWidthMm && ca.usableWidthMm > seg.lengthMm) {
+      b.issue({ code: "closure_usable_width", severity: "blocking", message: `${label} : cote utile ${ca.usableWidthMm} mm supérieure à l'ouverture.`, path: `segments.${segmentId}` });
+      continue;
+    }
+    if (!checkAvailability(b, variant, label, `segments.${segmentId}`)) continue;
     closureCount += 1;
     b.line({
       kind: "closure",
@@ -411,6 +438,7 @@ function evaluatePergolaStandard(catalog: CatalogSnapshot, input: PergolaStandar
     if (!variant.purchasable) {
       b.issue({ code: "option_not_purchasable", severity: "review", message: `${optFamily.name} : référence disponible sur devis uniquement.`, path, quoteSuggested: true });
     }
+    if (!checkAvailability(b, variant, optFamily.name, path)) return;
     b.line({ kind: "option", code: `option:${optFamily.slug}:${variant.sku}`, label: variant.label, sku: variant.sku, qty: opt.qty, unitGrossCents: variant.priceCents, taxRateBps: variant.taxRateBps, path, dataStatus: worst(variant.dataStatus, rule?.dataStatus ?? "unknown") });
   });
 
@@ -461,9 +489,10 @@ function evaluatePergolaStandard(catalog: CatalogSnapshot, input: PergolaStandar
 /* Sur-mesure                                                          */
 /* ------------------------------------------------------------------ */
 
-function evaluatePergolaCustom(catalog: CatalogSnapshot, input: PergolaCustomInput): EvaluationResult {
+function evaluatePergolaCustom(catalog: CatalogSnapshot, input: PergolaCustomInput, now: Date): EvaluationResult {
   const b = new Builder(catalog);
   const c = catalog.custom;
+  const family = findFamily(catalog, "pergola-sur-mesure") ?? catalog.families.find((f) => f.kind === "pergola_custom");
   const check = (label: string, v: number, r: { min: number; max: number; step: number }, path: string) => {
     if (!Number.isInteger(v) || v < r.min || v > r.max) {
       b.issue({ code: "custom_out_of_bounds", severity: "blocking", message: `${label} : entre ${r.min} et ${r.max} mm.`, path });
@@ -478,17 +507,55 @@ function evaluatePergolaCustom(catalog: CatalogSnapshot, input: PergolaCustomInp
   if (!fin) b.issue({ code: "finish_unavailable", severity: "blocking", message: "Finition inconnue.", path: "finishCode" });
   const layout = b.issues.some((i) => i.severity === "blocking")
     ? undefined
-    : (() => { try { return layoutForFamily({ slug: "sur-mesure", name: "Sur mesure", kind: "pergola_custom", status: "quote_only", shortDescription: "", dataStatus: c.dataStatus, dividerThresholdMm: 6000 }, input.widthMm, input.lengthMm, input.mounting); } catch { return undefined; } })();
-  b.issue({
-    code: "custom_quote_only",
-    severity: "review",
-    message: c.quoteOnly
-      ? "Pergola sur mesure : le prix est établi sur devis (grille fournisseur non validée). Aucun prix au m² n'est affiché."
-      : "Pergola sur mesure : le prix définitif est confirmé par devis.",
-    quoteSuggested: true,
-  });
+    : (() => { try { return layoutForFamily({ slug: family?.slug ?? "pergola-sur-mesure", name: family?.name ?? "Sur mesure", kind: "pergola_custom", status: "quote_only", shortDescription: "", dataStatus: c.dataStatus, dividerThresholdMm: family?.dividerThresholdMm ?? 6000 }, input.widthMm, input.lengthMm, input.mounting); } catch { return undefined; } })();
   if (input.widthMm * input.lengthMm > 20_000_000) {
     b.issue({ code: "permit_notice", severity: "info", message: "Au-delà de 20 m² d'emprise, une autorisation d'urbanisme peut être nécessaire : vérifiez auprès de votre mairie." });
+  }
+  const blockingDims = b.issues.some((i) => i.severity === "blocking");
+
+  // Parcours 1 : grille tarifaire publiée et active → configuration chiffrée
+  const grid = activeGridFor(c.grids, family?.slug ?? "pergola-sur-mesure", now);
+  const closureSlugs = Object.values(input.sides).filter((v): v is { closureFamilySlug: string } => !!v).map((v) => v.closureFamilySlug);
+  const priced = grid && !blockingDims && fin ? priceFromGrid(grid, { widthMm: input.widthMm, lengthMm: input.lengthMm, heightMm: input.heightMm, mounting: input.mounting, finishCode: input.finishCode, closureSlugs, options: input.options.map((o) => ({ familySlug: o.familySlug, qty: o.qty })), now }) : null;
+  if (priced && priced.status === "priced") {
+    const label = `${family?.name ?? "Pergola sur mesure"} ${input.widthMm / 1000} × ${input.lengthMm / 1000} m, h ${input.heightMm / 1000} m – ${fin!.label} – ${input.mounting === "wall" ? "adossée" : "autoportée"}`;
+    b.line({ kind: "base", code: `base:${family?.slug ?? "pergola-sur-mesure"}:grid:${grid!.id}`, label, qty: 1, unitGrossCents: priced.baseCents, taxRateBps: catalog.taxRateBps, dataStatus: grid!.dataStatus });
+    for (const l of priced.lines) {
+      const kind = l.code.startsWith("closure") ? "closure" : "option";
+      b.line({ kind, code: `${kind}:${family?.slug ?? "pergola-sur-mesure"}:${l.code}`, label: l.label, qty: l.qty, unitGrossCents: l.cents, taxRateBps: catalog.taxRateBps, dataStatus: grid!.dataStatus });
+    }
+    for (const u of priced.unpriced) {
+      const slug = u.split(":")[1] ?? u;
+      b.issue({ code: "custom_item_unpriced", severity: "review", message: `${findFamily(catalog, slug)?.name ?? slug} : non tarifé dans la grille sur mesure — chiffré sur devis.`, quoteSuggested: true, path: u.startsWith("closure") ? "sides" : "options" });
+    }
+    const firm = grid!.dataStatus === "supplier_verified" && !grid!.isDemo && !c.quoteOnly;
+    if (firm) {
+      b.issue({ code: "custom_grid_price", severity: "info", message: `Prix calculé depuis la grille fournisseur « ${grid!.name} » v${grid!.version}.` });
+    } else {
+      b.issue({ code: "custom_estimate", severity: "review", message: grid!.isDemo || grid!.dataStatus !== "supplier_verified" ? `Estimation à partir d'une grille de démonstration (« ${grid!.name } » v${grid!.version}) : le prix ferme est établi sur devis.` : "Pergola sur mesure : le prix définitif est confirmé par devis.", quoteSuggested: true });
+    }
+    if (input.installation === "professional") {
+      const rate = catalog.installationRates.find((r) => r.familySlug === (family?.slug ?? "pergola-sur-mesure") && !r.dimensionCode);
+      if (rate) b.line({ kind: "installation", code: `installation:${family?.slug ?? "pergola-sur-mesure"}`, label: "Montage professionnel – pergola sur mesure", qty: 1, unitGrossCents: rate.priceCents, taxRateBps: catalog.taxRateBps, dataStatus: rate.dataStatus });
+      else b.issue({ code: "installation_quote", severity: "review", message: "Montage professionnel : chiffré sur devis pour le sur mesure.", quoteSuggested: true, path: "installation" });
+    }
+    b.issue({ code: "anchoring_notice", severity: "info", message: "Fixations et fondations non incluses ; la tenue structurelle dépend du support et doit être vérifiée sur site." });
+    const ship = firm ? shipping(b, input.delivery) : null;
+    return finish(b, input, layout, ship, !firm);
+  }
+
+  // Parcours 2 : pas de grille, combinaison hors grille ou validation technique → devis, projet conservé
+  if (priced) {
+    b.issue({ code: `custom_grid_${priced.status}`, severity: "review", message: `${priced.message} Le projet complet est transmis pour devis.`, quoteSuggested: true });
+  } else {
+    b.issue({
+      code: "custom_quote_only",
+      severity: "review",
+      message: c.quoteOnly && !grid
+        ? "Pergola sur mesure : le prix est établi sur devis (aucune grille fournisseur validée). Aucun prix au m² n'est affiché."
+        : "Pergola sur mesure : le prix définitif est confirmé par devis.",
+      quoteSuggested: true,
+    });
   }
   return finish(b, input, layout, null, true);
 }
@@ -516,6 +583,10 @@ function evaluateAwning(catalog: CatalogSnapshot, input: AwningInput, now: Date)
   const bracketCount = input.widthMm >= 5000 ? 3 : 2;
   b.lines.push({ kind: "option", code: `included:${family.slug}:brackets`, label: `${bracketCount} supports de fixation ${input.bracketMount === "wall" ? "muraux" : "plafond"} (inclus)`, qty: bracketCount, unitGrossCents: 0, totalGrossCents: 0, taxRateBps: variant.taxRateBps, included: true, dataStatus: family.dataStatus });
   b.lines.push({ kind: "option", code: `included:${family.slug}:remote`, label: "Télécommande et éclairage LED intégré (inclus)", qty: 1, unitGrossCents: 0, totalGrossCents: 0, taxRateBps: variant.taxRateBps, included: true, dataStatus: family.dataStatus });
+  if (family.includedCableMm) {
+    b.lines.push({ kind: "option", code: `included:${family.slug}:cable`, label: `Câble d'alimentation ${family.includedCableMm / 1000} m (inclus)`, qty: 1, unitGrossCents: 0, totalGrossCents: 0, taxRateBps: variant.taxRateBps, included: true, dataStatus: family.dataStatus });
+  }
+  checkAvailability(b, variant, variant.label, "widthMm");
 
   input.options.forEach((opt, idx) => {
     const path = `options.${idx}`;
@@ -526,6 +597,13 @@ function evaluateAwning(catalog: CatalogSnapshot, input: AwningInput, now: Date)
     if (rule?.status === "forbidden") { b.issue({ code: "option_incompatible", severity: "blocking", message: `${optFamily.name} : ${rule.reason ?? "incompatible"}.`, path }); return; }
     const variant2 = variantsOf(catalog, optFamily.slug).find((v) => v.attributes.kind === "option" && (!opt.variantOption || v.attributes.variantOption === opt.variantOption) && (!v.attributes.colorCode || v.attributes.colorCode === input.cabinetColor));
     if (!variant2) { b.issue({ code: "option_variant_missing", severity: "blocking", message: `${optFamily.name} : référence indisponible pour ce coffre.`, path, quoteSuggested: true }); return; }
+    const oa = variant2.attributes.kind === "option" ? variant2.attributes : undefined;
+    if (oa?.cableRole === "extension") {
+      const prereq = (oa.prerequisites ?? []).join(", ");
+      b.issue({ code: "cable_extension_prerequisites", severity: oa.compatibleWith?.includes(family.slug) && rule?.status === "allowed" ? "info" : "review", message: `${variant2.label} : rallonge distincte du câble fourni${family.includedCableMm ? ` (${family.includedCableMm / 1000} m inclus)` : ""}${prereq ? ` — prérequis : ${prereq}` : ""}${rule?.status === "allowed" ? "." : " — compatibilité électrique non confirmée par le fournisseur : validée sur devis."}`, path, quoteSuggested: rule?.status !== "allowed" });
+    }
+    if (!variant2.purchasable) b.issue({ code: "option_not_purchasable", severity: "review", message: `${optFamily.name} : référence disponible sur devis uniquement.`, path, quoteSuggested: true });
+    if (!checkAvailability(b, variant2, optFamily.name, path)) return;
     b.line({ kind: "option", code: `option:${optFamily.slug}:${variant2.sku}`, label: variant2.label, sku: variant2.sku, qty: Math.max(1, opt.qty), unitGrossCents: variant2.priceCents, taxRateBps: variant2.taxRateBps, path, dataStatus: variant2.dataStatus });
   });
 
@@ -585,6 +663,9 @@ function evaluateAccessory(catalog: CatalogSnapshot, input: AccessoryStandaloneI
     if (a?.colorCode && fin && a.colorCode !== fin.structureColor) b.issue({ code: "option_color_mismatch", severity: "blocking", message: "Couleur différente de la structure.", path: "target.finishCode" });
   }
   if (!variant.purchasable) b.issue({ code: "variant_not_purchasable", severity: "review", message: "Référence disponible sur devis uniquement.", quoteSuggested: true });
+  const acc = variant.attributes.kind === "side_closure" ? variant.attributes : undefined;
+  if (acc?.assembly === "modular" && acc.validation !== "confirmed") b.issue({ code: "closure_assembly_to_confirm", severity: "review", message: `${variant.label} : assemblage de ${acc.modules ?? "plusieurs"} modules${acc.intermediatePosts ? ` avec ${acc.intermediatePosts} poteau(x) intermédiaire(s)` : ""} non confirmé par le fournisseur — validé sur devis.`, path: "sku", quoteSuggested: true });
+  if (!checkAvailability(b, variant, variant.label, "sku")) return finish(b, input, undefined, null);
   b.line({ kind: family.kind === "side_closure" ? "closure" : "option", code: `${family.kind === "side_closure" ? "closure" : "option"}:${family.slug}:${variant.sku}`, label: variant.label, sku: variant.sku, qty: Math.max(1, input.qty), unitGrossCents: variant.priceCents, taxRateBps: variant.taxRateBps, dataStatus: variant.dataStatus });
   applyPromotions(b, input.promotionCode, now);
   const ship = shipping(b, input.delivery);
@@ -600,7 +681,7 @@ export function evaluate(catalog: CatalogSnapshot, input: ConfigurationInput, no
     case "pergola_standard":
       return evaluatePergolaStandard(catalog, input, now);
     case "pergola_custom":
-      return evaluatePergolaCustom(catalog, input);
+      return evaluatePergolaCustom(catalog, input, now);
     case "awning":
       return evaluateAwning(catalog, input, now);
     case "accessory":

@@ -175,13 +175,15 @@ describe("pergola standard", () => {
 });
 
 describe("sur mesure", () => {
-  it("reste en devis, sans prix, avec contrôle des bornes", () => {
-    const ok = evaluate(catalog, { kind: "pergola_custom", widthMm: 3500, lengthMm: 4500, heightMm: 2500, mounting: "wall", finishCode: "WHITE", sides: {}, options: [], installation: "self", delivery: { countryCode: "FR" } });
+  it("reste en devis, sans prix, avec contrôle des bornes (aucune grille publiée)", () => {
+    const noGrid: CatalogSnapshot = { ...catalog, custom: { ...catalog.custom, grids: [] } };
+    const ok = evaluate(noGrid, { kind: "pergola_custom", widthMm: 3500, lengthMm: 4500, heightMm: 2500, mounting: "wall", finishCode: "WHITE", sides: {}, options: [], installation: "self", delivery: { countryCode: "FR" } });
     expect(ok.purchasable).toBe(false);
     expect(ok.quoteRecommended).toBe(true);
     expect(ok.totals.totalGrossCents).toBe(0);
     expect(ok.layout?.sides.find((s) => s.key === "back")?.isWall).toBe(true);
-    const ko = evaluate(catalog, { kind: "pergola_custom", widthMm: 4500, lengthMm: 4505, heightMm: 1000, mounting: "wall", finishCode: "WHITE", sides: {}, options: [], installation: "self", delivery: { countryCode: "FR" } });
+    expect(ok.issues.some((i) => i.code === "custom_quote_only")).toBe(true);
+    const ko = evaluate(noGrid, { kind: "pergola_custom", widthMm: 4500, lengthMm: 4505, heightMm: 1000, mounting: "wall", finishCode: "WHITE", sides: {}, options: [], installation: "self", delivery: { countryCode: "FR" } });
     expect(ko.issues.filter((i) => i.code === "custom_out_of_bounds")).toHaveLength(2);
     expect(ko.issues.some((i) => i.code === "custom_step")).toBe(true);
   });
@@ -192,7 +194,9 @@ describe("store banne", () => {
     const ok = evaluate(catalog, { kind: "awning", familySlug: "store-banne-ombra", widthMm: 4000, projectionMm: 3000, cabinetColor: "ANTHRACITE", fabricCode: "GREY", bracketMount: "ceiling", options: [{ familySlug: "anemometre", qty: 1 }], installation: "self", delivery: { countryCode: "FR", postalCode: "33000" } });
     expect(ok.purchasable).toBe(true);
     expect(ok.lines.find((l) => l.kind === "base")?.sku).toBe("ES-SB-4030-ANT-GREY");
-    expect(ok.lines.filter((l) => l.included)).toHaveLength(2);
+    // supports + télécommande/LED + câble d'alimentation fourni
+    expect(ok.lines.filter((l) => l.included)).toHaveLength(3);
+    expect(ok.lines.find((l) => l.code === "included:store-banne-ombra:cable")?.totalGrossCents).toBe(0);
     expect(ok.lines.find((l) => l.code.startsWith("option:anemometre"))?.sku).toBe("ES-AN-ANT");
     const ko = evaluate(catalog, { kind: "awning", familySlug: "store-banne-ombra", widthMm: 6000, projectionMm: 3500, cabinetColor: "ANTHRACITE", fabricCode: "GREY", bracketMount: "wall", options: [], installation: "self", delivery: { countryCode: "FR" } });
     expect(ko.purchasable).toBe(false);

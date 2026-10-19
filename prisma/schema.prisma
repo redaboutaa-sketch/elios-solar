@@ -201,6 +201,8 @@ model ProductFamily {
   lightingIncluded   String?
   accessoryRails     Int?
   dividerThresholdMm Int?
+  /** store banne : longueur du câble d'alimentation fourni (mm) */
+  includedCableMm    Int?
   mountings          Mounting[]
   specs              Json          @default("[]")
   faq                Json          @default("[]")

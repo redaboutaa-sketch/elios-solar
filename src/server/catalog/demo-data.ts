@@ -16,12 +16,29 @@ import type {
   InstallationRate,
   Mounting,
   OptionCompatRule,
+  PriceGridSnapshot,
   Promotion,
   ShippingRule,
   Variant,
 } from "@/domain/types";
 
-export const DEMO_CATALOG_VERSION = "demo-2026-10-19.1";
+/* ------------------------------------------------------------------ */
+/* Disponibilité et délais de DÉMONSTRATION (aucune source connectée)   */
+/* ------------------------------------------------------------------ */
+
+type LeadPreset = Pick<Variant, "availability" | "leadMinDays" | "leadMaxDays" | "leadUnit" | "leadSource" | "leadComponents" | "preorderAllowed" | "partialShipAllowed">;
+
+/** Jeu de démonstration : jours ouvrés, décomposés fournisseur / préparation / fabrication / transport. */
+export const LEAD_PRESETS: Record<"pergola" | "closure_made" | "closure_stock" | "option_stock" | "awning" | "to_confirm", LeadPreset> = {
+  pergola: { availability: "on_order", leadUnit: "business_days", leadSource: "demo", leadComponents: { supplier: 0, preparation: 2, production: 15, transport: 5 }, leadMinDays: 22, leadMaxDays: 30, preorderAllowed: false, partialShipAllowed: false },
+  closure_made: { availability: "on_order", leadUnit: "business_days", leadSource: "demo", leadComponents: { supplier: 10, preparation: 2, production: 10, transport: 5 }, leadMinDays: 27, leadMaxDays: 35, preorderAllowed: false, partialShipAllowed: true },
+  closure_stock: { availability: "available", leadUnit: "business_days", leadSource: "demo", leadComponents: { supplier: 0, preparation: 2, production: 0, transport: 4 }, leadMinDays: 6, leadMaxDays: 8, preorderAllowed: true, partialShipAllowed: true },
+  option_stock: { availability: "available", leadUnit: "business_days", leadSource: "demo", leadComponents: { supplier: 0, preparation: 1, production: 0, transport: 3 }, leadMinDays: 4, leadMaxDays: 6, preorderAllowed: true, partialShipAllowed: true },
+  awning: { availability: "on_order", leadUnit: "business_days", leadSource: "demo", leadComponents: { supplier: 0, preparation: 2, production: 10, transport: 4 }, leadMinDays: 16, leadMaxDays: 22, preorderAllowed: false, partialShipAllowed: true },
+  to_confirm: { availability: "to_confirm", leadUnit: "business_days", leadSource: "unknown", preorderAllowed: false, partialShipAllowed: true },
+};
+
+export const DEMO_CATALOG_VERSION = "demo-2026-10-19.2";
 
 /* ------------------------------------------------------------------ */
 /* Finitions & dimensions                                              */
@@ -98,6 +115,7 @@ export const FAMILY_CONTENT: Record<string, FamilyContent> = {
   "lampe-chauffante": { description: "Chauffage infrarouge à fixer sur la poutre, pour prolonger les soirées.", included: ["Lampe chauffante", "Support de fixation"], faq: [] },
   "lanterne-ambiance": { description: "Lanterne d'extérieur rechargeable, lumière chaude.", included: ["Lanterne", "Câble de charge"], faq: [] },
   "anemometre": { description: "Capteur de vent provoquant la rétraction automatique du store banne.", included: ["Capteur", "Pile"], faq: [] },
+  "cable-alimentation": { description: "Câble d'alimentation du moteur de store banne. Le câble fourni avec le store est inclus ; une rallonge est une référence distincte dont la compatibilité électrique doit être confirmée par le fournisseur.", included: [], faq: [{ q: "Le câble est-il inclus ?", a: "Oui, un câble est livré avec le store (longueur indiquée sur la fiche). La rallonge 6 m est une option distincte, à confirmer." }] },
 };
 
 export const FAMILIES: Family[] = [
@@ -193,9 +211,10 @@ export const FAMILIES: Family[] = [
     specs: [
       { label: "Largeurs", value: "2 à 6 m selon variantes", status: "demo" },
       { label: "Avancées", value: "1,5 à 3,5 m selon variantes", status: "demo" },
-      { label: "Alimentation", value: "230 V", status: "demo" },
+      { label: "Alimentation", value: "230 V, câble 3 m fourni (longueur à confirmer)", status: "demo" },
       { label: "Résistance au vent", value: "À confirmer (fiche fournisseur)", status: "unknown" },
     ],
+    includedCableMm: 3000,
     dataStatus: "demo",
   },
   { slug: "paroi-vitree", name: "Paroi vitrée", kind: "side_closure", status: "published", shortDescription: "Fixe ou coulissante, verre trempé.", specs: [{ label: "Hauteur", value: "À confirmer", status: "unknown" }], dataStatus: "demo" },
@@ -205,6 +224,7 @@ export const FAMILIES: Family[] = [
   { slug: "lampe-chauffante", name: "Lampe chauffante", kind: "option", status: "published", shortDescription: "Infrarouge 1 500 W ou 2 000 W.", specs: [], dataStatus: "demo" },
   { slug: "lanterne-ambiance", name: "Lanterne d'ambiance", kind: "option", status: "published", shortDescription: "Lumière chaude rechargeable.", specs: [], dataStatus: "demo" },
   { slug: "anemometre", name: "Anémomètre", kind: "option", status: "published", shortDescription: "Rétraction automatique du store banne par vent fort.", specs: [], dataStatus: "demo" },
+  { slug: "cable-alimentation", name: "Câble d'alimentation", kind: "option", status: "published", shortDescription: "Câble fourni avec le store ; rallonge 6 m à confirmer.", specs: [{ label: "Compatibilité électrique de la rallonge", value: "À confirmer (fiche fournisseur)", status: "unknown" }], dataStatus: "unknown" },
   { slug: "montage-professionnel", name: "Montage professionnel", kind: "service", status: "published", shortDescription: "Pose par un installateur partenaire (zones couvertes à confirmer).", specs: [], dataStatus: "demo" },
 ];
 
@@ -243,6 +263,7 @@ function pergolaVariants(): Variant[] {
             dataStatus: "demo",
             stockMode: "made_to_order",
             leadTimeDays: 21,
+            ...LEAD_PRESETS.pergola,
             weightGrams: Math.round(area * 16_000),
             attributes: { kind: "pergola_standard", finishCode: finish, dimensionCode: dim.code, mounting },
           });
@@ -270,19 +291,32 @@ function closureVariants(): Variant[] {
       familySlug: "paroi-vitree",
       label: `Paroi vitrée ${opt.label} ${len / 1000} m – ${COLOR_LABEL[color]}`,
       priceCents: round10(opt.fixed * 100 + opt.perMm * len * 100),
-      taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "made_to_order", leadTimeDays: 28,
-      attributes: { kind: "side_closure", sideLengthMm: len, colorCode: color, option: opt.code },
+      taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "made_to_order", leadTimeDays: 28, ...LEAD_PRESETS.closure_made,
+      attributes: { kind: "side_closure", sideLengthMm: len, colorCode: color, option: opt.code, assembly: "monobloc", usableWidthMm: len - 240, validation: "to_confirm" },
     });
   }
-  // Persienne : 2 couleurs, 4 longueurs, kit selon implantation
+  // Persienne : 2 couleurs, kit selon implantation. 3 et 4 m : panneau monobloc (démo).
+  // 5 et 6 m : assemblage de modules avec poteau intermédiaire, non confirmé par le fournisseur → devis.
   for (const len of CLOSURE_LENGTHS) for (const color of ["ANTHRACITE", "WHITE"]) for (const mounting of ALL_MOUNTINGS) {
+    const modular = len >= 5000;
+    const modules = modular ? 2 : 1;
     out.push({
       sku: `ES-PA-${len / 1000}M-${color.slice(0, 3)}-${mounting === "wall" ? "ADO" : "AUT"}`,
       familySlug: "persienne-aluminium",
-      label: `Persienne aluminium ${len / 1000} m – ${COLOR_LABEL[color]} – kit ${mounting === "wall" ? "adossée" : "autoportée"}`,
+      label: `Persienne aluminium ${len / 1000} m – ${COLOR_LABEL[color]} – kit ${mounting === "wall" ? "adossée" : "autoportée"}${modular ? ` (assemblage ${modules} modules)` : ""}`,
       priceCents: round10(350 * 100 + 0.3 * len * 100), // 3 m ≈ 1 250 €, 6 m ≈ 2 150 €
-      taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "made_to_order", leadTimeDays: 28,
-      attributes: { kind: "side_closure", sideLengthMm: len, colorCode: color, mounting },
+      taxRateBps: 2000, purchasable: !modular, dataStatus: modular ? "unknown" : "demo", stockMode: "made_to_order", leadTimeDays: 28,
+      ...(modular ? LEAD_PRESETS.to_confirm : LEAD_PRESETS.closure_made),
+      attributes: {
+        kind: "side_closure", sideLengthMm: len, colorCode: color, mounting,
+        assembly: modular ? "modular" : "monobloc",
+        modules,
+        moduleLengthMm: modular ? len / 2 : len,
+        usableWidthMm: len - 240 - (modular ? 120 : 0),
+        intermediatePosts: modular ? 1 : 0,
+        fixingKit: mounting === "wall" ? "kit adossée (fixation murale + poteau)" : "kit autoportée (2 poteaux)",
+        validation: "to_confirm",
+      },
     });
   }
   // Store vertical ZIP : 3 couleurs (dont noir), 4 longueurs
@@ -292,8 +326,8 @@ function closureVariants(): Variant[] {
       familySlug: "store-vertical-zip",
       label: `Store vertical ZIP ${len / 1000} m – ${COLOR_LABEL[color]}`,
       priceCents: round10(250 * 100 + 0.19 * len * 100), // 3 m ≈ 820 €, 6 m ≈ 1 390 €
-      taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "stock", stockQty: 12, leadTimeDays: 7,
-      attributes: { kind: "side_closure", sideLengthMm: len, colorCode: color, option: "zip" },
+      taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "stock", stockQty: 12, leadTimeDays: 7, ...LEAD_PRESETS.closure_stock,
+      attributes: { kind: "side_closure", sideLengthMm: len, colorCode: color, option: "zip", assembly: "monobloc", usableWidthMm: len - 240, validation: "to_confirm" },
     });
   }
   return out;
@@ -308,7 +342,7 @@ function optionVariants(): Variant[] {
       familySlug: "bandes-led",
       label: `Bandes LED ${color === "rgb" ? "RGB" : "blanc chaud"} – ${dim.label} ${mounting === "wall" ? "adossée" : "autoportée"}`,
       priceCents: round10(120 * 100 + perimeter * 20 * 100), // 3x4 (14 m) ≈ 400 €, 4x6 (20 m) ≈ 520 €
-      taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "stock", stockQty: 25, leadTimeDays: 5,
+      taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "stock", stockQty: 25, leadTimeDays: 5, ...LEAD_PRESETS.option_stock,
       attributes: { kind: "option", dimensionCode: dim.code, mounting, variantOption: color },
     });
   }
@@ -318,7 +352,7 @@ function optionVariants(): Variant[] {
       sku: `ES-CH-${watt.toUpperCase()}-${color.slice(0, 3)}`,
       familySlug: "lampe-chauffante",
       label: `Lampe chauffante ${watt.replace("w", " W")} – ${COLOR_LABEL[color]}`,
-      priceCents: price, taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "stock", stockQty: 30, leadTimeDays: 5,
+      priceCents: price, taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "stock", stockQty: 30, leadTimeDays: 5, ...LEAD_PRESETS.option_stock,
       attributes: { kind: "option", colorCode: color, variantOption: watt },
     });
   }
@@ -327,7 +361,7 @@ function optionVariants(): Variant[] {
       sku: `ES-LA-${size.toUpperCase()}-${color.slice(0, 3)}`,
       familySlug: "lanterne-ambiance",
       label: `Lanterne d'ambiance ${size === "medium" ? "moyenne" : "grande"} – ${COLOR_LABEL[color]}`,
-      priceCents: price, taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "stock", stockQty: 3, leadTimeDays: 5,
+      priceCents: price, taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "stock", stockQty: 3, leadTimeDays: 5, ...LEAD_PRESETS.option_stock,
       attributes: { kind: "option", colorCode: color, variantOption: size },
     });
   }
@@ -336,10 +370,19 @@ function optionVariants(): Variant[] {
       sku: `ES-AN-${color.slice(0, 3)}`,
       familySlug: "anemometre",
       label: `Anémomètre – ${COLOR_LABEL[color]}`,
-      priceCents: 89_00, taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "stock", stockQty: 40, leadTimeDays: 5,
+      priceCents: 89_00, taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "stock", stockQty: 40, leadTimeDays: 5, ...LEAD_PRESETS.option_stock,
       attributes: { kind: "option", colorCode: color },
     });
   }
+  // Câble d'alimentation : rallonge 6 m — référence, longueur et équipement compatible représentés ;
+  // supplément et compatibilité électrique NON confirmés (0 €, non achetable, devis).
+  out.push({
+    sku: "ES-CAB-6M",
+    familySlug: "cable-alimentation",
+    label: "Rallonge de câble d'alimentation 6 m (store banne)",
+    priceCents: 0, taxRateBps: 2000, purchasable: false, dataStatus: "unknown", stockMode: "made_to_order", leadTimeDays: null, ...LEAD_PRESETS.to_confirm,
+    attributes: { kind: "option", variantOption: "6m", cableLengthMm: 6000, cableRole: "extension", compatibleWith: ["store-banne-ombra"], prerequisites: ["raccordement 230 V par un électricien", "longueur totale admissible par le moteur à confirmer"] },
+  });
   return out;
 }
 
@@ -366,7 +409,7 @@ function awningVariants(): Variant[] {
       sku: `ES-SB-${s.widthMm / 100}${String(s.projectionMm / 100).padStart(2, "0")}-${cabinet.slice(0, 3)}-${fabric[0]}`,
       familySlug: "store-banne-ombra",
       label: `Store banne Ombra ${s.widthMm / 1000} × ${s.projectionMm / 1000} m – coffre ${COLOR_LABEL[cabinet]} – toile ${fabric[1]}`,
-      priceCents: s.priceCents, taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "made_to_order", leadTimeDays: 14,
+      priceCents: s.priceCents, taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "made_to_order", leadTimeDays: 14, ...LEAD_PRESETS.awning,
       weightGrams: Math.round(30_000 + (s.widthMm - 2000) * 14),
       attributes: { kind: "awning", widthMm: s.widthMm, projectionMm: s.projectionMm, cabinetColor: cabinet, fabricCode: fabric[0] },
     });
@@ -406,6 +449,8 @@ export const OPTION_COMPAT: OptionCompatRule[] = [
   { optionFamilySlug: "lanterne-ambiance", pergolaFamilySlug: "*", status: "allowed", maxQty: 6, dataStatus: "demo" },
   { optionFamilySlug: "anemometre", pergolaFamilySlug: "store-banne-ombra", status: "allowed", maxQty: 1, dataStatus: "demo" },
   { optionFamilySlug: "anemometre", pergolaFamilySlug: "*", status: "forbidden", reason: "l'anémomètre ne s'installe que sur un store banne", dataStatus: "demo" },
+  { optionFamilySlug: "cable-alimentation", pergolaFamilySlug: "store-banne-ombra", status: "unknown", maxQty: 1, reason: "rallonge 6 m : longueur totale admissible et raccordement non confirmés par le fournisseur", dataStatus: "unknown" },
+  { optionFamilySlug: "cable-alimentation", pergolaFamilySlug: "*", status: "forbidden", reason: "le câble d'alimentation ne concerne que le store banne motorisé", dataStatus: "demo" },
 ];
 
 export const INSTALLATION_RATES: InstallationRate[] = [
@@ -413,6 +458,8 @@ export const INSTALLATION_RATES: InstallationRate[] = [
     DIMENSIONS.map((d) => ({ familySlug: slug, dimensionCode: d.code, priceCents: round10(69_000 + ((d.widthMm * d.lengthMm) / 1_000_000) * 2_200), dataStatus: "demo" as const })),
   ),
   { familySlug: "side_closure", priceCents: 12_900, dataStatus: "demo" },
+  { familySlug: "pergola-sur-mesure", priceCents: 119_000, dataStatus: "demo" },
+
   { familySlug: "store-banne-ombra", priceCents: 29_900, dataStatus: "demo" },
 ];
 
@@ -425,6 +472,61 @@ export const SHIPPING_RULES: ShippingRule[] = [
 export const PROMOTIONS: Promotion[] = [
   { code: "BIENVENUE5", label: "Code de bienvenue (-5 % sur les pergolas, démonstration)", familySlugs: ["pergola-solis", "pergola-solis-pro", "pergola-solis-max"], percentBps: 500, active: true },
 ];
+
+/* ------------------------------------------------------------------ */
+/* Grille tarifaire sur mesure FICTIVE (test du moteur uniquement)       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Grille de DÉMONSTRATION : cellules largeur × longueur avec prix explicites (aucun prix au m²),
+ * suppléments finition / implantation / hauteur / fermetures / options. `isDemo: true` :
+ * l'estimation ne devient jamais un prix ferme. Explicitement séparée des données commerciales.
+ */
+export const DEMO_PRICE_GRID: PriceGridSnapshot = {
+  id: "demo-grid-sur-mesure-v1",
+  familySlug: "pergola-sur-mesure",
+  name: "Grille fictive de démonstration",
+  version: 1,
+  status: "published",
+  mode: "table",
+  validFrom: "2026-01-01T00:00:00.000Z",
+  validTo: null,
+  dataStatus: "demo",
+  isDemo: true,
+  widthMm: { min: 2000, max: 4000, step: 10 },
+  lengthMm: { min: 2000, max: 6000, step: 10 },
+  heightMm: { min: 2200, max: 3000, step: 10 },
+  mountings: ["freestanding", "wall"],
+  finishCodes: ["ANTHRACITE", "WHITE", "ANTHRACITE_WHITE_BLADES"],
+  cells: (() => {
+    const widths: Array<[number, number]> = [[2000, 3000], [3010, 3500], [3510, 4000]];
+    const lengths: Array<[number, number]> = [[2000, 3000], [3010, 4000], [4010, 5000], [5010, 6000]];
+    // prix TTC fictifs (centimes) par cellule — volontairement non proportionnels à la surface
+    const table = [
+      [349_000, 419_000, 489_000, 569_000],
+      [389_000, 459_000, 539_000, 629_000],
+      [429_000, 509_000, 599_000, 699_000],
+    ];
+    const cells = [];
+    for (const [wi, w] of widths.entries()) for (const [li, l] of lengths.entries()) {
+      cells.push({ widthMinMm: w[0], widthMaxMm: w[1], lengthMinMm: l[0], lengthMaxMm: l[1], mounting: "*" as const, finishCode: "*" as const, priceCents: table[wi]![li]! });
+    }
+    // la cellule 4 × 6 m adossée est volontairement absente de la grille fictive (zone sans tarif → devis)
+    const kept: PriceGridSnapshot["cells"] = cells.filter((c) => !(c.widthMinMm === 3510 && c.lengthMinMm === 5010));
+    kept.push({ widthMinMm: 3510, widthMaxMm: 4000, lengthMinMm: 5010, lengthMaxMm: 6000, mounting: "freestanding", finishCode: "*", priceCents: 699_000 });
+    return kept;
+  })(),
+  surcharges: [
+    { code: "finish-bicolor", label: "Finition bicolore (lames blanches)", kind: "finish", match: "ANTHRACITE_WHITE_BLADES", priceCents: 15_000, percentBps: 0 },
+    { code: "mounting-wall", label: "Implantation adossée (2 poteaux)", kind: "mounting", match: "wall", priceCents: -12_000, percentBps: 0 },
+    { code: "height-above-2500", label: "Hauteur au-delà de 2,50 m (par tranche de 100 mm)", kind: "height_above", match: "*", thresholdMm: 2500, perStepMm: 100, perStepCents: 6_000, priceCents: 0, percentBps: 0 },
+    { code: "closure-paroi-vitree", label: "Paroi vitrée sur mesure (par côté)", kind: "side_closure", match: "paroi-vitree", priceCents: 190_000, percentBps: 0 },
+    { code: "closure-persienne", label: "Persienne sur mesure (par côté)", kind: "side_closure", match: "persienne-aluminium", priceCents: 145_000, percentBps: 0 },
+    { code: "closure-zip", label: "Store vertical ZIP sur mesure (par côté)", kind: "side_closure", match: "store-vertical-zip", priceCents: 95_000, percentBps: 0 },
+    { code: "option-lampe", label: "Lampe chauffante", kind: "option", match: "lampe-chauffante", priceCents: 21_900, percentBps: 0 },
+    { code: "option-lanterne", label: "Lanterne d'ambiance", kind: "option", match: "lanterne-ambiance", priceCents: 28_900, percentBps: 0 },
+  ],
+};
 
 export function buildDemoCatalog(): CatalogSnapshot {
   return {
@@ -446,6 +548,8 @@ export function buildDemoCatalog(): CatalogSnapshot {
       lengthMm: { min: 2000, max: 6000, step: 10 },
       heightMm: { min: 2200, max: 3000, step: 10 },
       dataStatus: "unknown",
+      grids: [DEMO_PRICE_GRID],
     },
+    shipmentPolicy: "GROUPED",
   };
 }

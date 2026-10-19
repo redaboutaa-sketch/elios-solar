@@ -10,6 +10,8 @@ import { evaluateCart, findActiveCart } from "@/server/cart/service";
 import { removeLineAction, setDeliveryAction, updateQtyAction } from "@/server/actions/cart";
 import { summarizeStandard } from "@/domain/helpers";
 import { loadCatalog } from "@/server/catalog/load";
+import { estimateCartDelivery } from "@/server/stock/delivery";
+import { DeliveryEstimateBlock } from "@/components/catalog/delivery-estimate";
 
 export const metadata: Metadata = { title: "Panier", robots: { index: false } };
 
@@ -17,6 +19,7 @@ export default async function CartPage() {
   const [session, guestKey, catalog] = await Promise.all([getSession(), getGuestKey(), loadCatalog()]);
   const cart = await findActiveCart({ userId: session?.user.id, guestKey });
   const ev = cart && cart.lines.length ? await evaluateCart(cart, catalog) : null;
+  const estimate = ev ? await estimateCartDelivery(ev, catalog) : null;
   return (
     <div className="container-x py-8">
       <Breadcrumbs items={[{ label: "Panier" }]} />
@@ -62,6 +65,7 @@ export default async function CartPage() {
               <div className="flex justify-between border-t border-sand-200 pt-2 text-lg font-semibold"><dt>Total TTC {ev.isFinal ? "" : "(estimé)"}</dt><dd><Price cents={ev.totalCents} /></dd></div>
               <div className="flex justify-between text-xs text-stone-700"><dt>dont TVA</dt><dd><Price cents={ev.taxCents} showCents /></dd></div>
             </dl>
+            {estimate && <DeliveryEstimateBlock estimate={estimate} demo={catalog.variants.some((v) => v.leadSource === "demo")} />}
             {!ev.purchasable && <div className="mt-3"><Notice tone="warn">Une ligne nécessite une validation : modifiez-la ou demandez un devis.</Notice></div>}
             {ev.shippingStatus === "quote" && <div className="mt-3"><Notice tone="warn">Livraison sur devis pour cette zone : <Link href="/devis" className="underline">demander un devis</Link>.</Notice></div>}
             <Link href="/commande" aria-disabled={!ev.purchasable || ev.shippingStatus !== "ok"} className={`btn-accent w-full mt-5 ${!ev.purchasable || ev.shippingStatus !== "ok" ? "pointer-events-none opacity-50" : ""}`}>Passer la commande</Link>

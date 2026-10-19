@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
-import type { CatalogSnapshot, DataStatus, Family, FamilyKind, Mounting, Variant, VariantAttributes } from "@/domain/types";
+import type { Availability, CatalogSnapshot, DataStatus, Family, FamilyKind, LeadUnit, Mounting, PriceGridSnapshot, SurchargeKind, Variant, VariantAttributes } from "@/domain/types";
 import type { DataStatus as DbDataStatus, FamilyKind as DbFamilyKind, FamilyStatus as DbFamilyStatus, Mounting as DbMounting, CompatStatus as DbCompatStatus } from "@/generated/prisma/enums";
 
 export function dataStatusFromDb(s: DbDataStatus): DataStatus {
@@ -32,7 +32,7 @@ const TTL_MS = 10_000;
 /** Charge l'instantané du catalogue depuis la base (cache court en mémoire). */
 export async function loadCatalog(opts: { fresh?: boolean } = {}): Promise<CatalogSnapshot> {
   if (!opts.fresh && cache && Date.now() - cache.at < TTL_MS) return cache.snapshot;
-  const [settings, finishes, dimensions, families, variants, closureCompat, optionCompat, installationRates, shippingRules, promotions, custom] = await Promise.all([
+  const [settings, finishes, dimensions, families, variants, closureCompat, optionCompat, installationRates, shippingRules, promotions, custom, grids] = await Promise.all([
     prisma.siteSettings.findUnique({ where: { id: 1 } }),
     prisma.finish.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.dimensionPreset.findMany({ orderBy: { sortOrder: "asc" } }),
@@ -44,9 +44,10 @@ export async function loadCatalog(opts: { fresh?: boolean } = {}): Promise<Catal
     prisma.shippingRule.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.promotion.findMany(),
     prisma.customPergolaSettings.findUnique({ where: { id: 1 } }),
+    prisma.priceGrid.findMany({ where: { status: "PUBLISHED" }, include: { cells: true, surcharges: { orderBy: { sortOrder: "asc" } } } }),
   ]);
-  const latest = [...families.map((f) => f.updatedAt.getTime()), ...variants.map((v) => v.updatedAt.getTime()), ...closureCompat.map((r) => r.updatedAt.getTime()), ...optionCompat.map((r) => r.updatedAt.getTime()), ...installationRates.map((r) => r.updatedAt.getTime()), ...shippingRules.map((r) => r.updatedAt.getTime()), ...promotions.map((p) => p.updatedAt.getTime()), custom?.updatedAt.getTime() ?? 0, settings?.updatedAt.getTime() ?? 0].reduce((a, b) => Math.max(a, b), 0);
-  const version = createHash("sha1").update(`${latest}:${variants.length}:${closureCompat.length}:${optionCompat.length}`).digest("hex").slice(0, 12);
+  const latest = [...families.map((f) => f.updatedAt.getTime()), ...variants.map((v) => v.updatedAt.getTime()), ...closureCompat.map((r) => r.updatedAt.getTime()), ...optionCompat.map((r) => r.updatedAt.getTime()), ...installationRates.map((r) => r.updatedAt.getTime()), ...shippingRules.map((r) => r.updatedAt.getTime()), ...promotions.map((p) => p.updatedAt.getTime()), custom?.updatedAt.getTime() ?? 0, settings?.updatedAt.getTime() ?? 0, ...grids.map((g) => g.updatedAt.getTime())].reduce((a, b) => Math.max(a, b), 0);
+  const version = createHash("sha1").update(`${latest}:${variants.length}:${closureCompat.length}:${optionCompat.length}:${grids.map((g) => `${g.id}@${g.version}`).join(",")}`).digest("hex").slice(0, 12);
 
   const snapshot: CatalogSnapshot = {
     version,
@@ -69,6 +70,7 @@ export async function loadCatalog(opts: { fresh?: boolean } = {}): Promise<Catal
       dimensionCodes: f.dimensions.map((x) => x.dimensionCode),
       mountings: f.mountings.map(mountingFromDb),
       specs: (f.specs as Family["specs"]) ?? [],
+      includedCableMm: f.includedCableMm ?? undefined,
       dataStatus: dataStatusFromDb(f.dataStatus),
     })),
     variants: variants.map(
@@ -85,6 +87,15 @@ export async function loadCatalog(opts: { fresh?: boolean } = {}): Promise<Catal
         stockQty: v.stockQty,
         leadTimeDays: v.leadTimeDays,
         weightGrams: v.weightGrams,
+        availability: v.availability.toLowerCase() as Availability,
+        leadMinDays: v.leadMinDays,
+        leadMaxDays: v.leadMaxDays,
+        leadUnit: v.leadUnit.toLowerCase() as LeadUnit,
+        leadSource: dataStatusFromDb(v.leadSource),
+        leadUpdatedAt: v.leadUpdatedAt?.toISOString() ?? null,
+        leadComponents: { supplier: v.supplierDays, preparation: v.preparationDays, production: v.productionDays, transport: v.transportDays },
+        preorderAllowed: v.preorderAllowed,
+        partialShipAllowed: v.partialShipAllowed,
         attributes: v.attributes as VariantAttributes,
       }),
     ),
@@ -116,10 +127,37 @@ export async function loadCatalog(opts: { fresh?: boolean } = {}): Promise<Catal
       lengthMm: { min: custom?.lengthMinMm ?? 2000, max: custom?.lengthMaxMm ?? 6000, step: custom?.lengthStepMm ?? 10 },
       heightMm: { min: custom?.heightMinMm ?? 2200, max: custom?.heightMaxMm ?? 3000, step: custom?.heightStepMm ?? 10 },
       dataStatus: custom ? dataStatusFromDb(custom.dataStatus) : "unknown",
+      grids: grids.map(gridFromDb),
     },
+    shipmentPolicy: settings?.shipmentPolicy === "SEPARATE" ? "SEPARATE" : "GROUPED",
   };
   cache = { at: Date.now(), snapshot };
   return snapshot;
+}
+
+type DbGrid = Awaited<ReturnType<typeof prisma.priceGrid.findMany<{ include: { cells: true; surcharges: true } }>>>[number];
+
+/** Conversion d'une grille stockée vers l'instantané du moteur (aussi utilisée pour tester une grille en brouillon). */
+export function gridFromDb(g: DbGrid): PriceGridSnapshot {
+  return {
+    id: g.id,
+    familySlug: g.familySlug,
+    name: g.name,
+    version: g.version,
+    status: g.status.toLowerCase() as PriceGridSnapshot["status"],
+    mode: g.mode === "BANDS" ? "bands" : "table",
+    validFrom: g.validFrom?.toISOString() ?? null,
+    validTo: g.validTo?.toISOString() ?? null,
+    dataStatus: dataStatusFromDb(g.dataStatus),
+    isDemo: g.isDemo,
+    widthMm: { min: g.widthMinMm, max: g.widthMaxMm, step: g.widthStepMm },
+    lengthMm: { min: g.lengthMinMm, max: g.lengthMaxMm, step: g.lengthStepMm },
+    heightMm: { min: g.heightMinMm, max: g.heightMaxMm, step: g.heightStepMm },
+    mountings: g.mountings.filter((m): m is Mounting => m === "wall" || m === "freestanding"),
+    finishCodes: g.finishCodes,
+    cells: g.cells.map((c) => ({ widthMinMm: c.widthMinMm, widthMaxMm: c.widthMaxMm, lengthMinMm: c.lengthMinMm, lengthMaxMm: c.lengthMaxMm, mounting: (c.mounting === "wall" || c.mounting === "freestanding" ? c.mounting : "*") as Mounting | "*", finishCode: c.finishCode, priceCents: c.priceCents })),
+    surcharges: g.surcharges.map((x) => ({ code: x.code, label: x.label, kind: x.kind as SurchargeKind, match: x.match, thresholdMm: x.thresholdMm, perStepMm: x.perStepMm, perStepCents: x.perStepCents, priceCents: x.priceCents, percentBps: x.percentBps })),
+  };
 }
 
 export function invalidateCatalogCache() {
