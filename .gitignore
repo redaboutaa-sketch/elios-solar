@@ -1,0 +1,59 @@
+# dépendances
+node_modules/
+.pnpm-store/
+
+# builds
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# environnement & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets/
+*.secret
+
+# bases & sauvegardes
+*.sql
+*.sql.gz
+*.dump
+backups/
+*.sqlite
+*.db
+
+# médias uploadés & données réelles
+uploads/
+data/private/
+exports/
+
+# tests & rapports
+coverage/
+test-results/
+playwright-report/
+playwright/.cache/
+blob-report/
+tests/e2e/screenshots/**/*.diff.png
+
+# logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# docker local
+docker-compose.override.yml
