@@ -43,5 +43,17 @@ Légende : ✅ fait (codé + vérifié) · 🔄 en cours · ⏳ à faire · ⛔ 
 - ✅ Fiche produit : galerie 4 vues générées, points clés, onglets, comparatif, barre mobile
 - ✅ Accessoires : compatibilité calculée (collection + fiche), couleurs, longueurs
 - ✅ Configurateur : bloc « inclus », prix/délai/lien par fermeture, couleur de l'éclairage inclus, modification depuis le panier (pergola et store)
-- ⏳ Photographies et documents fournisseur (gap-analysis-v2 § F) ⛔
-- ⏳ Vue 3D
+- ⏳ Photographies et documents fournisseur (gap-analysis-v2 § F) ⛔ — interfaces livrées en itération 3
+- ✅ Vue 3D (itération 3)
+
+## Itération 3 — écarts restants (statuts : `docs/iteration3/README.md`)
+- ✅ Médiathèque administrable, rendus originaux identifiés, documents versionnés, espace documentaire, guide de préparation
+- ✅ Stocks et délais par référence, import contrôlé, adaptateur fournisseur, estimation de livraison, revalidation au checkout
+- ✅ Moteur de grille sur mesure versionnée (import, validation, test, publication), grille fictive séparée
+- ✅ Persiennes 5/6 m modulaires (devis), câble inclus vs rallonge 6 m (devis)
+- ✅ Vue 3D procédurale (pergola, store banne), export d'image indicative
+- ✅ Chat de conseil (présence réelle, hors ligne, admin, assistant IA optionnel)
+- ✅ Paiement fractionné : adaptateur Stripe désactivé + simulateur identifié
+- ✅ Sauvegarde, restauration isolée, redéploiement Docker 3401, commit exposé
+- ⏳ Joindre l'image 3D au devis ; 3D du sur-mesure ; écran de validation des références
+- ⛔ Données fournisseur (photos, notices, grille, assemblages, câble, délais réels), comptes Stripe/Alma/Klarna, SMTP, domaine

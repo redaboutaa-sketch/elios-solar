@@ -18,7 +18,10 @@ n'empêche de poursuivre la réalisation ; tout empêche la vente réelle.
 - [ ] Références, libellés, prix d'achat/vente, délais, stocks ⇒ import CSV/JSON (`docs/import/variants.example.csv`) avec `dataStatus=supplier_verified`.
 - [ ] Caractéristiques techniques validées (hauteurs, sections, charges vent/neige, surfaces) ; aujourd'hui `unknown`.
 - [ ] Matrice de compatibilité fournisseur : longueurs utiles des fermetures par dimension, poteau intermédiaire par gamme, cumul LED, persienne par implantation, cotes utiles vs commerciales.
-- [ ] Grille sur mesure (bornes, pas, prix) ; sinon le sur-mesure reste en devis.
+- [ ] Grille sur mesure fournisseur (bornes, pas, cellules, suppléments, validité) importée via Administration → Grilles sur mesure, statut « vérifié fournisseur », puis archivage de la grille **fictive** v1 ; sinon le sur-mesure reste en estimation + devis.
+- [ ] Persiennes 5/6 m : composition des assemblages (modules, poteau, cotes utiles, fixations, couleurs) ; aujourd'hui sur devis.
+- [ ] Câble de store banne : longueur fournie (conflit 3 m démo / 7,5 m observé), référence/prix/compatibilité de la rallonge 6 m.
+- [ ] Stocks et délais réels par référence (import CSV/JSON ou flux fournisseur) ; aujourd'hui jeu de démonstration.
 - [ ] Variantes de store banne réellement fabriquées (dimensions, toiles, supports) et options.
 
 ## Prix, livraison, montage
@@ -27,6 +30,8 @@ n'empêche de poursuivre la réalisation ; tout empêche la vente réelle.
 - [ ] Zones et tarifs de montage professionnel, partenaire installateur, assurance.
 
 ## Prestataires et clés
+- [ ] Paiement fractionné : compte Stripe validé, Alma et/ou Klarna activés, frais et « sans frais » confirmés par contrat, clauses CGV Alma, case « compte marchand validé » (Administration → Paiement fractionné) ; aujourd'hui simulateur seulement.
+- [ ] Chat : SMTP réel pour les réponses différées ; clé IA facultative (`AI_PROVIDER`, `ANTHROPIC_API_KEY`) et mention dans la politique de confidentialité si activée ; purge planifiée.
 - [ ] Stripe en production (`PAYMENT_PROVIDER=stripe`, clés live, webhook signé configuré sur `/api/webhooks/stripe`).
 - [ ] Fournisseur e-mail (SMTP/API) et adresse d'expédition ; `ADMIN_NOTIFICATION_EMAIL`.
 - [ ] Sauvegardes planifiées et restauration testée sur l'environnement de production.

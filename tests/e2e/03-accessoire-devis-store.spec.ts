@@ -24,7 +24,9 @@ test("demander un devis sur mesure : persistance et notification", async ({ page
   await page.getByLabel("Largeur (mm)", { exact: true }).fill("3600");
   await page.getByLabel("Longueur (mm)", { exact: true }).fill("5200");
   await page.getByLabel("Avant", { exact: true }).selectOption("paroi-vitree");
-  await expect(page.getByText(/établi sur devis/)).toBeVisible();
+  // 3,6 × 5,2 m adossée : zone volontairement sans tarif dans la grille fictive → devis, aucun prix
+  await expect(page.getByTestId("custom-price")).toContainText("Pas de prix calculable");
+  await expect(page.getByText(/Aucun tarif dans la grille/)).toBeVisible();
   await expect(page.getByText(/€\s*\/\s*m²/)).toHaveCount(0);
   const email = `devis-${uid()}@test.invalid`;
   await page.getByLabel("Prénom").fill("Ana");
@@ -64,5 +66,17 @@ test("configurer un store banne avec ses variantes réellement disponibles", asy
   await shot(page, "store-banne");
   await page.getByRole("button", { name: "Ajouter au panier" }).click();
   await page.waitForURL(/\/panier/);
-  await expect(page.getByText(/Store banne Ombra 4 × 3.5 m/)).toBeVisible();
+  await expect(page.getByTestId("cart-lines").getByText(/Store banne Ombra 4 × 3.5 m/)).toBeVisible();
+});
+
+test("sur mesure dans la grille fictive : estimation affichée, jamais d'achat direct", async ({ page }) => {
+  await page.goto("/configurateur/sur-mesure");
+  await acceptNecessaryOnly(page);
+  await page.getByLabel("Largeur (mm)", { exact: true }).fill("3200");
+  await page.getByLabel("Longueur (mm)", { exact: true }).fill("4500");
+  const price = page.getByTestId("custom-price");
+  await expect(price).toContainText("Estimation indicative");
+  await expect(price).toContainText("grille fictive");
+  await expect(price.getByRole("button", { name: "Ajouter au panier" })).toHaveCount(0);
+  await shot(page, "sur-mesure-estimation");
 });

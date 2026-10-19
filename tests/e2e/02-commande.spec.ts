@@ -6,7 +6,8 @@ test("commander en test et retrouver la configuration dans la commande", async (
   await page.getByRole("button", { name: "Ajouter au panier" }).click();
   await page.waitForURL(/\/panier/);
   await expect(page.getByText(/Pergola Solis 3 × 4 m · Anthracite · autoportée/)).toBeVisible();
-  await expect(page.getByText(/Paroi vitrée fixe 3 m/)).toBeVisible();
+  await expect(page.getByTestId("cart-lines").getByText(/Paroi vitrée fixe 3 m/)).toBeVisible();
+  await expect(page.getByTestId("delivery-estimate")).toContainText(/expédition groupée/i);
   await shot(page, "panier");
   const total = (await page.locator("dd").filter({ hasText: "€" }).last().textContent())?.trim();
   await page.getByRole("link", { name: "Passer la commande" }).click();

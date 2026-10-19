@@ -28,7 +28,7 @@ export default async function CartPage() {
         <div className="mt-8 card p-10 text-center"><p className="font-display text-2xl">Votre panier est vide.</p><p className="mt-2 text-stone-700">Composez votre pergola ou choisissez un accessoire compatible.</p><div className="mt-4 flex justify-center gap-2"><Link href="/configurateur" className="btn-accent">Configurer une pergola</Link><Link href="/accessoires" className="btn-secondary">Accessoires</Link></div></div>
       ) : (
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
-          <ul className="space-y-4">
+          <ul className="space-y-4" data-testid="cart-lines">
             {ev.lines.map(({ line, input, result, lineTotalCents }) => (
               <li key={line.id} className="card p-5">
                 <div className="flex flex-wrap justify-between gap-3">

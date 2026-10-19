@@ -76,3 +76,6 @@ En l'absence de ces médias, la préproduction utilise des rendus SVG originaux 
 
 ## G. Synthèse des priorités traitées dans cette itération
 P1 : A2, A3, B1, B2, C2, C3, D1. P2 : A1, A5, B3, B5, C1, C5, D2. Les autres restent documentés.
+
+## H. Itération 3 — traitement des écarts restants
+Les écarts E (persienne 5/6 m, câble 6 m, sur-mesure sans prix), F (médias, documents), B5 (délais par référence), A6 (chat), C5 (vue 3D) et le paiement fractionné ont été traités ; le statut détaillé de chacun (implémenté et testé, raccordement externe restant, dépendance fournisseur) figure dans `docs/iteration3/README.md`.

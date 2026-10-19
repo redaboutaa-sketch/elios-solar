@@ -32,6 +32,9 @@ services:
     env_file: [../.env.prod]
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-elios}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-elios_solar}?schema=public
+      MEDIA_STORAGE_DIR: /app/uploads
+    volumes:
+      - elios_solar_uploads:/app/uploads
     depends_on:
       postgres: { condition: service_healthy }
     restart: "no"
