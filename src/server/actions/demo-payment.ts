@@ -1,4 +1,5 @@
 "use server";
+import { internalBaseUrl } from "@/lib/internal-url";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -22,7 +23,7 @@ export async function demoPaymentAction(formData: FormData) {
   if (!payment?.providerRef) redirect(`/commande/${orderId}/confirmation`);
   const type = outcome === "succeeded" ? "demo.payment.succeeded" : outcome === "failed" ? "demo.payment.failed" : "demo.payment.cancelled";
   const body = JSON.stringify({ id: `evt_${randomCode(12)}`, type, data: { providerRef: payment.providerRef, orderId, amountCents: payment.amountCents } });
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3400";
+  const base = internalBaseUrl();
   const res = await fetch(`${base}/api/webhooks/payment/demo`, { method: "POST", headers: { "content-type": "application/json", "x-demo-signature": demoSign(body) }, body, cache: "no-store" });
   if (!res.ok) redirect(`/commande/${orderId}/paiement-demo?ref=${payment.providerRef}&erreur=webhook`);
   redirect(outcome === "succeeded" ? `/commande/${orderId}/confirmation` : `/commande/${orderId}/annulation?motif=${outcome}`);

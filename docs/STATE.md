@@ -1,6 +1,6 @@
 # État réel du projet
 
-Mis à jour : 2026-10-19 (itération 2 : audit REA, présentation premium, couverture fonctionnelle)
+Mis à jour : 2026-10-19 (itération 3 : médiathèque, stocks/délais, grilles sur mesure, 3D, chat, paiement fractionné)
 
 ## Où en est-on
 - Dépôt : `redaboutaa-sketch/elios-solar`, branche `feat/storefront-configurator` (depuis `main` = commit initial).
@@ -8,6 +8,7 @@ Mis à jour : 2026-10-19 (itération 2 : audit REA, présentation premium, couve
 - Base : PostgreSQL 16 en conteneur `elios-solar-dev-postgres` (127.0.0.1:5433), migrations appliquées, seed exécuté.
 - E-mails : Mailpit http://127.0.0.1:8025 (SMTP 1025) ; worker `pnpm mail:worker`.
 - Paiement : mode DEMO (page de paiement simulé + webhook signé HMAC).
+- **Préproduction Docker à jour** : commit exposé par `GET /api/health` (`commit`, `builtAt`, `lastMigration`) et dans le bandeau de l'administration. Redéploiement : `export GIT_COMMIT=$(git rev-parse HEAD) BUILD_TIME=$(date -u +%FT%TZ); docker compose -f docker/compose.prod.yml --env-file .env.prod build migrate app && docker compose -f docker/compose.prod.yml --env-file .env.prod up -d && docker compose -f docker/compose.prod.yml --env-file .env.prod run --rm migrate pnpm db:seed`. Sauvegarde préalable dans `backups/preprod/` (non commité).
 - Préproduction Docker : `docker compose -f docker/compose.prod.yml --env-file .env.prod up -d` → http://127.0.0.1:3401 (images `elios-solar/app:preprod`, `elios-solar/tools:preprod`, migrations appliquées par le service `migrate`, seed démo exécuté, santé OK, worker e-mail actif). `.env.prod` local non commité.
 - Sauvegarde/restauration : `scripts/backup.sh` et `scripts/restore.sh` testés (dump + médias + checksums ; restauration vérifiée dans une base isolée `elios_solar_restore_check`).
 - Vérifications passées : typecheck ✅, lint ✅, unitaires 33/33 ✅, intégration 14/14 ✅, Playwright 26/26 ✅, build ✅ (détail : `docs/test-report.md`).
@@ -28,8 +29,11 @@ pnpm typecheck && pnpm lint && pnpm test:unit
 ```
 Accès distant : tunnel SSH `ssh -L 3401:127.0.0.1:3401 -L 3400:127.0.0.1:3400 -L 8025:127.0.0.1:8025 root@<vps>` (3401 = pile Docker, 3400 = serveur de dev s'il tourne, 8025 = Mailpit).
 
+## Itération 3
+Statut de chaque écart : `docs/iteration3/README.md`. Nouvelles pages d'administration : Stocks & délais, Grilles sur mesure, Conversations, Documents, Médias → associations, Paiement fractionné.
+
 ## Prochaine action
-Revue de la préproduction ; fourniture des photographies et données fournisseur (gap-analysis-v2 § E–F) ; puis écarts P2/P3 restants (galerie photo réelle, délais réels, vue 3D) et bascule Stripe/domaine après revue.
+Revue de la préproduction ; fourniture des données fournisseur listées dans `docs/launch-blockers.md` (photos, notices, grille sur mesure, assemblages persienne, câble, délais) ; comptes Stripe/Alma/Klarna et SMTP ; puis domaine Traefik après revue.
 
 ## Procédure de reprise (tmux)
 `tmux attach -t pergola` ; lire `docs/STATE.md`, `docs/TASKS.md`, `git status` / `git diff` avant de reprendre.

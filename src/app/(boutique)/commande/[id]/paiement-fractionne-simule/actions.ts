@@ -1,4 +1,5 @@
 "use server";
+import { internalBaseUrl } from "@/lib/internal-url";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -23,7 +24,7 @@ export async function installmentsSimAction(formData: FormData) {
   const type = outcome === "accepted" ? "instsim.payment.succeeded" : outcome === "refused" ? "instsim.payment.failed" : "instsim.payment.cancelled";
   const reason = outcome === "refused" ? "refus simulé du prestataire de paiement fractionné" : outcome === "abandoned" ? "abandon par le client" : undefined;
   const body = JSON.stringify({ id: `evt_${randomCode(12)}`, type, data: { providerRef: payment.providerRef, orderId, amountCents: payment.amountCents, installments: payment.installments, reason } });
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3400";
+  const base = internalBaseUrl();
   const res = await fetch(`${base}/api/webhooks/payment/installments-sim`, { method: "POST", headers: { "content-type": "application/json", "x-instsim-signature": simSign(body) }, body, cache: "no-store" });
   if (!res.ok) redirect(`/commande/${orderId}/paiement-fractionne-simule?ref=${payment.providerRef}&erreur=webhook`);
   redirect(outcome === "accepted" ? `/commande/${orderId}/confirmation` : `/commande/${orderId}/annulation?motif=${outcome === "refused" ? "installments_refused" : "cancelled"}`);
