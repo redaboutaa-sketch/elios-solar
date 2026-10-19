@@ -1,16 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { configureStandard, fillCheckout, shot, uid } from "./helpers";
+import { configureStandard, fillCheckout, shot, uid, loginAdmin } from "./helpers";
 import { one } from "./db";
 
 const SKU = "ES-PS1-3X4-ANT-AUT";
 
-async function loginAdmin(page: import("@playwright/test").Page) {
-  await page.goto("/compte/connexion?next=/admin");
-  await page.getByLabel("E-mail").fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.getByLabel("Mot de passe").fill(process.env.E2E_ADMIN_PASSWORD!);
-  await page.getByRole("button", { name: "Se connecter" }).click();
-  await page.waitForURL((u) => u.pathname.startsWith("/admin"), { timeout: 20_000 });
-}
 
 test("changer un tarif en administration : appliqué au configurateur, sans altérer une commande passée", async ({ page, browser }) => {
   // 1. une commande payée au prix courant (client invité, contexte séparé)

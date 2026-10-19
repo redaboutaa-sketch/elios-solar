@@ -60,3 +60,5 @@ Thumbs.db
 # docker local
 docker-compose.override.yml
 src/generated/
+tests/e2e/.auth/
+.claude/

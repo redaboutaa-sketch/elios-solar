@@ -71,3 +71,61 @@ jobs:
             playwright-report
             tests/e2e/screenshots
           retention-days: 14
+
+  # Même pile que la préproduction (images Docker, compose, worker, migrations) : la recette navigateur
+  # complète est rejouée contre elle, sans relance automatique.
+  e2e-docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+      - name: Environnement éphémère (secrets aléatoires, jamais commités)
+        run: |
+          {
+            echo "POSTGRES_USER=elios"
+            echo "POSTGRES_PASSWORD=$(openssl rand -hex 24)"
+            echo "POSTGRES_DB=elios_solar"
+            echo "APP_PORT=3401"
+            echo "IMAGE_TAG=ci"
+            echo "TRAEFIK_ENABLE=false"
+            echo "NEXT_PUBLIC_BRAND_NAME=ELIOS SOLAR"
+            echo "NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3401"
+            echo "SITE_INDEXABLE=false"
+            echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)"
+            echo "BETTER_AUTH_URL=http://127.0.0.1:3401"
+            echo "MAIL_PROVIDER=log"
+            echo "ADMIN_NOTIFICATION_EMAIL=admin-ci@example.invalid"
+            echo "PAYMENT_PROVIDER=demo"
+            echo "DEMO_PAYMENT_WEBHOOK_SECRET=$(openssl rand -hex 24)"
+            echo "LOG_LEVEL=info"
+          } > .env.prod
+      - name: Construction et démarrage de la pile Docker
+        run: |
+          docker network create traefik-public || true
+          export GIT_COMMIT=${{ github.sha }} BUILD_TIME=$(date -u +%FT%TZ)
+          docker compose -f docker/compose.prod.yml --env-file .env.prod up -d --build
+          docker compose -f docker/compose.prod.yml --env-file .env.prod run --rm migrate pnpm db:seed
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:3401/api/health && break; sleep 2; done
+          curl -fsS http://127.0.0.1:3401/api/health | grep -q "${{ github.sha }}"
+      - name: Recette navigateur complète contre Docker
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          scripts/e2e-docker.sh .env.prod
+      - name: Journaux de la pile (en cas d'échec)
+        if: failure()
+        run: docker compose -f docker/compose.prod.yml --env-file .env.prod logs --tail 200 app worker migrate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-docker
+          path: playwright-report
+          retention-days: 14

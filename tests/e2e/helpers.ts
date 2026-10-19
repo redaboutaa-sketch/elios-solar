@@ -1,5 +1,21 @@
 import type { Page } from "@playwright/test";
 import { randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
+/** État de session admin produit par auth.setup.ts (fichier local, ignoré par git). */
+export const ADMIN_STATE = path.join(__dirname, ".auth", "admin.json");
+
+/**
+ * Ouvre l'administration avec la session admin de la campagne (aucune nouvelle connexion par
+ * formulaire : la limite anti-force brute n'est pas sollicitée par l'enchaînement des parcours).
+ */
+export async function loginAdmin(page: Page, to = "/admin") {
+  const state = JSON.parse(readFileSync(ADMIN_STATE, "utf8")) as { cookies: Parameters<ReturnType<Page["context"]>["addCookies"]>[0] };
+  await page.context().addCookies(state.cookies);
+  await page.goto(to);
+  await page.waitForURL((u) => u.pathname.startsWith("/admin"), { timeout: 20_000 });
+}
 
 export const uid = () => randomBytes(4).toString("hex");
 

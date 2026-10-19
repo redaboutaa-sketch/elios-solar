@@ -1,12 +1,15 @@
 import "server-only";
 import { headers } from "next/headers";
+import { getIP } from "better-auth/api";
+import { auth } from "@/lib/auth";
 
 const buckets = new Map<string, { count: number; resetAt: number }>();
 
 /** Limitation simple en mémoire (instance unique sur VPS). Retourne false si la limite est dépassée. */
 export async function rateLimit(scope: string, max: number, windowSeconds: number): Promise<boolean> {
   const h = await headers();
-  const ip = (h.get("x-forwarded-for") ?? h.get("x-real-ip") ?? "local").split(",")[0]!.trim();
+  // même résolution d'IP que better-auth (proxys de confiance, IPv6 /64) ; jamais la 1re valeur brute d'une chaîne
+  const ip = getIP(h, auth.options) ?? "no-trusted-ip";
   const key = `${scope}:${ip}`;
   const now = Date.now();
   const b = buckets.get(key);
