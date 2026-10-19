@@ -23,6 +23,7 @@ secrets/
 
 # bases & sauvegardes
 *.sql
+!prisma/migrations/**/*.sql
 *.sql.gz
 *.dump
 backups/
