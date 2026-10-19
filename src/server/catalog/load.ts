@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import type { Availability, CatalogSnapshot, DataStatus, Family, FamilyKind, LeadUnit, Mounting, PriceGridSnapshot, SurchargeKind, Variant, VariantAttributes } from "@/domain/types";
 import type { DataStatus as DbDataStatus, FamilyKind as DbFamilyKind, FamilyStatus as DbFamilyStatus, Mounting as DbMounting, CompatStatus as DbCompatStatus } from "@/generated/prisma/enums";
+import type { SpecSource } from "@/domain/technical-spec";
 
 export function dataStatusFromDb(s: DbDataStatus): DataStatus {
   return s.toLowerCase() as DataStatus;
@@ -36,7 +37,7 @@ export async function loadCatalog(opts: { fresh?: boolean } = {}): Promise<Catal
     prisma.siteSettings.findUnique({ where: { id: 1 } }),
     prisma.finish.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.dimensionPreset.findMany({ orderBy: { sortOrder: "asc" } }),
-    prisma.productFamily.findMany({ where: { status: { not: "ARCHIVED" } }, include: { finishes: true, dimensions: true }, orderBy: { sortOrder: "asc" } }),
+    prisma.productFamily.findMany({ where: { status: { not: "ARCHIVED" } }, include: { finishes: true, dimensions: true, technicalSpecs: { orderBy: { createdAt: "asc" } } }, orderBy: { sortOrder: "asc" } }),
     prisma.variant.findMany({ where: { active: true }, include: { family: { select: { slug: true } } } }),
     prisma.closureCompatRule.findMany(),
     prisma.optionCompatRule.findMany(),
@@ -70,7 +71,7 @@ export async function loadCatalog(opts: { fresh?: boolean } = {}): Promise<Catal
       dimensionCodes: f.dimensions.map((x) => x.dimensionCode),
       mountings: f.mountings.map(mountingFromDb),
       specs: (f.specs as Family["specs"]) ?? [],
-      includedCableMm: f.includedCableMm ?? undefined,
+      technicalSpecs: f.technicalSpecs.map((s) => ({ key: s.key, label: s.label, valueNum: s.valueNum, unit: s.unit, valueText: s.valueText, source: s.source.toLowerCase() as SpecSource, sourceRef: s.sourceRef, observedAt: s.observedAt?.toISOString().slice(0, 10) ?? null, variantSku: s.variantSku })),
       dataStatus: dataStatusFromDb(f.dataStatus),
     })),
     variants: variants.map(

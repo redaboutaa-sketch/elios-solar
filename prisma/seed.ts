@@ -38,7 +38,6 @@ export async function runSeed(prisma: PrismaClient) {
       lightingIncluded: f.lightingIncluded ?? null,
       accessoryRails: f.accessoryRails ?? null,
       dividerThresholdMm: f.dividerThresholdMm ?? null,
-      includedCableMm: f.includedCableMm ?? null,
       mountings: (f.mountings ?? []).map((m) => (m === "wall" ? "WALL" : "FREESTANDING")) as never,
       specs: f.specs ?? [],
       faq: content.faq,
@@ -48,6 +47,12 @@ export async function runSeed(prisma: PrismaClient) {
     };
     const row = await prisma.productFamily.upsert({ where: { slug: f.slug }, update: data, create: { slug: f.slug, ...data } });
     familyIds.set(f.slug, row.id);
+    // Données techniques du jeu de démo : seules les lignes non confirmées sont réécrites ;
+    // une confirmation fournisseur saisie en administration n'est jamais écrasée.
+    await prisma.technicalSpec.deleteMany({ where: { familyId: row.id, source: { in: ["DEMO_SEED", "OBSERVED_REFERENCE"] } } });
+    for (const s of f.technicalSpecs ?? []) {
+      await prisma.technicalSpec.create({ data: { familyId: row.id, key: s.key, label: s.label, valueNum: s.valueNum ?? null, unit: s.unit ?? null, valueText: s.valueText ?? null, source: s.source.toUpperCase() as never, sourceRef: s.sourceRef ?? "", observedAt: s.observedAt ? new Date(s.observedAt) : null, note: s.source === "demo_seed" ? "Ne pas publier : non issue d'une source." : "" } });
+    }
     await prisma.familyFinish.deleteMany({ where: { familyId: row.id } });
     await prisma.familyDimension.deleteMany({ where: { familyId: row.id } });
     if (f.finishCodes?.length) await prisma.familyFinish.createMany({ data: f.finishCodes.map((c) => ({ familyId: row.id, finishCode: c })) });

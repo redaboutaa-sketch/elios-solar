@@ -1,3 +1,4 @@
+import type { TechnicalSpecValue } from "./technical-spec";
 /**
  * Types du catalogue tels que vus par le moteur de configuration.
  * Le moteur ne dépend ni de Prisma ni de React : il reçoit un instantané
@@ -56,8 +57,8 @@ export interface Family {
   mountings?: Mounting[];
   /** Caractéristiques affichées (validées = statut) */
   specs?: Array<{ label: string; value: string; status: DataStatus }>;
-  /** store banne : longueur du câble d'alimentation fourni (mm) */
-  includedCableMm?: number;
+  /** Données techniques sourcées (démo, observation, confirmation fournisseur) — voir technical-spec.ts */
+  technicalSpecs?: TechnicalSpecValue[];
   dataStatus: DataStatus;
 }
 

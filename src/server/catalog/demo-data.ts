@@ -211,10 +211,14 @@ export const FAMILIES: Family[] = [
     specs: [
       { label: "Largeurs", value: "2 à 6 m selon variantes", status: "demo" },
       { label: "Avancées", value: "1,5 à 3,5 m selon variantes", status: "demo" },
-      { label: "Alimentation", value: "230 V, câble 3 m fourni (longueur à confirmer)", status: "demo" },
+      { label: "Alimentation", value: "230 V, câble fourni (longueur à confirmer)", status: "unknown" },
       { label: "Résistance au vent", value: "À confirmer (fiche fournisseur)", status: "unknown" },
     ],
-    includedCableMm: 3000,
+    technicalSpecs: [
+      // Deux provenances distinctes, aucune confirmée : le site affiche « longueur à confirmer ».
+      { key: "included_cable_length", label: "Longueur du câble d'alimentation fourni", valueNum: 3000, unit: "mm", source: "demo_seed", sourceRef: "valeur fictive du jeu de démonstration (ne pas publier)" },
+      { key: "included_cable_length", label: "Longueur du câble d'alimentation fourni", valueNum: 7500, unit: "mm", source: "observed_reference", sourceRef: "fiche produit « store banne » du site de référence, section Électricité : « Longueur du câble 7.5 m », sortie gauche face au mur (docs/reference-audit.md §3)", observedAt: "2026-10-19" },
+    ],
     dataStatus: "demo",
   },
   { slug: "paroi-vitree", name: "Paroi vitrée", kind: "side_closure", status: "published", shortDescription: "Fixe ou coulissante, verre trempé.", specs: [{ label: "Hauteur", value: "À confirmer", status: "unknown" }], dataStatus: "demo" },

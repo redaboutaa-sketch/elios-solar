@@ -6,6 +6,7 @@
 import { allSegments, layoutForFamily, segmentLabel } from "./layout";
 import { applyBps, taxIncludedIn, type Cents } from "./money";
 import { activeGridFor, priceFromGrid } from "./pricing-grid";
+import { includedCablePublicText } from "./technical-spec";
 import type {
   AccessoryStandaloneInput,
   AwningInput,
@@ -583,8 +584,9 @@ function evaluateAwning(catalog: CatalogSnapshot, input: AwningInput, now: Date)
   const bracketCount = input.widthMm >= 5000 ? 3 : 2;
   b.lines.push({ kind: "option", code: `included:${family.slug}:brackets`, label: `${bracketCount} supports de fixation ${input.bracketMount === "wall" ? "muraux" : "plafond"} (inclus)`, qty: bracketCount, unitGrossCents: 0, totalGrossCents: 0, taxRateBps: variant.taxRateBps, included: true, dataStatus: family.dataStatus });
   b.lines.push({ kind: "option", code: `included:${family.slug}:remote`, label: "Télécommande et éclairage LED intégré (inclus)", qty: 1, unitGrossCents: 0, totalGrossCents: 0, taxRateBps: variant.taxRateBps, included: true, dataStatus: family.dataStatus });
-  if (family.includedCableMm) {
-    b.lines.push({ kind: "option", code: `included:${family.slug}:cable`, label: `Câble d'alimentation ${family.includedCableMm / 1000} m (inclus)`, qty: 1, unitGrossCents: 0, totalGrossCents: 0, taxRateBps: variant.taxRateBps, included: true, dataStatus: family.dataStatus });
+  const cableText = includedCablePublicText(family.technicalSpecs);
+  if (cableText) {
+    b.lines.push({ kind: "option", code: `included:${family.slug}:cable`, label: `Câble d'alimentation fourni, ${cableText} (inclus)`, qty: 1, unitGrossCents: 0, totalGrossCents: 0, taxRateBps: variant.taxRateBps, included: true, dataStatus: family.dataStatus });
   }
   checkAvailability(b, variant, variant.label, "widthMm");
 
@@ -600,7 +602,7 @@ function evaluateAwning(catalog: CatalogSnapshot, input: AwningInput, now: Date)
     const oa = variant2.attributes.kind === "option" ? variant2.attributes : undefined;
     if (oa?.cableRole === "extension") {
       const prereq = (oa.prerequisites ?? []).join(", ");
-      b.issue({ code: "cable_extension_prerequisites", severity: oa.compatibleWith?.includes(family.slug) && rule?.status === "allowed" ? "info" : "review", message: `${variant2.label} : rallonge distincte du câble fourni${family.includedCableMm ? ` (${family.includedCableMm / 1000} m inclus)` : ""}${prereq ? ` — prérequis : ${prereq}` : ""}${rule?.status === "allowed" ? "." : " — compatibilité électrique non confirmée par le fournisseur : validée sur devis."}`, path, quoteSuggested: rule?.status !== "allowed" });
+      b.issue({ code: "cable_extension_prerequisites", severity: oa.compatibleWith?.includes(family.slug) && rule?.status === "allowed" ? "info" : "review", message: `${variant2.label} : rallonge distincte du câble fourni${cableText ? ` (${cableText}, inclus)` : ""}${prereq ? ` — prérequis : ${prereq}` : ""}${rule?.status === "allowed" ? "." : " — compatibilité électrique non confirmée par le fournisseur : validée sur devis."}`, path, quoteSuggested: rule?.status !== "allowed" });
     }
     if (!variant2.purchasable) b.issue({ code: "option_not_purchasable", severity: "review", message: `${optFamily.name} : référence disponible sur devis uniquement.`, path, quoteSuggested: true });
     if (!checkAvailability(b, variant2, optFamily.name, path)) return;

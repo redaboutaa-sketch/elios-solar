@@ -50,11 +50,21 @@ describe("câble de store banne", () => {
   const awning = { kind: "awning" as const, familySlug: "store-banne-ombra", widthMm: 4000, projectionMm: 3000, cabinetColor: "ANTHRACITE", fabricCode: "GREY", bracketMount: "wall" as const, installation: "self" as const, delivery: { countryCode: "FR", postalCode: "69000" } };
   it("câble fourni inclus à 0 €, distinct de la rallonge 6 m non confirmée (devis)", () => {
     const base = evaluate(catalog, { ...awning, options: [] });
-    expect(base.lines.find((l) => l.code.endsWith(":cable"))?.label).toMatch(/3 m \(inclus\)/);
+    const cableLine = base.lines.find((l) => l.code.endsWith(":cable"))!;
+    // démo 3 m et observation 7,5 m en conflit, aucune confirmation : aucune longueur affichée comme certaine
+    expect(cableLine.label).toBe("Câble d'alimentation fourni, longueur à confirmer (inclus)");
+    expect(cableLine.label).not.toMatch(/\d+([,.]\d+)? m/);
+    expect(cableLine.totalGrossCents).toBe(0);
     const ext = evaluate(catalog, { ...awning, options: [{ familySlug: "cable-alimentation", variantOption: "6m", qty: 1 }] });
     expect(ext.purchasable).toBe(false);
     expect(ext.issues.some((i) => i.code === "cable_extension_prerequisites" && /électricien/.test(i.message))).toBe(true);
     expect(ext.issues.some((i) => i.code === "option_compat_unknown")).toBe(true);
+  });
+  it("une longueur n'est affichée qu'une fois confirmée par le fournisseur", () => {
+    const fam = catalog.families.find((f) => f.slug === "store-banne-ombra")!;
+    const confirmed: CatalogSnapshot = { ...catalog, families: catalog.families.map((f) => (f === fam ? { ...f, technicalSpecs: [...(f.technicalSpecs ?? []), { key: "included_cable_length", label: "Longueur", valueNum: 7500, unit: "mm", source: "supplier_confirmed" as const, sourceRef: "fiche fournisseur v2" }] } : f)) };
+    const r = evaluate(confirmed, { ...awning, options: [] });
+    expect(r.lines.find((l) => l.code.endsWith(":cable"))?.label).toBe("Câble d'alimentation fourni, 7,5 m (inclus)");
   });
   it("rallonge interdite sur une pergola", () => {
     const r = evaluate(catalog, std({ options: [{ familySlug: "cable-alimentation", qty: 1 }] }));
