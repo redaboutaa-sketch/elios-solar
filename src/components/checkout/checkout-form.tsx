@@ -29,7 +29,7 @@ function AddressFields({ p, d, errors }: { p: string; d?: D; errors: Errs }) {
   );
 }
 
-export function CheckoutForm({ defaults, provider }: { defaults: D; provider: "DEMO" | "STRIPE" }) {
+export function CheckoutForm({ defaults, provider }: { defaults: D; provider: "DEMO" | "STRIPE" | "INSTALLMENTS_SIM" }) {
   const [state, action, pending] = useActionState<CheckoutState, FormData>(checkoutAction, null);
   const [billingSame, setBillingSame] = useState(true);
   const errors = state?.fieldErrors;

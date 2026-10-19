@@ -36,6 +36,8 @@ model User {
   carts         Cart[]
   orders        Order[]
   quotes        Quote[]
+  conversations Conversation[]
+  lastSeenAt    DateTime?
 
   @@unique([email])
   @@map("user")
@@ -117,6 +119,10 @@ model SiteSettings {
   indexable            Boolean  @default(false)
   analyticsEnabled     Boolean  @default(false)
   analyticsScriptUrl   String?
+  /** GROUPED = expédition groupée au délai le plus long ; SEPARATE = chaque référence part dès disponibilité */
+  shipmentPolicy       String   @default("GROUPED")
+  chatEnabled          Boolean  @default(true)
+  chatOfflineMessage   String   @default("")
   updatedAt            DateTime @updatedAt
 }
 
@@ -248,11 +254,59 @@ model Variant {
   weightGrams    Int?
   attributes     Json
   active         Boolean    @default(true)
+  /* Disponibilité et délais par référence (itération 3) */
+  availability       Availability @default(TO_CONFIRM)
+  leadMinDays        Int?
+  leadMaxDays        Int?
+  leadUnit           LeadUnit     @default(BUSINESS_DAYS)
+  leadSource         DataStatus   @default(UNKNOWN)
+  leadUpdatedAt      DateTime?
+  supplierDays       Int?
+  preparationDays    Int?
+  productionDays     Int?
+  transportDays      Int?
+  preorderAllowed    Boolean      @default(false)
+  partialShipAllowed Boolean      @default(true)
+  stockSource        String       @default("")
+  stockUpdatedAt     DateTime?
+  /* Validation administrative avec source documentaire */
+  validationSource     String?
+  validationDocumentId String?
+  validatedBy          String?
+  validatedAt          DateTime?
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
   reservations   StockReservation[]
+  movements      StockMovement[]
 
   @@index([familyId])
+}
+
+enum Availability {
+  AVAILABLE
+  ON_ORDER
+  OUT_OF_STOCK
+  TO_CONFIRM
+}
+
+enum LeadUnit {
+  BUSINESS_DAYS
+  CALENDAR_DAYS
+  WEEKS
+}
+
+/** Journal des mouvements de stock (saisie admin, import, correction). */
+model StockMovement {
+  id        String   @id @default(cuid())
+  variantId String
+  variant   Variant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  delta     Int
+  reason    String
+  reference String?
+  actor     String?
+  createdAt DateTime @default(now())
+
+  @@index([variantId, createdAt])
 }
 
 model ClosureCompatRule {
@@ -337,14 +391,124 @@ model CustomPergolaSettings {
 }
 
 /* ------------------------------------------------------------------ */
+/* Grilles tarifaires sur mesure (versionnées, testables avant publication) */
+/* ------------------------------------------------------------------ */
+
+enum GridStatus {
+  DRAFT
+  TESTING
+  PUBLISHED
+  ARCHIVED
+}
+
+enum GridMode {
+  /** cellules largeur × longueur (table fournisseur) */
+  TABLE
+  /** tranches dimensionnelles (bornes min/max) */
+  BANDS
+}
+
+model PriceGrid {
+  id           String     @id @default(cuid())
+  familySlug   String
+  name         String
+  version      Int        @default(1)
+  status       GridStatus @default(DRAFT)
+  mode         GridMode   @default(TABLE)
+  unit         String     @default("mm")
+  currency     String     @default("EUR")
+  validFrom    DateTime?
+  validTo      DateTime?
+  dataStatus   DataStatus @default(DEMO)
+  isDemo       Boolean    @default(true)
+  source       String     @default("")
+  widthMinMm   Int
+  widthMaxMm   Int
+  widthStepMm  Int        @default(10)
+  lengthMinMm  Int
+  lengthMaxMm  Int
+  lengthStepMm Int        @default(10)
+  heightMinMm  Int
+  heightMaxMm  Int
+  heightStepMm Int        @default(10)
+  mountings    String[]   @default([])
+  finishCodes  String[]   @default([])
+  notes        String     @default("")
+  importFilename String?
+  createdBy    String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  cells        PriceGridCell[]
+  surcharges   PriceGridSurcharge[]
+
+  @@unique([familySlug, version])
+  @@index([familySlug, status])
+}
+
+model PriceGridCell {
+  id          String    @id @default(cuid())
+  gridId      String
+  grid        PriceGrid @relation(fields: [gridId], references: [id], onDelete: Cascade)
+  widthMinMm  Int
+  widthMaxMm  Int
+  lengthMinMm Int
+  lengthMaxMm Int
+  mounting    String    @default("*")
+  finishCode  String    @default("*")
+  priceCents  Int
+
+  @@index([gridId])
+}
+
+/** Suppléments : finition, implantation, hauteur au-delà d'un seuil, fermeture par côté, option. */
+model PriceGridSurcharge {
+  id          String    @id @default(cuid())
+  gridId      String
+  grid        PriceGrid @relation(fields: [gridId], references: [id], onDelete: Cascade)
+  code        String
+  label       String
+  kind        String
+  match       String    @default("*")
+  thresholdMm Int?
+  perStepMm   Int?
+  perStepCents Int?
+  priceCents  Int       @default(0)
+  percentBps  Int       @default(0)
+  sortOrder   Int       @default(0)
+
+  @@index([gridId])
+}
+
+/* ------------------------------------------------------------------ */
 /* Médias & documents                                                  */
 /* ------------------------------------------------------------------ */
+
+enum MediaNature {
+  PHOTO
+  RENDER
+  ILLUSTRATION
+  VIDEO
+  DOCUMENT
+}
+
+enum MediaStatus {
+  DRAFT
+  VALIDATED
+  PUBLISHED
+  REJECTED
+}
 
 model Media {
   id         String   @id @default(cuid())
   kind       String   @default("image")
+  /** photo réelle, rendu 3D, illustration, vidéo, document : jamais un rendu présenté comme une photo */
+  nature     MediaNature @default(ILLUSTRATION)
+  status     MediaStatus @default(DRAFT)
   path       String
+  /** vidéo hébergée ailleurs (URL https) ; sinon fichier local */
+  externalUrl String?
   alt        String   @default("")
+  title      String   @default("")
   width      Int?
   height     Int?
   mimeType   String?
@@ -352,7 +516,18 @@ model Media {
   source     String   @default("")
   license    String   @default("")
   credit     String   @default("")
+  rightsNote String   @default("")
+  rightsExpiresAt DateTime?
+  takenAt    DateTime?
+  /** options visibles sur l'image mais non comprises dans le prix affiché */
+  visibleOptions String @default("")
+  /** paramètres du rendu (gamme, finition, implantation, équipements) */
+  renderConfig Json?
+  sortOrder  Int      @default(0)
+  validatedBy String?
+  validatedAt DateTime?
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
   products   ProductMedia[]
   documents  Document[]
   realisations Realisation[]
@@ -365,20 +540,58 @@ model ProductMedia {
   role      String        @default("gallery")
   caption   String        @default("")
   sortOrder Int           @default(0)
+  /** ciblage facultatif : variante, finition, implantation, équipements représentés */
+  variantSku String?
+  finishCode String?
+  mounting   String?
+  tags       String[]     @default([])
+  context    Json?
   family    ProductFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
   media     Media         @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@index([familyId, sortOrder])
 }
 
+enum DocumentStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum DocumentAudience {
+  PUBLIC
+  CUSTOMER
+  INTERNAL
+}
+
+/** Document versionné (notice, fiche technique, certificat, garantie, guide). Un `groupKey` regroupe les versions. */
 model Document {
   id         String         @id @default(cuid())
+  groupKey   String         @default(cuid())
+  version    Int            @default(1)
   familyId   String?
+  variantSku String?
   mediaId    String?
   title      String
   kind       String         @default("notice")
+  summary    String         @default("")
+  status     DocumentStatus @default(DRAFT)
+  audience   DocumentAudience @default(PUBLIC)
   dataStatus DataStatus     @default(UNKNOWN)
+  source     String         @default("")
+  notes      String         @default("")
+  validatedBy String?
+  validatedAt DateTime?
+  publishedAt DateTime?
+  createdBy  String?
   family     ProductFamily? @relation(fields: [familyId], references: [id], onDelete: SetNull)
   media      Media?         @relation(fields: [mediaId], references: [id], onDelete: SetNull)
   createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @default(now()) @updatedAt
+
+  @@unique([groupKey, version])
+  @@index([familyId, status])
 }
 
 /* ------------------------------------------------------------------ */
@@ -584,6 +797,7 @@ model OrderLine {
 enum PaymentProvider {
   DEMO
   STRIPE
+  INSTALLMENTS_SIM
 }
 
 enum PaymentStatus {
@@ -608,6 +822,11 @@ model Payment {
   currency      String          @default("EUR")
   checkoutUrl   String?
   failureReason String?
+  /** card | installments */
+  method        String          @default("card")
+  installments  Int?
+  planProvider  String?
+  feesCents     Int             @default(0)
   events        PaymentEvent[]
   refunds       Refund[]
   createdAt     DateTime        @default(now())
@@ -732,6 +951,89 @@ model AuditLog {
 
   @@index([entity, entityId])
   @@index([createdAt])
+}
+
+/* ------------------------------------------------------------------ */
+/* Paiement fractionné (désactivé tant que le compte marchand n'est pas validé) */
+/* ------------------------------------------------------------------ */
+
+model InstallmentSettings {
+  id                 Int      @id @default(1)
+  /** none | stripe_klarna | stripe_alma | simulator */
+  provider           String   @default("none")
+  enabledTest        Boolean  @default(false)
+  enabledProd        Boolean  @default(false)
+  merchantEligible   Boolean  @default(false)
+  minCents           Int      @default(5000)
+  maxCents           Int      @default(300000)
+  countries          String[] @default(["FR"])
+  currency           String   @default("EUR")
+  installmentCounts  Int[]    @default([3])
+  feesBps            Int      @default(0)
+  feesFixedCents     Int      @default(0)
+  feesLabel          String   @default("")
+  /** « sans frais » affichable uniquement si confirmé par le contrat prestataire */
+  noFeesConfirmed    Boolean  @default(false)
+  termsUrl           String?
+  updatedAt          DateTime @updatedAt
+}
+
+/* ------------------------------------------------------------------ */
+/* Chat de conseil                                                     */
+/* ------------------------------------------------------------------ */
+
+enum ConversationStatus {
+  OPEN
+  WAITING_CUSTOMER
+  CLOSED
+}
+
+enum MessageAuthor {
+  CUSTOMER
+  ADVISOR
+  ASSISTANT
+  SYSTEM
+}
+
+model Conversation {
+  id                 String             @id @default(cuid())
+  userId             String?
+  user               User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  guestKey           String?
+  email              String?
+  name               String?
+  subject            String             @default("")
+  status             ConversationStatus @default(OPEN)
+  configurationId    String?
+  quoteId            String?
+  orderId            String?
+  assignedUserId     String?
+  /** message laissé hors ligne (réponse différée par e-mail) */
+  offline            Boolean            @default(false)
+  consentPrivacy     Boolean            @default(false)
+  lastMessageAt      DateTime           @default(now())
+  lastCustomerReadAt DateTime?
+  lastAdvisorReadAt  DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  messages           ChatMessage[]
+
+  @@index([userId])
+  @@index([guestKey])
+  @@index([status, lastMessageAt])
+}
+
+model ChatMessage {
+  id             String        @id @default(cuid())
+  conversationId String
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  author         MessageAuthor
+  authorUserId   String?
+  body           String
+  meta           Json?
+  createdAt      DateTime      @default(now())
+
+  @@index([conversationId, createdAt])
 }
 
 /* ------------------------------------------------------------------ */
