@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { configureStandard, shot, uid } from "./helpers";
 
 test("configurer une pergola, équiper un côté, vérifier le total, sauvegarder et recharger", async ({ page }) => {

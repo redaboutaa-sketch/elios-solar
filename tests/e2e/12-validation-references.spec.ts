@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { loginAdmin, shot, uid } from "./helpers";
 import { pool } from "./db";
 

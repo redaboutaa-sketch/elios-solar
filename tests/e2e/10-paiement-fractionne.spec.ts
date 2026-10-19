@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page, newClientContext } from "./fixtures";
 import { configureStandard, fillCheckout, shot, uid, loginAdmin } from "./helpers";
 import { one, pool } from "./db";
 
@@ -47,7 +47,7 @@ test("paiement fractionné simulé : activation admin, acceptation puis refus av
     await shot(page, "admin-paiement-fractionne");
 
     // 2. le client paie en 3 fois et le simulateur accepte
-    const ctx = await browser.newContext({ viewport: page.viewportSize() });
+    const ctx = await newClientContext(browser, { viewport: page.viewportSize() });
     const cp = await ctx.newPage();
     const email = `fractionne-${uid()}@test.invalid`;
     await checkoutInstallments(cp, email);

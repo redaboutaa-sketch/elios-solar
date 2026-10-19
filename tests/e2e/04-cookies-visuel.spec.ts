@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { pool } from "./db";
 import { shot } from "./helpers";
 

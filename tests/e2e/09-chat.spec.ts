@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, newClientContext } from "./fixtures";
 import { acceptNecessaryOnly, shot, uid, loginAdmin } from "./helpers";
 import { one } from "./db";
 
@@ -10,7 +10,7 @@ test("chat : un visiteur écrit, un conseiller répond, le visiteur voit la rép
   const answer = `Bonjour, oui : je vous envoie le détail (${id}).`;
 
   // 1. le visiteur ouvre le widget, consent et envoie un message
-  const visitor = await browser.newContext({ viewport: page.viewportSize() });
+  const visitor = await newClientContext(browser, { viewport: page.viewportSize() });
   const vp = await visitor.newPage();
   await vp.goto("/aide");
   await acceptNecessaryOnly(vp);

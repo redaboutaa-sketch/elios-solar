@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./fixtures";
 import { acceptNecessaryOnly, configureStandard, shot } from "./helpers";
 
 // Chromium headless : rendu WebGL logiciel (SwiftShader) pour que le canvas soit réellement créé.

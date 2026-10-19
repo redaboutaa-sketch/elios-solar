@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { many, one, runMailWorkerOnce } from "./db";
 import { acceptNecessaryOnly, shot, uid } from "./helpers";
 

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { configureStandard, shot } from "./helpers";
 
 test("modifier une configuration depuis le panier remplace la ligne sans la dupliquer", async ({ page }) => {

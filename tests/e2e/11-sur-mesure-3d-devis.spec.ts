@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page, newClientContext } from "./fixtures";
 import { acceptNecessaryOnly, createAccount, loginAdmin, uid } from "./helpers";
 import { one } from "./db";
 
@@ -85,13 +85,13 @@ test("sur mesure : vue 3D aux cotes saisies, limites, devis avec visualisation j
   expect((await pdf.body()).toString("latin1")).toMatch(/\/Subtype \/Image/);
 
   // anonyme : ni le visuel ni le PDF, même avec l'identifiant
-  const anon = await browser.newContext();
+  const anon = await newClientContext(browser);
   expect((await anon.request.get(`/api/devis/${quote!.id}/visuel`)).status()).toBe(404);
   expect((await anon.request.get(`/api/devis/${quote!.id}/pdf`)).status()).toBe(404);
   await anon.close();
 
   // administration : même visuel, figé
-  const admin = await browser.newContext({ viewport: page.viewportSize() });
+  const admin = await newClientContext(browser, { viewport: page.viewportSize() });
   const adminPage = await admin.newPage();
   await loginAdmin(adminPage, `/admin/devis/${quote!.id}`);
   await expect(adminPage.getByTestId("quote-visual")).toContainText(/Visualisation 3D/);
@@ -101,7 +101,7 @@ test("sur mesure : vue 3D aux cotes saisies, limites, devis avec visualisation j
 });
 
 test("sans WebGL : repli 2D, devis toujours enregistré avec un plan 2D joint", async ({ browser, page }) => {
-  const ctx = await browser.newContext({ viewport: page.viewportSize() });
+  const ctx = await newClientContext(browser, { viewport: page.viewportSize() });
   await ctx.addInitScript(() => {
     const orig = HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...args: unknown[]) {

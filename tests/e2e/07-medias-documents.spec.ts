@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { acceptNecessaryOnly, shot, uid, loginAdmin } from "./helpers";
 import { many, one, pool } from "./db";

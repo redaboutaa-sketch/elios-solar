@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, newClientContext } from "./fixtures";
 import { configureStandard, fillCheckout, shot, uid, loginAdmin } from "./helpers";
 import { one } from "./db";
 
@@ -7,7 +7,7 @@ const SKU = "ES-PS1-3X4-ANT-AUT";
 
 test("changer un tarif en administration : appliqué au configurateur, sans altérer une commande passée", async ({ page, browser }) => {
   // 1. une commande payée au prix courant (client invité, contexte séparé)
-  const customer = await browser.newContext({ viewport: page.viewportSize() });
+  const customer = await newClientContext(browser, { viewport: page.viewportSize() });
   const cp = await customer.newPage();
   await configureStandard(cp);
   await cp.getByRole("button", { name: "Ajouter au panier" }).click();
