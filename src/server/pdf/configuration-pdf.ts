@@ -5,10 +5,31 @@ import { BRAND } from "@/config/brand";
 
 function clean(s: string): string {
   // pdf-lib (police standard WinAnsi) : remplacer les caractères non supportés
-  return s.replace(/[−]/g, "-").replace(/[×]/g, "x").replace(/[  ]/g, " ").replace(/[^\x20-\x7E\xA0-\xFF]/g, "");
+  return s.replace(/[−—–]/g, "-").replace(/[’‘]/g, "'").replace(/[«»]/g, '"').replace(/…/g, "...").replace(/[×]/g, "x").replace(/[  ]/g, " ").replace(/[^\x20-\x7E\xA0-\xFF]/g, "");
 }
 
-export async function buildConfigurationPdf(opts: { title: string; result: EvaluationResult; reference: string; validUntil?: Date | null; kind: "configuration" | "devis"; seller?: { legalName?: string | null; addressLine1?: string | null; postalCode?: string | null; city?: string | null } | null }): Promise<Uint8Array> {
+export interface PdfVisual {
+  kind: "SCENE_3D" | "PLAN_2D";
+  bytes: Uint8Array;
+  mime: "image/png" | "image/jpeg";
+  disclaimer: string;
+  represented: string[];
+  /** légende (plan 2D) */
+  legend?: string;
+}
+
+export async function buildConfigurationPdf(opts: {
+  title: string;
+  result: EvaluationResult;
+  reference: string;
+  validUntil?: Date | null;
+  kind: "configuration" | "devis";
+  seller?: { legalName?: string | null; addressLine1?: string | null; postalCode?: string | null; city?: string | null } | null;
+  /** visualisation jointe (devis) ; `null` = indisponible (mention explicite) ; `undefined` = section absente */
+  visual?: PdfVisual | null;
+  /** lignes d'information supplémentaires sous l'en-tête (statut, montant proposé…) */
+  info?: string[];
+}): Promise<Uint8Array> {
   const { result } = opts;
   const pdf = await PDFDocument.create();
   const font = await pdf.embedFont(StandardFonts.Helvetica);
@@ -23,8 +44,31 @@ export async function buildConfigurationPdf(opts: { title: string; result: Evalu
   text(opts.seller?.legalName ? `${opts.seller.legalName} - ${opts.seller.addressLine1 ?? ""} ${opts.seller.postalCode ?? ""} ${opts.seller.city ?? ""}` : "Identite du vendeur a renseigner (administration > reglages).", 40, 8, font, rgb(0.4, 0.4, 0.4)); line(14);
   text(`Reference : ${opts.reference}`, 40, 10); text(`Date : ${new Date().toLocaleDateString("fr-FR")}`, 400, 10); line();
   if (opts.validUntil) { text(`Validite : jusqu'au ${opts.validUntil.toLocaleDateString("fr-FR")}`, 40, 10); line(); }
+  for (const i of opts.info ?? []) { text(i, 40, 10); line(); }
   text(`Moteur ${result.engineVersion} - catalogue ${result.catalogVersion}`, 40, 8, font, rgb(0.4, 0.4, 0.4)); line(22);
   text(opts.title, 40, 13, bold); line(20);
+  if (opts.visual) {
+    const v = opts.visual;
+    const img = v.mime === "image/png" ? await pdf.embedPng(v.bytes) : await pdf.embedJpg(v.bytes);
+    const maxW = 515;
+    const maxH = 290;
+    const k = Math.min(maxW / img.width, maxH / img.height, 1);
+    const w = img.width * k;
+    const h = img.height * k;
+    if (y - h < 80) { page = pdf.addPage([595.28, 841.89]); y = 800; }
+    page.drawImage(img, { x: 40 + (maxW - w) / 2, y: y - h, width: w, height: h });
+    y -= h + 12;
+    text(v.kind === "SCENE_3D" ? "Visualisation 3D du projet" : "Plan 2D du projet (la vue 3D n'a pas pu etre jointe)", 40, 9, bold); line(12);
+    text(v.disclaimer, 40, 8, bold, rgb(0.55, 0.3, 0.05)); line(12);
+    if (v.legend) { text(v.legend.slice(0, 160), 40, 7, font, rgb(0.35, 0.35, 0.35)); line(11); }
+    if (v.represented.length) {
+      text("Elements representes :", 40, 8, bold); line(11);
+      for (const r of v.represented) { text(`- ${r}`.slice(0, 120), 46, 7.5); line(10); }
+    }
+    line(10);
+  } else if (opts.visual === null) {
+    text("Visualisation : indisponible pour ce devis (capture non transmise ou configuration non representable).", 40, 8, font, rgb(0.4, 0.4, 0.4)); line(18);
+  }
   if (result.layout) {
     const l = result.layout;
     text(`Implantation : ${l.mounting === "wall" ? "adossee" : "autoportee"} - ${l.widthMm / 1000} x ${l.lengthMm / 1000} m - ${l.postCount} poteaux (indicatif)`, 40, 10); line();

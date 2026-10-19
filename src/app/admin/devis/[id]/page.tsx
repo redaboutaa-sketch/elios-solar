@@ -7,6 +7,7 @@ import { Price } from "@/components/ui/price";
 import { DemoBadge } from "@/components/ui/demo-badge";
 import { IssueList } from "@/components/ui/alert";
 import { PlanPreview } from "@/components/configurator/plan-preview";
+import { QuoteVisualCard } from "@/components/quote/quote-visual-card";
 import { Flash, Options, PageTitle, QUOTE_STATUS_FR, Section, Table, fmtDate } from "@/components/admin/ui";
 import { centsToEuros, toDateInput } from "@/server/admin/form";
 import { updateQuoteAction } from "@/server/actions/admin/quotes";
@@ -17,7 +18,7 @@ export const metadata: Metadata = { title: "Détail du devis" };
 export default async function QuoteAdminPage(props: PageProps<"/admin/devis/[id]">) {
   await requireRole(["ADMIN", "MANAGER"]);
   const { id } = await props.params;
-  const quote = await prisma.quote.findUnique({ where: { id }, include: { configuration: { select: { id: true, shareToken: true, shareRevoked: true } } } });
+  const quote = await prisma.quote.findUnique({ where: { id }, include: { configuration: { select: { id: true, shareToken: true, shareRevoked: true, version: true } }, visuals: { orderBy: { createdAt: "asc" } } } });
   if (!quote) notFound();
   const snap = quote.snapshot as { input?: ConfigurationInput | null; result?: EvaluationResult | null } | null;
   const result = snap?.result ?? null;
@@ -42,6 +43,12 @@ export default async function QuoteAdminPage(props: PageProps<"/admin/devis/[id]
             </dl>
             {quote.message && <p className="mt-3 whitespace-pre-wrap rounded bg-sand-100 p-3 text-sm">{quote.message}</p>}
           </Section>
+          {input && (
+            <Section title="Visualisation jointe">
+              <QuoteVisualCard quoteId={quote.id} visual={quote.visuals[0]} admin />
+              <p className="mt-3 text-sm"><a className="underline" href={`/api/devis/${quote.id}/pdf`} target="_blank" rel="noopener">PDF du devis (avec visualisation)</a>{quote.configuration && <span className="text-stone-700"> · projet enregistré actuellement en v{quote.configuration.version} : la visualisation du devis reste celle de l'émission.</span>}</p>
+            </Section>
+          )}
           <Section title="Instantané de la configuration">
             {!result ? <p className="text-sm text-stone-700">Aucune configuration jointe.</p> : (
               <>

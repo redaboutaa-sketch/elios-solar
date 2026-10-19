@@ -11,7 +11,7 @@ import { SIDE_LABELS } from "@/domain/layout";
 import { SceneEngine, VIEW_PRESETS, supportsWebGL, type ViewPreset } from "./scene-engine";
 import { buildPergolaScene } from "./pergola-builder";
 import { buildAwningScene } from "./awning-builder";
-import { composeProjectImage, downloadDataUrl, EXPORT_FILENAME } from "./export-image";
+import { captionOf, composeProjectImage, downloadDataUrl, EXPORT_FILENAME } from "./export-image";
 
 const UNAVAILABLE = "La vue 3D n'est pas disponible sur cet appareil (WebGL désactivé ou non pris en charge). L'illustration et le plan 2D restent disponibles et le configurateur reste entièrement utilisable.";
 
@@ -45,9 +45,11 @@ interface ViewerProps {
   onImage?: (dataUrl: string) => void;
   /** contenu affiché si WebGL est indisponible */
   fallback?: ReactNode;
+  /** expose une capture de la vue courante (sans téléchargement), ex. pour la joindre à un devis ; null au démontage */
+  onCaptureReady?: (capture: (() => Promise<string>) | null) => void;
 }
 
-function Viewer3D({ model, selected = null, onSelect, onImage, fallback }: ViewerProps) {
+function Viewer3D({ model, selected = null, onSelect, onImage, fallback, onCaptureReady }: ViewerProps) {
   const [failed, setFailed] = useState(() => !supportsWebGL());
   const [engine, setEngine] = useState<SceneEngine | null>(null);
   const [view, setView] = useState<ViewPreset>("three_quarter");
@@ -103,12 +105,18 @@ function Viewer3D({ model, selected = null, onSelect, onImage, fallback }: Viewe
     framed.current = true;
   }, [engine, frameKey, view]);
 
+  useEffect(() => {
+    if (!onCaptureReady) return;
+    onCaptureReady(engine ? () => composeProjectImage(engine.capture(), captionOf(model)) : null);
+    return () => onCaptureReady(null);
+  }, [engine, model, onCaptureReady]);
+
   const exportImage = async () => {
     if (!engine) return;
     setExportState("busy");
     try {
       const raw = engine.capture();
-      const dataUrl = await composeProjectImage(raw, { title: model.familyName, dimension: model.dimensionLabel, finish: model.finishLabel, extra: model.kind === "pergola" ? (model.mounting === "wall" ? "adossée" : "autoportée") : undefined });
+      const dataUrl = await composeProjectImage(raw, captionOf(model));
       downloadDataUrl(dataUrl, EXPORT_FILENAME);
       onImage?.(dataUrl);
       setExportState("done");
@@ -178,7 +186,13 @@ function Viewer3D({ model, selected = null, onSelect, onImage, fallback }: Viewe
         <span aria-live="polite" className="text-xs text-stone-700">{exportState === "done" ? "Image exportée." : exportState === "error" ? "Export impossible sur ce navigateur." : ""}</span>
       </div>
       <p className="text-xs text-stone-700">Faites glisser pour tourner, molette ou pincement pour zoomer{onSelect ? ", touchez une ouverture pour l'équiper" : ""}. Réglages d'affichage uniquement : ils ne modifient ni la configuration ni le prix.</p>
-      <p className="text-xs font-medium text-stone-800">{model.disclaimer} — hauteur ({model.heightMm / 1000} m) et sections indicatives.</p>
+      {model.kind === "pergola" && model.toConfirm.length > 0 && (
+        <div data-testid="scene-3d-to-confirm" className="rounded-lg border border-warning/40 bg-white p-3 text-xs text-stone-800">
+          <p className="font-medium">Représenté à titre indicatif, à confirmer sur devis :</p>
+          <ul className="mt-1 list-disc pl-4">{model.toConfirm.map((t) => <li key={t}>{t}</li>)}</ul>
+        </div>
+      )}
+      <p className="text-xs font-medium text-stone-800">{model.disclaimer} — {model.kind === "pergola" && !model.indicative.heightMm ? `hauteur saisie (${(model.heightMm / 1000).toLocaleString("fr-FR")} m), sections indicatives.` : `hauteur (${(model.heightMm / 1000).toLocaleString("fr-FR")} m) et sections indicatives.`}</p>
     </div>
   );
 }

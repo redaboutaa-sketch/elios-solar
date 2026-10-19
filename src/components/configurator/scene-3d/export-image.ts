@@ -2,10 +2,10 @@
  * Compose l'image du projet : capture du canvas 3D + bandeau texte dessiné sur un canvas 2D.
  * Aucune dépendance three.js.
  */
-import { SCENE_DISCLAIMER } from "@/domain/scene-model";
+import { VISUAL_DISCLAIMER, type SceneModel } from "@/domain/scene-model";
 
 export const EXPORT_FILENAME = "projet-elios-solar.png";
-export const EXPORT_FOOTER = `${SCENE_DISCLAIMER} — ELIOS SOLAR (démonstration)`;
+export const EXPORT_FOOTER = `${VISUAL_DISCLAIMER} — ELIOS SOLAR (démonstration)`;
 
 export interface ImageCaption {
   title: string; // nom de la gamme
@@ -61,4 +61,26 @@ export function downloadDataUrl(dataUrl: string, filename = EXPORT_FILENAME) {
   document.body.appendChild(a);
   a.click();
   a.remove();
+}
+
+/**
+ * Prépare l'image pour l'envoi avec une demande de devis : JPEG, largeur bornée.
+ * (Le serveur revérifie signature, poids et dimensions, puis ré-encode.)
+ */
+export async function toUploadJpeg(dataUrl: string, maxWidth = 1600, quality = 0.85): Promise<string> {
+  const img = await loadImage(dataUrl);
+  const scale = Math.min(1, maxWidth / img.naturalWidth);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(img.naturalWidth * scale);
+  canvas.height = Math.round(img.naturalHeight * scale);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("canvas 2D indisponible");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
+export function captionOf(model: SceneModel): ImageCaption {
+  return { title: model.familyName, dimension: model.dimensionLabel, finish: model.finishLabel, extra: model.kind === "pergola" ? (model.mounting === "wall" ? "adossée" : "autoportée") : undefined };
 }

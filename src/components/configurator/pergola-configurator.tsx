@@ -16,6 +16,7 @@ import { IssueList, Notice } from "@/components/ui/alert";
 import { DemoBadge } from "@/components/ui/demo-badge";
 import { QuoteForm } from "./quote-form";
 import { PergolaVisuals } from "./scene-3d/visuals";
+import { useQuoteVisual } from "./quote-visual";
 
 type Pending = ReturnType<typeof adaptStandardInput>["pending"];
 
@@ -36,6 +37,7 @@ export function PergolaConfigurator({ catalog, initial, existing, replaceLineId 
   const dim = catalog.dimensions.find((d) => d.code === input.dimensionCode);
   const fin = catalog.finishes.find((f) => f.code === input.finishCode);
   const result = useMemo(() => evaluate(catalog, input), [catalog, input]);
+  const visual = useQuoteVisual(catalog, input, result);
   const layout = useMemo(() => (family && dim ? layoutForFamily(family, dim.widthMm, dim.lengthMm, input.mounting) : null), [family, dim, input.mounting]);
   const segments = layout ? allSegments(layout) : [];
 
@@ -79,7 +81,7 @@ export function PergolaConfigurator({ catalog, initial, existing, replaceLineId 
     <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
       {/* Colonne visuelle */}
       <div className="space-y-4 lg:sticky lg:top-24 self-start">
-        <PergolaVisuals catalog={catalog} input={input} result={result} selectedSegment={selectedSegment} onSelectSegment={(id) => { setSelectedSegment(id); document.getElementById("etape-ouvertures")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+        <PergolaVisuals catalog={catalog} input={input} result={result} onImage={visual.onImage} onCaptureReady={visual.onCaptureReady} selectedSegment={selectedSegment} onSelectSegment={(id) => { setSelectedSegment(id); document.getElementById("etape-ouvertures")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
           art={<PergolaArt structure={colorOf(fin?.structureColor)} blades={colorOf(fin?.bladeColor)} mounting={input.mounting} lighting={!!family?.lightingIncluded && family.lightingIncluded !== "none" || input.options.some((o) => o.familySlug === "bandes-led")} closures={{ left: artFor(input.segments["left-1"]), right: artFor(input.segments["right-1"]), front: artFor(input.segments["front-1"]) }} className="w-full h-auto" title="Aperçu schématique de la configuration" />}
           plan={layout ? <PlanPreview layout={layout} segments={input.segments} selected={selectedSegment} onSelect={(id) => { setSelectedSegment(id); document.getElementById("etape-ouvertures")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} finishSwatch={fin?.swatch} options={{ lighting: !!family?.lightingIncluded && family.lightingIncluded !== "none" || input.options.some((o) => o.familySlug === "bandes-led"), heaters: input.options.find((o) => o.familySlug === "lampe-chauffante")?.qty }} /> : null} />
         <div className="card p-5 hidden lg:block" aria-live="polite">
@@ -276,7 +278,7 @@ export function PergolaConfigurator({ catalog, initial, existing, replaceLineId 
               <button type="button" className="btn-accent sm:col-span-2" onClick={addToCart} disabled={busy || !result.purchasable} title={result.purchasable ? undefined : "Des points sont à résoudre avant l'achat"}><ShoppingBag className="size-4" aria-hidden="true" /> {result.purchasable ? (replaceLineId ? "Mettre à jour le panier" : "Ajouter au panier") : blocking.length ? "Achat impossible en l'état — devis conseillé" : "Ajouter au panier"}</button>
             </div>
             {shareUrl && <p className="mt-3 text-xs text-stone-700 flex items-center gap-1 break-all"><Share2 className="size-3" aria-hidden="true" /> Lien de partage (sans données personnelles, révocable depuis Mes projets) : <a className="underline" href={shareUrl}>{shareUrl}</a> · <a className="underline" href={`/projets/${saved!.token}/pdf`}>PDF</a></p>}
-            {showQuote && <div className="mt-5 border-t border-sand-200 pt-4"><QuoteForm input={input} kind="configuration" configurationId={saved?.id ?? null} onDone={(n) => { setShowQuote(false); setMessage({ tone: "success", text: `Demande de devis ${n} enregistrée : vous recevez une confirmation par e-mail.` }); }} /></div>}
+            {showQuote && <div className="mt-5 border-t border-sand-200 pt-4"><QuoteForm input={input} kind="configuration" configurationId={saved?.id ?? null} getVisual={visual.getVisual} onDone={(n, note) => { setShowQuote(false); setMessage({ tone: "success", text: <><span data-testid="quote-done">Demande de devis {n} enregistrée : vous recevez une confirmation par e-mail.</span>{note && <span data-testid="quote-visual-status" className="block mt-1">{note}</span>}</> }); }} /></div>}
           </div>
         </Step>
       </div>

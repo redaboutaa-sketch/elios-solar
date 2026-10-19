@@ -11,6 +11,7 @@ import { DemoBadge } from "@/components/ui/demo-badge";
 import { QuoteForm } from "./quote-form";
 import { includedCablePublicText } from "@/domain/technical-spec";
 import { AwningVisuals } from "./scene-3d/visuals";
+import { useQuoteVisual } from "./quote-visual";
 
 const CAB: Record<string, string> = { ANTHRACITE: "#3a3d41", WHITE: "#e9e6df" };
 const FAB: Record<string, [string, string]> = { GREY: ["gris", "#9a9a94"], BEIGE: ["beige", "#d9c7a5"] };
@@ -23,6 +24,7 @@ export function AwningConfigurator({ catalog, familySlug, initial = null, replac
   const [input, setInput] = useState<AwningInput>(initial ?? { kind: "awning", familySlug, widthMm: combos[0]?.widthMm ?? 3000, projectionMm: combos[0]?.projectionMm ?? 2000, cabinetColor: "ANTHRACITE", fabricCode: "GREY", bracketMount: "wall", options: [], installation: "self", delivery: { countryCode: "FR" } });
   const projections = combos.filter((c) => c.widthMm === input.widthMm).map((c) => c.projectionMm).sort((a, b) => a - b);
   const result = useMemo(() => evaluate(catalog, input), [catalog, input]);
+  const visual = useQuoteVisual(catalog, input, result);
   const [msg, setMsg] = useState<string | null>(null);
   const [showQuote, setShowQuote] = useState(false);
   const [busy, start] = useTransition();
@@ -33,7 +35,7 @@ export function AwningConfigurator({ catalog, familySlug, initial = null, replac
   return (
     <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
       <div className="space-y-4 lg:sticky lg:top-24 self-start">
-        <AwningVisuals catalog={catalog} input={input} art={<AwningArt cabinet={CAB[input.cabinetColor]} fabric={FAB[input.fabricCode]?.[1]} className="w-full h-auto" />} />
+        <AwningVisuals catalog={catalog} input={input} onImage={visual.onImage} onCaptureReady={visual.onCaptureReady} art={<AwningArt cabinet={CAB[input.cabinetColor]} fabric={FAB[input.fabricCode]?.[1]} className="w-full h-auto" />} />
         <div className="card p-5"><p className="text-sm text-stone-700">Total {result.totals.isFinal ? "définitif" : "estimé"}</p><p className="text-3xl font-semibold">{formatEur(result.totals.totalGrossCents)}</p>{result.containsDemoData && <DemoBadge className="mt-1" />}</div>
       </div>
       <div className="space-y-6">
@@ -56,7 +58,7 @@ export function AwningConfigurator({ catalog, familySlug, initial = null, replac
             <button type="button" className="btn-accent" disabled={busy || !result.purchasable} onClick={() => start(async () => { const r = await addToCartAction(input, null, replaceLineId); if (r.ok) router.push("/panier"); else setMsg(r.error); })}>{replaceLineId ? "Mettre à jour le panier" : "Ajouter au panier"}</button>
             <button type="button" className="btn-secondary" onClick={() => setShowQuote((s) => !s)}>Demander un devis</button>
           </div>
-          {showQuote && <div className="mt-4 border-t border-sand-200 pt-4"><QuoteForm input={input} kind="configuration" configurationId={null} /></div>}
+          {showQuote && <div className="mt-4 border-t border-sand-200 pt-4"><QuoteForm input={input} kind="configuration" configurationId={null} getVisual={visual.getVisual} /></div>}
         </section>
       </div>
     </div>

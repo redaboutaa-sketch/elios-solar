@@ -10,6 +10,8 @@ import { PlanPreview } from "./plan-preview";
 import { IssueList } from "@/components/ui/alert";
 import { QuoteForm } from "./quote-form";
 import { PergolaArt, colorOf } from "@/components/illustrations/pergola";
+import { PergolaVisuals } from "./scene-3d/visuals";
+import { useQuoteVisual } from "./quote-visual";
 
 const SIDES: Array<[SideKey, string]> = [["back", "Arrière"], ["front", "Avant"], ["left", "Gauche"], ["right", "Droite"]];
 
@@ -17,6 +19,8 @@ export function CustomConfigurator({ catalog }: { catalog: CatalogSnapshot }) {
   const c = catalog.custom;
   const [input, setInput] = useState<PergolaCustomInput>({ kind: "pergola_custom", widthMm: 3500, lengthMm: 4500, heightMm: 2500, mounting: "wall", finishCode: "ANTHRACITE", sides: {}, options: [], installation: "self", delivery: { countryCode: "FR" } });
   const result = useMemo(() => evaluate(catalog, input), [catalog, input]);
+  const visual = useQuoteVisual(catalog, input, result);
+  const customFamily = catalog.families.find((f) => f.kind === "pergola_custom");
   const router = useRouter();
   const [busy, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
@@ -29,8 +33,9 @@ export function CustomConfigurator({ catalog }: { catalog: CatalogSnapshot }) {
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
       <div className="space-y-4 lg:sticky lg:top-24 self-start">
-        <div className="card overflow-hidden"><PergolaArt structure={colorOf(fin?.structureColor)} blades={colorOf(fin?.bladeColor)} mounting={input.mounting} lighting className="w-full h-auto" title="Aperçu schématique sur mesure" /></div>
-        {result.layout && <div className="card p-3"><PlanPreview layout={result.layout} segments={segmentsForPreview} finishSwatch={fin?.swatch} /></div>}
+        <PergolaVisuals catalog={catalog} input={input} result={result} onImage={visual.onImage} onCaptureReady={visual.onCaptureReady}
+          art={<PergolaArt structure={colorOf(fin?.structureColor)} blades={colorOf(fin?.bladeColor)} mounting={input.mounting} lighting className="w-full h-auto" title="Aperçu schématique sur mesure" />}
+          plan={result.layout ? <PlanPreview layout={result.layout} segments={segmentsForPreview} finishSwatch={fin?.swatch} options={{ lighting: (!!customFamily?.lightingIncluded && customFamily.lightingIncluded !== "none") || input.options.some((o) => o.familySlug === "bandes-led"), heaters: input.options.find((o) => o.familySlug === "lampe-chauffante")?.qty }} /> : null} />
         <p className="text-xs text-stone-700">Bornes dimensionnelles : largeur {c.widthMm.min}–{c.widthMm.max} mm, longueur {c.lengthMm.min}–{c.lengthMm.max} mm, hauteur {c.heightMm.min}–{c.heightMm.max} mm ({c.dataStatus === "unknown" ? "à confirmer par le fournisseur" : c.dataStatus}).</p>
       </div>
       <div className="space-y-8">
@@ -79,7 +84,7 @@ export function CustomConfigurator({ catalog }: { catalog: CatalogSnapshot }) {
         <IssueList issues={result.issues} />
         <section className="card p-5">
           <h2 className="font-display text-xl">Demander le devis</h2>
-          <div className="mt-3"><QuoteForm input={input} kind="custom" configurationId={null} /></div>
+          <div className="mt-3"><QuoteForm input={input} kind="custom" configurationId={null} getVisual={visual.getVisual} /></div>
         </section>
       </div>
     </div>

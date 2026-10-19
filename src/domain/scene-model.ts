@@ -12,9 +12,13 @@
  * - y : la hauteur (0 = sol).
  */
 import { layoutForFamily } from "./layout";
-import type { AwningInput, CatalogSnapshot, ConfigurationInput, EvaluationResult, Layout, Mounting, PergolaStandardInput, SideKey } from "./types";
+import type { AwningInput, CatalogSnapshot, ConfigurationInput, EvaluationResult, Layout, Mounting, PergolaCustomInput, PergolaStandardInput, SideKey } from "./types";
 
 export const SCENE_DISCLAIMER = "Visualisation indicative — ne constitue pas un plan d'exécution";
+/** Mention portée par toute image jointe à un devis (image, PDF, compte, administration). */
+export const VISUAL_DISCLAIMER = "Visualisation non contractuelle — ne constitue ni un plan d'exécution ni une validation technique";
+/** Mention ajoutée aux scènes sur mesure : la géométrie ne valide pas la faisabilité. */
+export const CUSTOM_FEASIBILITY_NOTE = "Faisabilité technique à valider sur devis : la représentation reprend vos cotes sans les valider.";
 
 /** Hauteur de passage indicative (la fiche fournisseur n'est pas validée). */
 export const INDICATIVE_HEIGHT_MM = 2500;
@@ -69,7 +73,7 @@ export interface SceneClosure {
    * Assemblage lu sur la variante catalogue (persiennes 5/6 m : modules avec poteau intermédiaire).
    * `toConfirm` = assemblage non validé par le fournisseur : représenté à titre indicatif.
    */
-  assembly: { kind: "monobloc" | "modular"; modules: number; intermediatePosts: number; usableWidthMm?: number; toConfirm: boolean };
+  assembly: { kind: "monobloc" | "modular" | "made_to_measure"; modules: number; intermediatePosts: number; usableWidthMm?: number; toConfirm: boolean };
 }
 
 export interface SceneOpening {
@@ -84,6 +88,8 @@ export interface SceneOpening {
 
 export interface PergolaSceneModel {
   kind: "pergola";
+  /** gamme standard (dimension catalogue) ou sur mesure (cotes saisies) */
+  source: "standard" | "custom";
   familySlug: string;
   familyName: string;
   dimensionLabel: string;
@@ -125,7 +131,10 @@ export interface PergolaSceneModel {
   };
   heaters: { count: number; option?: string };
   lanterns: { count: number; option?: string };
-  indicative: { heightMm: true; sections: true; bladeCount: true; accessoryPlacement: true };
+  /** la hauteur est-elle indicative (gamme standard) ou saisie (sur mesure) ? */
+  indicative: { heightMm: boolean; sections: true; bladeCount: true; accessoryPlacement: true };
+  /** éléments représentés mais non confirmés (assemblages, poteaux intermédiaires, bornes) */
+  toConfirm: string[];
   disclaimer: string;
 }
 
@@ -195,7 +204,15 @@ function pointAlong(from: ScenePoint, to: ScenePoint, distanceMm: number): Scene
 }
 
 /** Modèle de scène d'une pergola standard à partir du layout (géométrie) et de l'entrée. */
-export function buildPergolaSceneModel(catalog: CatalogSnapshot, input: PergolaStandardInput, layout: Layout): PergolaSceneModel {
+interface SceneOverrides {
+  source: "custom";
+  heightMm: number;
+  dimensionLabel: string;
+  /** fermetures fabriquées à la cote : assemblage jamais déduit d'une variante catalogue */
+  boundsStatus: string;
+}
+
+export function buildPergolaSceneModel(catalog: CatalogSnapshot, input: PergolaStandardInput, layout: Layout, overrides?: SceneOverrides): PergolaSceneModel {
   const family = catalog.families.find((f) => f.slug === input.familySlug);
   const dim = catalog.dimensions.find((d) => d.code === input.dimensionCode);
   const fin = catalog.finishes.find((f) => f.code === input.finishCode);
@@ -227,8 +244,13 @@ export function buildPergolaSceneModel(catalog: CatalogSnapshot, input: PergolaS
       const segTo = pointAlong(from, to, acc);
       if (seg.hasDividerPost) posts.push({ id: `post-${seg.id}`, kind: "divider", side: side.key, ...segTo });
       const choice = input.segments[seg.id];
-      const closure: SceneClosure | null = choice
-        ? { id: seg.id, side: side.key, index: seg.index, familySlug: choice.closureFamilySlug, type: closureTypeOf(choice.closureFamilySlug), option: choice.option, lengthMm: seg.lengthMm, from: segFrom, to: segTo, assembly: closureAssembly(catalog, choice.closureFamilySlug, choice.option, seg.lengthMm, fin?.structureColor ?? "ANTHRACITE", mounting) }
+      const assembly: SceneClosure["assembly"] | null = choice
+        ? overrides
+          ? { kind: "made_to_measure", modules: 1, intermediatePosts: 0, toConfirm: true }
+          : closureAssembly(catalog, choice.closureFamilySlug, choice.option, seg.lengthMm, fin?.structureColor ?? "ANTHRACITE", mounting)
+        : null;
+      const closure: SceneClosure | null = choice && assembly
+        ? { id: seg.id, side: side.key, index: seg.index, familySlug: choice.closureFamilySlug, type: closureTypeOf(choice.closureFamilySlug), option: choice.option, lengthMm: seg.lengthMm, from: segFrom, to: segTo, assembly }
         : null;
       if (closure) closures.push(closure);
       openings.push({ id: seg.id, side: side.key, index: seg.index, lengthMm: seg.lengthMm, from: segFrom, to: segTo, closure });
@@ -240,15 +262,27 @@ export function buildPergolaSceneModel(catalog: CatalogSnapshot, input: PergolaS
   const structureCode = fin?.structureColor ?? "ANTHRACITE";
   const bladeCode = fin?.bladeColor ?? structureCode;
 
+  const toConfirm: string[] = [];
+  for (const c of closures) {
+    if (!c.assembly.toConfirm) continue;
+    const name = catalog.families.find((f) => f.slug === c.familySlug)?.name ?? c.familySlug;
+    const where = `côté ${c.side === "back" ? "arrière" : c.side === "front" ? "avant" : c.side === "left" ? "gauche" : "droit"}${side2count(openings, c.side) > 1 ? ` ${c.index}` : ""}`;
+    toConfirm.push(c.assembly.kind === "made_to_measure" ? `${name} ${where} : fabrication et assemblage à la cote (${fmtM(c.lengthMm)} m) à confirmer` : `${name} ${where} : assemblage en ${c.assembly.modules} modules à confirmer`);
+  }
+  const dividers = posts.filter((p) => p.kind === "divider").length;
+  if (overrides && dividers > 0) toConfirm.push(`${dividers} poteau${dividers > 1 ? "x" : ""} intermédiaire${dividers > 1 ? "s" : ""} représenté${dividers > 1 ? "s" : ""} selon la règle de portée de démonstration (à confirmer)`);
+  if (overrides && overrides.boundsStatus !== "supplier_verified") toConfirm.push("Bornes dimensionnelles du sur mesure non confirmées par le fournisseur");
+
   return {
     kind: "pergola",
+    source: overrides?.source ?? "standard",
     familySlug: input.familySlug,
     familyName: family?.name ?? input.familySlug,
-    dimensionLabel: dim?.label ?? `${lengthMm / 1000} × ${widthMm / 1000} m`,
+    dimensionLabel: overrides?.dimensionLabel ?? dim?.label ?? `${lengthMm / 1000} × ${widthMm / 1000} m`,
     finishLabel: fin?.label ?? input.finishCode,
     widthMm,
     lengthMm,
-    heightMm: INDICATIVE_HEIGHT_MM,
+    heightMm: overrides?.heightMm ?? INDICATIVE_HEIGHT_MM,
     mounting,
     wall,
     posts,
@@ -266,9 +300,50 @@ export function buildPergolaSceneModel(catalog: CatalogSnapshot, input: PergolaS
     lighting: { gutter: gutterLed, blades: included === "blade_led", ledStrips: ledStrip ? { color: ledColor } : null, color: ledColor },
     heaters: { count: heater?.qty ?? 0, option: heater?.variantOption },
     lanterns: { count: lantern?.qty ?? 0, option: lantern?.variantOption },
-    indicative: { heightMm: true, sections: true, bladeCount: true, accessoryPlacement: true },
-    disclaimer: SCENE_DISCLAIMER,
+    indicative: { heightMm: !overrides, sections: true, bladeCount: true, accessoryPlacement: true },
+    toConfirm,
+    disclaimer: overrides ? `${SCENE_DISCLAIMER}. ${CUSTOM_FEASIBILITY_NOTE}` : SCENE_DISCLAIMER,
   };
+}
+
+function side2count(openings: SceneOpening[], side: SideKey) {
+  return openings.filter((o) => o.side === side).length;
+}
+
+const fmtM = (mm: number) => `${(mm / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 2 })}`;
+
+/**
+ * Motif pour lequel une configuration sur mesure n'est pas représentée en 3D (null = représentable).
+ * Les bornes et pas sont ceux du catalogue (`catalog.custom`) : aucune valeur n'est bornée silencieusement.
+ */
+export function customSceneBlocker(catalog: CatalogSnapshot, input: PergolaCustomInput): string | null {
+  const c = catalog.custom;
+  const checks: Array<[string, number, { min: number; max: number; step: number }]> = [["Largeur", input.widthMm, c.widthMm], ["Longueur", input.lengthMm, c.lengthMm], ["Hauteur", input.heightMm, c.heightMm]];
+  for (const [label, v, r] of checks) {
+    if (!Number.isInteger(v) || v < r.min || v > r.max) return `${label} hors bornes (${r.min}–${r.max} mm) : vue 3D indisponible tant que la cote n'est pas corrigée.`;
+    if ((v - r.min) % r.step !== 0) return `${label} : saisissez une valeur par pas de ${r.step} mm pour afficher la vue 3D.`;
+  }
+  if (!catalog.finishes.some((f) => f.code === input.finishCode)) return "Finition inconnue : vue 3D indisponible.";
+  return null;
+}
+
+/**
+ * Scène d'une pergola sur mesure : cotes saisies (largeur, longueur, hauteur), implantation, finition,
+ * fermetures par côté réparties sur les segments du layout du moteur, options. Même entrée que le devis.
+ */
+export function buildCustomSceneModel(catalog: CatalogSnapshot, input: PergolaCustomInput, layout?: Layout | null): PergolaSceneModel | null {
+  if (customSceneBlocker(catalog, input)) return null;
+  const family = catalog.families.find((f) => f.slug === "pergola-sur-mesure") ?? catalog.families.find((f) => f.kind === "pergola_custom");
+  const geo = layout ?? (family ? layoutForFamily(family, input.widthMm, input.lengthMm, input.mounting) : null);
+  if (!geo) return null;
+  const segments: PergolaStandardInput["segments"] = {};
+  for (const side of geo.sides) {
+    const choice = input.sides[side.key];
+    if (!choice) continue;
+    for (const seg of side.segments) segments[seg.id] = { closureFamilySlug: choice.closureFamilySlug };
+  }
+  const std: PergolaStandardInput = { kind: "pergola_standard", familySlug: family?.slug ?? "pergola-sur-mesure", mounting: input.mounting, dimensionCode: "custom", finishCode: input.finishCode, segments, options: input.options, installation: input.installation, delivery: input.delivery };
+  return buildPergolaSceneModel(catalog, std, geo, { source: "custom", heightMm: input.heightMm, dimensionLabel: `largeur ${fmtM(input.widthMm)} m × longueur ${fmtM(input.lengthMm)} m, hauteur ${fmtM(input.heightMm)} m`, boundsStatus: catalog.custom.dataStatus });
 }
 
 export function buildAwningSceneModel(catalog: CatalogSnapshot, input: AwningInput): AwningSceneModel {
@@ -298,11 +373,12 @@ export function buildAwningSceneModel(catalog: CatalogSnapshot, input: AwningInp
 
 /**
  * Point d'entrée générique : construit le modèle de scène d'une configuration.
- * Retourne `null` pour les types non représentés (sur mesure, accessoire seul).
+ * Retourne `null` pour les types non représentés (accessoire seul) ou un sur mesure hors bornes.
  * `result.layout` est utilisé s'il est fourni, sinon le layout est reconstruit depuis le catalogue.
  */
 export function buildSceneModel(catalog: CatalogSnapshot, input: ConfigurationInput, result?: Pick<EvaluationResult, "layout"> | null): SceneModel | null {
   if (input.kind === "awning") return buildAwningSceneModel(catalog, input);
+  if (input.kind === "pergola_custom") return buildCustomSceneModel(catalog, input, result?.layout ?? null);
   if (input.kind !== "pergola_standard") return null;
   let layout = result?.layout ?? null;
   if (!layout) {
@@ -312,4 +388,45 @@ export function buildSceneModel(catalog: CatalogSnapshot, input: ConfigurationIn
     layout = layoutForFamily(family, dim.widthMm, dim.lengthMm, input.mounting);
   }
   return buildPergolaSceneModel(catalog, input, layout);
+}
+
+const CLOSURE_FR: Record<ClosureType, string> = { glass: "paroi vitrée", slats: "persienne", screen: "store ZIP" };
+const SIDE_FR: Record<SideKey, string> = { back: "arrière", front: "avant", left: "gauche", right: "droit" };
+
+/**
+ * Liste détaillée de ce qui est représenté sur la visualisation (jointe au devis et au PDF).
+ * Dérivée du modèle de scène : elle décrit exactement ce qui est dessiné, rien de plus.
+ */
+export function representedItems(catalog: CatalogSnapshot, model: SceneModel): string[] {
+  if (model.kind === "awning") {
+    return [
+      `Gamme : ${model.familyName}`,
+      `Dimensions : ${model.dimensionLabel} (largeur × avancée)`,
+      `Finition : ${model.finishLabel}`,
+      `${model.bracketCount} supports ${model.bracketMount === "wall" ? "muraux" : "plafond"}`,
+      model.led ? "Éclairage LED du coffre" : null,
+      model.anemometer ? "Anémomètre" : null,
+      `Hauteur de pose représentée : ${fmtM(model.heightMm)} m (indicative)`,
+    ].filter((x): x is string => !!x);
+  }
+  const familyName = (slug: string) => catalog.families.find((f) => f.slug === slug)?.name ?? CLOSURE_FR[closureTypeOf(slug)];
+  const items = [
+    `Gamme : ${model.familyName}`,
+    `Dimensions : ${model.dimensionLabel}`,
+    `Implantation : ${model.mounting === "wall" ? "adossée au mur" : "autoportée"}`,
+    `Finition : ${model.finishLabel}`,
+    `${model.posts.length} poteaux dont ${model.posts.filter((p) => p.kind === "divider").length} intermédiaire(s) (indicatif)`,
+    `Toit : ${model.blades.count} lames ${model.blades.motorized ? "motorisées" : "orientables"} (nombre indicatif)`,
+  ];
+  for (const o of model.openings) {
+    const multi = model.openings.filter((x) => x.side === o.side).length > 1;
+    const where = `Côté ${SIDE_FR[o.side]}${multi ? ` ${o.index}` : ""} (${fmtM(o.lengthMm)} m)`;
+    items.push(o.closure ? `${where} : ${familyName(o.closure.familySlug)}${o.closure.option ? ` (${o.closure.option})` : ""}${o.closure.assembly.toConfirm ? " — assemblage à confirmer" : ""}` : `${where} : ouvert`);
+  }
+  items.push(model.lighting.blades ? "Éclairage : LED intégrées aux lames" : model.lighting.gutter ? `Éclairage : LED de gouttière ${model.lighting.color === "rgb" ? "RGB" : "blanc chaud"}` : "Éclairage : aucun");
+  if (model.heaters.count) items.push(`${model.heaters.count} lampe(s) chauffante(s)${model.heaters.option ? ` ${model.heaters.option}` : ""} (emplacement indicatif)`);
+  if (model.lanterns.count) items.push(`${model.lanterns.count} lanterne(s)${model.lanterns.option ? ` ${model.lanterns.option}` : ""} (emplacement indicatif)`);
+  items.push(model.indicative.heightMm ? `Hauteur représentée : ${fmtM(model.heightMm)} m (indicative)` : `Hauteur saisie : ${fmtM(model.heightMm)} m`);
+  for (const t of model.toConfirm) items.push(`À confirmer : ${t}`);
+  return items;
 }

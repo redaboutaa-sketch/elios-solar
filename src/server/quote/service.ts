@@ -3,6 +3,8 @@ import type { ConfigurationInput, EvaluationResult } from "@/domain/types";
 import { businessNumber } from "@/server/ids";
 import { enqueueEmail } from "@/server/mail/outbox";
 import type { Owner } from "@/server/cart/service";
+import { loadCatalog } from "@/server/catalog/load";
+import { attachQuoteVisual, type AttachedVisual } from "@/server/quote/visual";
 
 export interface QuoteRequest {
   kind: "configuration" | "custom" | "accessory" | "general";
@@ -15,9 +17,11 @@ export interface QuoteRequest {
   input?: ConfigurationInput | null;
   result?: EvaluationResult | null;
   configurationId?: string | null;
+  /** visualisation exportée par le navigateur (dataURL PNG/JPEG), vérifiée et ré-encodée côté serveur */
+  visual?: unknown;
 }
 
-export async function createQuote(req: QuoteRequest, owner: Owner) {
+export async function createQuote(req: QuoteRequest, owner: Owner): Promise<Awaited<ReturnType<typeof prisma.quote.create>> & { visualKind: AttachedVisual }> {
   const number = businessNumber("DEV");
   const quote = await prisma.quote.create({
     data: {
@@ -36,11 +40,13 @@ export async function createQuote(req: QuoteRequest, owner: Owner) {
       status: "NEW",
     },
   });
+  // Visualisation figée à l'émission ; un échec n'empêche jamais l'enregistrement du devis.
+  const visual = req.input ? await attachQuoteVisual({ quoteId: quote.id, dataUrl: req.visual, input: req.input, result: req.result ?? null, catalog: await loadCatalog(), configurationId: req.configurationId ?? null }) : { kind: "NONE" as const };
   const lines = req.result?.lines.map((l) => ({ label: l.label, qty: l.qty, totalGrossCents: l.totalGrossCents, included: l.included })) ?? undefined;
   await enqueueEmail({ to: quote.email, subject: `Votre demande de devis ${number}`, template: "quote-received", payload: { number, firstName: quote.firstName, lines, demo: quote.containsDemoData }, dedupeKey: `quote-ack:${quote.id}` });
   const admin = process.env.ADMIN_NOTIFICATION_EMAIL;
   if (admin) await enqueueEmail({ to: admin, subject: `Nouvelle demande de devis ${number}`, template: "quote-admin-notification", payload: { number, quoteId: quote.id, email: quote.email, kind: quote.kind, message: quote.message, demo: quote.containsDemoData }, dedupeKey: `quote-admin:${quote.id}` });
-  return quote;
+  return { ...quote, visualKind: visual.kind };
 }
 
 export async function getQuoteForOwner(id: string, owner: Owner & { email?: string | null }) {

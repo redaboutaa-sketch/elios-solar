@@ -6,8 +6,8 @@
 import { useMemo, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { Box, Image as ImageIcon, Map as MapIcon } from "lucide-react";
-import { buildSceneModel } from "@/domain/scene-model";
-import type { AwningInput, CatalogSnapshot, EvaluationResult, PergolaStandardInput } from "@/domain/types";
+import { buildSceneModel, customSceneBlocker } from "@/domain/scene-model";
+import type { AwningInput, CatalogSnapshot, EvaluationResult, PergolaCustomInput, PergolaStandardInput } from "@/domain/types";
 
 const loading = () => <p className="grid aspect-[4/3] sm:aspect-[16/10] place-items-center rounded-lg bg-sand-100 text-sm text-stone-700">Chargement de la vue 3D…</p>;
 const PergolaScene3D = dynamic(() => import("./viewer-3d").then((m) => m.PergolaScene3D), { ssr: false, loading });
@@ -32,9 +32,10 @@ function ModeSwitch({ mode, onChange, withPlan }: { mode: Mode; onChange: (m: Mo
   );
 }
 
-export function PergolaVisuals({ catalog, input, result, art, plan, selectedSegment = null, onSelectSegment, onImage }: {
+export function PergolaVisuals({ catalog, input, result, art, plan, selectedSegment = null, onSelectSegment, onImage, onCaptureReady }: {
   catalog: CatalogSnapshot;
-  input: PergolaStandardInput;
+  /** pergola standard ou sur mesure : même objet que celui envoyé au devis */
+  input: PergolaStandardInput | PergolaCustomInput;
   result: EvaluationResult;
   /** illustration existante (affichée aussi si WebGL est indisponible) */
   art: ReactNode;
@@ -43,6 +44,7 @@ export function PergolaVisuals({ catalog, input, result, art, plan, selectedSegm
   selectedSegment?: string | null;
   onSelectSegment?: (segmentId: string) => void;
   onImage?: (dataUrl: string) => void;
+  onCaptureReady?: (capture: (() => Promise<string>) | null) => void;
 }) {
   const [mode, setMode] = useState<Mode>("illustration");
   const model = useMemo(() => {
@@ -56,7 +58,7 @@ export function PergolaVisuals({ catalog, input, result, art, plan, selectedSegm
       {mode === "illustration" && <div className="card overflow-hidden">{art}</div>}
       {mode === "3d" && (
         <div className="card p-3">
-          {model ? <PergolaScene3D model={model} selected={selectedSegment} onSelect={onSelectSegment} onImage={onImage} fallback={<div className="overflow-hidden rounded-lg">{art}</div>} /> : <p className="text-sm text-stone-700">Vue 3D indisponible pour cette configuration (dimension ou gamme inconnue).</p>}
+          {model ? <PergolaScene3D model={model} selected={selectedSegment} onSelect={onSelectSegment} onImage={onImage} onCaptureReady={onCaptureReady} fallback={<div className="overflow-hidden rounded-lg">{art}</div>} /> : <p data-testid="scene-3d-blocked" role="status" className="text-sm text-stone-700">{(input.kind === "pergola_custom" && customSceneBlocker(catalog, input)) || "Vue 3D indisponible pour cette configuration (dimension ou gamme inconnue)."}</p>}
         </div>
       )}
       {plan && <div className="card p-3">{plan}</div>}
@@ -64,7 +66,7 @@ export function PergolaVisuals({ catalog, input, result, art, plan, selectedSegm
   );
 }
 
-export function AwningVisuals({ catalog, input, art, onImage }: { catalog: CatalogSnapshot; input: AwningInput; art: ReactNode; onImage?: (dataUrl: string) => void }) {
+export function AwningVisuals({ catalog, input, art, onImage, onCaptureReady }: { catalog: CatalogSnapshot; input: AwningInput; art: ReactNode; onImage?: (dataUrl: string) => void; onCaptureReady?: (capture: (() => Promise<string>) | null) => void }) {
   const [mode, setMode] = useState<Mode>("illustration");
   const model = useMemo(() => {
     if (mode !== "3d") return null;
@@ -75,7 +77,7 @@ export function AwningVisuals({ catalog, input, art, onImage }: { catalog: Catal
     <>
       <ModeSwitch mode={mode} onChange={setMode} withPlan={false} />
       {mode === "illustration" && <div className="card overflow-hidden">{art}</div>}
-      {mode === "3d" && model && <div className="card p-3"><AwningScene3D model={model} onImage={onImage} fallback={<div className="overflow-hidden rounded-lg">{art}</div>} /></div>}
+      {mode === "3d" && model && <div className="card p-3"><AwningScene3D model={model} onImage={onImage} onCaptureReady={onCaptureReady} fallback={<div className="overflow-hidden rounded-lg">{art}</div>} /></div>}
     </>
   );
 }
