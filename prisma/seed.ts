@@ -10,6 +10,7 @@ import {
   CLOSURE_COMPAT, DEMO_PRICE_GRID, DIMENSIONS, FAMILIES, FAMILY_CONTENT, FINISHES, INSTALLATION_RATES, OPTION_COMPAT, PROMOTIONS, SHIPPING_RULES, buildVariants,
 } from "../src/server/catalog/demo-data";
 import { CONTENT_PAGES } from "../src/server/content/default-pages";
+import { seedDemoRenders } from "../src/server/media/demo-renders";
 
 const up = (s: string) => s.toUpperCase();
 
@@ -126,6 +127,12 @@ export async function runSeed(prisma: PrismaClient) {
         surcharges: { create: g.surcharges.map((x, i) => ({ code: x.code, label: x.label, kind: x.kind, match: x.match, thresholdMm: x.thresholdMm ?? null, perStepMm: x.perStepMm ?? null, perStepCents: x.perStepCents ?? null, priceCents: x.priceCents, percentBps: x.percentBps, sortOrder: i })) },
       },
     });
+  }
+
+  // Rendus originaux (scènes procédurales) et document de démonstration : idempotent ; désactivable (SEED_SKIP_RENDERS=1)
+  if (process.env.SEED_SKIP_RENDERS !== "1") {
+    const r = await seedDemoRenders(prisma);
+    console.log(`Rendus : ${r.created} créés, ${r.skipped} existants, ${r.linked} associations, ${r.documents} document(s) démo`);
   }
 
   const counts = { families: await prisma.productFamily.count(), variants: await prisma.variant.count(), closureRules: await prisma.closureCompatRule.count(), optionRules: await prisma.optionCompatRule.count() };

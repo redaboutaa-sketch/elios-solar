@@ -11,6 +11,10 @@ import { getFamily, listFamilies } from "@/server/catalog/queries";
 import { AccessoryBuyForm } from "@/components/configurator/accessory-buy-form";
 import { loadCatalog } from "@/server/catalog/load";
 import { accessoryCompat } from "@/server/catalog/accessory-compat";
+import { PublishedGallery } from "@/components/catalog/product-gallery";
+import { publishedMediaFor } from "@/server/media/queries";
+import { publicDocumentsForFamily } from "@/server/documents/queries";
+import { DocumentList } from "@/components/catalog/document-list";
 
 export async function generateMetadata(props: PageProps<"/accessoires/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
@@ -22,7 +26,7 @@ export default async function AccessoryPage(props: PageProps<"/accessoires/[slug
   const { slug } = await props.params;
   const f = await getFamily(slug);
   if (!f || (f.kind !== "SIDE_CLOSURE" && f.kind !== "OPTION")) notFound();
-  const [pergolas, catalog] = await Promise.all([listFamilies(["PERGOLA_STANDARD", "AWNING"]), loadCatalog()]);
+  const [pergolas, catalog, media, docs] = await Promise.all([listFamilies(["PERGOLA_STANDARD", "AWNING"]), loadCatalog(), publishedMediaFor(f.slug), publicDocumentsForFamily(f.id)]);
   const compat = accessoryCompat(catalog, f.slug);
   const variants = f.variants.map((v) => ({ sku: v.sku, label: v.label, priceCents: v.priceCents, purchasable: v.purchasable, dataStatus: v.dataStatus, attributes: v.attributes as Record<string, unknown>, stock: v.stockMode === "STOCK" ? Math.max(0, (v.stockQty ?? 0) - v.reservedQty) : null }));
   const targets = pergolas.map((p) => ({ slug: p.slug, name: p.name, kind: p.kind, dimensions: p.dimensions.map((d) => ({ code: d.dimensionCode, label: d.dimension.label, widthMm: d.dimension.widthMm, lengthMm: d.dimension.lengthMm })), finishes: p.finishes.map((x) => ({ code: x.finishCode, label: x.finish.label })), dividerThresholdMm: p.dividerThresholdMm }));
@@ -31,7 +35,7 @@ export default async function AccessoryPage(props: PageProps<"/accessoires/[slug
       <Breadcrumbs items={[{ href: "/accessoires", label: "Accessoires" }, { label: f.name }]} />
       <div className="mt-6 grid gap-10 lg:grid-cols-[1.2fr_1fr]">
         <div>
-          <div className="card overflow-hidden"><ClosureArt kind={artKind(f.slug)} className="w-full h-auto" /></div>
+          <PublishedGallery name={f.name} media={media} fallback={<ClosureArt kind={artKind(f.slug)} className="w-full h-auto" />} />
           <section className="mt-6 card p-4">
             <p className="font-medium">{compat.label}</p>
             <ul className="mt-2 text-sm text-stone-800 space-y-1">
@@ -46,6 +50,7 @@ export default async function AccessoryPage(props: PageProps<"/accessoires/[slug
           <section className="mt-8"><h2 className="font-display text-2xl">Description</h2><p className="mt-3 text-stone-800">{f.description}</p></section>
           <section className="mt-8"><h2 className="font-display text-2xl">Inclus</h2><ul className="mt-3 list-disc pl-6">{(f.included as string[]).map((i) => <li key={i}>{i}</li>)}</ul></section>
           <section className="mt-8"><h2 className="font-display text-2xl">Caractéristiques</h2><div className="mt-3"><SpecTable specs={f.specs as never} /></div></section>
+          <section className="mt-8"><h2 className="font-display text-2xl">Documents</h2><div className="mt-3"><DocumentList docs={docs} /></div></section>
           <section className="mt-8">
             <h2 className="font-display text-2xl">Références et prix</h2>
             <table className="mt-3 w-full text-sm"><thead><tr className="text-left border-b border-sand-300"><th className="py-2">Référence</th><th>Désignation</th><th className="text-right">Prix TTC</th></tr></thead><tbody>

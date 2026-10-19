@@ -7,6 +7,10 @@ import { AwningArt } from "@/components/illustrations/pergola";
 import { getFamily } from "@/server/catalog/queries";
 import { Price } from "@/components/ui/price";
 import { priceFrom } from "@/server/catalog/queries";
+import { PublishedGallery } from "@/components/catalog/product-gallery";
+import { publishedMediaFor } from "@/server/media/queries";
+import { publicDocumentsForFamily } from "@/server/documents/queries";
+import { DocumentList } from "@/components/catalog/document-list";
 
 export async function generateMetadata(props: PageProps<"/stores-bannes/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
@@ -18,6 +22,7 @@ export default async function AwningPage(props: PageProps<"/stores-bannes/[slug]
   const { slug } = await props.params;
   const f = await getFamily(slug);
   if (!f || f.kind !== "AWNING") notFound();
+  const [media, docs] = await Promise.all([publishedMediaFor(f.slug), publicDocumentsForFamily(f.id)]);
   const sizes = [...new Map(f.variants.map((v) => { const a = v.attributes as { widthMm: number; projectionMm: number }; return [`${a.widthMm}x${a.projectionMm}`, a] as const; })).values()];
   const from = priceFrom({ variants: f.variants });
   return (
@@ -25,11 +30,12 @@ export default async function AwningPage(props: PageProps<"/stores-bannes/[slug]
       <Breadcrumbs items={[{ href: "/stores-bannes", label: "Stores bannes" }, { label: f.name }]} />
       <div className="mt-6 grid gap-10 lg:grid-cols-[1.2fr_1fr]">
         <div>
-          <div className="card overflow-hidden"><AwningArt className="w-full h-auto" /></div>
+          <PublishedGallery name={f.name} media={media} fallback={<AwningArt className="w-full h-auto" />} />
           <section className="mt-8"><h2 className="font-display text-2xl">Description</h2><p className="mt-3 text-stone-800">{f.description}</p></section>
           <section className="mt-8"><h2 className="font-display text-2xl">Inclus</h2><ul className="mt-3 list-disc pl-6">{(f.included as string[]).map((i) => <li key={i}>{i}</li>)}</ul></section>
           <section className="mt-8"><h2 className="font-display text-2xl">Tailles disponibles</h2><p className="mt-2 text-sm text-stone-700">Largeur × avancée (m) — uniquement les combinaisons fabriquées.</p><ul className="mt-3 flex flex-wrap gap-2">{sizes.map((s) => <li key={`${s.widthMm}-${s.projectionMm}`} className="badge bg-sand-100 border border-sand-300">{s.widthMm / 1000} × {s.projectionMm / 1000}</li>)}</ul></section>
           <section className="mt-8"><h2 className="font-display text-2xl">Caractéristiques</h2><div className="mt-3"><SpecTable specs={f.specs as never} /></div></section>
+          <section className="mt-8"><h2 className="font-display text-2xl">Documents</h2><div className="mt-3"><DocumentList docs={docs} /></div></section>
           <section className="mt-8"><h2 className="font-display text-2xl">Questions fréquentes</h2><div className="mt-3 divide-y divide-sand-200">{(f.faq as Array<{ q: string; a: string }>).map((q) => <details key={q.q} className="py-3"><summary className="cursor-pointer font-medium">{q.q}</summary><p className="mt-2">{q.a}</p></details>)}</div></section>
         </div>
         <aside className="lg:sticky lg:top-24 self-start card p-6">

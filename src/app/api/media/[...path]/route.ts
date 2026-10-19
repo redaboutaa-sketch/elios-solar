@@ -1,9 +1,32 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { EXT_TO_MIME, resolveMediaFile } from "@/server/media/storage";
+import { EXT_TO_MIME, MEDIA_URL_PREFIX, resolveMediaFile } from "@/server/media/storage";
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+
+type Access = "public" | "customer" | "admin" | "none";
+
+/**
+ * Règle d'accès : public si le média est publié (ou logo/favicon des réglages) et n'est rattaché
+ * à aucun document restreint ; document « client » publié → compte connecté ; brouillons,
+ * documents internes ou non publiés → administration uniquement.
+ */
+async function accessFor(name: string): Promise<Access> {
+  const media = await prisma.media.findFirst({ where: { path: `${MEDIA_URL_PREFIX}${name}` }, select: { id: true, status: true, documents: { select: { status: true, audience: true } } } });
+  if (!media) return "none";
+  const docs = media.documents;
+  if (docs.length > 0) {
+    if (docs.some((d) => d.status === "PUBLISHED" && d.audience === "PUBLIC")) return "public";
+    if (docs.some((d) => d.status === "PUBLISHED" && d.audience === "CUSTOMER")) return "customer";
+    return "admin";
+  }
+  if (media.status === "PUBLISHED") return "public";
+  const inSettings = await prisma.siteSettings.count({ where: { OR: [{ logoMediaId: media.id }, { faviconMediaId: media.id }] } });
+  return inSettings > 0 ? "public" : "admin";
+}
 
 /** Sert un média téléversé. Seuls les noms générés (hex + extension) sont acceptés : pas de traversée. */
-export async function GET(_req: Request, ctx: RouteContext<"/api/media/[...path]">) {
+export async function GET(req: Request, ctx: RouteContext<"/api/media/[...path]">) {
   const { path: segments } = await ctx.params;
   if (segments.length !== 1) return new Response("Introuvable", { status: 404 });
   const name = segments[0]!;
@@ -11,6 +34,14 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/media/[...path]
   if (!full) return new Response("Introuvable", { status: 404 });
   const mime = EXT_TO_MIME[path.extname(name).slice(1)];
   if (!mime) return new Response("Introuvable", { status: 404 });
+  const access = await accessFor(name);
+  if (access === "none") return new Response("Introuvable", { status: 404 });
+  if (access !== "public") {
+    const session = await auth.api.getSession({ headers: req.headers });
+    const role = (session?.user as { role?: string } | undefined)?.role;
+    const isAdmin = role === "ADMIN" || role === "MANAGER";
+    if (!session || (access === "admin" && !isAdmin)) return new Response("Introuvable", { status: 404 });
+  }
   try {
     const st = await stat(full);
     if (!st.isFile()) return new Response("Introuvable", { status: 404 });
@@ -18,7 +49,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/media/[...path]
     const headers: Record<string, string> = {
       "Content-Type": mime,
       "Content-Length": String(st.size),
-      "Cache-Control": "public, max-age=31536000, immutable",
+      "Cache-Control": access === "public" ? "public, max-age=31536000, immutable" : "private, no-store",
       "X-Content-Type-Options": "nosniff",
     };
     // SVG : aucun script ni ressource externe, même ouvert directement.

@@ -15,6 +15,9 @@ import { rangeHighlights } from "@/server/catalog/highlights";
 import { renderMarkdown } from "@/server/content/render";
 import { BRAND } from "@/config/brand";
 import { Check } from "lucide-react";
+import { publishedMediaFor } from "@/server/media/queries";
+import { publicDocumentsForFamily } from "@/server/documents/queries";
+import { DocumentList } from "@/components/catalog/document-list";
 
 export async function generateMetadata(props: PageProps<"/pergolas/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
@@ -33,6 +36,7 @@ export default async function PergolaPage(props: PageProps<"/pergolas/[slug]">) 
   const mounting = sp.implantation === "adossee" ? "WALL" : "FREESTANDING";
   const fin = f.finishes.find((x) => x.finishCode === finishCode)!.finish;
   const dim = f.dimensions.find((d) => d.dimensionCode === dimensionCode)!.dimension;
+  const [media, docs] = await Promise.all([publishedMediaFor(f.slug, { finishCode, mounting: mounting === "WALL" ? "wall" : "freestanding" }), publicDocumentsForFamily(f.id)]);
   const variant = f.variants.find((v) => { const a = v.attributes as { finishCode: string; dimensionCode: string; mounting: string }; return a.finishCode === finishCode && a.dimensionCode === dimensionCode && a.mounting === (mounting === "WALL" ? "wall" : "freestanding"); });
   const specs = f.specs as Array<{ label: string; value: string; status: string }>;
   const faq = f.faq as Array<{ q: string; a: string }>;
@@ -45,9 +49,10 @@ export default async function PergolaPage(props: PageProps<"/pergolas/[slug]">) 
   const tabs = [
     { id: "description", label: "Description", content: <div className="prose-shop"><p>{f.description}</p><h3>Inclus avec {f.name}</h3><ul>{included.map((i) => <li key={i}>{i}</li>)}</ul>{h && h.closures.length > 0 && <p>Fermetures compatibles : {h.closures.join(", ")}. Options : {h.options.join(", ")}.</p>}</div> },
     { id: "caracteristiques", label: "Caractéristiques", content: <SpecTable specs={specs} /> },
-    { id: "montage", label: "Montage & livraison", content: <div className="prose-shop"><p>Montage par vos soins avec notice (à fournir par le fournisseur) ou montage professionnel chiffré dans le configurateur selon la dimension et les fermetures. Fixations, fondations et raccordement électrique non inclus.</p><p>Livraison sur palette, sur rendez-vous ; délai indicatif {variant?.leadTimeDays ?? "—"} jours (donnée de démonstration). Corse et Outre-mer sur devis.</p><p><Link href="/livraison-installation">Détails livraison et installation</Link></p></div> },
+    { id: "montage", label: "Montage & livraison", content: <div className="prose-shop"><p>Montage par vos soins avec notice (à fournir par le fournisseur) ou montage professionnel chiffré dans le configurateur selon la dimension et les fermetures. Fixations, fondations et raccordement électrique non inclus.</p><p>Livraison sur palette, sur rendez-vous ; délai indicatif {variant?.leadTimeDays ?? "—"} jours (donnée de démonstration). Corse et Outre-mer sur devis.</p><p><Link href="/livraison-installation">Détails livraison et installation</Link> · <Link href="/guides/preparation-projet">Préparer son projet et prendre les mesures</Link></p></div> },
     { id: "reglementation", label: "Réglementation", content: <div className="prose-shop" dangerouslySetInnerHTML={{ __html: renderMarkdown("## Autorisation d'urbanisme\n- Jusqu'à 5 m² d'emprise au sol : en général aucune formalité (hors secteur protégé).\n- De 5 à 20 m² : déclaration préalable de travaux.\n- Au-delà de 20 m² : permis de construire.\n\nCes seuils dépendent du plan local d'urbanisme : vérifiez auprès de votre mairie. [Guide complet](/guides/autorisation-urbanisme)") }} /> },
-    { id: "garantie", label: "Garantie", content: <div className="prose-shop"><p>Garantie légale de conformité (2 ans) et garantie des vices cachés. Une garantie commerciale sur la structure sera précisée après validation fournisseur (voir blocages de lancement).</p>{f.documents.length === 0 ? <p>Notice de montage et fiche technique : à fournir par le fournisseur.</p> : <ul>{f.documents.map((d) => <li key={d.id}><a href={d.media?.path ?? "#"}>{d.title}</a></li>)}</ul>}</div> },
+    { id: "garantie", label: "Garantie", content: <div className="prose-shop"><p>Garantie légale de conformité (2 ans) et garantie des vices cachés. Une garantie commerciale sur la structure sera précisée après validation fournisseur (voir blocages de lancement).</p><p>Les notices et fiches publiées sont disponibles dans l'onglet « Documents ».</p></div> },
+    { id: "documents", label: `Documents${docs.length ? ` (${docs.length})` : ""}`, content: <DocumentList docs={docs} /> },
     ...(faq.length ? [{ id: "faq", label: "Questions", content: <div className="divide-y divide-sand-200">{faq.map((q) => <details key={q.q} className="py-3"><summary className="cursor-pointer font-medium">{q.q}</summary><p className="mt-2 text-stone-800">{q.a}</p></details>)}</div> }] : []),
   ];
   return (
@@ -55,7 +60,7 @@ export default async function PergolaPage(props: PageProps<"/pergolas/[slug]">) 
       <Breadcrumbs items={[{ href: "/pergolas", label: "Pergolas" }, { label: f.name }]} />
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-12">
         <div className="min-w-0">
-          <ProductGallery name={f.name} structure={colorOf(fin.structureColor)} blades={colorOf(fin.bladeColor)} mounting={mounting === "WALL" ? "wall" : "freestanding"} lighting={lighting} widthMm={dim.widthMm} lengthMm={dim.lengthMm} dividerThresholdMm={f.dividerThresholdMm ?? 6000} finishSwatch={fin.swatch} />
+          <ProductGallery name={f.name} structure={colorOf(fin.structureColor)} blades={colorOf(fin.bladeColor)} mounting={mounting === "WALL" ? "wall" : "freestanding"} lighting={lighting} widthMm={dim.widthMm} lengthMm={dim.lengthMm} dividerThresholdMm={f.dividerThresholdMm ?? 6000} finishSwatch={fin.swatch} media={media} />
           <section className="mt-10 grid gap-4 sm:grid-cols-2">
             {[["Toit", f.roof === "motorized" ? "Lames orientables motorisées, télécommande" : "Lames orientables à commande manuelle"], ["Éclairage", h?.lighting ?? ""], ["Fermetures", h?.closures.length ? `${h.closures.join(", ")} — par ouverture` : "Sur devis"], ["Rails d'accessoires", f.accessoryRails ? `${f.accessoryRails} par poutre` : "—"]].map(([t, d]) => (
               <div key={t} className="card p-4 flex gap-3"><Check className="size-5 text-success shrink-0 mt-0.5" aria-hidden="true" /><div><p className="font-medium">{t}</p><p className="text-sm text-stone-700">{String(d).charAt(0).toUpperCase() + String(d).slice(1)}</p></div></div>

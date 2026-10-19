@@ -25,6 +25,7 @@
     "admin:bootstrap": "tsx scripts/bootstrap-admin.ts",
     "catalogue:import": "tsx scripts/import-catalogue.ts",
     "mail:worker": "tsx scripts/mail-worker.ts",
+    "renders:generate": "tsx scripts/generate-renders.ts",
     "backup": "bash scripts/backup.sh",
     "restore": "bash scripts/restore.sh"
   },

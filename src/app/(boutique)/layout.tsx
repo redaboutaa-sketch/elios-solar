@@ -6,10 +6,12 @@ import { getGuestKey } from "@/server/guest";
 import { findActiveCart } from "@/server/cart/service";
 import { getSiteSettings } from "@/server/catalog/queries";
 import { prisma } from "@/lib/prisma";
+import { ChatWidget } from "@/components/chat/chat-widget";
+import { advisorsOnline } from "@/server/chat/service";
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
   const [session, guestKey, settings] = await Promise.all([getSession(), getGuestKey(), getSiteSettings()]);
-  const cart = await findActiveCart({ userId: session?.user.id, guestKey });
+  const [cart, chatOnline] = await Promise.all([findActiveCart({ userId: session?.user.id, guestKey }), advisorsOnline().catch(() => false)]);
   const rangeRows = await prisma.productFamily.findMany({ where: { kind: { in: ["PERGOLA_STANDARD", "PERGOLA_CUSTOM"] }, status: { in: ["PUBLISHED", "QUOTE_ONLY"] } }, select: { slug: true, name: true, shortDescription: true, kind: true }, orderBy: { sortOrder: "asc" } });
   const ranges = rangeRows.map((r) => ({ slug: r.slug, name: r.name, shortDescription: r.shortDescription, custom: r.kind === "PERGOLA_CUSTOM" }));
   const role = (session?.user as { role?: string } | undefined)?.role;
@@ -21,6 +23,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       <Footer settings={settings} />
       <CookieBanner analyticsAvailable={!!analyticsSrc} />
       <ConsentGatedScript src={analyticsSrc} />
+      <ChatWidget enabled={settings?.chatEnabled ?? true} initialOnline={chatOnline} />
     </>
   );
 }

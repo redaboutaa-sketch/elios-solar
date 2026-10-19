@@ -55,3 +55,35 @@ export function checkSignature(buf: Buffer, mime: MediaMime): string | null {
     }
   }
 }
+
+/**
+ * Écrit un fichier dans le répertoire des médias sous un nom aléatoire (32 hex + extension).
+ * Retourne le nom de fichier et l'URL publique. Utilisé par le téléversement et par les rendus générés.
+ */
+export async function storeMediaBuffer(buf: Buffer | Uint8Array, mime: MediaMime): Promise<{ name: string; url: string; fullPath: string }> {
+  const { randomBytes } = await import("node:crypto");
+  const { mkdir, writeFile } = await import("node:fs/promises");
+  const dir = mediaDir();
+  await mkdir(dir, { recursive: true });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const name = `${randomBytes(16).toString("hex")}.${MEDIA_TYPES[mime]}`;
+    const full = resolveMediaFile(name);
+    if (!full) throw new Error("Nom de fichier média invalide");
+    try {
+      await writeFile(full, buf, { flag: "wx" });
+      return { name, url: `${MEDIA_URL_PREFIX}${name}`, fullPath: full };
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
+    }
+  }
+  throw new Error("Impossible de générer un nom de fichier unique");
+}
+
+/** Supprime un fichier du répertoire des médias à partir de son URL publique (silencieux si absent). */
+export async function removeMediaByUrl(url: string): Promise<void> {
+  if (!url.startsWith(MEDIA_URL_PREFIX)) return;
+  const { unlink } = await import("node:fs/promises");
+  const full = resolveMediaFile(url.slice(MEDIA_URL_PREFIX.length));
+  if (!full) return;
+  await unlink(full).catch(() => undefined);
+}
