@@ -1,6 +1,6 @@
 # État réel du projet
 
-Mis à jour : 2026-10-19 (incrément 2 en cours de finalisation)
+Mis à jour : 2026-10-19 — incréments 1 à 5 livrés (version intégrée en préproduction)
 
 ## Où en est-on
 - Dépôt : `redaboutaa-sketch/elios-solar`, branche `feat/storefront-configurator` (depuis `main` = commit initial).
@@ -8,8 +8,8 @@ Mis à jour : 2026-10-19 (incrément 2 en cours de finalisation)
 - Base : PostgreSQL 16 en conteneur `elios-solar-dev-postgres` (127.0.0.1:5433), migrations appliquées, seed exécuté.
 - E-mails : Mailpit http://127.0.0.1:8025 (SMTP 1025) ; worker `pnpm mail:worker`.
 - Paiement : mode DEMO (page de paiement simulé + webhook signé HMAC).
-- Vérifications passées : `pnpm typecheck` ✅, `pnpm lint` ✅ (1 avertissement img), `pnpm test:unit` ✅ 32/32.
-- Non encore exécuté : tests d'intégration, Playwright, build de production, CI.
+- Vérifications passées : typecheck ✅, lint ✅, unitaires 32/32 ✅, intégration 14/14 ✅, Playwright 22/22 ✅, build ✅ (détail : `docs/test-report.md`).
+- Administration : http://127.0.0.1:3400/admin (compte créé par `pnpm admin:bootstrap`).
 
 ## Commandes utiles
 ```bash
@@ -25,7 +25,7 @@ pnpm typecheck && pnpm lint && pnpm test:unit
 Accès distant : tunnel SSH `ssh -L 3400:127.0.0.1:3400 -L 8025:127.0.0.1:8025 root@<vps>`.
 
 ## Prochaine action
-Finaliser l'administration (agent), écrire et exécuter les tests d'intégration et Playwright, CI, Docker production, puis commit/push et draft PR.
+Revue de la préproduction par le propriétaire ; collecte des données fournisseur (import CSV), identité et contenus ; puis vue 3D (incrément 6) et bascule Stripe/domaine après revue.
 
 ## Procédure de reprise (tmux)
 `tmux attach -t pergola` ; lire `docs/STATE.md`, `docs/TASKS.md`, `git status` / `git diff` avant de reprendre.

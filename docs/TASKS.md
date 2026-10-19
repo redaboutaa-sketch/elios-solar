@@ -15,22 +15,22 @@ Légende : ✅ fait (codé + vérifié) · 🔄 en cours · ⏳ à faire · ⛔ 
 - ✅ Seed idempotent (13 familles, 291 variantes démo, règles, tarifs, pages)
 - ✅ Configurateur standard (8 étapes, plan 2D, adaptations, devis, sauvegarde, panier)
 - ✅ Panier, commande, paiement démo signé, webhook idempotent, confirmation, compte client
-- 🔄 Administration (agent dédié) : catalogue, règles, tarifs, commandes, devis, contenus, médias, import, réglages, journal
+- ✅ Administration : tableau de bord et blocages de lancement, commandes, devis, contacts, catalogue (familles, variantes, règles, tarifs, promotions, sur mesure), contenus, médias (registre des droits), import CSV/JSON, e-mails, réglages, utilisateurs, journal
 
 ## Incrément 3 — extension
 - ✅ Sur mesure (devis), store banne (variantes réelles), accessoire seul (compatibilité)
 - ✅ Projets : versions, partage révocable, duplication, PDF
-- ⏳ Import fournisseur (CLI + admin) — en cours via l'administration
+- ✅ Import fournisseur (CLI `pnpm catalogue:import` + administration, aperçu puis application)
 
 ## Incrément 4 — expérience et contenus
 - ✅ Accueil, collections (filtres/tri/vide), fiches, comparateur, devis, contact, rappel, aide, guides, pages légales, réalisations, showroom, cookies
 - ⏳ Médias réels, documents ⛔ (fournisseur)
 
 ## Incrément 5 — vérifications et exploitation
-- ⏳ Tests d'intégration serveur (prix falsifié, accès croisé, double webhook, stock concurrent, expiration, e-mail)
-- ⏳ Tests Playwright (8 parcours) + captures 390/1440
-- ⏳ CI GitHub Actions ; Docker Compose production ; sauvegarde/restauration vérifiée
-- ⏳ Draft PR
+- ✅ Tests d'intégration serveur (14) — voir test-report.md
+- ✅ Tests Playwright (11 scénarios × 2 viewports) + captures 390/1440
+- ✅ CI GitHub Actions (à observer au premier push) ; Dockerfile + Compose production ; scripts de sauvegarde/restauration (restauration non exécutée)
+- 🔄 Draft PR
 
 ## Incrément 6
 - ⏳ Vue 3D (après stabilisation des règles)

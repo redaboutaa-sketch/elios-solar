@@ -1,3 +1,4 @@
+"use client";
 import type { Layout, SegmentChoice } from "@/domain/types";
 import { SIDE_LABELS } from "@/domain/layout";
 

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/server/audit";
 import { invalidateCatalogCache } from "@/server/catalog/load";
 import { CompatStatus, DataStatus, FamilyStatus, StockMode } from "@/generated/prisma/enums";
-import { actorOf, back, fields, firstError, safeReturn, zBool, zEuros, zInt, zOpt, zOptDate, zOptEuros, zOptInt, zReq, zText } from "@/server/admin/form";
+import { actorOf, back, fields, firstError, safeReturn, zBool, zEuros, zInt, zOpt, zOptDate, zOptDateEnd, zOptEuros, zOptInt, zReq, zText } from "@/server/admin/form";
 
 const ROLES = ["ADMIN", "MANAGER"] as const;
 const isUniqueError = (e: unknown) => (e as { code?: string } | null)?.code === "P2002";
@@ -337,7 +337,7 @@ const promoSchema = z.object({
   allFamilies: zBool,
   percent: z.preprocess((v) => String(v ?? "").replace(",", ".").trim(), z.string().regex(/^\d{1,2}(\.\d{1,2})?$/, "Pourcentage invalide")).transform((v) => Math.round(Number(v) * 100)).refine((bps) => bps > 0 && bps <= 9000, "Pourcentage entre 0,01 et 90 %"),
   startsAt: zOptDate,
-  endsAt: zOptDate,
+  endsAt: zOptDateEnd,
   active: zBool,
 });
 

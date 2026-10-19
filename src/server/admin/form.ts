@@ -75,6 +75,9 @@ export const zOptDate = text.transform((v, ctx) => {
   return d;
 });
 
+/** Date facultative interprétée comme fin de journée (23:59:59, heure du serveur) : borne inclusive. */
+export const zOptDateEnd = zOptDate.transform((d) => (d ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999) : null));
+
 export function firstError(err: z.ZodError): string {
   const i = err.issues[0];
   if (!i) return "Saisie invalide";
@@ -89,7 +92,7 @@ export function back(path: string, message: string, tone: "ok" | "err" = "ok"): 
 
 /** Chemin de retour fourni par le formulaire, limité à l'administration. */
 export function safeReturn(value: string | undefined, fallback: string): string {
-  if (value && /^\/admin(\/[\w\-/]*)?(\?[\w\-=&%.]*)?$/.test(value)) return value.replace(/[?&](ok|err)=[^&]*/g, "");
+  if (value && /^\/admin(\/[\w\-/]*)?(\?[\w\-=&%.+]*)?$/.test(value)) return value.replace(/[?&](ok|err)=[^&]*/g, "");
   return fallback;
 }
 

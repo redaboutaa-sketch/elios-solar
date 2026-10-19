@@ -5,14 +5,14 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/server/audit";
 import { enqueueEmail } from "@/server/mail/outbox";
 import { QuoteStatus } from "@/generated/prisma/enums";
-import { actorOf, back, fields, firstError, zOpt, zOptDate, zOptEuros, zReq } from "@/server/admin/form";
+import { actorOf, back, fields, firstError, zOpt, zOptDateEnd, zOptEuros, zReq } from "@/server/admin/form";
 import type { EvaluationResult } from "@/domain/types";
 
 const schema = z.object({
   quoteId: zReq(64),
   status: z.enum(QuoteStatus),
   proposedTotal: zOptEuros,
-  validUntil: zOptDate,
+  validUntil: zOptDateEnd,
   adminNotes: zOpt(5000),
 });
 

@@ -34,7 +34,6 @@ export const auth = betterAuth({
     cookieCache: { enabled: false },
   },
   rateLimit: { enabled: true, window: 60, max: 30 },
-  advanced: { database: { generateId: "uuid" } },
   trustedOrigins: [process.env.BETTER_AUTH_URL ?? "http://127.0.0.1:3400", process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3400"],
   plugins: [nextCookies()],
 });

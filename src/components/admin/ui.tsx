@@ -24,7 +24,7 @@ export function PageTitle({ title, children, backHref, backLabel }: { title: str
 
 export function Section({ title, children, className = "" }: { title?: string; children: React.ReactNode; className?: string }) {
   return (
-    <section className={`card p-5 ${className}`}>
+    <section className={`card min-w-0 p-5 ${className}`}>
       {title && <h2 className="mb-3 font-display text-xl">{title}</h2>}
       {children}
     </section>
@@ -33,7 +33,7 @@ export function Section({ title, children, className = "" }: { title?: string; c
 
 export function Table({ children, caption }: { children: React.ReactNode; caption?: string }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="relative overflow-x-auto">
       <table className="w-full min-w-[640px] text-sm [&_th]:px-2 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-stone-700 [&_td]:px-2 [&_td]:py-2 [&_td]:align-top [&_tbody_tr]:border-t [&_tbody_tr]:border-sand-200">
         {caption && <caption className="sr-only">{caption}</caption>}
         {children}

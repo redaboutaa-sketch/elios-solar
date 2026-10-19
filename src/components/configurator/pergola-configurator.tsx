@@ -234,6 +234,7 @@ export function PergolaConfigurator({ catalog, initial, existing }: { catalog: C
               <tr><td className="py-2">Livraison</td><td className="py-2 text-right">{result.totals.shippingGrossCents === null ? "à calculer" : formatEur(result.totals.shippingGrossCents)}</td></tr>
               <tr className="font-semibold text-lg"><td className="pt-3">Total TTC {result.totals.isFinal ? "" : "(estimé)"}</td><td className="pt-3 text-right">{formatEur(result.totals.totalGrossCents)}</td></tr>
               <tr className="text-xs text-stone-700"><td>dont TVA</td><td className="text-right">{formatEur(result.totals.taxCents)}</td></tr>
+              <tr className="text-xs"><td colSpan={2} data-testid="price-confirmation">{confirmed ? <span className="inline-flex items-center gap-1 text-success"><Check className="size-3" aria-hidden="true" /> Prix confirmé par le serveur</span> : <span className="text-stone-700">Confirmation du prix en cours…</span>}</td></tr>
             </tbody></table>
             <IssueList issues={result.issues} className="mt-4" />
             {message && <div className="mt-4"><Notice tone={message.tone}>{message.text}</Notice></div>}

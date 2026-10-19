@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
@@ -45,7 +46,7 @@ export default async function FamilyEditPage(props: PageProps<"/admin/catalogue/
 
         <Section title="Caractéristiques techniques">
           <p className="mb-2 text-xs text-stone-700">Une ligne par caractéristique. Laisser libellé et valeur vides pour supprimer une ligne.</p>
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full min-w-[640px] text-sm">
               <thead><tr className="text-left text-stone-700"><th className="p-1 font-medium">Libellé</th><th className="p-1 font-medium">Valeur</th><th className="p-1 font-medium">Statut</th></tr></thead>
               <tbody>
@@ -103,7 +104,7 @@ export default async function FamilyEditPage(props: PageProps<"/admin/catalogue/
             {family.media.length === 0 && <tr><td colSpan={5} className="text-stone-700">Aucun média.</td></tr>}
           </tbody>
         </Table>
-        {images.length === 0 ? <p className="mt-3 text-sm text-stone-700">Aucune image dans la médiathèque : <a className="underline" href="/admin/medias">téléverser</a>.</p> : (
+        {images.length === 0 ? <p className="mt-3 text-sm text-stone-700">Aucune image dans la médiathèque : <Link className="underline" href="/admin/medias">téléverser</Link>.</p> : (
           <form action={addFamilyMediaAction} className="mt-4 grid gap-3 md:grid-cols-[2fr_1fr_2fr_6rem_auto] md:items-end">
             <input type="hidden" name="familyId" value={family.id} />
             <div><label className="label" htmlFor="pm-media">Image</label><select id="pm-media" name="mediaId" required className="input">{images.map((m) => <option key={m.id} value={m.id}>{m.alt || m.path}</option>)}</select></div>
@@ -128,7 +129,7 @@ export default async function FamilyEditPage(props: PageProps<"/admin/catalogue/
             {family.documents.length === 0 && <tr><td colSpan={5} className="text-stone-700">Aucun document.</td></tr>}
           </tbody>
         </Table>
-        {pdfs.length === 0 ? <p className="mt-3 text-sm text-stone-700">Aucun PDF dans la médiathèque : <a className="underline" href="/admin/medias">téléverser</a>.</p> : (
+        {pdfs.length === 0 ? <p className="mt-3 text-sm text-stone-700">Aucun PDF dans la médiathèque : <Link className="underline" href="/admin/medias">téléverser</Link>.</p> : (
           <form action={addFamilyDocumentAction} className="mt-4 grid gap-3 md:grid-cols-[2fr_2fr_1fr_1fr_auto] md:items-end">
             <input type="hidden" name="familyId" value={family.id} />
             <div><label className="label" htmlFor="doc-title">Titre</label><input id="doc-title" name="title" required maxLength={200} className="input" /></div>

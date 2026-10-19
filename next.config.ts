@@ -2,8 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
   poweredByHeader: false,
   reactStrictMode: true,
+  // Téléversement de médias (8 Mo max. + marge multipart) via server action.
+  experimental: { serverActions: { bodySizeLimit: "9mb" } },
   images: {
     formats: ["image/avif", "image/webp"],
     qualities: [60, 75, 90],

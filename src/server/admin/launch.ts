@@ -37,3 +37,10 @@ export async function launchBlockers(): Promise<LaunchBlocker[]> {
   if (process.env.PAYMENT_PROVIDER !== "stripe") out.push({ area: "Paiement", message: "Paiement en mode démonstration (PAYMENT_PROVIDER ≠ stripe)", href: "/admin" });
   return out;
 }
+
+/** Variables {{…}} des pages de contenu alimentées par SiteSettings (identiques à la page publique). */
+export const CONTENT_SETTING_KEYS = ["legalName", "legalForm", "addressLine1", "postalCode", "city", "siret", "vatNumber", "contactEmail", "phone"] as const;
+
+export function contentVars(s: SiteSettings | null): Record<string, string | null | undefined> {
+  return Object.fromEntries(CONTENT_SETTING_KEYS.map((k) => [k, s?.[k] ?? null]));
+}

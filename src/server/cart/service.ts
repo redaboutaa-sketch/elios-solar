@@ -50,7 +50,10 @@ export async function addLine(owner: Owner, input: ConfigurationInput, configura
   if (!result.purchasable) throw new CartError("Cette configuration ne peut pas être ajoutée au panier.", result.issues.filter((i) => i.severity !== "info"));
   const cart = await getOrCreateCart(owner);
   const line = await prisma.cartLine.create({ data: { cartId: cart.id, configurationId: configurationId ?? null, input: stripped as never, qty: 1 } });
-  await prisma.cart.update({ where: { id: cart.id }, data: { updatedAt: new Date() } });
+  // le code postal saisi dans le configurateur est repris pour le panier s'il n'en a pas encore
+  const postal = input.delivery?.postalCode?.trim();
+  const delivery = !cart.delivery && postal ? ({ countryCode: input.delivery.countryCode ?? "FR", postalCode: postal } as never) : undefined;
+  await prisma.cart.update({ where: { id: cart.id }, data: { updatedAt: new Date(), ...(delivery ? { delivery } : {}) } });
   return { cart, line };
 }
 
