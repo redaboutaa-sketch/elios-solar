@@ -229,3 +229,16 @@ describe("prix falsifié", () => {
     expect(r.totals.totalGrossCents).toBeGreaterThan(100_000);
   });
 });
+
+describe("éclairage inclus avec choix de couleur", () => {
+  it("Solis Pro : la ligne incluse porte la couleur choisie, sans facturation ni doublon", () => {
+    const r = evaluate(catalog, standard({ familySlug: "pergola-solis-pro", options: [{ familySlug: "bandes-led", variantOption: "rgb", qty: 1 }] }));
+    const included = r.lines.filter((l) => l.included);
+    expect(included).toHaveLength(1);
+    expect(included[0]!.label).toMatch(/Éclairage LED de gouttière \(inclus\) – .*RGB/);
+    expect(included[0]!.totalGrossCents).toBe(0);
+    expect(r.purchasable).toBe(true);
+    const none = evaluate(catalog, standard({ familySlug: "pergola-solis-pro" }));
+    expect(none.lines.filter((l) => l.included).map((l) => l.label)).toEqual(["Éclairage LED de gouttière (inclus)"]);
+  });
+});

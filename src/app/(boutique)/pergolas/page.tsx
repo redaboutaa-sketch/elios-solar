@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { FamilyCard } from "@/components/catalog/family-card";
+import { RangeCard } from "@/components/catalog/range-card";
+import { loadCatalog } from "@/server/catalog/load";
+import { rangeHighlights } from "@/server/catalog/highlights";
 import { listFamilies, priceFrom } from "@/server/catalog/queries";
 
 export const metadata: Metadata = { title: "Pergolas bioclimatiques", description: "Gammes de pergolas bioclimatiques en aluminium : toit manuel ou motorisé, 7 dimensions, finitions anthracite, blanc ou noir, adossée ou autoportée." };
@@ -15,7 +17,7 @@ export default async function PergolasPage(props: PageProps<"/pergolas">) {
   const finish = typeof sp.finition === "string" ? sp.finition : "";
   const dim = typeof sp.dimension === "string" ? sp.dimension : "";
   const sort = typeof sp.tri === "string" ? sp.tri : "reco";
-  const all = await listFamilies(["PERGOLA_STANDARD", "PERGOLA_CUSTOM"]);
+  const [all, catalog] = await Promise.all([listFamilies(["PERGOLA_STANDARD", "PERGOLA_CUSTOM"]), loadCatalog()]);
   const finishes = [...new Map(all.flatMap((f) => f.finishes.map((x) => [x.finishCode, x.finish] as const))).values()];
   const dims = [...new Map(all.flatMap((f) => f.dimensions.map((x) => [x.dimensionCode, x.dimension] as const))).values()];
   let list = all.filter((f) => (!roof || f.roof === roof) && (!finish || f.finishes.some((x) => x.finishCode === finish)) && (!dim || f.dimensions.some((x) => x.dimensionCode === dim)));
@@ -37,7 +39,7 @@ export default async function PergolasPage(props: PageProps<"/pergolas">) {
         <div className="mt-10 card p-10 text-center"><p className="font-display text-2xl">Aucune gamme ne correspond à ces filtres.</p><p className="mt-2 text-stone-700">Essayez une autre finition ou dimension, ou <Link href="/configurateur/sur-mesure" className="underline">passez par le sur-mesure</Link>.</p></div>
       ) : (
         <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {list.map((f) => <FamilyCard key={f.slug} f={f} href={f.kind === "PERGOLA_CUSTOM" ? "/configurateur/sur-mesure" : `/pergolas/${f.slug}`} finishCode={finish || "ANTHRACITE"} />)}
+          {list.map((f) => <RangeCard key={f.slug} f={f} highlights={rangeHighlights(catalog, f.slug)} />)}
         </div>
       )}
     </div>

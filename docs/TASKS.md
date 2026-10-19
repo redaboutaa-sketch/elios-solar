@@ -34,3 +34,14 @@ Légende : ✅ fait (codé + vérifié) · 🔄 en cours · ⏳ à faire · ⛔ 
 
 ## Incrément 6
 - ⏳ Vue 3D (après stabilisation des règles)
+
+## Itération 2 — audit REA et présentation
+- ✅ Audit comparatif v2 avec REA (`docs/gap-analysis-v2.md`)
+- ✅ Correction de la grille de prix démo des fermetures et LED
+- ✅ Identité : logo/favicon, menu Pergolas déroulant, bouton Comparer, téléphone
+- ✅ Accueil : hero avec scène originale, cartes de gammes enrichies (équipements calculés), section « essentiel »
+- ✅ Fiche produit : galerie 4 vues générées, points clés, onglets, comparatif, barre mobile
+- ✅ Accessoires : compatibilité calculée (collection + fiche), couleurs, longueurs
+- ✅ Configurateur : bloc « inclus », prix/délai/lien par fermeture, couleur de l'éclairage inclus, modification depuis le panier (pergola et store)
+- ⏳ Photographies et documents fournisseur (gap-analysis-v2 § F) ⛔
+- ⏳ Vue 3D

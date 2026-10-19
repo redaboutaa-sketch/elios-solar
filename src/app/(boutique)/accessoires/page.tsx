@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { FamilyCard } from "@/components/catalog/family-card";
 import { listFamilies, priceFrom } from "@/server/catalog/queries";
+import { loadCatalog } from "@/server/catalog/load";
+import { accessoryCompat } from "@/server/catalog/accessory-compat";
 
 export const metadata: Metadata = { title: "Accessoires et fermetures latérales", description: "Parois vitrées, persiennes aluminium, stores verticaux ZIP, bandes LED, chauffage et lanternes compatibles avec nos pergolas." };
 
@@ -10,6 +12,7 @@ export default async function AccessoiresPage(props: PageProps<"/accessoires">) 
   const sp = await props.searchParams;
   const type = typeof sp.type === "string" ? sp.type : "";
   const sort = typeof sp.tri === "string" ? sp.tri : "reco";
+  const catalog = await loadCatalog();
   let list = await listFamilies(["SIDE_CLOSURE", "OPTION"]);
   if (type === "fermetures") list = list.filter((f) => f.kind === "SIDE_CLOSURE");
   if (type === "options") list = list.filter((f) => f.kind === "OPTION");
@@ -26,7 +29,7 @@ export default async function AccessoiresPage(props: PageProps<"/accessoires">) 
         <button className="btn-primary" type="submit">Appliquer</button><Link href="/accessoires" className="btn-ghost">Réinitialiser</Link>
       </form>
       {list.length === 0 ? <p className="mt-10 card p-10 text-center">Aucun accessoire dans cette catégorie.</p> : (
-        <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">{list.map((f) => <FamilyCard key={f.slug} f={f} href={`/accessoires/${f.slug}`} />)}</div>
+        <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">{list.map((f) => <FamilyCard key={f.slug} f={f} href={`/accessoires/${f.slug}`} compat={accessoryCompat(catalog, f.slug)} />)}</div>
       )}
     </div>
   );

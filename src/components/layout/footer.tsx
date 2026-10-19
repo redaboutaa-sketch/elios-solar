@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BRAND } from "@/config/brand";
 import { CookiePreferencesButton } from "@/components/consent/cookie-banner";
+import { Logo } from "@/components/brand/logo";
 
 export function Footer({ settings }: { settings?: { legalName?: string | null; phone?: string | null; contactEmail?: string | null; city?: string | null } | null }) {
   const cols = [
@@ -12,7 +13,7 @@ export function Footer({ settings }: { settings?: { legalName?: string | null; p
     <footer className="mt-auto border-t border-sand-200 bg-sand-100">
       <div className="container-x py-12 grid gap-10 md:grid-cols-4">
         <div>
-          <p className="font-display text-xl font-semibold">{BRAND.name}</p>
+          <Logo />
           <p className="mt-2 text-sm text-stone-700">{BRAND.tagline}.</p>
           <p className="mt-4 text-xs text-stone-700">{settings?.legalName ? settings.legalName : "Identité du vendeur à renseigner dans l'administration."}{settings?.city ? ` — ${settings.city}` : ""}</p>
           {settings?.phone && <p className="text-xs text-stone-700">{settings.phone}</p>}

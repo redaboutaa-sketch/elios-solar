@@ -17,7 +17,7 @@ import { QuoteForm } from "./quote-form";
 
 type Pending = ReturnType<typeof adaptStandardInput>["pending"];
 
-export function PergolaConfigurator({ catalog, initial, existing }: { catalog: CatalogSnapshot; initial: PergolaStandardInput; existing?: { id: string; token: string; title: string | null } | null }) {
+export function PergolaConfigurator({ catalog, initial, existing, replaceLineId = null }: { catalog: CatalogSnapshot; initial: PergolaStandardInput; existing?: { id: string; token: string; title: string | null } | null; replaceLineId?: string | null }) {
   const router = useRouter();
   const [input, setInput] = useState<PergolaStandardInput>(initial);
   const [pending, setPending] = useState<Pending>([]);
@@ -65,7 +65,7 @@ export function PergolaConfigurator({ catalog, initial, existing }: { catalog: C
     else setMessage({ tone: "error", text: r.error });
   });
   const addToCart = () => startTransition(async () => {
-    const r = await addToCartAction(input, saved?.id ?? null);
+    const r = await addToCartAction(input, saved?.id ?? null, replaceLineId);
     if (r.ok) router.push("/panier");
     else setMessage({ tone: "error", text: r.error });
   });
@@ -99,6 +99,18 @@ export function PergolaConfigurator({ catalog, initial, existing }: { catalog: C
             ))}
           </div>
         </Step>
+
+        {family && (
+          <div className="card p-4 text-sm" aria-live="polite">
+            <p className="font-medium">Inclus avec {family.name}</p>
+            <ul className="mt-1 grid gap-1 sm:grid-cols-2 text-stone-800">
+              <li>· {family.roof === "motorized" ? "Toit à lames motorisé avec télécommande" : "Toit à lames orientables, commande manuelle"}</li>
+              <li>· {family.lightingIncluded === "gutter_led" ? "Éclairage LED de gouttière (couleur au choix à l'étape 6)" : family.lightingIncluded === "blade_led" ? "Éclairage LED intégré aux lames" : "Éclairage non inclus (bandes LED en option)"}</li>
+              <li>· {family.accessoryRails ?? 1} rail{(family.accessoryRails ?? 1) > 1 ? "s" : ""} d'accessoires par poutre</li>
+              <li>· Fixations, fondations et raccordement électrique non inclus</li>
+            </ul>
+          </div>
+        )}
 
         <Step n={2} title="Implantation">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -170,7 +182,7 @@ export function PergolaConfigurator({ catalog, initial, existing }: { catalog: C
                               <input type="radio" name={`seg-${seg.id}`} disabled={disabled} checked={selected} onChange={() => setSegment(seg.id, { closureFamilySlug: c.family.slug, option: c.variants[0]?.option })} className="mt-1" />
                               <span className="flex-1">
                                 <span className="font-medium">{c.family.name}</span>
-                                {c.variants[0] && !disabled && <span className="text-stone-700"> · à partir de {formatEur(Math.min(...c.variants.map((v) => v.priceCents)))}</span>}
+                                {c.variants[0] && !disabled && <span className="text-stone-700"> · {c.variants.length > 1 ? "à partir de " : ""}{formatEur(Math.min(...c.variants.map((v) => v.priceCents)))}{leadTimeOf(catalog, c.variants[0].sku) ? ` · délai indicatif ${leadTimeOf(catalog, c.variants[0].sku)} j` : ""} · <Link href={`/accessoires/${c.family.slug}`} className="underline" target="_blank" rel="noopener">voir la fiche</Link></span>}
                                 {c.status === "unknown" && <span className="block text-xs text-warning">Compatibilité non confirmée — validée sur devis{c.reason ? ` (${c.reason})` : ""}.</span>}
                                 {disabled && <span className="block text-xs text-danger">Indisponible : {c.reason}</span>}
                               </span>
@@ -197,11 +209,27 @@ export function PergolaConfigurator({ catalog, initial, existing }: { catalog: C
             {optionChoicesFor(catalog, input).map((o) => {
               const current = input.options.find((x) => x.familySlug === o.family.slug);
               const variantOptions = [...new Set(o.variants.map((v) => (v.attributes.kind === "option" ? v.attributes.variantOption : undefined)).filter(Boolean))] as string[];
+              if (o.includedInBase) {
+                return (
+                  <li key={o.family.slug} className="card p-4 border-success/40">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-medium">{o.family.name} <span className="badge-ok ml-1">inclus avec {family?.name}</span></p>
+                      <span className="text-sm text-stone-700">0 €</span>
+                    </div>
+                    {variantOptions.length > 1 && (
+                      <fieldset className="mt-2"><legend className="text-xs text-stone-700">Couleur d'éclairage (sans supplément)</legend>
+                        <div className="mt-1 flex flex-wrap gap-2">{variantOptions.map((vo) => <button key={vo} type="button" aria-pressed={current?.variantOption === vo} onClick={() => setOption(o.family.slug, vo, 1)} className={`rounded-full border px-3 py-1.5 text-xs min-h-9 ${current?.variantOption === vo ? "border-ink bg-anthracite text-sand-50" : "border-sand-300"}`}>{optionLabel(vo)}</button>)}</div>
+                        {!current && <p className="mt-1 text-xs text-warning">Choisissez la couleur : elle sera notée sur la commande.</p>}
+                      </fieldset>
+                    )}
+                  </li>
+                );
+              }
               return (
                 <li key={o.family.slug} className="card p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={!!current} disabled={o.variants.length === 0} onChange={(e) => setOption(o.family.slug, variantOptions[0], e.target.checked ? 1 : 0)} /> {o.family.name}</label>
-                    {o.includedInBase ? <span className="badge-ok">inclus dans {family?.name}</span> : o.variants.length === 0 ? <span className="badge-err">indisponible pour cette configuration</span> : <span className="text-sm">{formatEur(Math.min(...o.variants.map((v) => v.priceCents)))}{o.variants.length > 1 && variantOptions.length <= 1 ? " et plus" : ""}</span>}
+                    {o.variants.length === 0 ? <span className="badge-err">indisponible pour cette configuration</span> : <span className="text-sm">{formatEur(Math.min(...o.variants.map((v) => v.priceCents)))}{o.variants.length > 1 && variantOptions.length <= 1 ? " et plus" : ""}{leadTimeOf(catalog, o.variants[0]!.sku) ? ` · ${leadTimeOf(catalog, o.variants[0]!.sku)} j` : ""}</span>}
                   </div>
                   <p className="text-xs text-stone-700 mt-1">{o.family.shortDescription}{o.status === "unknown" && <span className="text-warning"> · compatibilité non confirmée : devis</span>}</p>
                   {current && (
@@ -242,7 +270,7 @@ export function PergolaConfigurator({ catalog, initial, existing }: { catalog: C
               <input className="input sm:col-span-2" placeholder="Nom du projet (facultatif)" value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Nom du projet" />
               <button type="button" className="btn-secondary" onClick={save} disabled={busy}><Save className="size-4" aria-hidden="true" /> {saved ? "Mettre à jour le projet" : "Sauvegarder le projet"}</button>
               <button type="button" className="btn-secondary" onClick={() => setShowQuote((s) => !s)}><FileText className="size-4" aria-hidden="true" /> Demander un devis</button>
-              <button type="button" className="btn-accent sm:col-span-2" onClick={addToCart} disabled={busy || !result.purchasable} title={result.purchasable ? undefined : "Des points sont à résoudre avant l'achat"}><ShoppingBag className="size-4" aria-hidden="true" /> {result.purchasable ? "Ajouter au panier" : blocking.length ? "Achat impossible en l'état — devis conseillé" : "Ajouter au panier"}</button>
+              <button type="button" className="btn-accent sm:col-span-2" onClick={addToCart} disabled={busy || !result.purchasable} title={result.purchasable ? undefined : "Des points sont à résoudre avant l'achat"}><ShoppingBag className="size-4" aria-hidden="true" /> {result.purchasable ? (replaceLineId ? "Mettre à jour le panier" : "Ajouter au panier") : blocking.length ? "Achat impossible en l'état — devis conseillé" : "Ajouter au panier"}</button>
             </div>
             {shareUrl && <p className="mt-3 text-xs text-stone-700 flex items-center gap-1 break-all"><Share2 className="size-3" aria-hidden="true" /> Lien de partage (sans données personnelles, révocable depuis Mes projets) : <a className="underline" href={shareUrl}>{shareUrl}</a> · <a className="underline" href={`/projets/${saved!.token}/pdf`}>PDF</a></p>}
             {showQuote && <div className="mt-5 border-t border-sand-200 pt-4"><QuoteForm input={input} kind="configuration" configurationId={saved?.id ?? null} onDone={(n) => { setShowQuote(false); setMessage({ tone: "success", text: `Demande de devis ${n} enregistrée : vous recevez une confirmation par e-mail.` }); }} /></div>}
@@ -268,6 +296,10 @@ function Step({ n, title, hint, id, children }: { n: number; title: string; hint
       <div className="mt-4">{children}</div>
     </section>
   );
+}
+
+function leadTimeOf(catalog: CatalogSnapshot, sku: string): number | null {
+  return catalog.variants.find((v) => v.sku === sku)?.leadTimeDays ?? null;
 }
 
 function artFor(c: SegmentChoice | null | undefined): "glass" | "slats" | "screen" | undefined {

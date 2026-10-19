@@ -57,6 +57,23 @@ export async function addLine(owner: Owner, input: ConfigurationInput, configura
   return { cart, line };
 }
 
+/** Remplace l'entrée d'une ligne (modification depuis le configurateur) après réévaluation serveur. */
+export async function replaceLine(owner: Owner, lineId: string, input: ConfigurationInput, configurationId?: string | null) {
+  const cart = await findActiveCart(owner);
+  const line = cart?.lines.find((l) => l.id === lineId);
+  if (!cart || !line) throw new CartError("Ligne introuvable.");
+  const catalog = await loadCatalog();
+  const stripped = stripDelivery(input);
+  const result = evaluate(catalog, { ...stripped, delivery: { countryCode: "FR", postalCode: "00000" } } as ConfigurationInput);
+  if (!result.purchasable) throw new CartError("Cette configuration ne peut pas être enregistrée dans le panier.", result.issues.filter((i) => i.severity !== "info"));
+  return prisma.cartLine.update({ where: { id: lineId }, data: { input: stripped as never, configurationId: configurationId ?? line.configurationId } });
+}
+
+export async function getLineForOwner(owner: Owner, lineId: string) {
+  const cart = await findActiveCart(owner);
+  return cart?.lines.find((l) => l.id === lineId) ?? null;
+}
+
 export async function updateLineQty(owner: Owner, lineId: string, qty: number) {
   const cart = await findActiveCart(owner);
   const line = cart?.lines.find((l) => l.id === lineId);

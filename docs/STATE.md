@@ -1,6 +1,6 @@
 # État réel du projet
 
-Mis à jour : 2026-10-19 — incréments 1 à 5 livrés (version intégrée en préproduction)
+Mis à jour : 2026-10-19 (itération 2 : audit REA, présentation premium, couverture fonctionnelle)
 
 ## Où en est-on
 - Dépôt : `redaboutaa-sketch/elios-solar`, branche `feat/storefront-configurator` (depuis `main` = commit initial).
@@ -10,7 +10,8 @@ Mis à jour : 2026-10-19 — incréments 1 à 5 livrés (version intégrée en p
 - Paiement : mode DEMO (page de paiement simulé + webhook signé HMAC).
 - Préproduction Docker : `docker compose -f docker/compose.prod.yml --env-file .env.prod up -d` → http://127.0.0.1:3401 (images `elios-solar/app:preprod`, `elios-solar/tools:preprod`, migrations appliquées par le service `migrate`, seed démo exécuté, santé OK, worker e-mail actif). `.env.prod` local non commité.
 - Sauvegarde/restauration : `scripts/backup.sh` et `scripts/restore.sh` testés (dump + médias + checksums ; restauration vérifiée dans une base isolée `elios_solar_restore_check`).
-- Vérifications passées : typecheck ✅, lint ✅, unitaires 32/32 ✅, intégration 14/14 ✅, Playwright 22/22 ✅, build ✅ (détail : `docs/test-report.md`).
+- Vérifications passées : typecheck ✅, lint ✅, unitaires 33/33 ✅, intégration 14/14 ✅, Playwright 26/26 ✅, build ✅ (détail : `docs/test-report.md`).
+- Audit comparatif v2 avec REA : `docs/gap-analysis-v2.md` (écarts, priorités, médias manquants).
 - Administration : http://127.0.0.1:3400/admin (compte créé par `pnpm admin:bootstrap`).
 
 ## Commandes utiles
@@ -28,7 +29,7 @@ pnpm typecheck && pnpm lint && pnpm test:unit
 Accès distant : tunnel SSH `ssh -L 3401:127.0.0.1:3401 -L 3400:127.0.0.1:3400 -L 8025:127.0.0.1:8025 root@<vps>` (3401 = pile Docker, 3400 = serveur de dev s'il tourne, 8025 = Mailpit).
 
 ## Prochaine action
-Revue de la préproduction par le propriétaire ; collecte des données fournisseur (import CSV), identité et contenus ; puis vue 3D (incrément 6) et bascule Stripe/domaine après revue.
+Revue de la préproduction ; fourniture des photographies et données fournisseur (gap-analysis-v2 § E–F) ; puis écarts P2/P3 restants (galerie photo réelle, délais réels, vue 3D) et bascule Stripe/domaine après revue.
 
 ## Procédure de reprise (tmux)
 `tmux attach -t pergola` ; lire `docs/STATE.md`, `docs/TASKS.md`, `git status` / `git diff` avant de reprendre.

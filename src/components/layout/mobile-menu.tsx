@@ -3,7 +3,7 @@ import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
-export function MobileMenu({ items }: { items: ReadonlyArray<{ href: string; label: string }> }) {
+export function MobileMenu({ items, ranges = [] }: { items: ReadonlyArray<{ href: string; label: string }>; ranges?: Array<{ slug: string; name: string; custom?: boolean }> }) {
   const [open, setOpen] = useState(false);
   const id = useId();
   useEffect(() => {
@@ -22,7 +22,14 @@ export function MobileMenu({ items }: { items: ReadonlyArray<{ href: string; lab
         <div id={id} className="fixed inset-x-0 top-16 bottom-0 z-50 bg-sand-50 overflow-y-auto border-t border-sand-200">
           <nav aria-label="Navigation mobile" className="container-x py-4 flex flex-col">
             {items.map((n) => (
-              <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className="py-3.5 text-lg border-b border-sand-200">{n.label}</Link>
+              <div key={n.href} className="border-b border-sand-200">
+                <Link href={n.href} onClick={() => setOpen(false)} className="block py-3.5 text-lg">{n.label}</Link>
+                {n.href === "/pergolas" && ranges.length > 0 && (
+                  <ul className="pb-3 pl-4 space-y-1">
+                    {ranges.map((r) => <li key={r.slug}><Link href={r.custom ? "/configurateur/sur-mesure" : `/pergolas/${r.slug}`} onClick={() => setOpen(false)} className="block py-1.5 text-base text-stone-800">{r.name}</Link></li>)}
+                  </ul>
+                )}
+              </div>
             ))}
             <Link href="/devis" onClick={() => setOpen(false)} className="py-3.5 text-lg border-b border-sand-200">Demander un devis</Link>
             <Link href="/contact" onClick={() => setOpen(false)} className="py-3.5 text-lg">Contact</Link>

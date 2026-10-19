@@ -22,3 +22,5 @@ Alimentation électrique,motorisation / LED / chauffage,prérequis (information)
 Fixations / fondations,toutes pergolas,"prérequis (information, aucune validation structurelle)",observed,2026-10-19,observed,issue info anchoring_notice,—,—
 Livraison Corse / Outre-mer,"20, 97, 98",quote,hypothèse interne,2026-10-19,demo,ShippingRule quoteRequired,engine.test Corse,zones réelles
 Sur mesure : bornes,"2000–4000 / 2000–6000 / 2200–3000 mm, pas 10",unknown (devis),hypothèse interne (≠ bornes observées),2026-10-19,unknown,CustomPergolaSettings,engine.test sur mesure,fournisseur
+Couleur de l'éclairage inclus (Pro),"blanc chaud ou RGB, sans supplément","allowed, includedInBase",observed (REA : 'Gratuit'),2026-10-19,demo,option bandes-led + includedInBase → ligne incluse avec la couleur,engine.test 'éclairage inclus',confirmation fournisseur
+Modification d'une ligne de panier,reprise de l'entrée dans le configurateur puis remplacement,allowed,fonctionnel interne,2026-10-19,observed,replaceLine (réévaluation serveur),e2e 06,—

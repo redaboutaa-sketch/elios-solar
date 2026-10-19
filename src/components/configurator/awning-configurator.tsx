@@ -13,12 +13,12 @@ import { QuoteForm } from "./quote-form";
 const CAB: Record<string, string> = { ANTHRACITE: "#3a3d41", WHITE: "#e9e6df" };
 const FAB: Record<string, [string, string]> = { GREY: ["gris", "#9a9a94"], BEIGE: ["beige", "#d9c7a5"] };
 
-export function AwningConfigurator({ catalog, familySlug }: { catalog: CatalogSnapshot; familySlug: string }) {
+export function AwningConfigurator({ catalog, familySlug, initial = null, replaceLineId = null }: { catalog: CatalogSnapshot; familySlug: string; initial?: AwningInput | null; replaceLineId?: string | null }) {
   const variants = catalog.variants.filter((v) => v.familySlug === familySlug && v.attributes.kind === "awning");
   const combos = [...new Map(variants.map((v) => { const a = v.attributes as { widthMm: number; projectionMm: number }; return [`${a.widthMm}-${a.projectionMm}`, a] as const; })).values()];
   const widths = [...new Set(combos.map((c) => c.widthMm))].sort((a, b) => a - b);
   const router = useRouter();
-  const [input, setInput] = useState<AwningInput>({ kind: "awning", familySlug, widthMm: combos[0]?.widthMm ?? 3000, projectionMm: combos[0]?.projectionMm ?? 2000, cabinetColor: "ANTHRACITE", fabricCode: "GREY", bracketMount: "wall", options: [], installation: "self", delivery: { countryCode: "FR" } });
+  const [input, setInput] = useState<AwningInput>(initial ?? { kind: "awning", familySlug, widthMm: combos[0]?.widthMm ?? 3000, projectionMm: combos[0]?.projectionMm ?? 2000, cabinetColor: "ANTHRACITE", fabricCode: "GREY", bracketMount: "wall", options: [], installation: "self", delivery: { countryCode: "FR" } });
   const projections = combos.filter((c) => c.widthMm === input.widthMm).map((c) => c.projectionMm).sort((a, b) => a - b);
   const result = useMemo(() => evaluate(catalog, input), [catalog, input]);
   const [msg, setMsg] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export function AwningConfigurator({ catalog, familySlug }: { catalog: CatalogSn
           <IssueList issues={result.issues} className="mt-3" />
           {msg && <div className="mt-3"><Notice tone="error">{msg}</Notice></div>}
           <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" className="btn-accent" disabled={busy || !result.purchasable} onClick={() => start(async () => { const r = await addToCartAction(input, null); if (r.ok) router.push("/panier"); else setMsg(r.error); })}>Ajouter au panier</button>
+            <button type="button" className="btn-accent" disabled={busy || !result.purchasable} onClick={() => start(async () => { const r = await addToCartAction(input, null, replaceLineId); if (r.ok) router.push("/panier"); else setMsg(r.error); })}>{replaceLineId ? "Mettre à jour le panier" : "Ajouter au panier"}</button>
             <button type="button" className="btn-secondary" onClick={() => setShowQuote((s) => !s)}>Demander un devis</button>
           </div>
           {showQuote && <div className="mt-4 border-t border-sand-200 pt-4"><QuoteForm input={input} kind="configuration" configurationId={null} /></div>}

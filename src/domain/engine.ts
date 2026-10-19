@@ -279,19 +279,6 @@ function evaluatePergolaStandard(catalog: CatalogSnapshot, input: PergolaStandar
     taxRateBps: base.taxRateBps,
     dataStatus: base.dataStatus,
   });
-  if (family.lightingIncluded && family.lightingIncluded !== "none") {
-    b.lines.push({
-      kind: "option",
-      code: `included:${family.slug}:lighting`,
-      label: family.lightingIncluded === "gutter_led" ? "Éclairage LED de gouttière (inclus)" : "Éclairage LED intégré aux lames (inclus)",
-      qty: 1,
-      unitGrossCents: 0,
-      totalGrossCents: 0,
-      taxRateBps: base.taxRateBps,
-      included: true,
-      dataStatus: family.dataStatus,
-    });
-  }
 
   // Segments
   const segments = allSegments(layout);
@@ -426,6 +413,17 @@ function evaluatePergolaStandard(catalog: CatalogSnapshot, input: PergolaStandar
     }
     b.line({ kind: "option", code: `option:${optFamily.slug}:${variant.sku}`, label: variant.label, sku: variant.sku, qty: opt.qty, unitGrossCents: variant.priceCents, taxRateBps: variant.taxRateBps, path, dataStatus: worst(variant.dataStatus, rule?.dataStatus ?? "unknown") });
   });
+
+  // Éclairage inclus dans la gamme : une seule ligne « inclus » (avec la couleur choisie le cas échéant)
+  if (family.lightingIncluded && family.lightingIncluded !== "none") {
+    const chosen = b.lines.find((l) => l.kind === "option" && l.included && l.code.startsWith("option:"));
+    const base = family.lightingIncluded === "gutter_led" ? "Éclairage LED de gouttière" : "Éclairage LED intégré aux lames";
+    if (chosen) {
+      chosen.label = `${base} (inclus) – ${chosen.label.replace(/\s*\(inclus\)$/, "")}`;
+    } else {
+      b.lines.splice(1, 0, { kind: "option", code: `included:${family.slug}:lighting`, label: `${base} (inclus)`, qty: 1, unitGrossCents: 0, totalGrossCents: 0, taxRateBps: catalog.taxRateBps, included: true, dataStatus: family.dataStatus });
+    }
+  }
 
   // Prérequis (information, jamais une validation structurelle)
   if (family.roof === "motorized" || input.options.some((o) => ["bandes-led", "lampe-chauffante"].includes(o.familySlug))) {

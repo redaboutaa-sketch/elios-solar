@@ -5,7 +5,7 @@ import type { ConfigurationInput, EvaluationResult } from "@/domain/types";
 import { getSession } from "@/lib/session";
 import { ensureGuestKey, getGuestKey } from "@/server/guest";
 import { evaluateInput, saveConfiguration, updateConfiguration } from "@/server/configuration/service";
-import { addLine, CartError } from "@/server/cart/service";
+import { addLine, CartError, replaceLine } from "@/server/cart/service";
 import { createQuote } from "@/server/quote/service";
 import { rateLimit } from "@/server/rate-limit";
 import { ensureCatalogSnapshot } from "@/server/catalog/public-snapshot";
@@ -35,14 +35,19 @@ export async function saveConfigurationAction(raw: unknown, title: string | null
   }
 }
 
-export async function addToCartAction(raw: unknown, configurationId: string | null): Promise<ActionResult<{ lineId: string }>> {
+export async function addToCartAction(raw: unknown, configurationId: string | null, replaceLineId: string | null = null): Promise<ActionResult<{ lineId: string }>> {
   const parsed = configurationInputSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, error: "Configuration invalide." };
   if (!(await rateLimit("add-to-cart", 60, 60))) return { ok: false, error: "Trop de requêtes." };
   const session = await getSession();
   const guestKey = await ensureGuestKey();
+  const owner = { userId: session?.user.id ?? null, guestKey };
   try {
-    const { line } = await addLine({ userId: session?.user.id ?? null, guestKey }, parsed.data as ConfigurationInput, configurationId);
+    if (replaceLineId) {
+      const line = await replaceLine(owner, replaceLineId, parsed.data as ConfigurationInput, configurationId);
+      return { ok: true, data: { lineId: line.id } };
+    }
+    const { line } = await addLine(owner, parsed.data as ConfigurationInput, configurationId);
     return { ok: true, data: { lineId: line.id } };
   } catch (e) {
     if (e instanceof CartError) return { ok: false, error: e.message, issues: e.issues };

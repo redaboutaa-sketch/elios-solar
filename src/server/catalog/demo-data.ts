@@ -259,9 +259,10 @@ function closureVariants(): Variant[] {
   const out: Variant[] = [];
   // Paroi vitrée : 3 options, 2 couleurs (pas de noir : comme observé), 4 longueurs
   const glassOptions = [
-    { code: "fixed", label: "fixe", perMm: 0.48, fixed: 14_000 },
-    { code: "sliding_framed", label: "coulissante avec cadre", perMm: 0.52, fixed: 16_000 },
-    { code: "sliding_frameless", label: "coulissante sans cadre", perMm: 0.56, fixed: 18_000 },
+    // prix démo : fixe (€) + €/mm de longueur → 3 m ≈ 1 440 / 1 560 / 1 680 €, 6 m ≈ 2 580 / 2 820 / 3 060 €
+    { code: "fixed", label: "fixe", perMm: 0.38, fixed: 300 },
+    { code: "sliding_framed", label: "coulissante avec cadre", perMm: 0.42, fixed: 300 },
+    { code: "sliding_frameless", label: "coulissante sans cadre", perMm: 0.46, fixed: 300 },
   ];
   for (const len of CLOSURE_LENGTHS) for (const color of ["ANTHRACITE", "WHITE"]) for (const opt of glassOptions) {
     out.push({
@@ -279,7 +280,7 @@ function closureVariants(): Variant[] {
       sku: `ES-PA-${len / 1000}M-${color.slice(0, 3)}-${mounting === "wall" ? "ADO" : "AUT"}`,
       familySlug: "persienne-aluminium",
       label: `Persienne aluminium ${len / 1000} m – ${COLOR_LABEL[color]} – kit ${mounting === "wall" ? "adossée" : "autoportée"}`,
-      priceCents: round10(12_000 * 100 + 0.36 * len * 100),
+      priceCents: round10(350 * 100 + 0.3 * len * 100), // 3 m ≈ 1 250 €, 6 m ≈ 2 150 €
       taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "made_to_order", leadTimeDays: 28,
       attributes: { kind: "side_closure", sideLengthMm: len, colorCode: color, mounting },
     });
@@ -290,7 +291,7 @@ function closureVariants(): Variant[] {
       sku: `ES-SV-${len / 1000}M-${color.slice(0, 3)}`,
       familySlug: "store-vertical-zip",
       label: `Store vertical ZIP ${len / 1000} m – ${COLOR_LABEL[color]}`,
-      priceCents: round10(7_500 * 100 + 0.24 * len * 100),
+      priceCents: round10(250 * 100 + 0.19 * len * 100), // 3 m ≈ 820 €, 6 m ≈ 1 390 €
       taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "stock", stockQty: 12, leadTimeDays: 7,
       attributes: { kind: "side_closure", sideLengthMm: len, colorCode: color, option: "zip" },
     });
@@ -306,7 +307,7 @@ function optionVariants(): Variant[] {
       sku: `ES-LED-${dim.code.toUpperCase()}-${mounting === "wall" ? "ADO" : "AUT"}-${color === "rgb" ? "RGB" : "BC"}`,
       familySlug: "bandes-led",
       label: `Bandes LED ${color === "rgb" ? "RGB" : "blanc chaud"} – ${dim.label} ${mounting === "wall" ? "adossée" : "autoportée"}`,
-      priceCents: round10(12_000 * 100 + perimeter * 2_200 * 100),
+      priceCents: round10(120 * 100 + perimeter * 20 * 100), // 3x4 (14 m) ≈ 400 €, 4x6 (20 m) ≈ 520 €
       taxRateBps: 2000, purchasable: true, dataStatus: "demo", stockMode: "stock", stockQty: 25, leadTimeDays: 5,
       attributes: { kind: "option", dimensionCode: dim.code, mounting, variantOption: color },
     });

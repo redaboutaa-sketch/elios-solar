@@ -16,3 +16,7 @@
 | 2026-10-19 | Fournisseur de paiement « DEMO » signé HMAC, même chemin de webhook que Stripe | Préproduction vérifiable sans clés réelles |
 | 2026-10-19 | Règle ESLint `react/no-unescaped-entities` désactivée | Textes français avec apostrophes dans le JSX |
 | 2026-10-19 | `AGENTS.md` généré par `next dev` conservé tel quel | Évite un diff permanent ; pointe vers les docs de la version installée |
+| 2026-10-19 | REA (`rea-agents`, `capture_browser_scenario` en mode launch avec le Chromium Playwright) utilisé pour l'audit v2 : arbres d'accessibilité et interactions des pages publiques, sans achat ni formulaire | Outil REA confirmé par le propriétaire ; captures pixel via Playwright, hors dépôt pour la référence |
+| 2026-10-19 | Prix démo des fermetures et LED recalculés (erreur de facteur 100 détectée à l'audit v2) | Grille cohérente avec les pergolas, toujours `demo` |
+| 2026-10-19 | Éclairage inclus (Pro) : couleur choisie via l'option `bandes-led` marquée `includedInBase`, une seule ligne « inclus » | Comportement observé sur la référence (« Gratuit ») sans refacturation |
+| 2026-10-19 | Rendus SVG originaux (scène de terrasse, vues multiples) en attendant des photographies autorisées ; liste des médias manquants dans gap-analysis-v2.md § F | Aucune image de tiers |

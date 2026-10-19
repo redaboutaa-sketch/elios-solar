@@ -39,7 +39,9 @@ export default async function CartPage() {
                     <p className="text-xl font-semibold"><Price cents={lineTotalCents} /></p>
                     <form action={updateQtyAction} className="mt-2 flex items-center justify-end gap-2"><input type="hidden" name="lineId" value={line.id} /><label className="text-sm" htmlFor={`qty-${line.id}`}>Qté</label><input id={`qty-${line.id}`} name="qty" type="number" min={1} max={10} defaultValue={line.qty} className="input w-20 py-1" /><button className="btn-secondary py-1.5" type="submit">Mettre à jour</button></form>
                     <form action={removeLineAction} className="mt-2"><input type="hidden" name="lineId" value={line.id} /><button className="text-sm underline text-stone-700" type="submit">Retirer</button></form>
-                    {input.kind === "pergola_standard" && line.configurationId && <Link href={`/configurateur?projet=${line.configurationId}`} className="block mt-2 text-sm underline">Modifier la configuration</Link>}
+                    {input.kind === "pergola_standard" && <Link href={`/configurateur?ligne=${line.id}`} className="block mt-2 text-sm underline">Modifier la configuration</Link>}
+                    {input.kind === "awning" && <Link href={`/configurateur/store-banne?ligne=${line.id}`} className="block mt-2 text-sm underline">Modifier le store</Link>}
+                    {input.kind === "accessory" && <Link href={`/accessoires/${input.familySlug}`} className="block mt-2 text-sm underline">Voir l'accessoire</Link>}
                   </div>
                 </div>
               </li>

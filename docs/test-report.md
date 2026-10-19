@@ -1,4 +1,4 @@
-# Rapport de vérification — 2026-10-19
+# Rapport de vérification — 2026-10-19 (itération 2)
 
 Environnement : VPS (Node 22.23, pnpm 10.33, PostgreSQL 16 en conteneur, Chromium Playwright 1.64),
 serveur de développement Next.js 16.4 sur 127.0.0.1:3400, paiement en mode DEMO, e-mails en mode `log`/Mailpit.
@@ -7,9 +7,9 @@ serveur de développement Next.js 16.4 sur 127.0.0.1:3400, paiement en mode DEMO
 |---|---|---|
 | Contrôle TypeScript | `pnpm typecheck` | ✅ 0 erreur |
 | Lint | `pnpm lint` | ✅ 0 erreur, 1 avertissement (`<img>` dans réalisations) |
-| Tests moteur (unitaires) | `pnpm test:unit` | ✅ 32/32 |
+| Tests moteur (unitaires) | `pnpm test:unit` | ✅ 33/33 |
 | Tests serveur (intégration, base dédiée) | `pnpm test:integration` | ✅ 14/14 |
-| Parcours navigateur desktop 1440 px + mobile 390 px | `E2E_NO_SERVER=1 pnpm test:e2e` | ✅ 22/22 (11 scénarios × 2 viewports) |
+| Parcours navigateur desktop 1440 px + mobile 390 px | `E2E_NO_SERVER=1 pnpm test:e2e` | ✅ 26/26 (13 scénarios × 2 viewports) |
 | Build de production | `pnpm build` | ✅ |
 
 ## Scénarios navigateur couverts (tests/e2e)
@@ -23,6 +23,11 @@ serveur de développement Next.js 16.4 sur 127.0.0.1:3400, paiement en mode DEMO
 8. Refus des cookies optionnels ⇒ aucun script optionnel chargé ; acceptation ultérieure ⇒ chargement.
 9. Captures accueil, collection, fiche, comparateur, connexion, configurateur, panier, paiement, administration (tests/e2e/screenshots/*-1440.png et *-390.png) ; absence de débordement horizontal.
 10. Changement de dimension ⇒ adaptations à confirmer, report de la fermeture sur une autre ouverture.
+11. Modification d'une configuration depuis le panier : la ligne est remplacée (dimension et fermeture reportées), pas dupliquée.
+12. Éclairage inclus (gamme Pro) : choix de couleur sans supplément, une seule ligne « inclus » dans le récapitulatif.
+
+## Audit v2 (REA)
+Scénarios `capture_browser_scenario` sur la référence (accueil, fiche Pro, configurateur Pro mobile avec ouverture de la modale d'un côté) ; captures Playwright référence/préproduction à 1440 et 390 px ; absence de débordement horizontal vérifiée sur accueil, fiche, configurateur, accessoires.
 
 ## Tests serveur (tests/integration)
 Total serveur vs. valeurs falsifiées ; configuration non achetable refusée au panier ; isolement des commandes par propriétaire ;
