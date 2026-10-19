@@ -1,0 +1,34 @@
+# Services de développement locaux pour ELIOS SOLAR (ne pas utiliser en production).
+# Ports liés à 127.0.0.1 uniquement : accès par tunnel SSH si nécessaire.
+name: elios-solar-dev
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: elios-solar-dev-postgres
+    environment:
+      POSTGRES_USER: elios
+      POSTGRES_PASSWORD: elios_dev_only
+      POSTGRES_DB: elios_solar
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - elios_solar_dev_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U elios -d elios_solar"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: elios-solar-dev-mailpit
+    ports:
+      - "127.0.0.1:1025:1025"   # SMTP de capture
+      - "127.0.0.1:8025:8025"   # interface web
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    restart: unless-stopped
+volumes:
+  elios_solar_dev_pg:
+    name: elios_solar_dev_pg
