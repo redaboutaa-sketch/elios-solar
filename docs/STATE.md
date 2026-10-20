@@ -12,12 +12,14 @@ Le bilan complet est dans `docs/heliostores/README.md`, avec les sources, corres
 - **Tarifs fournisseur** importés en privé (`pnpm supplier-prices:import`, Administration → Tarifs fournisseur), jamais lus par la boutique.
 - **Médias fabricant** importés par `pnpm media:heliostores --dir private/heliostores/media-staging --apply` ; les fichiers restent privés.
 - **Ancien catalogue de démonstration** archivé (`legacy`), conservé pour l'historique ; `SEED_LEGACY_DEMO=active` le réactive pour les seuls tests d'intégration.
-- **Vérifications** (commit déployé `ec22202`) :
-  - typecheck ✅, lint ✅ (0 erreur), unitaires 193/193 ✅, intégration 80/80 ✅ ;
+- **Vérifications** (commit déployé `4bfb76c`) :
+  - typecheck ✅, lint ✅ (0 erreur), unitaires 194/194 ✅, intégration 80/80 ✅ ;
   - **recette navigateur complète contre Docker : 29/29 en une campagne, sans relance** ✅ ;
   - CI `verify` et `e2e-docker` (29/29) ✅ sur push et PR ;
   - contrôle externe HTTPS (identité, images, 3D des trois types, compte, devis) ✅.
-- **Préproduction** https://demo-elios.beaverdata.eu (identifiants de revue inchangés). Sauvegarde préalable : `backups/preprod/db_20261020_175919.dump` et `media_20261020_175919.tgz` avec leurs empreintes.
+- **Décisions client (2026-10-21)** : VERANDA FTS hors catalogue public (brouillon) ; tout sur devis ; tarifs en brouillon jusqu'à un écrit du fournisseur ; 7 dossiers de validation ouverts. Questions : `docs/heliostores/validation-fournisseur.md` ; revue : `docs/heliostores/revue-client.md`.
+- **Médias** : volume `elios_solar_uploads` conservé entre redéploiements ; sauvegarde `MEDIA_VOLUME=elios_solar_uploads scripts/backup.sh backups/preprod` ; contrôle `scripts/check-public-media.ts` (voir `docs/heliostores/medias.md`).
+- **Préproduction** https://demo-elios.beaverdata.eu (identifiants de revue inchangés). Dernière sauvegarde : `backups/preprod/db_20261020_210852.dump` et `media_20261020_210852.tar.gz`, avec leurs empreintes.
 - **Recette contre Docker** : remettre temporairement `NEXT_PUBLIC_SITE_URL` et `BETTER_AUTH_URL` sur `http://127.0.0.1:3401`, lancer `scripts/e2e-docker.sh .env.prod`, puis rétablir l'URL HTTPS (procédure suivie pour cette livraison).
 - **Fichiers privés**, exclus de Git et de Docker : `inputs/` (les 9 sources client) et `private/` (extractions, rapports chiffrés, médias préparés, pages ALUPROF).
 

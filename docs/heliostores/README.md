@@ -167,8 +167,8 @@ Le repli en plan 2D est conservé pour les pergolas. Pour les screens et les sto
 
 ## 10. Vérifications
 
-- Commit déployé : `ec22202`, vérifié par `/api/health` (migration `20261021090000_heliostores_catalogue_sources_prices`).
-- Typecheck ✅, lint ✅, tests unitaires 193/193, intégration 80/80.
+- Commit déployé : `4bfb76c`, vérifié par `/api/health` (migration `20261021090000_heliostores_catalogue_sources_prices`).
+- Typecheck ✅, lint ✅, tests unitaires 194/194, intégration 80/80.
 - **Recette navigateur complète contre Docker : 29/29 en une campagne**, bureau et mobile, sans relance.
 - CI verte (`verify`, `e2e-docker`).
 
