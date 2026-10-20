@@ -74,6 +74,8 @@ async function seedHeliostoresDocuments(prisma: PrismaClient): Promise<number> {
 export async function setLegacyCatalogue(prisma: PrismaClient, legacySlugs: string[], mode: "archived" | "active") {
   const slugs = legacySlugs.filter((s) => !HELIOSTORES_SLUGS.includes(s));
   await prisma.productFamily.updateMany({ where: { slug: { in: slugs } }, data: { legacy: true, category: null, ...(mode === "archived" ? { status: "ARCHIVED" } : {}) } });
+  // la grille sur mesure fictive suit l'ancien catalogue : archivée en préproduction, republiée comme jeu d'essai
   if (mode === "archived") await prisma.priceGrid.updateMany({ where: { isDemo: true, status: "PUBLISHED" }, data: { status: "ARCHIVED" } });
+  else await prisma.priceGrid.updateMany({ where: { isDemo: true, status: "ARCHIVED", source: { startsWith: "Grille fictive" } }, data: { status: "PUBLISHED" } });
   return slugs.length;
 }

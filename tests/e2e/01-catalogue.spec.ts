@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "./fixtures";
 import { acceptNecessaryOnly, shot } from "./helpers";
+import { one } from "./db";
 
 /** Aucun montant affiché (euros, dirhams) dans le texte visible d'une page publique. */
 async function expectNoAmount(page: Page) {
@@ -32,9 +33,16 @@ test("catalogue HELIOSTORES : trois familles, fiches sourcées, prix sur devis, 
   await page.goto("/screens/screen-refleksol-120-ziiip");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Screen REFLEKSOL 120 ZiiiP");
   await expect(page.getByTestId("price-on-quote")).toContainText("Prix établi sur devis");
-  const img = page.getByTestId("system-gallery").locator("figure img");
-  await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBeGreaterThan(0);
-  await expect(page.getByTestId("media-credit").first()).toContainText(/THYSENS|ALUPROF/);
+  // les visuels fabricant sont des fichiers privés importés par environnement (absents en CI) : on vérifie l'état réel
+  const imported = Number((await one<{ n: string }>(`SELECT count(*) AS n FROM "ProductMedia" pm JOIN "ProductFamily" f ON f.id = pm."familyId" JOIN "Media" m ON m.id = pm."mediaId" WHERE f.slug = 'screen-refleksol-120-ziiip' AND m.status = 'PUBLISHED' AND m.provenance IS NOT NULL`))!.n);
+  if (imported > 0) {
+    const img = page.getByTestId("system-gallery").locator("figure img");
+    await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBeGreaterThan(0);
+    await expect(page.getByTestId("media-credit").first()).toContainText(/THYSENS|ALUPROF/);
+  } else {
+    test.info().annotations.push({ type: "médias", description: "aucun visuel fabricant importé dans cet environnement : état vide vérifié" });
+    await expect(page.getByText("Visuels du fabricant en cours d'intégration.")).toBeVisible();
+  }
   await page.getByRole("tab", { name: "Caractéristiques" }).click();
   const width = page.locator('[data-spec="width_max"]');
   await expect(width).toHaveAttribute("data-status", "to_confirm");

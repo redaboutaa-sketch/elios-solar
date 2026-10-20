@@ -57,11 +57,17 @@ test("médiathèque et documents : nouvelle version PDF publiée, visible sur la
     // 5. fiche produit : onglet Documents + galerie fabricant (nature et crédit affichés)
     await page.goto("/pergolas/pergola-sb400");
     await acceptNecessaryOnly(page);
-    await expect(page.getByTestId("media-nature").first()).toHaveText("Photographie fournisseur");
-    await expect(page.getByTestId("media-credit").first()).toContainText("Catalogue THYSENS");
-    await page.getByRole("button", { name: /Afficher : Vue de dessous de la toiture/ }).click();
-    await expect(page.getByTestId("media-nature").first()).toHaveText("Rendu fabricant");
-    await expect(page.getByTestId("media-options").first()).toContainText("non inclus d'office : éclairage LED périphérique (option)");
+    const imported = Number((await one<{ n: string }>(`SELECT count(*) AS n FROM "ProductMedia" pm JOIN "ProductFamily" f ON f.id = pm."familyId" JOIN "Media" m ON m.id = pm."mediaId" WHERE f.slug = 'pergola-sb400' AND m.status = 'PUBLISHED' AND m.provenance IS NOT NULL`))!.n);
+    if (imported > 0) {
+      await expect(page.getByTestId("media-nature").first()).toHaveText("Photographie fournisseur");
+      await expect(page.getByTestId("media-credit").first()).toContainText("Catalogue THYSENS");
+      await page.getByRole("button", { name: /Afficher : Vue de dessous de la toiture/ }).click();
+      await expect(page.getByTestId("media-nature").first()).toHaveText("Rendu fabricant");
+      await expect(page.getByTestId("media-options").first()).toContainText("non inclus d'office : éclairage LED périphérique (option)");
+    } else {
+      test.info().annotations.push({ type: "médias", description: "aucun visuel fabricant importé dans cet environnement : état vide vérifié" });
+      await expect(page.getByText("Visuels du fabricant en cours d'intégration.")).toBeVisible();
+    }
     await shot(page, "fiche-galerie-rendu");
     await page.getByRole("tab", { name: /^Documents/ }).click();
     const link = page.getByRole("link", { name: title });

@@ -26,7 +26,7 @@ function describe(model: SceneModel): string {
   const closures = model.closures.map((c) => `${CLOSURE_NAMES[c.type]} ${SIDE_LABELS[c.side].toLowerCase()}${model.openings.filter((o) => o.side === c.side).length > 1 ? ` ${c.index}` : ""}${c.assembly.kind === "modular" ? ` (${c.assembly.modules} modules${c.assembly.toConfirm ? ", assemblage à confirmer" : ""})` : ""}`);
   const light = [model.lighting.blades ? "LED intégrées aux lames" : model.lighting.gutter ? `LED ${model.sections ? "périphérique" : "de gouttière"} ${model.lighting.color === "rgb" ? "RGB" : "blanc chaud"}` : null, model.lighting.spots ? `${model.lighting.spots} spots LED` : null].filter(Boolean).join(", ") || "sans éclairage";
   return [
-    `${model.familyName} ${model.dimensionLabel}, ${model.mounting === "wall" ? "adossée au mur" : "autoportée"}, ${model.finishLabel.toLowerCase()}`,
+    `${model.familyName} ${model.dimensionLabel}, ${model.mounting === "wall" ? "adossée au mur" : "autoportée"}, ${model.sections ? model.finishLabel : model.finishLabel.toLowerCase()}`,
     `${model.posts.length} poteaux, ${model.blades.count} lames (indicatif)`,
     closures.length ? closures.join(", ") : "aucune fermeture",
     light,
