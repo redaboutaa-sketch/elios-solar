@@ -1,0 +1,135 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: elios
+          POSTGRES_PASSWORD: elios_ci
+          POSTGRES_DB: elios_solar_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U elios -d elios_solar_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://elios:elios_ci@127.0.0.1:5432/elios_solar_test?schema=public
+      BETTER_AUTH_SECRET: ci-only-secret-not-for-production-0123456789
+      BETTER_AUTH_URL: http://127.0.0.1:3400
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3400
+      NEXT_PUBLIC_BRAND_NAME: ELIOS SOLAR
+      SITE_INDEXABLE: "false"
+      PAYMENT_PROVIDER: demo
+      DEMO_PAYMENT_WEBHOOK_SECRET: ci-demo-webhook-secret
+      MAIL_PROVIDER: log
+      ADMIN_NOTIFICATION_EMAIL: admin@example.invalid
+      MEDIA_STORAGE_DIR: ./uploads
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+      - run: pnpm exec next typegen
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:unit
+      - run: pnpm db:deploy
+      - run: pnpm db:seed
+      - run: pnpm test:integration
+      - run: pnpm build
+      - name: Tests navigateur (Playwright)
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            tests/e2e/screenshots
+          retention-days: 14
+
+  # Même pile que la préproduction (images Docker, compose, worker, migrations) : la recette navigateur
+  # complète est rejouée contre elle, sans relance automatique.
+  e2e-docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+      - name: Environnement éphémère (secrets aléatoires, jamais commités)
+        run: |
+          {
+            echo "POSTGRES_USER=elios"
+            echo "POSTGRES_PASSWORD=$(openssl rand -hex 24)"
+            echo "POSTGRES_DB=elios_solar"
+            echo "APP_PORT=3401"
+            echo "IMAGE_TAG=ci"
+            echo "TRAEFIK_ENABLE=false"
+            echo "NEXT_PUBLIC_BRAND_NAME=ELIOS SOLAR"
+            echo "NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3401"
+            echo "SITE_INDEXABLE=false"
+            echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)"
+            echo "BETTER_AUTH_URL=http://127.0.0.1:3401"
+            echo "MAIL_PROVIDER=log"
+            echo "ADMIN_NOTIFICATION_EMAIL=admin-ci@example.invalid"
+            echo "PAYMENT_PROVIDER=demo"
+            echo "DEMO_PAYMENT_WEBHOOK_SECRET=$(openssl rand -hex 24)"
+            echo "LOG_LEVEL=info"
+          } > .env.prod
+      - name: Construction et démarrage de la pile Docker
+        run: |
+          docker network create traefik-public || true
+          export GIT_COMMIT=${{ github.sha }} BUILD_TIME=$(date -u +%FT%TZ)
+          docker compose -f docker/compose.prod.yml --env-file .env.prod up -d --build
+          docker compose -f docker/compose.prod.yml --env-file .env.prod run --rm migrate pnpm db:seed
+          # le lanceur joint l'app via la passerelle du réseau interne : seul pair autorisé à transmettre
+          # X-Forwarded-For (un client simulé par parcours) ; tout autre pair est ramené à son adresse réelle
+          echo "TRUSTED_PROXIES=$(docker network inspect elios_solar_internal -f '{{range .IPAM.Config}}{{.Gateway}}{{end}}')" >> .env.prod
+          docker compose -f docker/compose.prod.yml --env-file .env.prod up -d --no-deps --force-recreate app
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:3401/api/health && break; sleep 2; done
+          curl -fsS http://127.0.0.1:3401/api/health | grep -q "${{ github.sha }}"
+      - name: Recette navigateur complète contre Docker
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          scripts/e2e-docker.sh .env.prod
+      - name: Journaux de la pile (en cas d'échec)
+        if: failure()
+        run: docker compose -f docker/compose.prod.yml --env-file .env.prod logs --tail 200 app worker migrate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-docker
+          path: playwright-report
+          retention-days: 14

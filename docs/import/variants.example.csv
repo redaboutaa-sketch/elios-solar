@@ -1,0 +1,4 @@
+sku,familySlug,label,priceCents,compareAtCents,purchasable,stockMode,stockQty,leadTimeDays,dataStatus,attributes
+EX-PS1-3X4-ANT-ADO,pergola-solis,"Pergola Solis 3 × 4 m anthracite, adossée (exemple fictif)",549000,,false,MADE_TO_ORDER,,42,DEMO,"{""kind"":""pergola_standard"",""finishCode"":""ANTHRACITE"",""dimensionCode"":""3x4"",""mounting"":""wall""}"
+EX-PV-3000-ANT,paroi-vitree,Paroi vitrée coulissante 3 m anthracite (exemple fictif),189000,209000,false,STOCK,4,10,DEMO,"{""kind"":""side_closure"",""sideLengthMm"":3000,""colorCode"":""ANTHRACITE"",""option"":""sliding_frameless""}"
+EX-LED-WW,bandes-led,Bandes LED blanc chaud (exemple fictif),39000,,false,MADE_TO_ORDER,,15,DEMO,"{""kind"":""option"",""variantOption"":""warm_white""}"

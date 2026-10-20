@@ -1,0 +1,34 @@
+regle,contexte,statut,source,date,niveau_confiance,implementation,test,a_confirmer
+Paroi vitrée sur pergola standard,"gammes Solis/Pro, segments 3–5 m, finitions anthracite/blanc",allowed,observed (configurateur de référence),2026-10-19,demo,ClosureCompatRule *,engine.test 'équipe un côté',"cotes utiles, hauteur"
+Persienne sur pergola standard,"idem, kit selon implantation",allowed,observed,2026-10-19,demo,ClosureCompatRule * + variantes par implantation,engine.test 4x6,raison du kit par implantation
+Store vertical ZIP sur pergola standard,toutes finitions (noir disponible),allowed,observed,2026-10-19,demo,ClosureCompatRule *,engine.test pergola noire,—
+Paroi vitrée / persienne sur finition Noir,pas de référence noire,forbidden,observed (filtrage couleur),2026-10-19,demo,ClosureCompatRule finition BLACK,engine.test 'explique l'incompatibilité',—
+Fermeture sur un côté de 6 m d'un seul tenant,segment 6000 mm,unknown,observed : 6 m = 2×3 m (poteau intermédiaire),2026-10-19,unknown,ClosureCompatRule 6000 + layout divisé,engine.test côté 6 m,règle par gamme (Max annoncée sans poteau central)
+Paroi vitrée 5 m sur gamme Max,profils renforcés,unknown,hypothèse interne (démonstration d'un cas inconnu),2026-10-19,unknown,ClosureCompatRule solis-max/5000,engine.test 'compatibilité inconnue',fournisseur
+Deux fermetures sur le même segment,empilement,forbidden,observed (1 slot par côté),2026-10-19,observed,modèle : 1 choix par segment,UI + schéma zod,empilements documentés ?
+Bandes LED sur gamme manuelle,option,allowed,observed,2026-10-19,demo,OptionCompatRule,engine.test LED dimension,—
+Bandes LED sur gamme Pro,LED gouttière déjà incluse,"allowed, includedInBase (non facturé)",déduit de la fiche Pro,2026-10-19,demo,OptionCompatRule includedInBase,engine.test 'ne refacture pas',cumul physique possible ?
+Bandes LED sur gamme Max,LED intégré aux lames,unknown,non documenté,2026-10-19,unknown,OptionCompatRule unknown,UI : devis,fournisseur
+Lampe chauffante,"toutes gammes, max 4",allowed,observed (fiche),2026-10-19,demo,OptionCompatRule maxQty 4,engine.test quantité max,puissance électrique cumulée
+Lanterne,"toutes gammes, max 6",allowed,observed,2026-10-19,demo,OptionCompatRule,—,—
+Anémomètre,store banne uniquement,allowed sur store / forbidden ailleurs,observed,2026-10-19,demo,OptionCompatRule,engine.test anémomètre,—
+Couleur des fermetures,= couleur de structure (lames blanches ⇒ anthracite),allowed,observed (includes),2026-10-19,observed,variant.colorCode = finish.structureColor,engine.test lames blanches,—
+Lampe chauffante 2000 W en blanc,inexistante,forbidden (variante absente),observed,2026-10-19,observed,absence de variante ⇒ blocage + devis,engine.test,—
+Finition Noir sur gamme Max,non proposée,forbidden,observed,2026-10-19,observed,family.finishCodes,engine.test,—
+Dimension hors preset,ex. 5x5,forbidden ⇒ sur mesure,observed,2026-10-19,observed,family.dimensionCodes,engine.test,—
+Store banne : combinaison largeur × avancée,12 réelles seulement,allowed si variante existe,observed,2026-10-19,demo,variantes explicites,engine.test store banne,liste fournisseur
+Supports store banne,2 (<5 m) / 3 (≥5 m) inclus,allowed,observed (option 2/3),2026-10-19,demo,ligne incluse,engine.test 3 supports,seuil exact
+Alimentation électrique,motorisation / LED / chauffage,prérequis (information),observed,2026-10-19,observed,issue info power_supply_required,—,—
+Fixations / fondations,toutes pergolas,"prérequis (information, aucune validation structurelle)",observed,2026-10-19,observed,issue info anchoring_notice,—,—
+Livraison Corse / Outre-mer,"20, 97, 98",quote,hypothèse interne,2026-10-19,demo,ShippingRule quoteRequired,engine.test Corse,zones réelles
+Sur mesure : bornes,"2000–4000 / 2000–6000 / 2200–3000 mm, pas 10",unknown (devis),hypothèse interne (≠ bornes observées),2026-10-19,unknown,CustomPergolaSettings,engine.test sur mesure,fournisseur
+Couleur de l'éclairage inclus (Pro),"blanc chaud ou RGB, sans supplément","allowed, includedInBase",observed (REA : 'Gratuit'),2026-10-19,demo,option bandes-led + includedInBase → ligne incluse avec la couleur,engine.test 'éclairage inclus',confirmation fournisseur
+Modification d'une ligne de panier,reprise de l'entrée dans le configurateur puis remplacement,allowed,fonctionnel interne,2026-10-19,observed,replaceLine (réévaluation serveur),e2e 06,—
+Persienne 3 et 4 m,"panneau monobloc, kit selon implantation, cote utile = longueur − 240 mm (démo)",allowed,observed (variantes de référence) + hypothèse de cote utile,2026-10-19,demo,attributes.assembly=monobloc,unit stock-closures-cable 'monobloc achetable',"cote utile réelle, kit de fixation"
+Persienne 5 et 6 m,"assemblage 2 modules + 1 poteau intermédiaire, cote utile démo ; faisabilité non déduite de la largeur nominale",unknown (devis),hypothèse interne,2026-10-19,unknown,"attributes.assembly=modular, validation=to_confirm, purchasable=false → closure_assembly_to_confirm (review, devis)",unit stock-closures-cable 'assemblage de modules',"existence des variantes 5/6 m, modules, poteau, fixations, cotes utiles, couleur par implantation"
+Côté de 6 m d'une pergola standard,divisé en 2 segments de 3 m par poteau intermédiaire,allowed,observed,2026-10-19,demo,buildLayout dividerThreshold 6000,unit stock-closures-cable 'reste divisé en 2 × 3 m',poteau intermédiaire par gamme
+Câble fourni store banne,"inclus, 3 m (longueur démo), ligne à 0 €",allowed,observed (câble 0 €) + longueur à confirmer,2026-10-19,demo,Family.includedCableMm → ligne included:cable,unit stock-closures-cable 'câble fourni inclus',longueur réelle (fiche observée : 7,5 m sortie gauche — conflicting)
+Rallonge de câble 6 m,"référence ES-CAB-6M distincte, équipement compatible store-banne-ombra, prérequis électricien",unknown (devis),hypothèse interne,2026-10-19,unknown,"OptionCompatRule unknown, purchasable=false, prix 0 non facturable",unit stock-closures-cable 'rallonge 6 m non confirmée',"référence, prix, longueur totale admissible par le moteur, raccordement"
+Rallonge de câble sur pergola,—,forbidden,fonctionnel interne,2026-10-19,demo,OptionCompatRule forbidden,unit stock-closures-cable 'rallonge interdite',—
+Rupture sans précommande,toute référence availability=out_of_stock et preorderAllowed=false,forbidden (devis),fonctionnel interne,2026-10-19,observed,variant_out_of_stock (blocking + devis),unit + intégration stock-grids,—
+Sur mesure chiffré,"grille publiée en vigueur, cellule trouvée, fermetures et options tarifées",allowed si grille supplier_verified et non fictive ; sinon estimation + devis,fonctionnel interne,2026-10-19,demo (grille fictive),pricing-grid.priceFromGrid + evaluatePergolaCustom,unit pricing-grid + intégration stock-grids,grille fournisseur réelle

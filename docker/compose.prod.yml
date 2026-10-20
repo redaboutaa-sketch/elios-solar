@@ -1,0 +1,100 @@
+# Préproduction / production sur VPS : application + worker + PostgreSQL.
+# - ports liés à 127.0.0.1 (accès par tunnel SSH) ; le proxy Traefik existant peut être branché
+#   avec `--profile traefik` quand un domaine est disponible (réseau externe traefik-public).
+# - les migrations sont exécutées UNE fois au déploiement par le service `migrate`.
+# Usage : docker compose -f docker/compose.prod.yml --env-file .env.prod up -d --build
+name: elios-solar
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: elios-solar-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-elios}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD requis}
+      POSTGRES_DB: ${POSTGRES_DB:-elios_solar}
+    volumes:
+      - elios_solar_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-elios} -d ${POSTGRES_DB:-elios_solar}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+    logging: &log
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+    networks: [internal]
+
+  migrate:
+    build: { context: .., dockerfile: Dockerfile, target: tools, args: { GIT_COMMIT: "${GIT_COMMIT:-unknown}" } }
+    image: elios-solar/tools:${IMAGE_TAG:-latest}
+    command: ["pnpm", "db:deploy"]
+    env_file: [../.env.prod]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-elios}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-elios_solar}?schema=public
+      MEDIA_STORAGE_DIR: /app/uploads
+    volumes:
+      - elios_solar_uploads:/app/uploads
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: "no"
+    logging: *log
+    networks: [internal]
+
+  app:
+    build: { context: .., dockerfile: Dockerfile, target: runner, args: { GIT_COMMIT: "${GIT_COMMIT:-unknown}", BUILD_TIME: "${BUILD_TIME:-unknown}" } }
+    image: elios-solar/app:${IMAGE_TAG:-latest}
+    container_name: elios-solar-app
+    env_file: [../.env.prod]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-elios}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-elios_solar}?schema=public
+      MEDIA_STORAGE_DIR: /app/uploads
+    volumes:
+      - elios_solar_uploads:/app/uploads
+    ports:
+      - "127.0.0.1:${APP_PORT:-3400}:3400"
+    depends_on:
+      postgres: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    restart: unless-stopped
+    logging: *log
+    networks: [internal, traefik-public]
+    labels:
+      traefik.enable: "${TRAEFIK_ENABLE:-false}"
+      traefik.http.routers.elios-solar.rule: "Host(`${SITE_DOMAIN:-elios-solar.invalid}`)"
+      traefik.http.routers.elios-solar.entrypoints: "websecure"
+      traefik.http.routers.elios-solar.tls.certresolver: "letsencrypt"
+      traefik.http.services.elios-solar.loadbalancer.server.port: "3400"
+      # revue client : identifiant + mot de passe (REVIEW_BASIC_AUTH = ligne htpasswd, uniquement dans .env.prod)
+      # et préproduction non indexable. Sans REVIEW_BASIC_AUTH, le middleware est invalide : le routeur reste fermé.
+      traefik.http.routers.elios-solar.middlewares: "elios-solar-auth,elios-solar-headers"
+      traefik.http.middlewares.elios-solar-auth.basicauth.users: "${REVIEW_BASIC_AUTH:-}"
+      traefik.http.middlewares.elios-solar-auth.basicauth.realm: "ELIOS SOLAR - revue"
+      traefik.http.middlewares.elios-solar-auth.basicauth.removeheader: "true"
+      traefik.http.middlewares.elios-solar-headers.headers.customresponseheaders.X-Robots-Tag: "noindex, nofollow, noarchive"
+      traefik.docker.network: "traefik-public"
+
+  worker:
+    image: elios-solar/tools:${IMAGE_TAG:-latest}
+    container_name: elios-solar-worker
+    command: ["pnpm", "mail:worker"]
+    env_file: [../.env.prod]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-elios}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-elios_solar}?schema=public
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    restart: unless-stopped
+    logging: *log
+    networks: [internal]
+
+volumes:
+  elios_solar_pg:
+    name: elios_solar_pg
+  elios_solar_uploads:
+    name: elios_solar_uploads
+
+networks:
+  internal:
+    name: elios_solar_internal
+  traefik-public:
+    external: true

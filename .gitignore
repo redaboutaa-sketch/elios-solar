@@ -14,6 +14,7 @@ next-env.d.ts
 .env
 .env.*
 !.env.example
+!.env.prod.example
 *.pem
 *.key
 *.p12
@@ -22,6 +23,7 @@ secrets/
 
 # bases & sauvegardes
 *.sql
+!prisma/migrations/**/*.sql
 *.sql.gz
 *.dump
 backups/
@@ -57,3 +59,6 @@ Thumbs.db
 
 # docker local
 docker-compose.override.yml
+src/generated/
+tests/e2e/.auth/
+.claude/
