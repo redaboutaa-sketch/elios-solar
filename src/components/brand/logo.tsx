@@ -1,24 +1,20 @@
+import Image from "next/image";
 import { BRAND } from "@/config/brand";
 
-/** Monogramme original ELIOS SOLAR : soleil bas derrière un toit à lames. */
-export function LogoMark({ className = "size-8" }: { className?: string }) {
+/**
+ * Logo HELIOSTORES fourni par le client (détouré, couleurs d'origine, jamais redessiné ni recoloré).
+ * - `variant="dark"` (défaut) : logo transparent, à poser sur une surface sombre (`surface-night`).
+ * - `variant="plate"` : logo intact sur sa plaque sombre arrondie, pour les fonds clairs.
+ * La hauteur est pilotée par `className` (ex. `h-7`), la largeur suit le ratio 1230:347.
+ */
+export function Logo({ variant = "dark", className = "h-7", priority = false }: { variant?: "dark" | "plate"; className?: string; priority?: boolean }) {
+  const img = variant === "plate" ? BRAND.logoPlate : BRAND.logo;
   return (
-    <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
-      <circle cx="24" cy="21" r="9" fill="#b5693c" />
-      <rect x="6" y="26" width="36" height="3" rx="1.5" fill="currentColor" />
-      <rect x="9" y="31" width="30" height="2.4" rx="1.2" fill="currentColor" opacity="0.8" />
-      <rect x="12" y="36" width="24" height="2.4" rx="1.2" fill="currentColor" opacity="0.6" />
-      <rect x="8" y="29" width="2.6" height="13" fill="currentColor" />
-      <rect x="37.4" y="29" width="2.6" height="13" fill="currentColor" />
-    </svg>
+    <Image src={img.src} width={img.width} height={img.height} alt={BRAND.name} priority={priority} quality={90} sizes="240px" className={`w-auto ${className}`} />
   );
 }
 
-export function Logo({ className = "" }: { className?: string }) {
-  return (
-    <span className={`inline-flex items-center gap-2 ${className}`}>
-      <LogoMark />
-      <span className="font-display text-xl tracking-[0.08em] font-semibold">{BRAND.name}</span>
-    </span>
-  );
+/** Marque « soleil » (point du i du logo), recadrée sans retouche. Décorative. */
+export function LogoMark({ className = "size-8" }: { className?: string }) {
+  return <Image src="/brand/heliostores-soleil.png" width={86} height={86} alt="" aria-hidden="true" className={className} />;
 }

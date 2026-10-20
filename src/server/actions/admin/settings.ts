@@ -23,7 +23,7 @@ const schema = z.object({
   countryCode: zReq(2).transform((v) => v.toUpperCase()).refine((v) => /^[A-Z]{2}$/.test(v), "Code pays ISO à 2 lettres"),
   phone: zOpt(30),
   contactEmail: zOpt(200).refine((v) => v === null || z.email().safeParse(v).success, "E-mail de contact invalide"),
-  domain: zOpt(200).refine((v) => v === null || /^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(v), "Domaine invalide (ex. elios-solar.fr, sans https://)"),
+  domain: zOpt(200).refine((v) => v === null || /^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(v), "Domaine invalide (ex. heliostores.fr, sans https://)"),
   taxRate: z.preprocess((v) => String(v ?? "").replace(",", ".").trim(), z.string().regex(/^\d{1,2}(\.\d{1,2})?$/, "Taux de TVA invalide")).transform((v) => Math.round(Number(v) * 100)),
   indexable: zBool,
   shipmentPolicy: z.enum(["GROUPED", "SEPARATE"]).default("GROUPED"),
