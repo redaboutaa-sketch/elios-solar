@@ -21,14 +21,16 @@ compte se fait par l'URL HTTPS.
 | Page | Lien |
 |---|---|
 | Accueil | <https://demo-elios.beaverdata.eu/> |
-| Catalogue pergolas | <https://demo-elios.beaverdata.eu/pergolas> |
-| Fiche produit | <https://demo-elios.beaverdata.eu/pergolas/pergola-solis> |
-| Configurateur standard | <https://demo-elios.beaverdata.eu/configurateur?gamme=pergola-solis> |
-| Configurateur store banne | <https://demo-elios.beaverdata.eu/configurateur/store-banne> |
-| Sur-mesure | <https://demo-elios.beaverdata.eu/configurateur/sur-mesure> |
+| Pergolas | <https://demo-elios.beaverdata.eu/pergolas> |
+| Fiche Pergola SB400 | <https://demo-elios.beaverdata.eu/pergolas/pergola-sb400> |
+| Fiche Pergola SB500 | <https://demo-elios.beaverdata.eu/pergolas/pergola-sb500> |
+| Screens | <https://demo-elios.beaverdata.eu/screens> · fiche <https://demo-elios.beaverdata.eu/screens/screen-refleksol-120-ziiip> |
+| Stores bannes | <https://demo-elios.beaverdata.eu/stores-bannes> · fiche <https://demo-elios.beaverdata.eu/stores-bannes/store-banne-casablanca> |
+| Configurateurs | <https://demo-elios.beaverdata.eu/configurateur> (SB400, SB500, REFLEKSOL 120 ZiiiP, CASABLANCA) |
 | Demande de devis | <https://demo-elios.beaverdata.eu/devis> |
 | Compte client | <https://demo-elios.beaverdata.eu/compte> |
 | Administration | <https://demo-elios.beaverdata.eu/admin> |
+| Tarifs fournisseur (privé, administrateurs) | <https://demo-elios.beaverdata.eu/admin/catalogue/tarifs-fournisseur> |
 | Validation des références | <https://demo-elios.beaverdata.eu/admin/catalogue/validations> |
 
 ## 2. Accès administrateur (aucun secret n'est stocké ni affiché)
@@ -43,20 +45,22 @@ docker compose -f docker/compose.prod.yml --env-file .env.prod run --rm -it migr
 Le script demande l'e-mail, puis le mot de passe (12 caractères minimum, non affiché ni journalisé). Ne passez pas le mot de passe
 en argument ou en variable dans un terminal journalisé. Après 5 échecs, le compte est verrouillé 15 minutes.
 
-## 3. Vérifications suggérées (≈ 20 min)
+## 3. Vérifications suggérées (≈ 25 min)
 
-1. **Accueil → catalogue → fiche** : bandeau « démonstration », prix TTC, mention des données à confirmer.
-2. **Configurateur standard** : changer la dimension, la couleur, la pose et les options. Le prix, la vue 3D et le récapitulatif
-   suivent. Sur mobile ou sans WebGL, un plan 2D s'affiche.
-3. **Store banne** : le câble indique « longueur à confirmer ».
-4. **Sur-mesure** : saisir largeur, profondeur et hauteur hors bornes (message de borne), puis dans les bornes. Ajouter des fermetures,
-   des segments et des équipements : la 3D suit. Les assemblages non confirmés basculent « sur devis ».
-5. **Devis** depuis le sur-mesure : créer un compte client fictif (`…@example.invalid`), envoyer. Dans le compte, le devis montre
-   le visuel exporté, la mention « visualisation non contractuelle » et le PDF.
-6. **Panier → commande → paiement simulé** : la commande passe « payée (démo) », aucun prestataire réel n'est appelé.
-7. **Administration** : tableau de bord (liste des blocages de lancement), devis (visuel figé une fois émis, PDF),
-   commandes, journal, **Catalogue → Validation des références** (dossier câble 3 m / 7,5 m, statuts brouillon → à vérifier → validé
-   ou rejeté, historique).
-8. **Anti-force brute** : 5 mauvais mots de passe sur un compte client entraînent un verrouillage temporaire du compte.
+1. **Identité et navigation** : logo HELIOSTORES, trois familles Pergolas — Screens — Stores bannes, pied de page sans coordonnées inventées.
+2. **Fiches** : galerie de visuels fabricant (nature et crédit sous chaque image), « Prix établi sur devis », onglet *Caractéristiques* avec
+   sources et valeurs « à confirmer » (ex. largeur max. du REFLEKSOL : 4 m fiche / 7 m catalogue), *Documents* (liens vers les documents officiels ALUPROF).
+3. **Configurateur SB400** : projection hors pas de 20 cm (message et valeur voisine proposée), largeur > 4 m refusée, spots (nombre de points
+   selon les dimensions), LED + spots (cumul à confirmer), screen souhaité sur un côté (étude au devis). Vue 3D : cotes, poteaux, lames, spots.
+4. **SB500** : pas de 25 cm, moteurs, poteaux supplémentaires, plusieurs modules (composés au devis).
+5. **REFLEKSOL 120 ZiiiP** : largeur 4,5 m (accepté, « à confirmer »), moteur Altus WT avec une largeur < 73 cm (refusé), pose en niche, 3D.
+6. **CASABLANCA** : avancée 3,1 m avec 3 m de largeur (refusé : 3,51 m minimum), pose sur chevrons, commande électrique (à confirmer), 3D.
+7. **Devis** : depuis un configurateur, avec un compte client fictif (`…@example.invalid`) : la visualisation est jointe (plan 2D pour une
+   pergola sans WebGL), le compte et le PDF montrent le récapitulatif et « Prix : établi sur devis » (aucun total).
+8. **Administration** : devis (récapitulatif, origine du prospect, qualification), *Tarifs fournisseur* (montants internes, versions brouillon,
+   activation / retour arrière), *Validation des références* (dossier REFLEKSOL), *Médiathèque* (provenance des visuels).
+9. **Ancien catalogue** : un ancien lien (`/configurateur?gamme=pergola-solis`) affiche un avis et propose de recommencer avec un modèle actuel.
+
+Il n'existe plus de parcours d'achat en ligne : aucun tarif public n'est validé. Le paiement reste en mode test.
 
 Remarques : notez l'URL et l'heure. Les journaux de l'application contiennent l'identifiant de requête utile au diagnostic.

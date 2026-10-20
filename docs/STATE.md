@@ -1,8 +1,20 @@
 # État réel du projet
 
-Mis à jour : 2026-10-19 (itération 4 : recette complète contre Docker, anti-force brute, 3D du sur-mesure, visuel joint au devis, validation des références, données techniques sourcées — statuts : `docs/iteration4/README.md`)
+Mis à jour : 2026-10-21 — **migration HELIOSTORES** (branche `feat/heliostores`, draft PR #2 vers `feat/storefront-configurator`).
+Le bilan complet est dans `docs/heliostores/README.md`, avec les sources, correspondances, médias, la revue tarifaire, l'import et l'identité.
 
-## Où en est-on
+## HELIOSTORES (en cours de revue)
+
+- **Marque** HELIOSTORES (logo client), trois familles publiques : Pergolas (SB400, SB500), Screens (REFLEKSOL 120 ZiiiP), Stores bannes (CASABLANCA).
+  VERANDA FTS reste en brouillon, son classement est à décider.
+- **Configurateur générique des systèmes** (`src/domain/system.ts`, `/configurateur/<produit>`) : règles sourcées, 3D pour pergola, screen et store,
+  **prix toujours sur devis** (`priceMode: "quote"`).
+- **Tarifs fournisseur** importés en privé (`pnpm supplier-prices:import`, Administration → Tarifs fournisseur), jamais lus par la boutique.
+- **Médias fabricant** importés par `pnpm media:heliostores --dir private/heliostores/media-staging --apply` ; les fichiers restent privés.
+- **Ancien catalogue de démonstration** archivé (`legacy`), conservé pour l'historique ; `SEED_LEGACY_DEMO=active` le réactive pour les seuls tests d'intégration.
+- **Fichiers privés**, exclus de Git et de Docker : `inputs/` (les 9 sources client) et `private/` (extractions, rapports chiffrés, médias préparés, pages ALUPROF).
+
+## Historique (itérations 1 à 4, catalogue de démonstration)
 - Dépôt : `redaboutaa-sketch/elios-solar`, branche `feat/storefront-configurator` (depuis `main` = commit initial).
 - Préproduction locale : `pnpm dev` sur http://127.0.0.1:3400 (toutes les pages publiques répondent 200).
 - Base : PostgreSQL 16 en conteneur `elios-solar-dev-postgres` (127.0.0.1:5433), migrations appliquées, seed exécuté.
