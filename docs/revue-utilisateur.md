@@ -5,27 +5,31 @@ e-mails conservés dans le journal d'envoi (Administration → E-mails), non dis
 
 ## 1. Accès
 
-Par tunnel SSH, l'application n'est liée qu'à `127.0.0.1:3401` sur le VPS :
+URL de revue : **https://demo-elios.beaverdata.eu**. Le navigateur demande un identifiant et un mot de passe de revue (`revue-client`).
+Ils sont stockés sur le VPS dans `/root/elios-solar-revue.txt`, lisible par root uniquement :
 
 ```bash
-ssh -N -L 3401:127.0.0.1:3401 root@76.13.44.177      # hôte : srv1791879.hstgr.cloud
+ssh root@76.13.44.177 'cat /root/elios-solar-revue.txt'
 ```
 
-Laisser ce terminal ouvert, puis ouvrir <http://127.0.0.1:3401>. Une URL HTTPS publique protégée par identifiant
-pourra remplacer le tunnel (voir `docs/preprod-https.md` une fois le domaine choisi).
+Transmettez l'URL et l'identifiant par un canal (e-mail), et le mot de passe par un autre (SMS, appel). Ne mettez jamais les deux
+dans le même message. Pour changer ou révoquer l'accès, voir `docs/preprod-https.md`.
+
+Le tunnel SSH (`ssh -N -L 3401:127.0.0.1:3401 root@76.13.44.177`) reste disponible pour le diagnostic, mais la connexion à un
+compte se fait par l'URL HTTPS.
 
 | Page | Lien |
 |---|---|
-| Accueil | <http://127.0.0.1:3401/> |
-| Catalogue pergolas | <http://127.0.0.1:3401/pergolas> |
-| Fiche produit | <http://127.0.0.1:3401/pergolas/pergola-solis> |
-| Configurateur standard | <http://127.0.0.1:3401/configurateur?gamme=pergola-solis> |
-| Configurateur store banne | <http://127.0.0.1:3401/configurateur/store-banne> |
-| Sur-mesure | <http://127.0.0.1:3401/configurateur/sur-mesure> |
-| Demande de devis | <http://127.0.0.1:3401/devis> |
-| Compte client | <http://127.0.0.1:3401/compte> |
-| Administration | <http://127.0.0.1:3401/admin> |
-| Validation des références | <http://127.0.0.1:3401/admin/catalogue/validations> |
+| Accueil | <https://demo-elios.beaverdata.eu/> |
+| Catalogue pergolas | <https://demo-elios.beaverdata.eu/pergolas> |
+| Fiche produit | <https://demo-elios.beaverdata.eu/pergolas/pergola-solis> |
+| Configurateur standard | <https://demo-elios.beaverdata.eu/configurateur?gamme=pergola-solis> |
+| Configurateur store banne | <https://demo-elios.beaverdata.eu/configurateur/store-banne> |
+| Sur-mesure | <https://demo-elios.beaverdata.eu/configurateur/sur-mesure> |
+| Demande de devis | <https://demo-elios.beaverdata.eu/devis> |
+| Compte client | <https://demo-elios.beaverdata.eu/compte> |
+| Administration | <https://demo-elios.beaverdata.eu/admin> |
+| Validation des références | <https://demo-elios.beaverdata.eu/admin/catalogue/validations> |
 
 ## 2. Accès administrateur (aucun secret n'est stocké ni affiché)
 
