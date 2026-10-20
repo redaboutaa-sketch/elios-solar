@@ -13,7 +13,7 @@ async function makePdf(title: string): Promise<Buffer> {
   return Buffer.from(await doc.save());
 }
 
-test("médiathèque et documents : nouvelle version PDF publiée, visible sur la fiche ; galerie avec mention de rendu", async ({ page }) => {
+test("médiathèque et documents : nouvelle version PDF publiée, visible sur la fiche ; galerie fabricant avec nature et crédit", async ({ page }) => {
   const title = `Guide e2e ${uid()}`;
   try {
     await loginAdmin(page);
@@ -22,7 +22,7 @@ test("médiathèque et documents : nouvelle version PDF publiée, visible sur la
     await page.locator("#new-title").fill(title);
     await page.locator("#new-kind").selectOption("guide");
     await page.locator("#new-audience").selectOption("PUBLIC");
-    await page.locator("#new-family").selectOption({ label: "Pergola Solis Pro" });
+    await page.locator("#new-family").selectOption({ label: "Pergola SB400" });
     await page.locator("#new-ds").selectOption("DEMO");
     await page.locator("#new-source").fill("Test automatisé");
     await page.locator("#new-summary").fill("Document de démonstration créé par le test de bout en bout.");
@@ -54,11 +54,14 @@ test("médiathèque et documents : nouvelle version PDF publiée, visible sur la
     await expect(page.getByRole("heading", { name: "Médiathèque" })).toBeVisible();
     await shot(page, "admin-medias");
 
-    // 5. fiche produit : onglet Documents + galerie avec mention de rendu
-    await page.goto("/pergolas/pergola-solis-pro");
+    // 5. fiche produit : onglet Documents + galerie fabricant (nature et crédit affichés)
+    await page.goto("/pergolas/pergola-sb400");
     await acceptNecessaryOnly(page);
-    await expect(page.getByTestId("media-nature").first()).toHaveText(/Visualisation 3D — rendu, pas une photographie/);
-    await expect(page.getByTestId("media-options").first()).toContainText("Options visibles non comprises dans le prix");
+    await expect(page.getByTestId("media-nature").first()).toHaveText("Photographie fournisseur");
+    await expect(page.getByTestId("media-credit").first()).toContainText("Catalogue THYSENS");
+    await page.getByRole("button", { name: /Afficher : Vue de dessous de la toiture/ }).click();
+    await expect(page.getByTestId("media-nature").first()).toHaveText("Rendu fabricant");
+    await expect(page.getByTestId("media-options").first()).toContainText("non inclus d'office : éclairage LED périphérique (option)");
     await shot(page, "fiche-galerie-rendu");
     await page.getByRole("tab", { name: /^Documents/ }).click();
     const link = page.getByRole("link", { name: title });
