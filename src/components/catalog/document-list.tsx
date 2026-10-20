@@ -12,7 +12,7 @@ export function DocumentList({ docs, empty = "Notice de montage et fiche techniq
         <ul className="divide-y divide-sand-200 rounded-xl border border-sand-200 bg-white" data-testid="document-list">
           {docs.map((d) => (
             <li key={d.id} className="flex flex-wrap items-start gap-3 p-4">
-              <FileText className="size-5 shrink-0 text-copper-600 mt-0.5" aria-hidden="true" />
+              <FileText className="size-5 shrink-0 text-brand-600 mt-0.5" aria-hidden="true" />
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{d.href ? <a href={d.href} className="underline" target="_blank" rel="noopener">{d.title}</a> : d.title}</p>
                 <p className="text-xs text-stone-700">{DOCUMENT_KIND_FR[d.kind] ?? d.kind} · version {d.version}{d.publishedAt ? ` · publiée le ${d.publishedAt.toLocaleDateString("fr-FR")}` : ""}{showFamily && d.familyName ? ` · ${d.familyName}` : ""}{d.variantSku ? ` · réf. ${d.variantSku}` : ""}{d.href ? " · PDF" : ""}</p>

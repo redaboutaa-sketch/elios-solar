@@ -7,6 +7,7 @@ import { allSegments, layoutForFamily, segmentLabel } from "./layout";
 import { applyBps, taxIncludedIn, type Cents } from "./money";
 import { activeGridFor, priceFromGrid } from "./pricing-grid";
 import { includedCablePublicText } from "./technical-spec";
+import { evaluateSystemRules, type SystemInput } from "./system";
 import type {
   AccessoryStandaloneInput,
   AwningInput,
@@ -30,7 +31,7 @@ import type {
   Variant,
 } from "./types";
 
-export const ENGINE_VERSION = "1.1.0";
+export const ENGINE_VERSION = "1.2.0";
 
 /* ------------------------------------------------------------------ */
 /* Utilitaires catalogue                                               */
@@ -675,6 +676,44 @@ function evaluateAccessory(catalog: CatalogSnapshot, input: AccessoryStandaloneI
 }
 
 /* ------------------------------------------------------------------ */
+/* Systèmes à la cote (catalogue HELIOSTORES)                           */
+/* ------------------------------------------------------------------ */
+
+const SYSTEM_KINDS = new Set(["pergola_system", "screen_system", "awning_system", "roof_blind_system"]);
+
+/**
+ * Système configurable à la cote : règles sourcées de la famille, aucun prix (devis).
+ * Une famille en brouillon (ex. système dont le classement reste à décider) n'est pas configurable publiquement.
+ */
+function evaluateSystem(catalog: CatalogSnapshot, input: SystemInput): EvaluationResult {
+  const b = new Builder(catalog);
+  const family = findFamily(catalog, input.familySlug);
+  if (!family || !SYSTEM_KINDS.has(family.kind) || !family.systemRules) {
+    b.issue({ code: "family_unknown", severity: "blocking", message: "Système inconnu.", path: "familySlug" });
+    return { ...finish(b, input, undefined, null, true), priceMode: "quote" };
+  }
+  if (family.status === "archived" || family.status === "draft") {
+    b.issue({ code: "family_unavailable", severity: "blocking", message: `${family.name} : système non proposé à la configuration (classement ou données en cours de validation).`, path: "familySlug" });
+    return { ...finish(b, input, undefined, null, true), priceMode: "quote" };
+  }
+  const ev = evaluateSystemRules(family.systemRules, input, family.name);
+  for (const i of ev.issues) b.issue(i);
+  let layout: Layout | undefined;
+  const rules = family.systemRules;
+  if (rules.type === "pergola" && ev.geometry.depthMm != null && !b.issues.some((i) => i.severity === "blocking" && /^(widthMm|depthMm|mounting)$/.test(i.path ?? ""))) {
+    // repère du layout : « largeur » du layout = projection (côtés gauche/droit), « longueur » = largeur le long du mur.
+    // Aucun poteau intermédiaire automatique : ils sont une option dont la position est établie au devis.
+    try {
+      layout = layoutForFamily({ ...family, dividerThresholdMm: 1_000_000 }, ev.geometry.depthMm, input.widthMm, input.mounting === "wall" ? "wall" : "freestanding");
+    } catch {
+      layout = undefined;
+    }
+  }
+  const result = finish(b, input, layout, null, true);
+  return { ...result, containsDemoData: family.dataStatus === "demo", purchasable: false, quoteRecommended: true, priceMode: "quote", recap: ev.recap };
+}
+
+/* ------------------------------------------------------------------ */
 /* Point d'entrée                                                      */
 /* ------------------------------------------------------------------ */
 
@@ -688,6 +727,8 @@ export function evaluate(catalog: CatalogSnapshot, input: ConfigurationInput, no
       return evaluateAwning(catalog, input, now);
     case "accessory":
       return evaluateAccessory(catalog, input, now);
+    case "system":
+      return evaluateSystem(catalog, input);
     default: {
       const b = new Builder(catalog);
       b.issue({ code: "kind_unknown", severity: "blocking", message: "Type de configuration inconnu." });

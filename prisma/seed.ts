@@ -12,11 +12,12 @@ import {
 import { CONTENT_PAGES } from "../src/server/content/default-pages";
 import { seedDemoRenders } from "../src/server/media/demo-renders";
 import { seedReferenceValidations } from "../src/server/validation/seed";
+import { seedHeliostores, setLegacyCatalogue } from "../src/server/catalog/heliostores-seed";
 
 const up = (s: string) => s.toUpperCase();
 
 export async function runSeed(prisma: PrismaClient) {
-  await prisma.siteSettings.upsert({ where: { id: 1 }, update: {}, create: { id: 1, brandName: process.env.NEXT_PUBLIC_BRAND_NAME ?? "ELIOS SOLAR" } });
+  await prisma.siteSettings.upsert({ where: { id: 1 }, update: {}, create: { id: 1, brandName: process.env.NEXT_PUBLIC_BRAND_NAME ?? "HELIOSTORES" } });
   await prisma.customPergolaSettings.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
 
   for (const [i, f] of FINISHES.entries()) {
@@ -135,8 +136,15 @@ export async function runSeed(prisma: PrismaClient) {
     });
   }
 
-  // Rendus originaux (scènes procédurales) et document de démonstration : idempotent ; désactivable (SEED_SKIP_RENDERS=1)
-  if (process.env.SEED_SKIP_RENDERS !== "1") {
+  // Catalogue HELIOSTORES (sources publiables) ; l'ancien catalogue de démonstration est archivé pour l'historique,
+  // sauf SEED_LEGACY_DEMO=active (jeu d'essai des tests d'intégration du panier, des commandes et du paiement simulé).
+  const legacyMode = process.env.SEED_LEGACY_DEMO === "active" ? "active" : "archived";
+  const helio = await seedHeliostores(prisma);
+  const legacy = await setLegacyCatalogue(prisma, FAMILIES.map((f) => f.slug), legacyMode);
+  console.log(`HELIOSTORES : ${helio.families} familles, ${helio.specs} données sourcées, ${helio.documents} document(s) fabricant ajouté(s) ; ancien catalogue (${legacy} familles) : ${legacyMode === "active" ? "jeu d'essai actif" : "archivé"}`);
+
+  // Rendus originaux (scènes procédurales) de l'ancien catalogue : seulement comme jeu d'essai (SEED_SKIP_RENDERS=1 pour les ignorer)
+  if (process.env.SEED_SKIP_RENDERS !== "1" && legacyMode === "active") {
     const r = await seedDemoRenders(prisma);
     console.log(`Rendus : ${r.created} créés, ${r.skipped} existants, ${r.linked} associations, ${r.documents} document(s) démo`);
   }

@@ -1,109 +1,87 @@
 import Link from "next/link";
-import { ArrowRight, Sun, Droplets, Layers, Wrench } from "lucide-react";
-import { PergolaArt, AwningArt, ClosureArt, colorOf } from "@/components/illustrations/pergola";
-import { TerraceScene } from "@/components/illustrations/scene";
-import { Price } from "@/components/ui/price";
-import { DemoBadge } from "@/components/ui/demo-badge";
-import { listFamilies, priceFrom } from "@/server/catalog/queries";
-import { BRAND } from "@/config/brand";
-import { artKind } from "@/components/illustrations/art-kind";
-import { RangeCard } from "@/components/catalog/range-card";
-import { loadCatalog } from "@/server/catalog/load";
-import { rangeHighlights } from "@/server/catalog/highlights";
+import { ArrowRight, MessageCircle, Ruler, FileText, LayoutGrid } from "lucide-react";
+import { CATEGORIES, configuratorHref, productHref } from "@/domain/categories";
+import { dimRangeText } from "@/domain/system";
+import { listSystemFamilies } from "@/server/catalog/systems";
+
+const smallOf = (m: { path: string; provenance: unknown } | null) => (m ? ((m.provenance as { variants?: { small?: { path?: string } } } | null)?.variants?.small?.path ?? m.path) : null);
 
 export default async function HomePage() {
-  const [pergolas, accessories, awnings, catalog] = await Promise.all([listFamilies(["PERGOLA_STANDARD", "PERGOLA_CUSTOM"]), listFamilies(["SIDE_CLOSURE", "OPTION"]), listFamilies(["AWNING"]), loadCatalog()]);
-  const demo = pergolas.some((f) => f.dataStatus === "DEMO");
+  const families = await Promise.all(CATEGORIES.map(async (c) => ({ c, items: await listSystemFamilies(c.key) })));
+  const heroFamily = families[0]?.items[0] ?? null;
   return (
     <>
       <section className="relative isolate overflow-hidden bg-sand-100">
-        <div className="container-x grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,46%)_minmax(0,54%)] lg:items-center py-10 lg:py-12">
-          <div className="relative z-10 py-4 lg:py-16">
-            <p className="text-copper-600 text-sm font-medium tracking-[0.18em] uppercase">Pergolas bioclimatiques · stores bannes · fermetures</p>
-            <h1 className="mt-4 font-display text-5xl sm:text-6xl xl:text-7xl leading-[1.02] font-medium">Votre terrasse, pensée pour toutes les saisons.</h1>
-            <p className="mt-6 text-lg sm:text-xl text-stone-800 max-w-xl">Configurez votre pergola en huit étapes : gamme, implantation, dimensions, finitions, fermetures côté par côté et options, avec un prix calculé en direct. Devis et accompagnement pour le sur mesure.</p>
+        <div className="container-x grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,46%)_minmax(0,54%)] lg:items-center py-10 lg:py-14">
+          <div className="relative z-10 py-4 lg:py-12">
+            <p className="text-brand-700 text-sm font-medium tracking-[0.18em] uppercase">Pergolas · Screens · Stores bannes</p>
+            <h1 className="mt-4 font-display text-5xl sm:text-6xl leading-[1.04] font-semibold">Protection solaire sur mesure pour votre terrasse et vos baies.</h1>
+            <p className="mt-6 text-lg text-stone-800 max-w-xl">Choisissez votre produit, configurez-le à vos cotes avec une vue 3D indicative, puis recevez un devis établi par un conseiller.</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/configurateur" className="btn-accent text-base px-6 py-3.5">Configurer ma pergola <ArrowRight className="size-4" aria-hidden="true" /></Link>
-              <Link href="/comparer" className="btn-secondary text-base px-6 py-3.5">Comparer les gammes</Link>
+              <Link href="/configurateur" className="btn-accent text-base px-6 py-3.5">Configurer mon projet <ArrowRight className="size-4" aria-hidden="true" /></Link>
+              <Link href="/devis" className="btn-secondary text-base px-6 py-3.5">Demander un devis</Link>
             </div>
-            {demo && <p className="mt-5 text-xs text-stone-700">Préproduction : prix et références de démonstration. <DemoBadge /></p>}
+            <p className="mt-5 text-xs text-stone-700">Prix établis sur devis : les tarifs fournisseurs sont en cours de validation.</p>
           </div>
-          <div className="relative min-w-0 w-full rounded-2xl overflow-hidden shadow-soft" style={{ aspectRatio: "5 / 3" }}>
-            <TerraceScene lighting closures={{ left: "glass", right: "screen" }} className="absolute inset-0 w-full h-full" title="Terrasse au crépuscule avec pergola bioclimatique, paroi vitrée et store vertical" />
-          </div>
+          {heroFamily?.hero && (
+            <figure className="relative min-w-0 w-full overflow-hidden rounded-2xl bg-white shadow-soft">
+              {/* eslint-disable-next-line @next/next/no-img-element -- média de la médiathèque */}
+              <img src={heroFamily.hero.path} alt={heroFamily.hero.alt} width={heroFamily.hero.width ?? undefined} height={heroFamily.hero.height ?? undefined} className="aspect-[5/4] w-full object-cover" />
+              <figcaption className="px-4 py-2 text-xs text-stone-700">{heroFamily.name} — {heroFamily.hero.credit}. Photographie du fabricant, pas une réalisation HELIOSTORES.</figcaption>
+            </figure>
+          )}
         </div>
       </section>
 
-      <section className="container-x py-16 sm:py-20">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 className="font-display text-3xl sm:text-4xl">Trois gammes, une architecture.</h2>
-            <p className="mt-2 text-stone-700 max-w-2xl">Toit manuel ou motorisé, éclairage inclus ou en option, un à trois rails pour les fermetures : choisissez le niveau d'équipement puis composez côté par côté.</p>
-          </div>
-          <Link href="/comparer" className="btn-ghost">Comparer en détail</Link>
-        </div>
-        <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {pergolas.map((f) => <RangeCard key={f.slug} f={f} highlights={rangeHighlights(catalog, f.slug)} />)}
-        </div>
-      </section>
-
-      <section className="bg-sand-100 py-16">
-        <div className="container-x grid gap-8 md:grid-cols-4">
-          {[
-            [Sun, "Lames orientables", "Soleil, ombre ou ventilation : orientez les lames selon l'heure ; motorisées sur les gammes Pro et Max."],
-            [Droplets, "Toit étanche", "Lames fermées, les gouttières intégrées évacuent l'eau par les poteaux."],
-            [Layers, "Fermetures modulaires", "Parois vitrées, persiennes et stores ZIP par ouverture, ajoutables plus tard après vérification de compatibilité."],
-            [Wrench, "Montage au choix", "Par vos soins avec notice, ou par un installateur partenaire chiffré selon la configuration."],
-          ].map(([Icon, t, d]) => {
-            const I = Icon as typeof Sun;
-            return <div key={String(t)}><I className="size-7 text-copper-600" aria-hidden="true" /><h3 className="mt-3 font-display text-xl">{String(t)}</h3><p className="mt-1 text-sm text-stone-700">{String(d)}</p></div>;
+      <section className="container-x py-16" aria-labelledby="familles">
+        <h2 id="familles" className="font-display text-3xl sm:text-4xl">Trois familles de produits</h2>
+        <div className="mt-8 grid gap-6 md:grid-cols-3">
+          {families.map(({ c, items }) => {
+            const first = items[0];
+            const img = smallOf(first?.hero ?? null);
+            return (
+              <article key={c.key} className="card overflow-hidden flex flex-col" data-testid={`home-${c.key}`}>
+                <Link href={c.href} className="block aspect-[4/3] bg-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- média de la médiathèque */}
+                  {img ? <img src={img} alt={first?.hero?.alt ?? c.label} className="size-full object-cover" loading="lazy" /> : <span className="grid size-full place-items-center text-sm text-stone-700">Visuels à venir</span>}
+                </Link>
+                <div className="flex flex-1 flex-col p-5">
+                  <h3 className="font-display text-2xl"><Link href={c.href}>{c.label}</Link></h3>
+                  <p className="mt-1 text-sm text-stone-700">{c.intro}</p>
+                  <ul className="mt-3 space-y-1 text-sm">
+                    {items.map((f) => <li key={f.slug}><Link href={productHref(c.key, f.slug)} className="underline underline-offset-2">{f.name}</Link> <span className="text-stone-700">— {f.rules.dims.width.label.toLowerCase()} {dimRangeText(f.rules.dims.width)}</span></li>)}
+                  </ul>
+                  <div className="mt-auto flex flex-wrap gap-2 pt-4">
+                    <Link href={c.href} className="btn-secondary">Voir les modèles</Link>
+                    {first && <Link href={configuratorHref(first.slug)} className="btn-ghost">Configurer</Link>}
+                  </div>
+                </div>
+              </article>
+            );
           })}
         </div>
       </section>
 
-      <section className="container-x py-16 grid gap-12 lg:grid-cols-2">
-        <div>
-          <h2 className="font-display text-3xl">Fermetures et accessoires</h2>
-          <p className="mt-2 text-stone-700">Chaque accessoire n'est proposé que pour les dimensions, finitions et gammes compatibles. Les cas non confirmés passent par un devis.</p>
-          <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-            {accessories.slice(0, 6).map((f) => (
-              <li key={f.slug}>
-                <Link href={`/accessoires/${f.slug}`} className="flex items-center gap-4 card p-3 hover:border-ink">
-                  <ClosureArt kind={artKind(f.slug)} className="w-24 h-auto rounded-lg shrink-0" />
-                  <div><p className="font-medium">{f.name}</p><p className="text-xs text-stone-700">{f.shortDescription}</p>{priceFrom(f) && <p className="text-xs mt-1">dès <Price cents={priceFrom(f)!} className="font-semibold" /></p>}</div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <Link href="/accessoires" className="btn-secondary mt-6">Tous les accessoires</Link>
-        </div>
-        <div>
-          <h2 className="font-display text-3xl">Stores bannes</h2>
-          <p className="mt-2 text-stone-700">Coffre intégral motorisé, éclairage et télécommande inclus. Seules les combinaisons largeur × avancée réellement fabriquées sont proposées.</p>
-          {awnings.map((f) => (
-            <Link key={f.slug} href={`/stores-bannes/${f.slug}`} className="mt-6 block card overflow-hidden hover:border-ink">
-              <AwningArt className="w-full h-auto" />
-              <div className="p-5 flex items-center justify-between"><span className="font-display text-xl">{f.name}</span>{priceFrom(f) && <span className="text-sm">À partir de <Price cents={priceFrom(f)!} className="font-semibold" /></span>}</div>
-            </Link>
-          ))}
+      <section className="bg-sand-100 py-16" aria-labelledby="parcours">
+        <div className="container-x">
+          <h2 id="parcours" className="font-display text-3xl">Comment se déroule votre projet</h2>
+          <ol className="mt-8 grid gap-8 md:grid-cols-4">
+            {[
+              [LayoutGrid, "1. Choisir", "Pergola, screen ou store banne : comparez les modèles et leurs caractéristiques sourcées.", "/pergolas"],
+              [Ruler, "2. Configurer", "Saisissez vos cotes, la pose, la teinte et les équipements ; la 3D suit vos choix.", "/configurateur"],
+              [MessageCircle, "3. Être conseillé", "Un conseiller vérifie la faisabilité, les fixations et les points à confirmer.", "/contact"],
+              [FileText, "4. Recevoir le devis", "Prix, délai et conditions établis sur la base de votre configuration et de sa visualisation.", "/devis"],
+            ].map(([Icon, t, d, href]) => {
+              const I = Icon as typeof Ruler;
+              return <li key={String(t)}><I className="size-7 text-brand-700" aria-hidden="true" /><h3 className="mt-3 font-display text-xl"><Link href={String(href)}>{String(t)}</Link></h3><p className="mt-1 text-sm text-stone-700">{String(d)}</p></li>;
+            })}
+          </ol>
         </div>
       </section>
 
-      <section className="bg-anthracite text-sand-50 py-16">
-        <div className="container-x grid gap-8 md:grid-cols-3">
-          {[
-            ["Étude de votre projet", "Dimensions, implantation, autorisation d'urbanisme : nos conseillers valident la faisabilité avant commande.", "/devis", "Demander un devis"],
-            ["Prix transparent", "Pergola, fermetures, options, montage et livraison sont chiffrés ligne par ligne et recalculés côté serveur.", "/configurateur", "Voir le configurateur"],
-            ["Un projet, une configuration", "Sauvegardez, dupliquez et partagez vos configurations ; reprenez-les depuis votre compte ou le panier.", "/compte/projets", "Mes projets"],
-          ].map(([t, d, href, cta]) => (
-            <div key={t}><h2 className="font-display text-2xl">{t}</h2><p className="mt-2 text-sand-200">{d}</p><Link href={href!} className="mt-4 inline-flex items-center gap-1 underline underline-offset-4">{cta} <ArrowRight className="size-4" aria-hidden="true" /></Link></div>
-          ))}
-        </div>
-      </section>
       <section className="container-x py-10 text-sm text-stone-700">
-        <p>{BRAND.name} est un nom d'affichage provisoire. Aucun avis client, label ou chiffre de ventes n'est affiché tant qu'il n'est pas vérifiable. Visuels : rendus originaux en attendant des photographies autorisées.</p>
+        <p>Les visuels produits proviennent de la documentation du fabricant (ALUPROF) et du catalogue fournisseur (THYSENS, collection SELT). Les caractéristiques affichées citent leurs sources ; celles qui divergent sont signalées « à confirmer ». Aucun avis, label ou réalisation n&apos;est affiché tant qu&apos;il n&apos;est pas vérifiable.</p>
       </section>
-      <div className="hidden"><PergolaArt structure={colorOf("ANTHRACITE")} /></div>
     </>
   );
 }

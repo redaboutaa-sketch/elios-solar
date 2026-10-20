@@ -1,0 +1,123 @@
+import Link from "next/link";
+import { Check, Info } from "lucide-react";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { ProductTabs } from "@/components/catalog/product-tabs";
+import { DocumentList } from "@/components/catalog/document-list";
+import { SourcedSpecTable } from "@/components/catalog/sourced-spec-table";
+import { SystemGallery } from "@/components/catalog/system-gallery";
+import { categoryByKey, configuratorHref, type CategoryKey } from "@/domain/categories";
+import { MOUNTING_FR, dimRangeText, type SourceRef } from "@/domain/system";
+import type { PublishedMedia } from "@/server/media/types";
+import type { PublicDocument } from "@/server/documents/queries";
+import type { SystemFamily } from "@/server/catalog/systems";
+import { BRAND } from "@/config/brand";
+
+const USAGE: Record<string, string> = {
+  pergola: "Couvrir une terrasse, contre la maison ou en espace libre, et régler l'ensoleillement par l'orientation des lames.",
+  screen: "Protéger une baie ou une façade du soleil et de la chaleur tout en gardant la vue vers l'extérieur.",
+  awning: "Ombrager une terrasse à la demande ; la toile se replie dans le coffre quand le store n'est pas utilisé.",
+  roof_blind: "Ombrager une toiture vitrée.",
+};
+
+function SourceList({ sources }: { sources: SourceRef[] }) {
+  return <span className="text-xs text-stone-700">({sources.map((s) => `${s.label}${s.loc ? `, ${s.loc}` : ""}`).join(" ; ")})</span>;
+}
+
+export function SystemProductPage({ family: f, category, media, docs }: { family: SystemFamily; category: CategoryKey; media: PublishedMedia[]; docs: PublicDocument[] }) {
+  const cat = categoryByKey(category)!;
+  const r = f.rules;
+  const d = r.dims;
+  const technicalQuestions = f.questions.filter((q) => q.field !== "Tarifs");
+  const jsonLd = { "@context": "https://schema.org", "@type": "Product", name: f.name, description: f.shortDescription, ...(f.brand ? { brand: { "@type": "Brand", name: f.brand } } : {}), ...(f.manufacturer ? { manufacturer: { "@type": "Organization", name: f.manufacturer } } : {}), image: media.slice(0, 3).map((m) => `${BRAND.siteUrl}${m.path}`) };
+  const tabs = [
+    {
+      id: "description", label: "Description", content: (
+        <div className="prose-shop">
+          <p>{f.description}</p>
+          <h3>Usage</h3>
+          <p>{USAGE[r.type]}</p>
+          <h3>Inclus</h3>
+          <ul>{r.included.map((i) => <li key={i.label}>{i.label}{i.status === "to_confirm" ? " (à confirmer)" : ""}</li>)}</ul>
+          {r.options.length > 0 && <><h3>Options</h3><ul>{r.options.map((o) => <li key={o.code}>{o.label}{o.status === "to_confirm" ? " — à confirmer au devis" : ""}{o.note && o.status !== "to_confirm" ? ` — ${o.note}` : ""}</li>)}</ul></>}
+          <p className="text-sm">Les options et équipements sont chiffrés sur devis ; une option visible sur une photo n'est jamais incluse d'office.</p>
+        </div>
+      ),
+    },
+    { id: "caracteristiques", label: "Caractéristiques", content: <SourcedSpecTable specs={f.specValues} /> },
+    {
+      id: "dimensions", label: "Dimensions et pose", content: (
+        <div className="prose-shop" data-testid="system-dimensions">
+          <ul>
+            <li>{d.width.label} : {dimRangeText(d.width)} <SourceList sources={d.width.sources} />{d.width.confirmAboveMm ? ` — au-delà de ${(d.width.confirmAboveMm / 1000).toLocaleString("fr-FR")} m : ${d.width.confirmNote}, validé au devis.` : ""}</li>
+            {d.depth && <li>{d.depth.label} : {dimRangeText(d.depth)} <SourceList sources={d.depth.sources} /></li>}
+            {d.height && <li>{d.height.label} : {dimRangeText(d.height)} <SourceList sources={d.height.sources} />{d.height.confirmAboveMm ? ` — au-delà de ${(d.height.confirmAboveMm / 1000).toLocaleString("fr-FR")} m : ${d.height.confirmNote}, validé au devis.` : ""}</li>}
+            {r.depthWidthMin?.map((c) => <li key={c.depthMm}>Avancée {(c.depthMm / 1000).toLocaleString("fr-FR")} m : largeur minimale {(c.widthMinMm / 1000).toLocaleString("fr-FR")} m</li>)}
+            {r.controls?.some((c) => c.minWidthMm) && <li>La largeur minimale dépend du moteur choisi (voir « Commande »).</li>}
+            {r.modules && <li>Module : jusqu'à {(r.modules.maxSingleWidthMm / 1000).toLocaleString("fr-FR")} m de largeur ; plusieurs modules : {r.modules.multiModule === "documented" ? "possible, composition établie au devis" : "non documenté, étude au devis"} <SourceList sources={r.modules.sources} /></li>}
+          </ul>
+          <h3>Pose</h3>
+          <ul>{r.mountings.map((m) => <li key={m.code}>{m.label} ({MOUNTING_FR[m.code]}){m.status === "to_confirm" ? " — à confirmer" : ""}</li>)}</ul>
+          <p className="text-sm">La 3D du configurateur reprend vos cotes à titre indicatif : elle ne constitue ni un plan d'exécution ni une validation structurelle.</p>
+        </div>
+      ),
+    },
+    {
+      id: "teintes", label: r.fabrics?.length ? "Teintes et toiles" : "Teintes", content: (
+        <div className="space-y-4" data-testid="system-finishes">
+          <ul className="flex flex-wrap gap-2">{r.finishes.map((c) => <li key={c.code} className="flex items-center gap-2 rounded-full border border-sand-300 bg-white px-3 py-1.5 text-sm"><span aria-hidden="true" className="size-5 rounded-full border border-sand-300" style={{ background: c.swatch ?? "repeating-linear-gradient(45deg,#ddd,#ddd 3px,#fff 3px,#fff 6px)" }} />{c.label}</li>)}</ul>
+          {r.customFinish && <p className="text-sm">{r.customFinish.label} : {r.customFinish.note}.</p>}
+          <p className="text-xs text-stone-700">Pastilles d'aperçu indicatives : vérifiez la teinte sur nuancier. Les couleurs du site HELIOSTORES ne sont pas des teintes de produit.</p>
+          {r.fabrics?.length ? <><h3 className="font-medium">Toiles</h3><ul className="list-disc pl-5 text-sm">{r.fabrics.map((x) => <li key={x.code}>{x.label}{x.status === "to_confirm" ? ` — ${x.note ?? "à confirmer"}` : ""}</li>)}</ul></> : null}
+        </div>
+      ),
+    },
+    {
+      id: "commande", label: "Commande et installation", content: (
+        <div className="prose-shop">
+          {r.controls?.length ? <><h3>Commande</h3><ul>{r.controls.map((c) => <li key={c.code}>{c.label}{c.minWidthMm ? ` — largeur minimale du système ${c.minWidthMm / 10} cm` : ""}{c.cable ? `, ${c.cable}` : ""}{c.status === "to_confirm" ? ` — ${c.note ?? "à confirmer"}` : ""}</li>)}</ul></> : null}
+          <h3>Installation</h3>
+          <ul>{(r.notices ?? []).map((n) => <li key={n}>{n}</li>)}<li>Pose professionnelle possible : zones et conditions établies au devis.</li></ul>
+        </div>
+      ),
+    },
+    { id: "documents", label: `Documents${docs.length ? ` (${docs.length})` : ""}`, content: <DocumentList docs={docs} empty="Les notices et fiches techniques du fabricant sont en cours de validation ; elles seront publiées ici." /> },
+    ...(f.faqItems.length ? [{ id: "faq", label: "Questions", content: <div className="divide-y divide-sand-200">{f.faqItems.map((q) => <details key={q.q} className="py-3"><summary className="cursor-pointer font-medium">{q.q}</summary><p className="mt-2 text-stone-800">{q.a}</p></details>)}</div> }] : []),
+    ...(technicalQuestions.length ? [{ id: "a-confirmer", label: "Points à confirmer", content: <ul className="space-y-2 text-sm" data-testid="open-questions">{technicalQuestions.map((q) => <li key={q.question} className="rounded-lg border border-warning/40 bg-warning/5 p-3"><span className="font-medium">{q.field} :</span> {q.question}</li>)}</ul> }] : []),
+  ];
+  return (
+    <div className="container-x py-6 sm:py-8">
+      <Breadcrumbs items={[{ href: cat.href, label: cat.label }, { label: f.name }]} />
+      <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-12">
+        <div className="min-w-0">
+          <SystemGallery name={f.name} media={media} />
+          <p className="mt-2 text-xs text-stone-700">Visuels issus de la documentation du fabricant et du fournisseur : ils présentent le produit et ne sont pas des réalisations HELIOSTORES.</p>
+          <section className="mt-10"><ProductTabs tabs={tabs} /></section>
+        </div>
+        <aside className="min-w-0 lg:sticky lg:top-24 self-start card p-6">
+          <p className="text-xs uppercase tracking-wide text-brand-600">{cat.singular}</p>
+          <h1 className="font-display text-3xl sm:text-4xl mt-1">{f.name}</h1>
+          <p className="mt-1 text-stone-700">{f.shortDescription}</p>
+          <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+            <dt className="text-stone-700">Référence</dt><dd>{f.supplierRef}</dd>
+            {f.manufacturer && <><dt className="text-stone-700">Fabricant</dt><dd>{f.manufacturer}</dd></>}
+            {f.brand && <><dt className="text-stone-700">Marque</dt><dd>{f.brand}</dd></>}
+            <dt className="text-stone-700">{d.width.label}</dt><dd>{dimRangeText(d.width)}</dd>
+            {d.depth && <><dt className="text-stone-700">{d.depth.label}</dt><dd>{dimRangeText(d.depth)}</dd></>}
+            {d.height && <><dt className="text-stone-700">{d.height.label}</dt><dd>{dimRangeText(d.height)}</dd></>}
+          </dl>
+          <ul className="mt-4 space-y-1 text-sm">{r.included.slice(0, 4).map((i) => <li key={i.label} className="flex gap-2"><Check className="size-4 text-success mt-0.5 shrink-0" aria-hidden="true" />{i.label}</li>)}</ul>
+          <p data-testid="price-on-quote" className="mt-5 flex gap-2 rounded-lg bg-brand-100 p-3 text-sm"><Info className="size-4 mt-0.5 shrink-0 text-brand-700" aria-hidden="true" /><span><strong>Prix établi sur devis.</strong> Les tarifs fournisseurs sont en cours de validation ; aucun prix n'est affiché en ligne.</span></p>
+          <Link href={configuratorHref(f.slug)} className="btn-accent w-full mt-5 text-base">Configurer à mes cotes</Link>
+          <Link href={`/devis?produit=${f.slug}`} className="btn-secondary w-full mt-2">Demander un devis</Link>
+          <Link href="/contact" className="btn-ghost w-full mt-2">Parler à un conseiller</Link>
+        </aside>
+      </div>
+      <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 border-t border-sand-300 bg-white/95 backdrop-blur p-3 flex items-center justify-between gap-3" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
+        <div><p className="text-xs text-stone-700">{f.name}</p><p className="text-sm font-semibold">Prix sur devis</p></div>
+        <Link href={configuratorHref(f.slug)} className="btn-accent">Configurer</Link>
+      </div>
+      <div className="lg:hidden h-20" aria-hidden="true" />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+    </div>
+  );
+}

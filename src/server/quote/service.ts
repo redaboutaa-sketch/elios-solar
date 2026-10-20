@@ -1,3 +1,4 @@
+import type { Attribution } from "@/domain/attribution";
 import { prisma } from "@/lib/prisma";
 import type { ConfigurationInput, EvaluationResult } from "@/domain/types";
 import { businessNumber } from "@/server/ids";
@@ -7,7 +8,7 @@ import { loadCatalog } from "@/server/catalog/load";
 import { attachQuoteVisual, type AttachedVisual } from "@/server/quote/visual";
 
 export interface QuoteRequest {
-  kind: "configuration" | "custom" | "accessory" | "general";
+  kind: "configuration" | "custom" | "accessory" | "general" | "system";
   firstName: string;
   lastName: string;
   email: string;
@@ -19,6 +20,8 @@ export interface QuoteRequest {
   configurationId?: string | null;
   /** visualisation exportée par le navigateur (dataURL PNG/JPEG), vérifiée et ré-encodée côté serveur */
   visual?: unknown;
+  /** attribution du prospect (déjà nettoyée), voir src/domain/attribution.ts */
+  attribution?: Attribution | null;
 }
 
 export async function createQuote(req: QuoteRequest, owner: Owner): Promise<Awaited<ReturnType<typeof prisma.quote.create>> & { visualKind: AttachedVisual }> {
@@ -37,6 +40,7 @@ export async function createQuote(req: QuoteRequest, owner: Owner): Promise<Awai
       configurationId: req.configurationId ?? null,
       snapshot: { input: req.input ?? null, result: req.result ?? null } as never,
       containsDemoData: req.result?.containsDemoData ?? true,
+      attribution: (req.attribution ?? undefined) as never,
       status: "NEW",
     },
   });

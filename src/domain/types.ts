@@ -1,4 +1,6 @@
 import type { TechnicalSpecValue } from "./technical-spec";
+import type { SystemInput, SystemRules } from "./system";
+import type { CategoryKey } from "./categories";
 /**
  * Types du catalogue tels que vus par le moteur de configuration.
  * Le moteur ne dépend ni de Prisma ni de React : il reçoit un instantané
@@ -15,7 +17,12 @@ export type FamilyKind =
   | "awning"
   | "side_closure"
   | "option"
-  | "service";
+  | "service"
+  /* systèmes configurables à la cote (catalogue HELIOSTORES), règles sourcées dans `systemRules` */
+  | "pergola_system"
+  | "screen_system"
+  | "awning_system"
+  | "roof_blind_system";
 
 export type LightingIncluded = "none" | "gutter_led" | "blade_led";
 /** Disponibilité commerciale d'une référence (saisie admin / import fournisseur). */
@@ -60,6 +67,16 @@ export interface Family {
   /** Données techniques sourcées (démo, observation, confirmation fournisseur) — voir technical-spec.ts */
   technicalSpecs?: TechnicalSpecValue[];
   dataStatus: DataStatus;
+  /** famille publique (Pergolas, Screens, Stores bannes) ; absent = hors navigation */
+  category?: CategoryKey | null;
+  /** marque commerciale, fabricant et référence exacte quand une source les établit */
+  brand?: string | null;
+  manufacturer?: string | null;
+  supplierRef?: string | null;
+  /** règles du configurateur à la cote (systèmes HELIOSTORES) */
+  systemRules?: SystemRules | null;
+  /** ancien produit de démonstration conservé pour l'historique */
+  legacy?: boolean;
 }
 
 /** Variante vendable (SKU). Les attributs dépendent du type de famille. */
@@ -362,7 +379,8 @@ export type ConfigurationInput =
   | PergolaStandardInput
   | PergolaCustomInput
   | AwningInput
-  | AccessoryStandaloneInput;
+  | AccessoryStandaloneInput
+  | SystemInput;
 
 /* ------------------------------------------------------------------ */
 /* Résultat                                                            */
@@ -454,4 +472,15 @@ export interface EvaluationResult {
   purchasable: boolean;
   /** un devis est le parcours recommandé */
   quoteRecommended: boolean;
+  /** « quote » : aucun tarif public validé — le prix est établi sur devis (pas de total affiché). Absent = ancien résultat chiffré. */
+  priceMode?: "priced" | "quote";
+  /** récapitulatif lisible de la configuration (devis sans prix, PDF, administration) */
+  recap?: RecapItem[];
+}
+
+export interface RecapItem {
+  label: string;
+  value: string;
+  /** inclus dans le système, option choisie, ou point à confirmer au devis */
+  status?: "included" | "option" | "to_confirm";
 }

@@ -73,6 +73,12 @@ export async function loadCatalog(opts: { fresh?: boolean } = {}): Promise<Catal
       specs: (f.specs as Family["specs"]) ?? [],
       technicalSpecs: f.technicalSpecs.map((s) => ({ key: s.key, label: s.label, valueNum: s.valueNum, unit: s.unit, valueText: s.valueText, source: s.source.toLowerCase() as SpecSource, sourceRef: s.sourceRef, observedAt: s.observedAt?.toISOString().slice(0, 10) ?? null, variantSku: s.variantSku })),
       dataStatus: dataStatusFromDb(f.dataStatus),
+      category: (f.category as Family["category"]) ?? null,
+      brand: f.brand,
+      manufacturer: f.manufacturer,
+      supplierRef: f.supplierRef,
+      systemRules: (f.systemRules as Family["systemRules"]) ?? null,
+      legacy: f.legacy,
     })),
     variants: variants.map(
       (v): Variant => ({

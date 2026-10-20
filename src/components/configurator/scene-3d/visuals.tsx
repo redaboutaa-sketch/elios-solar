@@ -8,6 +8,7 @@ import dynamic from "next/dynamic";
 import { Box, Image as ImageIcon, Map as MapIcon } from "lucide-react";
 import { buildSceneModel, customSceneBlocker } from "@/domain/scene-model";
 import type { AwningInput, CatalogSnapshot, EvaluationResult, PergolaCustomInput, PergolaStandardInput } from "@/domain/types";
+import { systemSceneBlocker, type SystemInput } from "@/domain/system";
 
 const loading = () => <p className="grid aspect-[4/3] sm:aspect-[16/10] place-items-center rounded-lg bg-sand-100 text-sm text-stone-700">Chargement de la vue 3D…</p>;
 const PergolaScene3D = dynamic(() => import("./viewer-3d").then((m) => m.PergolaScene3D), { ssr: false, loading });
@@ -78,6 +79,39 @@ export function AwningVisuals({ catalog, input, art, onImage, onCaptureReady }: 
       <ModeSwitch mode={mode} onChange={setMode} withPlan={false} />
       {mode === "illustration" && <div className="card overflow-hidden">{art}</div>}
       {mode === "3d" && model && <div className="card p-3"><AwningScene3D model={model} onImage={onImage} onCaptureReady={onCaptureReady} fallback={<div className="overflow-hidden rounded-lg">{art}</div>} /></div>}
+    </>
+  );
+}
+
+const SystemScene3D = dynamic(() => import("./viewer-3d").then((m) => m.SystemScene3D), { ssr: false, loading });
+
+/**
+ * Colonne visuelle d'un système HELIOSTORES : photo du produit, plan 2D (pergola) et vue 3D construite
+ * depuis la même entrée que le devis. three.js n'est chargé qu'au clic sur « Vue 3D ».
+ */
+export function SystemVisuals({ catalog, input, result, art, plan, onImage, onCaptureReady }: {
+  catalog: CatalogSnapshot;
+  input: SystemInput;
+  result: EvaluationResult;
+  art: ReactNode;
+  plan: ReactNode | null;
+  onImage?: (dataUrl: string) => void;
+  onCaptureReady?: (capture: (() => Promise<string>) | null) => void;
+}) {
+  const [mode, setMode] = useState<Mode>("illustration");
+  const family = catalog.families.find((f) => f.slug === input.familySlug);
+  const model = useMemo(() => (mode === "3d" ? buildSceneModel(catalog, input, result) : null), [mode, catalog, input, result]);
+  const blocker = family?.systemRules ? systemSceneBlocker(family.systemRules, input) : "Système inconnu.";
+  return (
+    <>
+      <ModeSwitch mode={mode} onChange={setMode} withPlan={!!plan} />
+      {mode === "illustration" && <div className="card overflow-hidden">{art}</div>}
+      {mode === "3d" && (
+        <div className="card p-3">
+          {model ? <SystemScene3D model={model} onImage={onImage} onCaptureReady={onCaptureReady} fallback={<div className="overflow-hidden rounded-lg">{art}</div>} /> : <p data-testid="scene-3d-blocked" role="status" className="text-sm text-stone-700">{blocker ?? "Vue 3D indisponible pour cette configuration."}</p>}
+        </div>
+      )}
+      {plan && mode !== "illustration" && <div className="card p-3">{plan}</div>}
     </>
   );
 }

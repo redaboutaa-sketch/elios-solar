@@ -39,5 +39,8 @@ export async function publishedMediaFor(familySlug: string, ctx: MediaContext = 
     height: r.media.height,
     finishCode: r.finishCode,
     mounting: r.mounting,
+    smallPath: (r.media.provenance as { variants?: { small?: { path?: string } } } | null)?.variants?.small?.path ?? null,
+    sourceLabel: r.media.source || null,
+    match: (r.media.provenance as { match?: string } | null)?.match ?? null,
   }));
 }

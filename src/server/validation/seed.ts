@@ -11,6 +11,11 @@ const SEED_NOTE = "Dossier initial du jeu de démonstration";
 const DOSSIERS: Array<{ type: TargetType; id: string; note: string }> = [
   {
     type: "FAMILY_SPEC",
+    id: specTargetId("screen-refleksol-120-ziiip", "width_max"),
+    note: "Contradiction de sources HELIOSTORES : fiche transmise par le client = 4 m (barre anti-vent) / 3,5 m (guidage câble) ; catalogue THYSENS p. 66 et page fabricant R 120 ZiiiP = 7 m. Le configurateur accepte jusqu'à 7 m mais signale toute largeur > 4 m « à valider au devis ». Joindre un écrit fournisseur pour trancher.",
+  },
+  {
+    type: "FAMILY_SPEC",
     id: specTargetId("store-banne-ombra", "included_cable_length"),
     note: `${SEED_NOTE}. Conflit : 3 m (valeur fictive du seed) / 7,5 m (observé sur la fiche de référence, sortie gauche). Aucune spécification fournisseur : la longueur reste « à confirmer » sur le site. Joindre la fiche technique fournisseur pour valider.`,
   },

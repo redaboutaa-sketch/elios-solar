@@ -8,7 +8,6 @@ import type { AwningSceneModel } from "@/domain/scene-model";
 import { DAY, NIGHT, disposeTree, type BuiltScene } from "./scene-engine";
 
 const M = 1 / 1000;
-const PITCH = THREE.MathUtils.degToRad(14); // inclinaison indicative de la toile
 const WARM = 0xffcf8a;
 
 function box(w: number, h: number, d: number, mat: THREE.Material, x: number, y: number, z: number): THREE.Mesh {
@@ -34,6 +33,8 @@ function bar(a: THREE.Vector3, b: THREE.Vector3, thickness: number, mat: THREE.M
 }
 
 export function buildAwningScene(model: AwningSceneModel): BuiltScene {
+  // inclinaison : valeur du modèle (dans la plage documentée), sinon 14° indicatifs
+  const PITCH = THREE.MathUtils.degToRad(model.tiltDeg ?? 14);
   const Wd = model.widthMm * M;
   const P = model.projectionMm * M;
   const H = model.heightMm * M;
@@ -63,7 +64,7 @@ export function buildAwningScene(model: AwningSceneModel): BuiltScene {
   group.add(box(Wd + 3, facadeH, 0.3, wallMat, Wd / 2, facadeH / 2, -0.15));
   group.add(box(Math.min(1.6, Wd * 0.35), 2.1, 0.02, windowMat, Wd * 0.3, 1.05, 0.005));
   group.add(box(Math.min(1.2, Wd * 0.25), 1.2, 0.02, windowMat, Wd * 0.75, 1.4, 0.005));
-  if (model.bracketMount === "ceiling") {
+  if (model.bracketMount !== "wall") {
     // avancée de toiture / plafond indicatif
     group.add(box(Wd + 1, 0.12, cabD + 0.5, wallMat, Wd / 2, H + cabH / 2 + 0.06 + 0.02, (cabD + 0.5) / 2));
   }
@@ -71,9 +72,11 @@ export function buildAwningScene(model: AwningSceneModel): BuiltScene {
   /* Coffre + LED + supports */
   const cabY = H;
   group.add(box(Wd, cabH, cabD, cabinetMat, Wd / 2, cabY, cabD / 2));
-  const led = new THREE.Mesh(new THREE.BoxGeometry(Wd - 0.2, 0.01, 0.02), ledMat);
-  led.position.set(Wd / 2, cabY - cabH / 2 - 0.006, cabD * 0.6);
-  group.add(led);
+  if (model.led) {
+    const led = new THREE.Mesh(new THREE.BoxGeometry(Wd - 0.2, 0.01, 0.02), ledMat);
+    led.position.set(Wd / 2, cabY - cabH / 2 - 0.006, cabD * 0.6);
+    group.add(led);
+  }
   for (let i = 0; i < model.bracketCount; i += 1) {
     const x = model.bracketCount === 1 ? Wd / 2 : 0.25 + ((Wd - 0.5) * i) / (model.bracketCount - 1);
     if (model.bracketMount === "wall") group.add(box(0.12, cabH + 0.12, 0.06, cabinetMat, x, cabY, 0.03));

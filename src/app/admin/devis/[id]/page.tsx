@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -12,6 +13,9 @@ import { Flash, Options, PageTitle, QUOTE_STATUS_FR, Section, Table, fmtDate } f
 import { centsToEuros, toDateInput } from "@/server/admin/form";
 import { updateQuoteAction } from "@/server/actions/admin/quotes";
 import type { ConfigurationInput, EvaluationResult } from "@/domain/types";
+import type { Attribution } from "@/domain/attribution";
+
+const QUALIFICATION_FR: Record<string, string> = { TO_QUALIFY: "À qualifier", QUALIFIED: "Qualifié", NOT_QUALIFIED: "Non qualifié" };
 
 export const metadata: Metadata = { title: "Détail du devis" };
 
@@ -39,6 +43,8 @@ export default async function QuoteAdminPage(props: PageProps<"/admin/devis/[id]
               <dt className="text-stone-700">Code postal</dt><dd>{quote.postalCode ?? "—"}</dd>
               <dt className="text-stone-700">Type</dt><dd>{quote.kind}</dd>
               <dt className="text-stone-700">Reçu le</dt><dd>{fmtDate(quote.createdAt)}</dd>
+              <dt className="text-stone-700">Qualification</dt><dd data-testid="quote-qualification">{QUALIFICATION_FR[quote.qualification] ?? quote.qualification}</dd>
+              <dt className="text-stone-700">Origine</dt><dd data-testid="quote-attribution">{(() => { const a = quote.attribution as Attribution | null; if (!a) return "non renseignée"; const p = Object.entries(a.params ?? {}).map(([k, v]) => `${k}=${v}`).join(", "); return [p, a.referrerHost ? `référent ${a.referrerHost}` : null, a.landingPath ? `entrée ${a.landingPath}` : null].filter(Boolean).join(" · ") || "non renseignée"; })()}</dd>
               {quote.configuration && <><dt className="text-stone-700">Configuration</dt><dd>{quote.configuration.shareRevoked ? "lien révoqué" : <a className="underline" href={`/projets/${quote.configuration.shareToken}`}>Ouvrir le projet</a>}</dd></>}
             </dl>
             {quote.message && <p className="mt-3 whitespace-pre-wrap rounded bg-sand-100 p-3 text-sm">{quote.message}</p>}
@@ -51,7 +57,15 @@ export default async function QuoteAdminPage(props: PageProps<"/admin/devis/[id]
           )}
           <Section title="Instantané de la configuration">
             {!result ? <p className="text-sm text-stone-700">Aucune configuration jointe.</p> : (
-              <>
+              result.priceMode === "quote" ? (
+                <>
+                  <dl data-testid="quote-recap" className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[12rem_1fr]">{(result.recap ?? []).map((r, i) => <div key={`${r.label}-${i}`} className="contents"><dt className="text-stone-700">{r.label}</dt><dd>{r.value}{r.status === "to_confirm" ? <span className="badge-warn ml-2">à confirmer</span> : r.status === "included" ? <span className="badge-ok ml-2">inclus</span> : null}</dd></div>)}</dl>
+                  <p className="mt-3 text-sm">Prix : <strong>établi sur devis</strong> (aucun tarif public validé). Les tarifs fournisseurs internes sont consultables dans <Link className="underline" href="/admin/catalogue/tarifs-fournisseur">Tarifs fournisseurs</Link> (administrateurs).</p>
+                  <h3 className="mt-4 text-sm font-medium">Points signalés</h3>
+                  {result.issues.length ? <IssueList issues={result.issues} className="mt-2" /> : <p className="text-sm text-stone-700">Aucun.</p>}
+                  {result.layout && <div className="mt-4 rounded-lg border border-sand-200 p-2"><PlanPreview layout={result.layout} segments={{}} /></div>}
+                </>
+              ) : <>
                 <Table caption="Lignes estimées">
                   <thead><tr><th>Libellé</th><th>SKU</th><th className="text-right">Qté</th><th className="text-right">Total TTC</th><th>Donnée</th></tr></thead>
                   <tbody>{result.lines.map((l, i) => <tr key={i}><td>{l.label}</td><td className="font-mono text-xs">{l.sku ?? "—"}</td><td className="text-right">{l.qty}</td><td className="text-right">{l.included ? "inclus" : <Price cents={l.totalGrossCents} />}</td><td>{l.dataStatus}</td></tr>)}</tbody>
@@ -68,6 +82,7 @@ export default async function QuoteAdminPage(props: PageProps<"/admin/devis/[id]
           <form action={updateQuoteAction} className="space-y-3">
             <input type="hidden" name="quoteId" value={quote.id} />
             <div><label className="label" htmlFor="status">Statut</label><select id="status" name="status" className="input" defaultValue={quote.status}><Options values={Object.values(QuoteStatus)} labels={QUOTE_STATUS_FR} /></select><p className="mt-1 text-xs text-stone-700">Le passage à « Envoyé » adresse un e-mail au client.</p></div>
+            <div><label className="label" htmlFor="qualification">Qualification du prospect</label><select id="qualification" name="qualification" className="input" defaultValue={quote.qualification}>{Object.entries(QUALIFICATION_FR).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
             <div><label className="label" htmlFor="proposedTotal">Montant proposé TTC (€)</label><input id="proposedTotal" name="proposedTotal" inputMode="decimal" className="input" defaultValue={centsToEuros(quote.proposedTotalCents)} /></div>
             <div><label className="label" htmlFor="validUntil">Valable jusqu'au</label><input id="validUntil" name="validUntil" type="date" className="input" defaultValue={toDateInput(quote.validUntil)} /></div>
             <div><label className="label" htmlFor="adminNotes">Notes internes</label><textarea id="adminNotes" name="adminNotes" rows={5} className="input" defaultValue={quote.adminNotes ?? ""} /></div>
