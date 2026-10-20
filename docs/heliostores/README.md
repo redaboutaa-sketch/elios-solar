@@ -165,7 +165,14 @@ Le repli en plan 2D est conservé pour les pergolas. Pour les screens et les sto
 
 ## 10. Vérifications
 
-Résultats en fin de livraison : `docs/STATE.md`, section HELIOSTORES.
+- Commit déployé : `ec22202`, vérifié par `/api/health` (migration `20261021090000_heliostores_catalogue_sources_prices`).
+- Typecheck ✅, lint ✅, tests unitaires 193/193, intégration 80/80.
+- **Recette navigateur complète contre Docker : 29/29 en une campagne**, bureau et mobile, sans relance.
+- CI verte (`verify`, `e2e-docker`).
+
+En CI, les visuels du fabricant, qui sont des fichiers privés, ne sont pas disponibles : la recette y vérifie l'état vide explicite des galeries, annoté dans le rapport.
+
+Le contrôle externe HTTPS a porté sur l'identité, l'absence de montant, les images de toutes les pages, la 3D des trois types, le compte avec cookie sécurisé, et un devis avec visualisation jointe.
 
 ## 11. Revue utilisateur
 
