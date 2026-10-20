@@ -13,7 +13,8 @@ const SIGN_IN_PATH = "/sign-in/email";
 /**
  * Proxys de confiance (CIDR, séparés par des virgules) : quand l'application est derrière un ou
  * plusieurs proxys qui AJOUTENT l'IP cliente à X-Forwarded-For, better-auth retient la première IP
- * non fiable en partant de la droite. Sans proxy (port lié à 127.0.0.1), laisser vide.
+ * non fiable en partant de la droite. En production, la garde docker/xff-guard.cjs garantit que
+ * l'en-tête ne vient que de ces pairs (sinon il est remplacé par l'adresse réelle du pair).
  */
 const trustedProxies = (process.env.TRUSTED_PROXIES ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 

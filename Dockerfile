@@ -23,11 +23,13 @@ RUN groupadd -r app && useradd -r -g app -d /app app
 COPY --from=build --chown=app:app /app/.next/standalone ./
 COPY --from=build --chown=app:app /app/.next/static ./.next/static
 COPY --from=build --chown=app:app /app/public ./public
+COPY --chown=app:app docker/xff-guard.cjs ./xff-guard.cjs
 RUN mkdir -p /app/uploads && chown app:app /app/uploads
 USER app
 EXPOSE 3400
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD node -e "fetch('http://127.0.0.1:3400/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
-CMD ["node", "server.js"]
+# xff-guard : X-Forwarded-For n'est conservé que s'il vient d'un proxy de TRUSTED_PROXIES
+CMD ["node", "-r", "./xff-guard.cjs", "server.js"]
 
 # ---- image outils : migrations, seed, worker e-mail, import, sauvegarde ----
 FROM deps AS tools

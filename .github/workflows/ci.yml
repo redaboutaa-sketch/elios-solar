@@ -114,6 +114,10 @@ jobs:
           export GIT_COMMIT=${{ github.sha }} BUILD_TIME=$(date -u +%FT%TZ)
           docker compose -f docker/compose.prod.yml --env-file .env.prod up -d --build
           docker compose -f docker/compose.prod.yml --env-file .env.prod run --rm migrate pnpm db:seed
+          # le lanceur joint l'app via la passerelle du réseau interne : seul pair autorisé à transmettre
+          # X-Forwarded-For (un client simulé par parcours) ; tout autre pair est ramené à son adresse réelle
+          echo "TRUSTED_PROXIES=$(docker network inspect elios_solar_internal -f '{{range .IPAM.Config}}{{.Gateway}}{{end}}')" >> .env.prod
+          docker compose -f docker/compose.prod.yml --env-file .env.prod up -d --no-deps --force-recreate app
           for i in $(seq 1 60); do curl -fsS http://127.0.0.1:3401/api/health && break; sleep 2; done
           curl -fsS http://127.0.0.1:3401/api/health | grep -q "${{ github.sha }}"
       - name: Recette navigateur complète contre Docker
