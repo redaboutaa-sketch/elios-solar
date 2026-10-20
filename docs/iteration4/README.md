@@ -51,3 +51,27 @@ la scène et la liste des éléments représentés ne montrent donc un éclairag
 - Une règle de compatibilité recréée par le seed change d'identifiant : un dossier qui la vise signale « cible introuvable ».
 - Pas de séparation obligatoire auteur / validateur d'un dossier (un seul compte admin en recette).
 - Verrous et quotas en mémoire : réinitialisés au redémarrage du conteneur (instance unique).
+
+## Contrôle X-Forwarded-For (2026-10-20)
+
+Le contrôle initial n'était **pas suffisant** : `getIP` (better-auth) et les quotas de l'application ne lisent que les en-têtes,
+et `next start` conserve un X-Forwarded-For fourni par le client. Un pair joignant directement le port de l'application
+(autre conteneur du réseau partagé `traefik-public`, tunnel SSH) pouvait donc choisir son IP.
+
+Correctif (`969d583`) : la garde `docker/xff-guard.cjs`, préchargée par le serveur autonome, est appliquée **avant** Next.
+- Si le pair TCP n'appartient pas à `TRUSTED_PROXIES`, l'en-tête est remplacé par l'adresse réelle du pair.
+- Si le pair est déclaré, la chaîne est conservée et le pair est ajouté à la fin.
+
+better-auth retient ensuite la première adresse non fiable en partant de la droite.
+
+Preuves :
+- `tests/unit/xff-guard.test.ts` : 4 tests.
+- Sonde depuis un conteneur éphémère sur `traefik-public` avec rotation de l'en-tête : 401 ×3 puis 429.
+- Même sonde depuis la passerelle déclarée : la chaîne est acceptée.
+
+Le verrou par compte (5 échecs, 15 min) s'applique dans tous les cas.
+
+En préproduction, `TRUSTED_PROXIES` désigne la passerelle hôte du réseau interne. C'est le chemin du tunnel SSH et du lanceur
+de recette : les utilisateurs SSH de l'hôte restent donc de confiance. Derrière Traefik, il faut y mettre l'adresse
+du conteneur Traefik, jamais le sous-réseau partagé. Le serveur de développement (`pnpm dev`) ne charge pas la garde ;
+il n'est pas exposé.
