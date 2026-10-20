@@ -17,9 +17,10 @@ test("validation des références : contradiction REFLEKSOL (fiche 4 m / catalog
   await shot(page, "validation-refleksol-largeur");
 
   // 2. dossier de test sur une donnée technique (création → à vérifier → rejet), sans modifier la donnée
+  const specsBefore = (await pool.query(`SELECT source, "valueNum", "sourceRef" FROM "TechnicalSpec" t JOIN "ProductFamily" f ON f.id = t."familyId" WHERE f.slug = 'pergola-sb400' AND t.key = 'height_max' ORDER BY source, "valueNum", "sourceRef"`)).rows;
   await page.goto(`/admin/catalogue/validations/nouveau?type=FAMILY_SPEC&cible=${encodeURIComponent("pergola-sb400#height_max")}`);
-  await page.getByLabel(/^Valeur numérique/).fill("3020");
-  await page.getByLabel("Référence et contexte de la source").fill(`Test e2e ${id} : déclaration P/SB400/25 (dimensions maximales 7000 × 4000 × 3020 mm) — à rapprocher de la page fabricant (2,8 m)`);
+  await page.getByLabel(/^Valeur numérique/).fill("2950");
+  await page.getByLabel("Référence et contexte de la source").fill(`Test e2e ${id} : valeur fictive de test, aucune source réelle`);
   await page.getByRole("button", { name: "Créer le dossier (brouillon)" }).click();
   await expect(page.getByText("Dossier créé en brouillon.")).toBeVisible();
   const dossierId = new URL(page.url()).pathname.split("/").pop()!;
@@ -34,8 +35,8 @@ test("validation des références : contradiction REFLEKSOL (fiche 4 m / catalog
     await expect(history).toContainText("Brouillon → À vérifier");
     await expect(history).toContainText("À vérifier → Rejeté");
     await expect(history).toContainText(`rejet e2e ${id}`);
-    const rows = await pool.query(`SELECT "valueNum" FROM "TechnicalSpec" t JOIN "ProductFamily" f ON f.id = t."familyId" WHERE f.slug = 'pergola-sb400' AND t.key = 'height_max'`);
-    expect(rows.rows.map((r) => r.valueNum)).not.toContain(3020);
+    // un dossier rejeté ne modifie aucune donnée technique (les divergences sourcées restent intactes)
+    expect((await pool.query(`SELECT source, "valueNum", "sourceRef" FROM "TechnicalSpec" t JOIN "ProductFamily" f ON f.id = t."familyId" WHERE f.slug = 'pergola-sb400' AND t.key = 'height_max' ORDER BY source, "valueNum", "sourceRef"`)).rows).toEqual(specsBefore);
   } finally {
     await pool.query('DELETE FROM "ReferenceValidation" WHERE id = $1', [dossierId]);
   }

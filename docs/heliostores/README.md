@@ -10,7 +10,9 @@ Documents liés :
 - `medias.md` : registre des médias ;
 - `revue-tarifaire.md` : revue tarifaire sans montant ;
 - `import-tarifs.md` : procédure d'import privé ;
-- `identite.md` : charte et logo.
+- `identite.md` : charte et logo ;
+- `validation-fournisseur.md` : questions au fournisseur (annexe chiffrée privée hors dépôt) ;
+- `revue-client.md` : fiche de revue pour le client.
 
 > **Le catalogue n'est pas prêt à la vente.** La nature, la devise, la fiscalité et la validité des tarifs transmis ne sont pas établies. Aucun prix n'est affiché et chaque configuration aboutit à une demande de devis.
 

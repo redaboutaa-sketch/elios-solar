@@ -18,6 +18,65 @@ Source du registre : `src/server/media/heliostores-media.ts` (manifeste commité
 - texture de fond (p. 114) ;
 - images des pages SB 450 / SB 550, qui montrent des systèmes MB-OpenSky.
 
+## Conservation et restauration lors d'un redéploiement
+
+**Où sont les médias :**
+- les **fichiers** se trouvent dans le volume Docker nommé `elios_solar_uploads`, monté sur `/app/uploads` dans `app` et `migrate` ;
+- les visuels figés des devis sont dans son sous-dossier `quotes/` ;
+- les **métadonnées** sont en base : `Media.path`, `Media.provenance` (variantes, empreinte, source) et `ProductMedia` pour les associations.
+
+**Redéploiement** (`docker compose … build` puis `up -d`) :
+- les images sont reconstruites, mais le volume nommé n'est ni recréé ni vidé : les médias sont conservés ;
+- vérifié lors des trois redéploiements du 2026-10-20 ;
+- ne jamais lancer de suppression globale de volumes (`docker volume prune`, `down -v`).
+
+**Sauvegarde avant chaque redéploiement** :
+
+```bash
+MEDIA_VOLUME=elios_solar_uploads scripts/backup.sh backups/preprod
+```
+
+- produit le dump de la base et l'archive du volume (lu en lecture seule), avec leurs empreintes SHA-256 ;
+- `backups/` est exclu de Git.
+
+**Restauration** :
+
+```bash
+MEDIA_RESTORE_VOLUME=elios_solar_uploads scripts/restore.sh backups/preprod/db_<horodatage>.dump backups/preprod/media_<horodatage>.tar.gz
+```
+
+- la base est d'abord restaurée et contrôlée dans une base isolée, et ne bascule que si `RESTORE_TARGET_URL` est fourni ;
+- l'archive des médias est extraite dans le volume : les fichiers sont ajoutés ou remplacés, aucun n'est supprimé.
+
+Un aller-retour sauvegarde → restauration dans un volume temporaire a été vérifié le 2026-10-20 : empreintes identiques au volume réel (visuels produits, documents, visuels figés des devis).
+
+**Reconstitution sans archive** : si un fichier manque mais que la base est intacte, relancer l'import depuis le dossier privé (monté en lecture seule) :
+
+```bash
+docker compose -f docker/compose.prod.yml --env-file .env.prod run --rm \
+  -v /opt/pergola/private/heliostores/media-staging:/staging:ro migrate pnpm media:heliostores --dir /staging --apply
+```
+
+- une entrée dont le fichier ou la vignette manque est régénérée (testé) ;
+- les autres ne sont pas réécrites ;
+- les visuels figés des devis ne peuvent pas être régénérés : seule l'archive les restaure.
+
+**Contrôle après redéploiement** : chaque galerie doit contenir exactement les visuels du manifeste, sans image cassée.
+
+```bash
+REVIEW_USER=revue-client REVIEW_PASSWORD="$(sed -n 's/^Mot de passe : //p' /root/elios-solar-revue.txt)" \
+  pnpm exec tsx scripts/check-public-media.ts https://demo-elios.beaverdata.eu
+```
+
+Résultat du 2026-10-20 :
+- SB400 16/16, SB500 3/3, REFLEKSOL 9/9, CASABLANCA 13/13 ;
+- images principales et vignettes chargées et décodées ;
+- accueil et collections sans image cassée.
+
+En CI, les fichiers fabricant, privés, sont absents : la recette n'y vérifie que l'état vide des galeries. Ce contrôle sur la préproduction est donc le seul qui vérifie le contenu réel des galeries.
+
+## Visuels publiés
+
 | Produit | Rôle | Nature | Modèle représenté | Source | Rattachement | Texte alternatif |
 |---|---|---|---|---|---|---|
 | pergola-sb400 | hero | photo | SunBreaker 400 | Catalogue THYSENS (7).pdf, p. 11 — photo de la page SunBreaker 400 ; même photo au catalogue SB400 p. 2 | confirmé | Pergola SB400 gris anthracite adossée à une maison contemporaine, lames ouvertes projetant des ombres rayées sur la terrasse |

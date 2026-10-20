@@ -72,11 +72,13 @@ describe("Pergola SB400", () => {
     expect(codes("pergola-sb400", { depthMm: 7200 })).toContain("blocking:dimension_out_of_bounds");
     expect(codes("pergola-sb400", { depthMm: 1200 })).toContain("blocking:dimension_out_of_bounds");
   });
-  it("largeur 1,4 à 4 m par module, hauteur max 2,8 m", () => {
+  it("largeur 1,4 à 4 m par module ; hauteur : 2,8 m (site, catalogue) / 3 020 mm (déclaration) → au-delà de 2,8 m à confirmer, jamais tranché", () => {
     expect(codes("pergola-sb400", { widthMm: 4010 })).toContain("blocking:dimension_out_of_bounds");
     expect(codes("pergola-sb400", { widthMm: 1390 })).toContain("blocking:dimension_out_of_bounds");
-    expect(codes("pergola-sb400", { heightMm: 2900 })).toContain("blocking:dimension_out_of_bounds");
-    expect(codes("pergola-sb400", { heightMm: 2800 })).not.toContain("blocking:dimension_out_of_bounds");
+    expect(codes("pergola-sb400", { heightMm: 2800 })).not.toContain("review:dimension_to_confirm");
+    expect(codes("pergola-sb400", { heightMm: 2900 })).toContain("review:dimension_to_confirm");
+    expect(codes("pergola-sb400", { heightMm: 3020 })).not.toContain("blocking:dimension_out_of_bounds");
+    expect(codes("pergola-sb400", { heightMm: 3100 })).toContain("blocking:dimension_out_of_bounds");
   });
   it("spots : nombre de points selon le tableau de la fiche", () => {
     const t = rules("pergola-sb400").options.find((o) => o.code === "led_spots")!.spotTable;
@@ -167,6 +169,14 @@ describe("Store banne CASABLANCA", () => {
     const r = evaluate(catalog, input("store-banne-casablanca"));
     const text = JSON.stringify(r);
     expect(text).not.toMatch(/LED|télécommande|câble|230 V/);
+  });
+  it("divergences conservées en données sourcées (jamais une valeur choisie)", () => {
+    const spec = (slug: string, key: string) => catalog.families.find((f) => f.slug === slug)!.technicalSpecs!.filter((t) => t.key === key);
+    expect(new Set(spec("pergola-sb400", "height_max").map((t) => t.valueNum))).toEqual(new Set([2800, 3020]));
+    expect(new Set(spec("screen-refleksol-120-ziiip", "height_max").map((t) => t.valueNum))).toEqual(new Set([4000, 3000]));
+    expect(new Set(spec("screen-refleksol-120-ziiip", "width_max").map((t) => t.valueNum))).toEqual(new Set([7000, 4000]));
+    expect(new Set(spec("pergola-sb500", "manufacturer_reference").map((t) => t.source)).size).toBe(2);
+    expect(new Set(spec("store-banne-casablanca", "drive").map((t) => t.valueText)).size).toBe(2);
   });
   it("commande manuelle documentée ; électrique à confirmer", () => {
     expect(codes("store-banne-casablanca", { controlCode: "crank_1800" })).not.toContain("review:control_to_confirm");

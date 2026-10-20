@@ -10,7 +10,8 @@
  * Pour chaque entrée : contrôle du fichier (signature, dimensions), variantes web WebP (≤ 1600 px et ≤ 640 px,
  * jamais agrandies), média PUBLIÉ avec provenance (fichier + page ou URL + date), crédit, autorisation et
  * association au produit (rôle, légende, teinte, pose). Une entrée déjà importée (même clé, même empreinte) n'est
- * pas réécrite ; seules ses métadonnées sont mises à jour.
+ * pas réécrite ; seules ses métadonnées sont mises à jour — sauf si ses fichiers manquent dans le stockage, qui sont
+ * alors régénérés depuis le dossier privé.
  */
 import "dotenv/config";
 import { createHash } from "node:crypto";
@@ -31,7 +32,8 @@ async function main() {
   const dir = path.resolve(args[dirIdx + 1]!);
   const sharp = (await import("sharp")).default;
   const { prisma } = await import("../src/lib/prisma");
-  const { storeMediaBuffer } = await import("../src/server/media/storage");
+  const { storeMediaBuffer, resolveMediaFile, MEDIA_URL_PREFIX } = await import("../src/server/media/storage");
+  const { existsSync } = await import("node:fs");
   const { HELIOSTORES_MEDIA, HELIOSTORES_MEDIA_AUTHORIZATION } = await import("../src/server/media/heliostores-media");
 
   const families = new Map((await prisma.productFamily.findMany({ select: { id: true, slug: true } })).map((f) => [f.slug, f.id]));
@@ -77,7 +79,13 @@ async function main() {
       continue;
     }
     let mediaId: string;
-    if (existing && prov?.sha256 === sha256) {
+    const filePresent = (url: string | undefined) => {
+      const full = url ? resolveMediaFile(url.slice(MEDIA_URL_PREFIX.length)) : null;
+      return !!full && existsSync(full);
+    };
+    const smallPath = (prov?.variants as { small?: { path?: string } } | undefined)?.small?.path;
+    // même source et fichiers présents dans le stockage : métadonnées seulement ; fichier perdu (volume restauré partiellement) : régénéré
+    if (existing && prov?.sha256 === sha256 && filePresent(existing.path) && filePresent(smallPath)) {
       await prisma.media.update({ where: { id: existing.id }, data: { ...common, provenance: { ...provenanceBase, variants: prov.variants } as never } });
       mediaId = existing.id;
       updated += 1;
