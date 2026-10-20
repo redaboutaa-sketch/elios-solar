@@ -166,6 +166,18 @@ enum FamilyKind {
   SIDE_CLOSURE
   OPTION
   SERVICE
+  /// systèmes configurables à la cote (catalogue HELIOSTORES) : règles sourcées dans `systemRules`
+  PERGOLA_SYSTEM
+  SCREEN_SYSTEM
+  AWNING_SYSTEM
+  ROOF_BLIND_SYSTEM
+}
+
+/// Les trois familles publiques du catalogue HELIOSTORES (navigation principale).
+enum ProductCategory {
+  PERGOLAS
+  SCREENS
+  STORES_BANNES
 }
 
 enum FamilyStatus {
@@ -229,6 +241,18 @@ model ProductFamily {
   included           Json              @default("[]")
   dataStatus         DataStatus        @default(DEMO)
   sortOrder          Int               @default(0)
+  /// famille publique (Pergolas, Screens, Stores bannes) ; null = hors navigation (ancien catalogue, brouillon)
+  category           ProductCategory?
+  /// marque commerciale, fabricant du système et référence exacte, quand ils sont établis par une source
+  brand              String?
+  manufacturer       String?
+  supplierRef        String?
+  /// règles du configurateur (dimensions, implantations, options, inclus) avec leurs sources — voir src/domain/system.ts
+  systemRules        Json?
+  /// questions ouvertes bloquant une décision (texte + champ concerné + sources)
+  openQuestions      Json              @default("[]")
+  /// ancien produit de démonstration conservé pour l'historique des devis, projets et commandes
+  legacy             Boolean           @default(false)
   seoTitle           String?
   seoDescription     String?
   createdAt          DateTime          @default(now())
@@ -578,6 +602,8 @@ model Media {
    * paramètres du rendu (gamme, finition, implantation, équipements)
    */
   renderConfig    Json?
+  /// provenance : fichier source + page, ou URL + date de récupération, modèle représenté, autorisation client
+  provenance      Json?
   sortOrder       Int            @default(0)
   validatedBy     String?
   validatedAt     DateTime?
@@ -781,6 +807,10 @@ model Quote {
   adminNotes         String?
   proposedTotalCents Int?
   containsDemoData   Boolean        @default(true)
+  /// attribution du prospect transmise avec la demande (utm_*, référent, page d'entrée) — jamais par cookie
+  attribution        Json?
+  /// qualification commerciale (à qualifier, qualifié, non qualifié) — indépendante du statut du devis
+  qualification      String         @default("TO_QUALIFY")
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   visuals            QuoteVisual[]
@@ -999,6 +1029,8 @@ model ContactRequest {
   message       String?
   preferredSlot String?
   status        String   @default("NEW")
+  /// attribution du prospect transmise avec la demande (utm_*, référent, page d'entrée)
+  attribution   Json?
   createdAt     DateTime @default(now())
 }
 
@@ -1198,6 +1230,12 @@ enum SpecSource {
   DEMO_SEED
   OBSERVED_REFERENCE
   SUPPLIER_CONFIRMED
+  /// fiche technique du modèle exact transmise par le client
+  CLIENT_SHEET
+  /// catalogue ou document technique du fournisseur / fabricant
+  SUPPLIER_DOCUMENT
+  /// page officielle du fabricant
+  MANUFACTURER_WEBSITE
 }
 
 /**
@@ -1322,4 +1360,111 @@ model QuoteVisual {
   createdAt            DateTime       @default(now())
 
   @@index([quoteId])
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Tarifs fournisseur — PRIVÉS (jamais dans l'instantané public)
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+enum PriceNature {
+  /// nature non établie : ni prix de vente, ni prix d'achat confirmé
+  UNKNOWN
+  PURCHASE
+  SALE
+  RECOMMENDED
+  EXAMPLE
+}
+
+enum TaxBasis {
+  UNKNOWN
+  HT
+  TTC
+}
+
+enum PriceListStatus {
+  /// importée, en revue
+  DRAFT
+  /// version de référence (une seule active par source)
+  ACTIVE
+  ARCHIVED
+  REJECTED
+}
+
+enum PriceRowStatus {
+  OK
+  TO_CHECK
+  REJECTED
+}
+
+/// Version importée d'un tarif fournisseur (classeur, fiche). Les montants restent internes tant que leur nature n'est pas établie.
+model SupplierPriceList {
+  id           String             @id @default(cuid())
+  /// identifiant stable de la source (ex. « situation-des-tarifs ») ; les versions se succèdent
+  sourceKey    String
+  version      Int
+  label        String
+  sourceFile   String
+  sourceSha256 String
+  status       PriceListStatus    @default(DRAFT)
+  /// devise indiquée par la source (code ISO, ex. MAD) ; null = non indiquée
+  currency     String?
+  currencyNote String             @default("")
+  taxBasis     TaxBasis           @default(UNKNOWN)
+  nature       PriceNature        @default(UNKNOWN)
+  natureNote   String             @default("")
+  validFrom    DateTime?
+  validTo      DateTime?
+  /// feuilles analysées, formules, contrôles, rapport d'import (lignes intégrées / à vérifier / rejetées)
+  report       Json               @default("{}")
+  notes        String             @default("")
+  importedBy   String?
+  activatedBy  String?
+  activatedAt  DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  rows         SupplierPriceRow[]
+
+  @@unique([sourceKey, version])
+  @@index([sourceKey, status])
+}
+
+/// Ligne de tarif : montant d'une cellule précise, avec sa provenance et ses contrôles.
+model SupplierPriceRow {
+  id          String            @id @default(cuid())
+  listId      String
+  list        SupplierPriceList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  familySlug  String
+  /// variante tarifaire telle que nommée par la source (ex. « autoportante », « murale », « module suivant »)
+  variantKey  String            @default("")
+  /// GRID = produit à la dimension ; OPTION = équipement / supplément
+  kind        String            @default("GRID")
+  code        String            @default("")
+  label       String            @default("")
+  /// dimension principale (projection, hauteur…) et plage de largeur couvertes, en mm
+  dimAKey     String?
+  dimAmm      Int?
+  widthMinMm  Int?
+  widthMaxMm  Int?
+  /// conditions d'application (plages, unité, remise, « non remisé »…)
+  conditions  Json              @default("{}")
+  /// montant en unités mineures (centimes) de `currency` ; null = cellule vide (jamais zéro par défaut)
+  amountMinor Int?
+  currency    String?
+  /// colonne / nature de la valeur dans la source (ex. « C Prix », « F Prix final HELIOSTORES »)
+  amountRole  String
+  /// formule source et valeur en cache, quand la cellule est calculée
+  formula     String?
+  cachedValue Float?
+  sourceRef   String
+  status      PriceRowStatus    @default(TO_CHECK)
+  issues      String[]          @default([])
+  createdAt   DateTime          @default(now())
+
+  @@index([listId, familySlug])
 }
