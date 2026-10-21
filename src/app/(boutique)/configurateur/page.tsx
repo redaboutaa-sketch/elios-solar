@@ -30,9 +30,9 @@ export default async function ConfiguratorIndex(props: PageProps<"/configurateur
         {CATEGORIES.map((c) => {
           const items = families.filter((f) => f.category === c.key);
           return (
-            <section key={c.key} aria-labelledby={`cat-${c.key}`} className="sketch-trigger grid gap-4 py-8 md:grid-cols-[12rem_1fr] md:gap-8">
+            <section key={c.key} aria-labelledby={`cat-${c.key}`} className="grid gap-4 py-8 md:grid-cols-[12rem_1fr] md:gap-8">
               <div>
-                <FamilySketch kind={c.key} sun={false} className="w-40 md:w-full" />
+                <FamilySketch kind={c.key} sun={false} animated={false} className="w-40 md:w-full" />
                 <h2 id={`cat-${c.key}`} className="mt-1 font-display text-2xl font-semibold">{c.label}</h2>
               </div>
               {items.length === 0 ? <p className="mt-2 text-sm text-stone-700">Modèles en cours d&apos;intégration.</p> : (

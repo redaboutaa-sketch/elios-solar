@@ -20,7 +20,8 @@ const GLASS = "#eef3f1";
 
 function projector(ox: number, oy: number, s: number): Proj {
   const c = Math.cos(Math.PI / 6), k = 0.5;
-  return ([x, y, z]) => `${(ox + (x - z) * c * s).toFixed(1)} ${(oy + (x + z) * k * s - y * s).toFixed(1)}`;
+  const r = (v: number) => String(Math.round(v * 10) / 10);
+  return ([x, y, z]) => `${r(ox + (x - z) * c * s)} ${r(oy + (x + z) * k * s - y * s)}`;
 }
 const poly = (P: Proj, pts: readonly V3[]) => `M${pts.map(P).join(" L")} Z`;
 const line = (P: Proj, pts: readonly V3[]) => `M${pts.map(P).join(" L")}`;
@@ -29,7 +30,9 @@ const faceX = (P: Proj, x: number, y0: number, y1: number, z0: number, z1: numbe
 const faceY = (P: Proj, y: number, x0: number, x1: number, z0: number, z1: number) => poly(P, [[x0, y, z0], [x1, y, z0], [x1, y, z1], [x0, y, z1]]);
 const faceZ = (P: Proj, z: number, x0: number, x1: number, y0: number, y1: number) => poly(P, [[x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z]]);
 
-const morph = (off: string, on: string): { d: string; style: CSSProperties } => ({ d: off, style: { "--off": `path("${off}")`, "--on": `path("${on}")` } as CSSProperties });
+type Morph = (off: string, on: string) => { d: string; style?: CSSProperties };
+/** Élément mobile : tracé de repos, plus les deux états d'animation sauf en dessin statique (menus). */
+const morpher = (animated: boolean): Morph => (off, on) => (animated ? { d: off, style: { "--off": `path("${off}")`, "--on": `path("${on}")` } as CSSProperties } : { d: off });
 
 const stroke = { stroke: INK, strokeWidth: 1.6, strokeLinejoin: "round" as const, strokeLinecap: "round" as const, vectorEffect: "non-scaling-stroke" as const };
 const thin = { ...stroke, strokeWidth: 0.9 };
@@ -44,7 +47,7 @@ function Sun({ cx = 352, cy = 34 }: { cx?: number; cy?: number }) {
   );
 }
 
-function PergolaSketch() {
+function PergolaSketch(morph: Morph) {
   const P = projector(186, 128, 40);
   const W = 4, D = 3.2, H = 2.5, bh = 0.24, t = 0.14, f = 0.12, n = 13;
   const post = (px: number, pz: number) => <g key={`${px}-${pz}`} fill="#fff" {...stroke}><path d={faceZ(P, pz + t, px, px + t, 0, H)} /><path d={faceX(P, px + t, 0, H, pz, pz + t)} /></g>;
@@ -69,7 +72,7 @@ function PergolaSketch() {
   );
 }
 
-function ScreenSketch() {
+function ScreenSketch(morph: Morph) {
   const P = projector(151, 145, 42);
   const WW = 4.6, WH = 3.0, x0 = 0.9, x1 = 3.7, oh = 2.5, r = 0.08;
   const fabric = (drop: number) => faceZ(P, 0.05, x0 + r, x1 - r, oh - drop, oh);
@@ -101,7 +104,7 @@ function ScreenSketch() {
   );
 }
 
-function AwningSketch() {
+function AwningSketch(morph: Morph) {
   const P = projector(169, 130, 40);
   const WW = 4.8, WH = 3.0, cy = 2.45, cz = 0.22, slope = 0.27, L = 1.45;
   const fx0 = 0.5, fx1 = 4.3;
@@ -142,20 +145,20 @@ function AwningSketch() {
   );
 }
 
-const SKETCHES: Record<CategoryKey, { draw: () => React.ReactNode; label: string }> = {
+const SKETCHES: Record<CategoryKey, { draw: (morph: Morph) => React.ReactNode; label: string }> = {
   PERGOLAS: { draw: PergolaSketch, label: "Dessin d'une pergola à lames orientables" },
   SCREENS: { draw: ScreenSketch, label: "Dessin d'un screen à toile verticale devant une baie" },
   STORES_BANNES: { draw: AwningSketch, label: "Dessin d'un store banne à bras articulés" },
 };
 
 /** Dessin d'une famille. `decorative` (défaut) : masqué des lecteurs d'écran, le lien parent porte le nom. */
-export function FamilySketch({ kind, className = "", decorative = true, sun = true }: { kind: CategoryKey; className?: string; decorative?: boolean; sun?: boolean }) {
+export function FamilySketch({ kind, className = "", decorative = true, sun = true, animated = true }: { kind: CategoryKey; className?: string; decorative?: boolean; sun?: boolean; animated?: boolean }) {
   const s = SKETCHES[kind];
-  const Draw = s.draw;
+  const body = s.draw(morpher(animated));
   return (
     <svg viewBox="0 0 400 300" className={`sketch ${className}`} {...(decorative ? { "aria-hidden": true } : { role: "img", "aria-label": s.label })} focusable="false">
       {sun && <Sun />}
-      <Draw />
+      {body}
     </svg>
   );
 }

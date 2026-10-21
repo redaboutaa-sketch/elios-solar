@@ -35,7 +35,7 @@ export function MobileMenu({ categories = [], services = [] }: { categories?: Re
               {categories.map((c) => (
                 <li key={c.key}>
                   <Link href={c.href} onClick={close} className="sketch-trigger flex h-full flex-col items-center rounded-xl border border-sand-200 bg-white p-2 text-center text-sm font-semibold hover:border-brand-700 focus-visible:border-brand-700">
-                    <FamilySketch kind={c.key as CategoryKey} sun={false} className="w-full" />
+                    <FamilySketch kind={c.key as CategoryKey} sun={false} animated={false} className="w-full" />
                     <span className="mt-1 leading-tight">{c.label}</span>
                   </Link>
                 </li>

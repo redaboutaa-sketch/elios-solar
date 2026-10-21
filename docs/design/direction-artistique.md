@@ -43,8 +43,9 @@ Composition sobre, grands blancs, trait fin ; la couleur forte est réservée à
 ## Mouvement
 
 - Durées : 150 ms (états), 250 ms (menus, panneaux), 600 ms (dessins). Courbe `--ease-out` cubic-bezier(.2,.7,.2,1).
-- Apparition des sections : fondu + translation 16 px liés au défilement (`animation-timeline: view()`), uniquement si le
-  navigateur le permet et sans réduction des animations. Le contenu est visible par défaut (sans JavaScript ni support).
+- Apparition des sections : glissement de 12 px lié au défilement (`animation-timeline: view()`), uniquement si le
+  navigateur le permet et sans réduction des animations. Pas de fondu : un fondu lié au défilement laissait les sections
+  quasi invisibles en capture pleine page (constaté en QA) ; le contenu n'est jamais masqué.
 - Aucune animation ne retarde l'accès aux produits ; défilement natif conservé.
 
 ## Contrôle de la direction (fait avant l'implémentation)

@@ -31,7 +31,7 @@ export function Header({ cartCount = 0, signedIn = false, isAdmin = false, categ
               <Link href={c.href} className={navLink}>{c.label} <ChevronDown className="size-3.5 transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180" aria-hidden="true" /></Link>
               <div className="absolute left-1/2 top-full -translate-x-1/2 pt-3 invisible opacity-0 translate-y-1 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 transition-[opacity,transform] duration-200">
                 <div className="card grid w-[34rem] grid-cols-[12rem_1fr] gap-2 p-2 text-ink font-normal">
-                  <Link href={c.href} tabIndex={-1} aria-hidden="true" className="sketch-trigger rounded-lg bg-sand-50 p-2"><FamilySketch kind={c.key as CategoryKey} className="w-full" /></Link>
+                  <Link href={c.href} tabIndex={-1} aria-hidden="true" className="sketch-trigger rounded-lg bg-sand-50 p-2"><FamilySketch kind={c.key as CategoryKey} animated={false} className="w-full" /></Link>
                   <ul className="py-1">
                     {c.items.map((p) => (
                       <li key={p.slug}><Link href={p.href} className="block rounded-lg px-3 py-2 hover:bg-brand-50"><span className="font-medium">{p.name}</span>{p.shortDescription && <span className="block text-xs text-stone-700">{p.shortDescription}</span>}</Link></li>
