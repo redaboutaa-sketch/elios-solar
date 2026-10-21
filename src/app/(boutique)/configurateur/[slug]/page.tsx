@@ -59,9 +59,9 @@ export default async function SystemConfiguratorPage(props: PageProps<"/configur
   return (
     <div className="container-x py-8">
       <Breadcrumbs items={[{ href: cat.href, label: cat.label }, { href: productHref(cat.key, family.slug), label: family.name }, { label: "Configurer" }]} />
-      <h1 className="mt-4 font-display text-4xl">Configurer {family.name}</h1>
-      <p className="mt-2 max-w-2xl text-stone-700">Saisissez vos cotes et vos choix : le prix de la structure s'affiche selon vos dimensions. La structure seule se commande en ligne ; les options, la pose, la livraison et les points à confirmer sont étudiés au devis.</p>
-      <div className="mt-8"><SystemConfigurator catalog={catalog} familySlug={family.slug} art={art} initial={initial} existing={existing} cartLineId={cartLineId} /></div>
+      <h1 className="mt-4 font-display text-display font-semibold">Configurer {family.name}</h1>
+      <p className="mt-2 max-w-3xl text-stone-700 text-pretty">Saisissez vos cotes et vos choix : le prix de la structure s'affiche selon vos dimensions. La structure seule se commande en ligne ; les options, la pose, la livraison et les points à confirmer sont étudiés au devis.</p>
+      <div className="mt-6"><SystemConfigurator catalog={catalog} familySlug={family.slug} art={art} initial={initial} existing={existing} cartLineId={cartLineId} /></div>
     </div>
   );
 }

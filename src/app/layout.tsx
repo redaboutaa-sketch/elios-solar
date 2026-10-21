@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Outfit } from "next/font/google";
+import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import { BRAND } from "@/config/brand";
 
-// Polices du site (choix d'interface) — aucune typographie de marque n'a été fournie par le client.
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" });
+// Polices du site (choix d'interface, licence OFL) — ce ne sont pas les polices du logo ; voir docs/design/direction-artistique.md.
+const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 const indexable = process.env.SITE_INDEXABLE === "true";
@@ -24,7 +24,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${outfit.variable} ${inter.variable}`}>
+    <html lang="fr" className={`${manrope.variable} ${inter.variable}`}>
       <body className="min-h-dvh flex flex-col">{children}</body>
     </html>
   );

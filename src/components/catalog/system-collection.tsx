@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { FamilySketch } from "@/components/illustrations/sketches";
+import { MediaImage } from "@/components/ui/media-image";
 import { categoryByKey, configuratorHref, productHref, type CategoryKey } from "@/domain/categories";
 import { dimRangeText } from "@/domain/system";
 import { formatSystemPrice } from "@/domain/system-pricing";
@@ -7,45 +10,93 @@ import type { listSystemFamilies } from "@/server/catalog/systems";
 
 type Item = Awaited<ReturnType<typeof listSystemFamilies>>[number];
 
-/** Page d'une famille publique : produits publiés, cotes documentées, accès à la fiche et au configurateur. */
+const priceText = (f: Item) => (f.fromPrice ? formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis) : null);
+
+/** Comparatif des cotes et poses documentées, lorsque la famille compte plusieurs modèles. */
+function Comparison({ items }: { items: Item[] }) {
+  const rows: Array<[string, (f: Item) => string]> = [
+    [items[0]!.rules.dims.width.label, (f) => dimRangeText(f.rules.dims.width)],
+    ...(items.some((f) => f.rules.dims.depth) ? [[items.find((f) => f.rules.dims.depth)!.rules.dims.depth!.label, (f: Item) => (f.rules.dims.depth ? dimRangeText(f.rules.dims.depth) : "—")] as [string, (f: Item) => string]] : []),
+    ...(items.some((f) => f.rules.dims.height) ? [[items.find((f) => f.rules.dims.height)!.rules.dims.height!.label, (f: Item) => (f.rules.dims.height ? dimRangeText(f.rules.dims.height) : "—")] as [string, (f: Item) => string]] : []),
+    ["Pose", (f) => f.rules.mountings.map((m) => m.label + (m.status === "to_confirm" ? " (à confirmer)" : "")).join(", ")],
+    ["Plusieurs modules", (f) => (f.rules.modules ? (f.rules.modules.multiModule === "documented" ? "possible, composé au devis" : "non documenté, étude au devis") : "—")],
+    ["Prix de la structure", (f) => (priceText(f) ? `à partir de ${priceText(f)}` : "sur devis")],
+  ];
+  return (
+    <section className="section-y border-t border-sand-200" aria-labelledby="comparatif">
+      <h2 id="comparatif" className="font-display text-display font-semibold">Comparer les modèles</h2>
+      <p className="mt-2 max-w-2xl text-stone-700">Cotes et poses documentées pour un module ; les points « à confirmer » sont vérifiés au devis.</p>
+      <div className="mt-8 overflow-hidden rounded-xl border border-sand-200 bg-white">
+        <table className="w-full table-fixed text-left text-sm" data-testid="collection-compare">
+          <caption className="sr-only">Comparatif des modèles</caption>
+          <thead className="bg-sand-100">
+            <tr>
+              <th scope="col" className="w-[30%] p-3 font-medium text-stone-700 sm:p-4"><span className="sr-only">Caractéristique</span></th>
+              {items.map((f) => <th key={f.slug} scope="col" className="p-3 font-display text-base font-semibold sm:p-4 sm:text-lg"><Link href={productHref(f.category as CategoryKey, f.slug)} className="hover:text-brand-700">{f.name}</Link></th>)}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-sand-200">
+            {rows.map(([label, value]) => (
+              <tr key={label}>
+                <th scope="row" className="p-3 align-top font-medium text-stone-700 sm:p-4">{label}</th>
+                {items.map((f) => <td key={f.slug} className="p-3 align-top tabular-nums sm:p-4">{value(f)}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+/** Page d'une famille publique : bandeau dessiné, modèles en rangées alternées, comparatif, accès fiche et configurateur. */
 export function SystemCollection({ category, items }: { category: CategoryKey; items: Item[] }) {
   const cat = categoryByKey(category)!;
   return (
-    <div className="container-x py-8">
-      <Breadcrumbs items={[{ label: cat.label }]} />
-      <h1 className="mt-4 font-display text-4xl">{cat.label}</h1>
-      <p className="mt-2 max-w-2xl text-stone-700">{cat.intro} Chaque modèle se configure à vos cotes, avec son prix selon vos dimensions.</p>
-      {items.length === 0 ? (
-        <div className="mt-10 card p-10 text-center"><p className="font-display text-2xl">Modèles en cours d'intégration.</p><p className="mt-2 text-stone-700"><Link href="/devis" className="underline">Décrivez votre projet</Link> : un conseiller vous répond.</p></div>
-      ) : (
-        <ul className="mt-8 grid gap-6 md:grid-cols-2" data-testid="collection">
-          {items.map((f) => {
-            const small = (f.hero?.provenance as { variants?: { small?: { path?: string } } } | null)?.variants?.small?.path ?? f.hero?.path;
-            return (
-              <li key={f.slug} className="card overflow-hidden flex flex-col">
-                <Link href={productHref(category, f.slug)} className="block aspect-[4/3] bg-white">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- média de la médiathèque */}
-                  {small ? <img src={small} alt={f.hero?.alt ?? f.name} className="size-full object-contain" loading="lazy" /> : <span className="grid size-full place-items-center text-sm text-stone-700">Visuel à venir</span>}
+    <>
+      <section className="border-b border-sand-200 bg-gradient-to-b from-white to-sand-50">
+        <div className="container-x grid items-center gap-6 py-8 md:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] md:py-10">
+          <div>
+            <Breadcrumbs items={[{ label: cat.label }]} />
+            <h1 className="mt-5 font-display text-hero font-semibold">{cat.label}</h1>
+            <p className="mt-3 max-w-xl text-lg text-stone-800 text-pretty">{cat.intro} Chaque modèle affiche son prix selon vos dimensions.</p>
+            {items.length > 1 && <p className="mt-4 text-sm text-stone-700">{items.length} modèles · <a href="#comparatif" className="link-brand">comparer</a></p>}
+          </div>
+          <FamilySketch kind={category} decorative={false} className="sketch-trigger mx-auto hidden w-full max-w-sm md:block" />
+        </div>
+      </section>
+      <div className="container-x">
+        {items.length === 0 ? (
+          <div className="my-12 rounded-2xl border border-dashed border-sand-300 bg-white p-10 text-center"><p className="font-display text-2xl">Modèles en cours d'intégration.</p><p className="mt-2 text-stone-700"><Link href="/devis" className="underline">Décrivez votre projet</Link> : un conseiller vous répond.</p></div>
+        ) : (
+          <ul className="divide-y divide-sand-200" data-testid="collection">
+            {items.map((f, i) => (
+              <li key={f.slug} className="grid items-center gap-6 py-10 md:grid-cols-2 md:gap-12 md:py-14">
+                <Link href={productHref(category, f.slug)} className={`group block overflow-hidden rounded-2xl bg-white ${i % 2 ? "md:order-2" : ""}`} tabIndex={-1} aria-hidden="true">
+                  {f.hero ? <MediaImage media={f.hero} sizes="(min-width: 768px) 46vw, 92vw" eager={i === 0} className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" /> : <span className="grid aspect-[4/3] place-items-center text-sm text-stone-700">Visuel à venir</span>}
                 </Link>
-                <div className="flex flex-1 flex-col p-5">
-                  <h2 className="font-display text-2xl"><Link href={productHref(category, f.slug)}>{f.name}</Link></h2>
-                  <p className="mt-1 text-sm text-stone-700">{f.shortDescription}</p>
-                  <ul className="mt-3 text-sm text-stone-800">
-                    <li>{f.rules.dims.width.label} : {dimRangeText(f.rules.dims.width)}</li>
-                    {f.rules.dims.depth && <li>{f.rules.dims.depth.label} : {dimRangeText(f.rules.dims.depth)}</li>}
-                    {f.rules.dims.height && <li>{f.rules.dims.height.label} : {dimRangeText(f.rules.dims.height)}</li>}
-                  </ul>
-                  <p className="mt-3 text-sm font-medium" data-testid="collection-price">{f.fromPrice ? <>À partir de <span className="tabular-nums">{formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis)}</span></> : "Prix sur devis"}</p>
-                  <div className="mt-auto flex flex-wrap gap-2 pt-4">
+                <div className="min-w-0">
+                  <p className="eyebrow">{cat.singular}</p>
+                  <h2 className="mt-2 font-display text-display font-semibold"><Link href={productHref(category, f.slug)} className="hover:text-brand-700">{f.name}</Link></h2>
+                  <p className="mt-3 text-stone-800 text-pretty">{f.shortDescription}</p>
+                  <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 border-t border-sand-200 pt-4 text-sm">
+                    <dt className="text-stone-700">{f.rules.dims.width.label}</dt><dd className="tabular-nums">{dimRangeText(f.rules.dims.width)}</dd>
+                    {f.rules.dims.depth && <><dt className="text-stone-700">{f.rules.dims.depth.label}</dt><dd className="tabular-nums">{dimRangeText(f.rules.dims.depth)}</dd></>}
+                    {f.rules.dims.height && <><dt className="text-stone-700">{f.rules.dims.height.label}</dt><dd className="tabular-nums">{dimRangeText(f.rules.dims.height)}</dd></>}
+                  </dl>
+                  <p className="mt-5 text-base" data-testid="collection-price">{priceText(f) ? <>À partir de <span className="font-display text-2xl font-semibold tabular-nums">{priceText(f)}</span></> : "Prix sur devis"}</p>
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    <Link href={configuratorHref(f.slug)} className="btn-accent">Configurer <ArrowRight className="size-4" aria-hidden="true" /></Link>
                     <Link href={productHref(category, f.slug)} className="btn-secondary">Voir la fiche</Link>
-                    <Link href={configuratorHref(f.slug)} className="btn-accent">Configurer</Link>
                   </div>
                 </div>
               </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
+            ))}
+          </ul>
+        )}
+        {items.length > 1 && <Comparison items={items} />}
+      </div>
+      <div className="h-6" aria-hidden="true" />
+    </>
   );
 }

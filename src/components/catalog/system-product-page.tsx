@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check, Info } from "lucide-react";
+import { Check, Info, MessageCircle, Plus, Ruler, FileText } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { ProductTabs } from "@/components/catalog/product-tabs";
 import { DocumentList } from "@/components/catalog/document-list";
@@ -32,9 +32,6 @@ export function SystemProductPage({ family: f, category, media, docs }: { family
           <p>{f.description}</p>
           <h3>Usage</h3>
           <p>{USAGE[r.type]}</p>
-          <h3>Inclus</h3>
-          <ul>{r.included.map((i) => <li key={i.label}>{i.label}{i.status === "to_confirm" ? " (à confirmer)" : ""}</li>)}</ul>
-          {r.options.length > 0 && <><h3>Options</h3><ul>{r.options.map((o) => <li key={o.code}>{o.label}{o.status === "to_confirm" ? " — à confirmer au devis" : ""}{o.note && o.status !== "to_confirm" ? ` — ${o.note}` : ""}</li>)}</ul></>}
           <p className="text-sm">Le prix affiché correspond à la structure aux dimensions choisies ; les options et équipements sont chiffrés sur devis. Une option visible sur une photo n'est jamais incluse d'office.</p>
         </div>
       ),
@@ -85,29 +82,49 @@ export function SystemProductPage({ family: f, category, media, docs }: { family
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-12">
         <div className="min-w-0">
           <SystemGallery name={f.name} media={media} />
+          <section className="mt-10 grid gap-4 sm:grid-cols-2" aria-label="Équipement" data-testid="system-included-options">
+            <div className="rounded-xl border border-sand-200 bg-white p-5">
+              <h2 className="font-display text-lg font-semibold">Inclus</h2>
+              <ul className="mt-3 space-y-2 text-sm">{r.included.map((i) => <li key={i.label} className="flex gap-2"><Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" /><span>{i.label}{i.status === "to_confirm" ? " (à confirmer)" : ""}</span></li>)}</ul>
+            </div>
+            <div className="rounded-xl border border-dashed border-sand-300 bg-sand-50 p-5">
+              <h2 className="font-display text-lg font-semibold">En option</h2>
+              {r.options.length > 0 ? <ul className="mt-3 space-y-2 text-sm">{r.options.map((o) => <li key={o.code} className="flex gap-2"><Plus className="mt-0.5 size-4 shrink-0 text-brand-700" aria-hidden="true" /><span>{o.label}{o.status === "to_confirm" ? " — à confirmer au devis" : ""}{o.note && o.status !== "to_confirm" ? ` — ${o.note}` : ""}</span></li>)}</ul> : <p className="mt-3 text-sm text-stone-700">Aucune option documentée.</p>}
+              <p className="mt-4 text-xs text-stone-700">Options chiffrées sur devis ; une option visible sur une photo n'est jamais incluse d'office.</p>
+            </div>
+          </section>
           <section className="mt-10"><ProductTabs tabs={tabs} /></section>
         </div>
-        <aside className="min-w-0 lg:sticky lg:top-24 self-start card p-6">
-          <p className="text-xs uppercase tracking-wide text-brand-600">{cat.singular}</p>
-          <h1 className="font-display text-3xl sm:text-4xl mt-1">{f.name}</h1>
-          <p className="mt-1 text-stone-700">{f.shortDescription}</p>
-          <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+        <aside className="min-w-0 self-start lg:sticky lg:top-24 rounded-2xl border border-sand-200 bg-white p-6 shadow-soft">
+          <p className="eyebrow">{cat.singular}</p>
+          <h1 className="mt-2 font-display text-3xl font-semibold sm:text-4xl">{f.name}</h1>
+          <p className="mt-2 text-stone-800 text-pretty">{f.shortDescription}</p>
+          <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 border-t border-sand-200 pt-4 text-sm">
             <dt className="text-stone-700">Référence</dt><dd>{f.supplierRef}</dd>
             <dt className="text-stone-700">{d.width.label}</dt><dd>{dimRangeText(d.width)}</dd>
             {d.depth && <><dt className="text-stone-700">{d.depth.label}</dt><dd>{dimRangeText(d.depth)}</dd></>}
             {d.height && <><dt className="text-stone-700">{d.height.label}</dt><dd>{dimRangeText(d.height)}</dd></>}
           </dl>
-          <ul className="mt-4 space-y-1 text-sm">{r.included.slice(0, 4).map((i) => <li key={i.label} className="flex gap-2"><Check className="size-4 text-success mt-0.5 shrink-0" aria-hidden="true" />{i.label}</li>)}</ul>
           {f.fromPrice ? (
-            <p data-testid="from-price" className="mt-5 rounded-lg bg-brand-100 p-3 text-sm"><span className="block text-xs text-stone-700">À partir de</span><strong className="font-display text-2xl tabular-nums">{formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis)}</strong><span className="mt-1 block text-xs text-stone-700">Prix selon vos dimensions, calculé dans le configurateur ; options, pose et livraison chiffrées au devis.</span></p>
+            <p data-testid="from-price" className="mt-5 rounded-xl bg-brand-50 p-4 text-sm"><span className="block text-xs text-stone-700">À partir de</span><strong className="font-display text-3xl font-semibold tabular-nums">{formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis)}</strong><span className="mt-1 block text-xs text-stone-700">Prix selon vos dimensions, calculé dans le configurateur ; options, pose et livraison chiffrées au devis.</span></p>
           ) : (
-            <p data-testid="price-on-quote" className="mt-5 flex gap-2 rounded-lg bg-brand-100 p-3 text-sm"><Info className="size-4 mt-0.5 shrink-0 text-brand-700" aria-hidden="true" /><span><strong>Prix sur devis.</strong> Configurez vos dimensions pour recevoir votre devis.</span></p>
+            <p data-testid="price-on-quote" className="mt-5 flex gap-2 rounded-xl bg-brand-50 p-4 text-sm"><Info className="size-4 mt-0.5 shrink-0 text-brand-700" aria-hidden="true" /><span><strong>Prix sur devis.</strong> Configurez vos dimensions pour recevoir votre devis.</span></p>
           )}
           <Link href={configuratorHref(f.slug)} className="btn-accent w-full mt-5 text-base">Configurer à mes cotes</Link>
           <Link href={`/devis?produit=${f.slug}`} className="btn-secondary w-full mt-2">Demander un devis</Link>
           <Link href="/contact" className="btn-ghost w-full mt-2">Parler à un conseiller</Link>
         </aside>
       </div>
+      <section className="mt-16 grid gap-6 border-t border-sand-200 pt-10 sm:grid-cols-3" aria-labelledby="accompagnement">
+        <h2 id="accompagnement" className="sr-only">Accompagnement</h2>
+        {[
+          [Ruler, "Configurer à vos cotes", "Dimensions, pose, teinte et équipements, avec vue 3D indicative et prix de la structure.", configuratorHref(f.slug), "Ouvrir le configurateur"],
+          [FileText, "Devis pour le reste", "Options, pose, livraison et points à confirmer sont chiffrés par devis.", `/devis?produit=${f.slug}`, "Décrire mon projet"],
+          [MessageCircle, "Un conseiller vous accompagne", "Il vérifie la faisabilité, les fixations et les points à confirmer.", "/contact", "Nous contacter"],
+        ].map(([Icon, t, d, href, cta]) => { const I = Icon as typeof Ruler; return (
+          <div key={String(t)}><I className="size-6 text-brand-700" aria-hidden="true" /><h3 className="mt-3 font-display text-lg font-semibold">{String(t)}</h3><p className="mt-1 text-sm text-stone-700">{String(d)}</p><Link href={String(href)} className="mt-2 inline-block text-sm font-medium text-brand-700 underline-offset-4 hover:underline">{String(cta)}</Link></div>
+        ); })}
+      </section>
       <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 border-t border-sand-300 bg-white/95 backdrop-blur p-3 flex items-center justify-between gap-3" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
         <div><p className="text-xs text-stone-700">{f.name}</p><p className="text-sm font-semibold">{f.fromPrice ? `À partir de ${formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis)}` : "Prix sur devis"}</p></div>
         <Link href={configuratorHref(f.slug)} className="btn-accent">Configurer</Link>

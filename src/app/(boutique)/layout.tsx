@@ -18,7 +18,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
   return (
     <>
       <Header cartCount={cart?.lines.reduce((s, l) => s + l.qty, 0) ?? 0} signedIn={!!session} isAdmin={role === "ADMIN" || role === "MANAGER"} categories={categories} phone={settings?.phone ?? null} />
-      <main id="contenu" className="flex-1">{children}</main>
+      <main id="contenu" tabIndex={-1} className="flex-1 focus:outline-none">{children}</main>
       <Footer settings={settings} categories={categories} />
       <CookieBanner analyticsAvailable={!!analyticsSrc} />
       <ConsentGatedScript src={analyticsSrc} />

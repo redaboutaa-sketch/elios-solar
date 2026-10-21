@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  /* Polices du SITE (choix d'interface, pas une typographie de marque : aucune n'a été fournie). */
-  --font-display: var(--font-outfit), "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  /* Polices du SITE (choix d'interface, pas la typographie du logo) — docs/design/direction-artistique.md. */
+  --font-display: var(--font-manrope), "Avenir Next", "Segoe UI", system-ui, sans-serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;
 
   /* HELIOSTORES — valeurs, dérivation et contrastes : docs/heliostores/identite.md.
@@ -37,13 +37,28 @@
   --color-danger: #a33a2a;
 
   --shadow-soft: 0 10px 30px -12px rgb(26 32 28 / 0.18);
-  --radius-xl: 1.25rem;
+  --shadow-lift: 0 22px 44px -20px rgb(26 32 28 / 0.28);
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1.25rem;
+
+  /* échelle typographique fluide (titres) */
+  --text-hero: clamp(2.25rem, 1.5rem + 3vw, 3.75rem);
+  --text-hero--line-height: 1.02;
+  --text-display: clamp(1.875rem, 1.45rem + 1.9vw, 2.75rem);
+  --text-display--line-height: 1.08;
+
+  /* mouvement */
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --animate-fade-in: fade-in 250ms var(--ease-out) both;
+  --animate-sheet-in: sheet-in 250ms var(--ease-out) both;
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes sheet-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 }
 
 @layer base {
   html { scroll-behavior: smooth; }
   body { @apply bg-sand-50 text-ink font-sans antialiased; }
-  h1, h2, h3, .font-display { font-family: var(--font-display); }
+  h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.02em; }
   :focus-visible { outline: 2px solid var(--color-brand-500); outline-offset: 3px; }
   .surface-night :focus-visible { outline-color: var(--color-sage-400); }
   a { text-underline-offset: 0.18em; }
@@ -58,6 +73,8 @@
 @utility input { @apply w-full rounded-lg border border-sand-300 bg-white px-3 py-2.5 text-base text-ink placeholder:text-stone-700/60 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25 focus:outline-none min-h-11; }
 @utility label { @apply mb-1 block text-sm font-medium text-stone-800; }
 @utility container-x { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
+@utility section-y { padding-block: clamp(3.5rem, 2rem + 6vw, 7rem); }
+@utility eyebrow { @apply text-xs font-semibold uppercase tracking-[0.16em] text-brand-700; }
 
 @layer components {
   .btn-primary { @apply btn bg-anthracite text-sand-50 hover:bg-brand-900; }
@@ -78,4 +95,49 @@
   .prose-shop ul { @apply list-disc pl-6; }
   .prose-shop li { @apply my-1; }
   .prose-shop a { @apply text-brand-700 underline hover:text-brand-800; }
+
+  /* Boutons : retour au clic (sélection, envoi) */
+  .btn-primary, .btn-accent, .btn-secondary, .btn-ghost { transition: background-color 150ms, border-color 150ms, color 150ms, transform 150ms var(--ease-out); }
+  .btn-primary:active:not(:disabled), .btn-accent:active:not(:disabled), .btn-secondary:active:not(:disabled) { transform: scale(0.98); }
+
+  /* Lien de carte : toute la carte est cliquable, focus visible sur la carte */
+  .card-link { @apply relative; }
+  .card-link :where(a.stretched)::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+  .card-link:has(a.stretched:focus-visible) { outline: 2px solid var(--color-brand-500); outline-offset: 3px; }
+  .card-link a.stretched:focus-visible { outline: none; }
 }
+
+/* Apparition des sections liée au défilement : amélioration progressive. Le contenu reste visible sans support,
+   sans JavaScript et avec la réduction des animations. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal { animation: reveal-up linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }
+  }
+}
+@keyframes reveal-up { from { opacity: 0.001; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+/* Dessins HELIOSTORES : l'élément mobile du produit joue son mouvement au survol ou au focus de la carte.
+   Morphing de l'attribut d (navigateurs compatibles) ; sinon dessin statique. */
+.sketch .sk-move { transition: d 600ms var(--ease-out), opacity 600ms var(--ease-out); }
+.sketch .sk-sun { transition: transform 600ms var(--ease-out); transform-box: fill-box; transform-origin: center; }
+@media (hover: hover) {
+  .sketch-trigger:hover .sk-move { d: var(--on); }
+  .sketch-trigger:hover .sk-sun { transform: scale(1.12); }
+}
+.sketch-trigger:focus-within .sk-move { d: var(--on); }
+.sketch-trigger:focus-within .sk-sun { transform: scale(1.12); }
+@media (prefers-reduced-motion: reduce) {
+  .sketch .sk-move { transition: none; }
+  .sketch-trigger:hover .sk-move, .sketch-trigger:focus-within .sk-move { d: var(--off); }
+}
+
+/* Configurateur mobile : la barre de prix se retire pendant la saisie pour ne jamais masquer un champ.
+   Réapparition différée : un appui qui fait perdre le focus à un champ (ex. « Sauvegarder ») ne tombe pas sur la barre. */
+.cfg-bar { transition: visibility 0s linear 400ms; }
+body:has(:is(input, select, textarea):focus) .cfg-bar { visibility: hidden; transition-delay: 0s; }
+
+/* Hauteur de l'en-tête collant (bandeau de préproduction inclus) : repère des éléments collants et des ancres. */
+:root { --header-h: 4rem; }
+:root:has(.preprod-banner) { --header-h: 5.5rem; }
+/* Menu mobile ouvert : le bouton du chat ne recouvre pas le menu. */
+body:has(nav[aria-label="Navigation mobile"]) [data-chat-launcher] { display: none; }

@@ -6,10 +6,10 @@
  * livraison sont chiffrées au devis. Une configuration entièrement tarifée (structure seule, sans option ni point à
  * confirmer) peut être ajoutée au panier ; le serveur réévalue la configuration avant de l'accepter.
  */
-import { useMemo, useState, useTransition, type ReactNode } from "react";
+import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Save, Share2, ShoppingCart } from "lucide-react";
+import { ChevronDown, Save, Share2, ShoppingCart } from "lucide-react";
 import { addToCartAction, saveConfigurationAction } from "@/server/actions/configurator";
 import { evaluate } from "@/domain/engine";
 import { defaultSystemInput, dimRangeText, nearestAllowed, spotsFor, type DimRule, type SystemInput, type SystemRules } from "@/domain/system";
@@ -25,11 +25,11 @@ import { useQuoteVisual } from "./quote-visual";
 function SystemPriceBox({ result }: { result: EvaluationResult }) {
   const p = result.systemPrice;
   if (!p) {
-    return <p data-testid="system-price" data-priced="false" className="mt-4 rounded-lg bg-brand-100 px-3 py-2 text-sm text-ink"><strong>Prix sur devis</strong> pour ces dimensions : un conseiller vous le communique avec votre devis.</p>;
+    return <p data-testid="system-price" data-priced="false" className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink"><strong>Prix sur devis</strong> pour ces dimensions : un conseiller vous le communique avec votre devis.</p>;
   }
   return (
-    <div data-testid="system-price" data-priced="true" className="mt-4 rounded-lg bg-brand-100 px-3 py-2 text-sm text-ink">
-      <p className="flex flex-wrap items-baseline justify-between gap-2"><span>Prix de la structure</span><strong className="font-display text-2xl tabular-nums" data-testid="system-price-amount">{formatSystemPrice(p.amountMinor, p.currency, p.taxBasis)}</strong></p>
+    <div data-testid="system-price" data-priced="true" className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink">
+      <p className="flex flex-wrap items-baseline justify-between gap-2"><span>Prix de la structure</span><strong className="font-display text-2xl font-semibold tabular-nums" data-testid="system-price-amount">{formatSystemPrice(p.amountMinor, p.currency, p.taxBasis)}</strong></p>
       <p className="mt-1 text-xs text-stone-700">Tarif pour {fmtM(p.grid.widthMm)} de largeur × {fmtM(p.grid.dimMm)} ({p.grid.dimLabel.toLowerCase()}){p.roundedUp ? ", dimension de la grille immédiatement supérieure à votre cote" : ""}. Options, pose et livraison chiffrées au devis.</p>
     </div>
   );
@@ -63,6 +63,36 @@ function DimField({ id, rule, value, onChange }: { id: string; rule: DimRule; va
   );
 }
 
+const STEPS = [["dims-title", "Dimensions"], ["pose-title", "Pose et teinte"], ["equip-title", "Équipements"], ["order-title", "Commande"], ["quote-title", "Devis"]] as const;
+
+/** Repères d'étapes : liens d'ancrage, étape courante suivie au défilement (sans effet sur la saisie). */
+function StepNav() {
+  const [active, setActive] = useState<string>(STEPS[0][0]);
+  useEffect(() => {
+    const els = STEPS.map(([id]) => document.getElementById(id)?.closest("section")).filter((e): e is HTMLElement => !!e);
+    const io = new IntersectionObserver((entries) => {
+      const v = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      const id = v?.target.querySelector("h2")?.id;
+      if (id) setActive(id);
+    }, { rootMargin: "-20% 0px -60% 0px" });
+    els.forEach((e) => io.observe(e));
+    return () => io.disconnect();
+  }, []);
+  return (
+    <nav aria-label="Étapes de la configuration" className="sticky top-[var(--header-h)] z-20 -mx-4 overflow-x-auto border-b border-sand-200 bg-sand-50/95 px-4 py-2 backdrop-blur sm:mx-0 sm:rounded-full sm:border sm:px-2 lg:top-[calc(var(--header-h)+0.75rem)]">
+      <ol className="flex min-w-max gap-1 text-sm">
+        {STEPS.map(([id, label], i) => (
+          <li key={id}><a href={`#${id}`} aria-current={active === id ? "step" : undefined} className={`inline-flex min-h-9 items-center gap-1 rounded-full px-2.5 transition-colors duration-150 ${active === id ? "bg-anthracite text-sand-50" : "text-stone-800 hover:bg-white"}`}><span className="tabular-nums opacity-70">{i + 1}</span>{label}</a></li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
+const choiceCls = "flex cursor-pointer items-start gap-2 rounded-xl border border-sand-200 px-3 py-2.5 text-sm transition-colors duration-150 has-[:checked]:border-brand-700 has-[:checked]:bg-brand-50";
+const cardCls = "scroll-mt-[calc(var(--header-h)+4rem)] rounded-2xl border border-sand-200 bg-white p-5 sm:p-6";
+const stepTitle = "font-display text-xl font-semibold";
+
 /** Commande en ligne d'une configuration entièrement tarifée, sinon motifs du passage au devis. */
 function OnlineOrder({ result, busy, onAdd, editing }: { result: EvaluationResult; busy: boolean; onAdd: () => void; editing: boolean }) {
   const o = result.onlineOrder;
@@ -95,6 +125,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
   const [busy, startTransition] = useTransition();
   const router = useRouter();
   const [cartError, setCartError] = useState<string | null>(null);
+  const [recapOpen, setRecapOpen] = useState(false);
   const addToCart = () => startTransition(async () => {
     setCartError(null);
     const r = await addToCartAction(input, saved?.id ?? null, cartLineId);
@@ -119,15 +150,28 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
   const blocking = result.issues.some((i) => i.severity === "blocking");
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_1fr]" data-testid="system-configurator" data-family={familySlug}>
-      <div className="space-y-4 lg:sticky lg:top-24 self-start">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-10" data-testid="system-configurator" data-family={familySlug}>
+      <div className="min-w-0 space-y-4 self-start lg:sticky lg:top-24">
         <SystemVisuals catalog={catalog} input={input} result={result} art={art} plan={plan} onImage={visual.onImage} onCaptureReady={visual.onCaptureReady} />
         <p className="text-xs text-stone-700">Visuels non contractuels. La vue 3D est indicative et ne valide ni la faisabilité ni la structure.</p>
+        <section id="recap" className="scroll-mt-[calc(var(--header-h)+4rem)] rounded-2xl border border-sand-200 bg-white p-5" data-testid="system-recap" aria-live="polite" aria-labelledby="recap-title">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="recap-title" className={stepTitle}>Récapitulatif</h2>
+            <button type="button" className="btn-ghost -my-2 px-3 text-sm lg:hidden" aria-expanded={recapOpen} aria-controls="recap-details" onClick={() => setRecapOpen((o) => !o)}>{recapOpen ? "Masquer" : "Détails"} <ChevronDown className={`size-4 transition-transform duration-200 ${recapOpen ? "rotate-180" : ""}`} aria-hidden="true" /></button>
+          </div>
+          <dl id="recap-details" className={`mt-3 grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm ${recapOpen ? "grid" : "hidden lg:grid"}`}>
+            {(result.recap ?? []).filter((r) => r.label !== "Inclus").map((r, i) => (
+              <div key={`${r.label}-${i}`} className="contents"><dt className="text-stone-700">{r.label}</dt><dd>{r.value}{r.status === "to_confirm" ? <span className="badge-warn ml-2">à confirmer</span> : null}</dd></div>
+            ))}
+          </dl>
+          <div className="mt-4"><SystemPriceBox result={result} /></div>
+        </section>
       </div>
 
-      <div className="space-y-6">
-        <section className="card p-5" aria-labelledby="dims-title">
-          <h2 id="dims-title" className="font-display text-xl">1. Dimensions</h2>
+      <div className="min-w-0 space-y-5">
+        <StepNav />
+        <section className={cardCls} aria-labelledby="dims-title">
+          <h2 id="dims-title" className={stepTitle}>1. Dimensions</h2>
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <DimField id="dim-width" rule={rules.dims.width} value={input.widthMm} onChange={(v) => set({ widthMm: v ?? 0 })} />
             {rules.dims.depth && <DimField id="dim-depth" rule={rules.dims.depth} value={input.depthMm} onChange={(v) => set({ depthMm: v })} />}
@@ -136,13 +180,13 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
           {rules.depthWidthMin?.length ? <p className="mt-2 text-xs text-stone-700">Largeur minimale selon l'avancée : {rules.depthWidthMin.map((c) => `${(c.depthMm / 1000).toLocaleString("fr-FR")} m → ${(c.widthMinMm / 1000).toLocaleString("fr-FR")} m`).join(" ; ")}.</p> : null}
         </section>
 
-        <section className="card p-5" aria-labelledby="pose-title">
-          <h2 id="pose-title" className="font-display text-xl">2. Pose et teinte</h2>
+        <section className={cardCls} aria-labelledby="pose-title">
+          <h2 id="pose-title" className={stepTitle}>2. Pose et teinte</h2>
           <fieldset className="mt-3">
             <legend className="label">Pose</legend>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-2">
               {rules.mountings.map((m) => (
-                <label key={m.code} className="flex items-center gap-2 text-sm"><input type="radio" name="mounting" checked={input.mounting === m.code} onChange={() => set({ mounting: m.code, sides: m.code === "wall" ? { ...input.sides, back: null } : input.sides })} /> {m.label}{m.status === "to_confirm" ? " (à confirmer)" : ""}</label>
+                <label key={m.code} className={choiceCls}><input type="radio" className="accent-brand-700" name="mounting" checked={input.mounting === m.code} onChange={() => set({ mounting: m.code, sides: m.code === "wall" ? { ...input.sides, back: null } : input.sides })} /> {m.label}{m.status === "to_confirm" ? " (à confirmer)" : ""}</label>
               ))}
             </div>
           </fieldset>
@@ -175,18 +219,18 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
           ) : null}
         </section>
 
-        <section className="card p-5" aria-labelledby="equip-title">
-          <h2 id="equip-title" className="font-display text-xl">3. Équipements</h2>
-          <h3 className="mt-3 text-sm font-medium">Inclus</h3>
+        <section className={cardCls} aria-labelledby="equip-title">
+          <h2 id="equip-title" className={stepTitle}>3. Équipements</h2>
+          <h3 className="mt-4 text-sm font-semibold">Inclus</h3>
           <ul className="mt-1 list-disc pl-5 text-sm text-stone-800">{rules.included.map((i) => <li key={i.label}>{i.label}{i.status === "to_confirm" ? " (à confirmer)" : ""}</li>)}</ul>
-          {rules.options.length > 0 && <h3 className="mt-4 text-sm font-medium">Options</h3>}
-          <div className="mt-1 grid gap-2">
+          {rules.options.length > 0 && <h3 className="mt-5 text-sm font-semibold">Options <span className="font-normal text-stone-700">(chiffrées au devis)</span></h3>}
+          <div className="mt-2 grid gap-2">
             {rules.options.map((o) => {
               const on = optionOn(o.code);
               return (
-                <div key={o.code} className="text-sm">
-                  <label className="flex items-start gap-2">
-                    <input type="checkbox" className="mt-1" checked={!!on} onChange={(e) => toggleOption(o.code, e.target.checked, { qty: o.maxQty != null ? 1 : undefined, value: o.values?.[0]?.code })} />
+                <div key={o.code} className="rounded-xl border border-sand-200 p-3 text-sm transition-colors duration-150 has-[:checked]:border-brand-700 has-[:checked]:bg-brand-50">
+                  <label className="flex cursor-pointer items-start gap-2">
+                    <input type="checkbox" className="mt-1 accent-brand-700" checked={!!on} onChange={(e) => toggleOption(o.code, e.target.checked, { qty: o.maxQty != null ? 1 : undefined, value: o.values?.[0]?.code })} />
                     <span>{o.label}{o.status === "to_confirm" ? " — à confirmer au devis" : ""}{o.spotTable ? (spots != null ? ` (${spots} points pour ces dimensions)` : " (nombre de points hors tableau : devis)") : ""}{o.note && o.status !== "to_confirm" ? ` — ${o.note}` : ""}</span>
                   </label>
                   {on && (o.maxQty != null || o.values?.length) ? (
@@ -215,26 +259,16 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
             </div>
           ) : null}
           {rules.type === "pergola" && rules.modules ? (
-            <label className="mt-4 flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1" checked={!!input.multiModule} onChange={(e) => set({ multiModule: e.target.checked })} /> Installation en plusieurs modules ({rules.modules.multiModule === "documented" ? "possible selon le fabricant, composée au devis" : "non documentée, à étudier"})</label>
+            <label className={`mt-4 ${choiceCls}`}><input type="checkbox" className="mt-1 accent-brand-700" checked={!!input.multiModule} onChange={(e) => set({ multiModule: e.target.checked })} /> Installation en plusieurs modules ({rules.modules.multiModule === "documented" ? "possible selon le fabricant, composée au devis" : "non documentée, à étudier"})</label>
           ) : null}
-          <label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={input.installation === "professional"} onChange={(e) => set({ installation: e.target.checked ? "professional" : "self" })} /> Pose professionnelle souhaitée</label>
+          <label className={`mt-2 ${choiceCls}`}><input type="checkbox" className="accent-brand-700" checked={input.installation === "professional"} onChange={(e) => set({ installation: e.target.checked ? "professional" : "self" })} /> Pose professionnelle souhaitée</label>
           <div className="mt-3"><label className="label" htmlFor="notes">Précisions (support, accès, contraintes)</label><textarea id="notes" rows={3} className="input" value={input.notes ?? ""} onChange={(e) => set({ notes: e.target.value })} /></div>
-        </section>
-
-        <section className="card p-5" data-testid="system-recap" aria-live="polite">
-          <h2 className="font-display text-xl">Récapitulatif</h2>
-          <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-            {(result.recap ?? []).filter((r) => r.label !== "Inclus").map((r, i) => (
-              <div key={`${r.label}-${i}`} className="contents"><dt className="text-stone-700">{r.label}</dt><dd>{r.value}{r.status === "to_confirm" ? <span className="badge-warn ml-2">à confirmer</span> : null}</dd></div>
-            ))}
-          </dl>
-          <SystemPriceBox result={result} />
         </section>
 
         <IssueList issues={result.issues.filter((i) => i.code !== "system_quote_only")} />
 
-        <section className="card p-5" aria-labelledby="save-title">
-          <h2 id="save-title" className="font-display text-xl">Enregistrer le projet</h2>
+        <section className={cardCls} aria-labelledby="save-title">
+          <h2 id="save-title" className={stepTitle}>Enregistrer le projet</h2>
           <div className="mt-3 flex flex-wrap items-end gap-2">
             <div className="grow"><label className="label" htmlFor="project-title">Nom du projet (facultatif)</label><input id="project-title" className="input" maxLength={80} value={title} onChange={(e) => setTitle(e.target.value)} /></div>
             <button type="button" className="btn-secondary" onClick={save} disabled={busy}><Save className="size-4" aria-hidden="true" /> {saved ? "Mettre à jour le projet" : "Sauvegarder le projet"}</button>
@@ -243,18 +277,24 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
           {message && <div className="mt-3"><Notice tone={message.tone}>{message.text}</Notice></div>}
         </section>
 
-        <section className="card p-5" aria-labelledby="order-title">
-          <h2 id="order-title" className="font-display text-xl">4. Commander en ligne</h2>
+        <section className={cardCls} aria-labelledby="order-title">
+          <h2 id="order-title" className={stepTitle}>4. Commander en ligne</h2>
           <OnlineOrder result={result} busy={busy} onAdd={addToCart} editing={!!cartLineId} />
           {cartError && <div className="mt-3"><Notice tone="error">{cartError}</Notice></div>}
         </section>
 
-        <section className="card p-5" aria-labelledby="quote-title">
-          <h2 id="quote-title" className="font-display text-xl">5. Demander le devis</h2>
+        <section className={cardCls} aria-labelledby="quote-title">
+          <h2 id="quote-title" className={stepTitle}>5. Demander le devis</h2>
           {blocking ? <p className="mt-2 text-sm text-danger">Corrigez les points signalés « Impossible » pour envoyer cette configuration ; vous pouvez aussi décrire votre projet dans le message.</p> : null}
           <div className="mt-3"><QuoteForm input={blocking ? null : input} kind="system" configurationId={saved?.id ?? null} getVisual={blocking ? undefined : visual.getVisual} /></div>
         </section>
       </div>
+      {/* barre de prix mobile : masquée pendant la saisie (clavier virtuel), voir globals.css */}
+      <div className="cfg-bar fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-sand-300 bg-white/95 p-3 backdrop-blur lg:hidden" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }} data-testid="config-price-bar">
+        <a href="#recap" className="min-w-0"><span className="block text-xs text-stone-700">Prix de la structure</span><span className="block truncate text-sm font-semibold tabular-nums">{result.systemPrice ? formatSystemPrice(result.systemPrice.amountMinor, result.systemPrice.currency, result.systemPrice.taxBasis) : "Sur devis"}</span></a>
+        <a href={result.onlineOrder?.ok ? "#order-title" : "#quote-title"} className="btn-accent shrink-0">{result.onlineOrder?.ok ? "Commander" : "Demander le devis"}</a>
+      </div>
+      <div className="h-16 lg:hidden" aria-hidden="true" />
     </div>
   );
 }
