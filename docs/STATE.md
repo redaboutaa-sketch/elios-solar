@@ -1,9 +1,15 @@
 # État réel du projet
 
-Mis à jour : 2026-10-21 (commande en ligne) — **migration HELIOSTORES** (branche `feat/heliostores`, draft PR #2 vers `feat/storefront-configurator`).
+Mis à jour : 2026-10-21 (refonte visuelle) — **migration HELIOSTORES** (branche `feat/heliostores`, draft PR #2 vers `feat/storefront-configurator`).
 Le bilan complet est dans `docs/heliostores/README.md`, avec les sources, correspondances, médias, la revue tarifaire, l'import et l'identité.
 
 ## HELIOSTORES (en cours de revue)
+
+- **Refonte visuelle** (commits d421f5c → 9c6b318, déployé 9c6b318) : accueil à sélecteur par dessins SVG (pergola, screen, store banne),
+  méga-menu illustré, collections en rangées avec comparatif, fiche avec bloc Inclus / En option, configurateur avec aperçu,
+  récapitulatif et prix collants et barre de prix mobile ; Manrope + Inter ; aucune dépendance ajoutée ; règles, prix, formulaires,
+  API et 3D inchangés. Brief, direction artistique, plan et QA : `docs/design/`. Sauvegarde avant déploiement :
+  `backups/preprod/db_20261021_153109.dump` et `media_20261021_153109.tar.gz`.
 
 - **Marque** HELIOSTORES (logo client), trois familles publiques : Pergolas (SB400, SB500), Screens (REFLEKSOL 120 ZiiiP), Stores bannes (CASABLANCA).
   VERANDA FTS reste en brouillon, son classement est à décider.
