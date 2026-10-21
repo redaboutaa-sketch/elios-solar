@@ -2,7 +2,7 @@
 
 État au 2026-10-21, branche `feat/heliostores` (draft PR #2, base `feat/storefront-configurator`).
 
-Préproduction : https://demo-elios.beaverdata.eu. Elle est protégée par identifiant, non indexable, avec le paiement en mode test. Les prix de la structure sont affichés selon la grille « Prix final HELIOSTORES » du classeur, en € HT (décision client du 2026-10-21, voir `prix-publics.md`) ; la commande passe par un devis.
+Préproduction : https://demo-elios.beaverdata.eu. Elle est protégée par identifiant, non indexable, avec le paiement en mode test. Les prix de la structure sont affichés selon la grille « Prix final HELIOSTORES » du classeur, en € HT (décision client du 2026-10-21, voir `prix-publics.md`) ; une configuration entièrement tarifée (structure seule, sans option ni point à confirmer) se commande en ligne avec paiement simulé ; le reste passe par un devis. Réalisations et Showroom sont masqués.
 
 Documents liés :
 - `prix-publics.md` : prix affichés (grille, arrondi, publication) et retrait des références fabricant/fournisseur du site ;
@@ -13,7 +13,8 @@ Documents liés :
 - `import-tarifs.md` : procédure d'import privé ;
 - `identite.md` : charte et logo ;
 - `validation-fournisseur.md` : questions au fournisseur (annexe chiffrée privée hors dépôt) ;
-- `revue-client.md` : fiche de revue pour le client.
+- `revue-client.md` : fiche de revue pour le client ;
+- `bilan-client.md` : bilan à transmettre au client (sans montant ni nom de fabricant).
 
 > **Le catalogue n'est pas prêt à la vente.** La nature, la devise, la fiscalité et la validité des tarifs transmis ne sont pas établies. Aucun prix n'est affiché et chaque configuration aboutit à une demande de devis.
 

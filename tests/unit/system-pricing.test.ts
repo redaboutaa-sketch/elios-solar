@@ -58,6 +58,40 @@ describe("prix publics des systèmes (grille « Prix final HELIOSTORES »)", () 
     expect(evaluate(base, input("pergola-sb400", { widthMm: 2000, depthMm: 3400 })).systemPrice).toBeNull();
   });
 
+  it("configuration entièrement tarifée : ligne de structure TTC (TVA du catalogue ajoutée au prix HT), commandable en ligne", () => {
+    const cat = withPrices("pergola-sb400", pergolaTable);
+    const r = evaluate(cat, input("pergola-sb400", { widthMm: 2000, depthMm: 3400, mounting: "wall", options: [], installation: "self", sides: {} }));
+    expect(r.onlineOrder).toEqual({ ok: true, reasons: [] });
+    expect(r.purchasable).toBe(true);
+    expect(r.lines).toHaveLength(1);
+    expect(r.lines[0]).toMatchObject({ kind: "base", qty: 1, taxRateBps: cat.taxRateBps, unitGrossCents: 101_055 + Math.round((101_055 * cat.taxRateBps) / 10_000) });
+    expect(r.lines[0]!.label).toContain("2 m × 3,4 m");
+    expect(r.issues.some((i) => i.code === "system_quote_only")).toBe(false);
+    expect(r.systemPrice?.amountMinor).toBe(101_055);
+    expect(r.recap?.some((x) => x.label.startsWith("Prix"))).toBe(false);
+  });
+
+  it("option, pose professionnelle, choix à confirmer, cote hors grille ou base fiscale absente : devis seulement", () => {
+    const cat = withPrices("pergola-sb400", pergolaTable);
+    const ok = input("pergola-sb400", { widthMm: 2000, depthMm: 3400, mounting: "wall", options: [], installation: "self", sides: {} });
+    const opt = rules("pergola-sb400").options[0]!;
+    const cases: Array<[Partial<SystemInput>, string]> = [
+      [{ options: [{ code: opt.code, qty: opt.maxQty != null ? 1 : undefined, value: opt.values?.[0]?.code }] }, "options"],
+      [{ installation: "professional" }, "pose professionnelle"],
+      [{ multiModule: true }, "à confirmer"],
+      [{ widthMm: 1400 }, "grille"],
+    ];
+    for (const [over, reason] of cases) {
+      const r = evaluate(cat, { ...ok, ...over });
+      expect(r.purchasable, reason).toBe(false);
+      expect(r.lines, reason).toEqual([]);
+      expect(r.onlineOrder?.reasons.join(" "), reason).toContain(reason);
+    }
+    const screen = evaluate(withPrices("screen-refleksol-120-ziiip", screenTable), input("screen-refleksol-120-ziiip", { widthMm: 1000, heightMm: 1000, options: [] }));
+    expect(screen.purchasable).toBe(false);
+    expect(screen.onlineOrder?.reasons.join(" ")).toContain("base fiscale");
+  });
+
   it("« à partir de » et format (devise, HT/TTC) sans arrondi", () => {
     expect(minSystemPrice(pergolaTable)).toEqual({ amountMinor: 100_055, currency: "EUR", taxBasis: "HT" });
     expect(formatSystemPrice(100_055, "EUR", "HT").replace(/\s/g, " ")).toBe("1 000,55 € HT");

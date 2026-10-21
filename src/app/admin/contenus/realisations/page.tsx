@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_SECTIONS } from "@/config/brand";
 import { requireRole } from "@/lib/session";
 import type { Realisation } from "@/generated/prisma/client";
 import { Flash, PageTitle, Section, StatusBadge } from "@/components/admin/ui";
@@ -39,6 +40,7 @@ export default async function RealisationsPage(props: PageProps<"/admin/contenus
   return (
     <div className="space-y-6">
       <PageTitle title="Réalisations" />
+      {!PUBLIC_SECTIONS.realisations && <p className="mb-4 rounded-lg border border-warning/40 bg-warning/5 px-4 py-3 text-sm text-warning" data-testid="section-hidden">Rubrique masquée sur le site public (page en 404) tant qu'aucun contenu réel et autorisé n'est fourni. Les fiches restent modifiables ici.</p>}
       <Flash searchParams={props.searchParams} />
       {items.map((r) => (
         <Section key={r.id}>

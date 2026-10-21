@@ -9,6 +9,7 @@ import { getSession } from "@/lib/session";
 import { getGuestKey } from "@/server/guest";
 import { prisma } from "@/lib/prisma";
 import { isOwner } from "@/server/configuration/service";
+import { getLineForOwner } from "@/server/cart/service";
 import type { SystemInput } from "@/domain/system";
 
 const SYSTEM_KINDS = new Set(["pergola_system", "screen_system", "awning_system"]);
@@ -37,7 +38,14 @@ export default async function SystemConfiguratorPage(props: PageProps<"/configur
   const hero = media.find((m) => m.role === "hero") ?? media[0];
   let initial: Partial<SystemInput> | undefined;
   let existing: { id: string; token: string; title: string | null } | null = null;
-  if (typeof sp.projet === "string") {
+  let cartLineId: string | null = null;
+  if (typeof sp.ligne === "string") {
+    // modification d'une ligne du panier : seule une ligne du panier du visiteur, pour ce produit
+    const [session, guestKey] = await Promise.all([getSession(), getGuestKey()]);
+    const line = await getLineForOwner({ userId: session?.user.id, guestKey }, sp.ligne);
+    const li = line?.input as unknown as SystemInput | undefined;
+    if (line && li?.kind === "system" && li.familySlug === family.slug) { initial = li; cartLineId = line.id; }
+  } else if (typeof sp.projet === "string") {
     const [session, guestKey] = await Promise.all([getSession(), getGuestKey()]);
     const c = await prisma.configuration.findFirst({ where: { OR: [{ id: sp.projet }, { shareToken: sp.projet }] } });
     const owner = { userId: session?.user.id, guestKey };
@@ -52,8 +60,8 @@ export default async function SystemConfiguratorPage(props: PageProps<"/configur
     <div className="container-x py-8">
       <Breadcrumbs items={[{ href: cat.href, label: cat.label }, { href: productHref(cat.key, family.slug), label: family.name }, { label: "Configurer" }]} />
       <h1 className="mt-4 font-display text-4xl">Configurer {family.name}</h1>
-      <p className="mt-2 max-w-2xl text-stone-700">Saisissez vos cotes et vos choix : le prix de la structure s'affiche selon vos dimensions. Les points à confirmer sont signalés et étudiés au devis, avec les options, la pose et la livraison.</p>
-      <div className="mt-8"><SystemConfigurator catalog={catalog} familySlug={family.slug} art={art} initial={initial} existing={existing} /></div>
+      <p className="mt-2 max-w-2xl text-stone-700">Saisissez vos cotes et vos choix : le prix de la structure s'affiche selon vos dimensions. La structure seule se commande en ligne ; les options, la pose, la livraison et les points à confirmer sont étudiés au devis.</p>
+      <div className="mt-8"><SystemConfigurator catalog={catalog} familySlug={family.slug} art={art} initial={initial} existing={existing} cartLineId={cartLineId} /></div>
     </div>
   );
 }

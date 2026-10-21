@@ -3,12 +3,14 @@
  * Configurateur d'un système HELIOSTORES (pergola, screen, store banne) à partir des règles sourcées de la
  * famille. Le même objet `input` alimente l'évaluation (même moteur que le serveur), la 3D, le plan 2D et la
  * demande de devis. Le prix affiché est celui de la grille publique (structure à la cote) ; options, pose et
- * livraison sont chiffrées au devis.
+ * livraison sont chiffrées au devis. Une configuration entièrement tarifée (structure seule, sans option ni point à
+ * confirmer) peut être ajoutée au panier ; le serveur réévalue la configuration avant de l'accepter.
  */
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
-import { Save, Share2 } from "lucide-react";
-import { saveConfigurationAction } from "@/server/actions/configurator";
+import { useRouter } from "next/navigation";
+import { Save, Share2, ShoppingCart } from "lucide-react";
+import { addToCartAction, saveConfigurationAction } from "@/server/actions/configurator";
 import { evaluate } from "@/domain/engine";
 import { defaultSystemInput, dimRangeText, nearestAllowed, spotsFor, type DimRule, type SystemInput, type SystemRules } from "@/domain/system";
 import type { CatalogSnapshot, EvaluationResult, SideKey } from "@/domain/types";
@@ -61,7 +63,26 @@ function DimField({ id, rule, value, onChange }: { id: string; rule: DimRule; va
   );
 }
 
-export function SystemConfigurator({ catalog, familySlug, art, initial, existing = null }: { catalog: CatalogSnapshot; familySlug: string; art: ReactNode; initial?: Partial<SystemInput>; existing?: { id: string; token: string; title: string | null } | null }) {
+/** Commande en ligne d'une configuration entièrement tarifée, sinon motifs du passage au devis. */
+function OnlineOrder({ result, busy, onAdd, editing }: { result: EvaluationResult; busy: boolean; onAdd: () => void; editing: boolean }) {
+  const o = result.onlineOrder;
+  if (o?.ok) {
+    return (
+      <div data-testid="online-order" data-orderable="true">
+        <p className="mt-2 text-sm text-stone-700">Cette configuration est entièrement tarifée : vous pouvez la commander en ligne (structure seule, TVA ajoutée au panier). La livraison et la pose s'organisent ensuite avec un conseiller.</p>
+        <button type="button" className="btn-accent mt-3" onClick={onAdd} disabled={busy} data-testid="add-to-cart"><ShoppingCart className="size-4" aria-hidden="true" /> {editing ? "Mettre à jour le panier" : "Ajouter au panier"}</button>
+      </div>
+    );
+  }
+  return (
+    <div data-testid="online-order" data-orderable="false">
+      <p className="mt-2 text-sm text-stone-700">Commande en ligne indisponible pour cette configuration{o?.reasons.length ? <> : {o.reasons.join(" ; ")}</> : null}. Demandez un devis ci-dessous.</p>
+      <p className="mt-1 text-xs text-stone-700">La commande en ligne est possible pour la structure seule, aux dimensions de la grille de prix, sans option ni choix à confirmer.</p>
+    </div>
+  );
+}
+
+export function SystemConfigurator({ catalog, familySlug, art, initial, existing = null, cartLineId = null }: { catalog: CatalogSnapshot; familySlug: string; art: ReactNode; initial?: Partial<SystemInput>; existing?: { id: string; token: string; title: string | null } | null; cartLineId?: string | null }) {
   const family = catalog.families.find((f) => f.slug === familySlug)!;
   const rules = family.systemRules as SystemRules;
   const [input, setInput] = useState<SystemInput>(() => ({ ...defaultSystemInput(familySlug, rules), ...initial, kind: "system", familySlug }));
@@ -72,6 +93,14 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
   const [title, setTitle] = useState(existing?.title ?? "");
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: ReactNode } | null>(null);
   const [busy, startTransition] = useTransition();
+  const router = useRouter();
+  const [cartError, setCartError] = useState<string | null>(null);
+  const addToCart = () => startTransition(async () => {
+    setCartError(null);
+    const r = await addToCartAction(input, saved?.id ?? null, cartLineId);
+    if (r.ok) router.push("/panier");
+    else setCartError([r.error, ...(r.issues ?? []).map((i) => i.message)].join(" "));
+  });
   const save = () => startTransition(async () => {
     const r = await saveConfigurationAction(input, title || null, saved?.id ?? null);
     if (r.ok) { setSaved({ id: r.data.id, token: r.data.token, title: title || null }); setMessage({ tone: "success", text: <>Projet enregistré. Retrouvez-le dans <Link href="/compte/projets" className="underline">Mes projets</Link>.</> }); }
@@ -214,8 +243,14 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
           {message && <div className="mt-3"><Notice tone={message.tone}>{message.text}</Notice></div>}
         </section>
 
+        <section className="card p-5" aria-labelledby="order-title">
+          <h2 id="order-title" className="font-display text-xl">4. Commander en ligne</h2>
+          <OnlineOrder result={result} busy={busy} onAdd={addToCart} editing={!!cartLineId} />
+          {cartError && <div className="mt-3"><Notice tone="error">{cartError}</Notice></div>}
+        </section>
+
         <section className="card p-5" aria-labelledby="quote-title">
-          <h2 id="quote-title" className="font-display text-xl">4. Demander le devis</h2>
+          <h2 id="quote-title" className="font-display text-xl">5. Demander le devis</h2>
           {blocking ? <p className="mt-2 text-sm text-danger">Corrigez les points signalés « Impossible » pour envoyer cette configuration ; vous pouvez aussi décrire votre projet dans le message.</p> : null}
           <div className="mt-3"><QuoteForm input={blocking ? null : input} kind="system" configurationId={saved?.id ?? null} getVisual={blocking ? undefined : visual.getVisual} /></div>
         </section>

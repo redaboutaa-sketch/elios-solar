@@ -4,8 +4,8 @@
  * Chaque famille porte ses règles (`SystemRules`) établies par des sources précises (fiche du modèle exact,
  * catalogue fournisseur, page fabricant). Le moteur n'invente aucune règle : une valeur absente des sources
  * reste « non documentée » et une contradiction entre sources ne bloque que le champ concerné (validation
- * au devis). Aucun prix n'est calculé ici : tant que la nature, la devise et la fiscalité des tarifs
- * transmis ne sont pas établies, le prix est établi sur devis (`priceMode: "quote"`).
+ * au devis). Aucun prix n'est calculé ici : le prix de la structure est lu dans la grille publique par le moteur
+ * (system-pricing.ts) ; options, pose, livraison et points à confirmer sont chiffrés au devis.
  */
 import type { DeliveryInput, Issue, RecapItem, SideKey } from "./types";
 
@@ -318,7 +318,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
 
   if (input.installation === "professional") add({ code: "installation_quote", severity: "review", message: "Pose professionnelle : zones et tarifs non établis — chiffrée sur devis.", path: "installation", quoteSuggested: true });
   for (const n of rules.notices ?? []) add({ code: "system_notice", severity: "info", message: n });
-  add({ code: "system_quote_only", severity: "review", message: "Prix établi sur devis : les tarifs transmis n'ont pas encore de nature (vente ou achat), de devise et de fiscalité validées. Aucun prix n'est affiché.", quoteSuggested: true });
+  add({ code: "system_quote_only", severity: "review", message: "Commande sur devis : options, pose, livraison et points à confirmer sont chiffrés par un conseiller.", quoteSuggested: true });
 
   /* Récapitulatif */
   const d = rules.dims;
@@ -347,7 +347,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
     if (input.multiModule) recap.push({ label: "Modules", value: "installation en plusieurs modules souhaitée", status: "to_confirm" });
   }
   recap.push({ label: "Pose du système", value: input.installation === "professional" ? "pose professionnelle souhaitée (devis)" : "sans pose" });
-  recap.push({ label: "Prix", value: "établi sur devis", status: "to_confirm" });
+  // pas de ligne « Prix » : le prix de la structure (grille) est porté par `systemPrice` et affiché à part
 
   const depth = d.depth ? (input.depthMm ?? null) : null;
   const height = d.height ? (input.heightMm ?? (rules.type === "pergola" ? Math.min(2500, d.height.maxMm) : null)) : null;

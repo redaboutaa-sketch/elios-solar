@@ -30,6 +30,13 @@ Sur chaque fiche, consultez la galerie, le prix « à partir de », les onglets 
 2. Dans le configurateur, remplissez **« Demander le devis »** et envoyez.
 3. Le numéro de devis s'affiche, avec la mention de la visualisation jointe.
 
+## 3 bis. Commander en ligne (paiement simulé)
+
+1. Configurez une pergola SB400 sans option ni pose professionnelle, à une dimension de la grille.
+2. Cliquez **« Ajouter au panier »**. Le panier affiche le prix TTC, le rappel du prix HT et « Livraison et pose non comprises ».
+3. **Passer la commande**, renseignez une adresse fictive, puis **« Simuler un paiement accepté »** : aucun débit. La confirmation porte la mention « Commande de démonstration ».
+4. Cochez une option : le configurateur explique pourquoi la commande passe alors par un devis.
+
 ## 4. Consulter le PDF
 
 1. Ouvrez **Compte → Mes devis** : le devis apparaît avec son visuel figé.
@@ -51,5 +58,6 @@ Aucun e-mail réel n'est envoyé pendant la préproduction.
 3. Textes ou caractéristiques à corriger.
 4. Parcours de configuration : étapes peu claires, options manquantes.
 5. Devis et PDF : informations à ajouter (coordonnées, mentions, conditions).
-7. Prix affichés : vérifiez quelques cotes du configurateur avec le classeur (arrondi à la dimension supérieure, € HT).
 6. Informations société à afficher (raison sociale, SIRET, adresse, téléphone), aujourd'hui non renseignées.
+7. Prix affichés : vérifiez quelques cotes du configurateur avec le classeur (arrondi à la dimension supérieure, € HT).
+8. Commande en ligne de la structure seule : à conserver, ou à retirer jusqu'à la validation des tarifs.

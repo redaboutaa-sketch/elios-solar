@@ -3,13 +3,14 @@
  * DÉMONSTRATION, paramètres du site, pages de contenu avec champs manquants.
  * Relançable sans doublon (upsert par clés naturelles).
  */
+import { createHash } from "node:crypto";
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import {
   CLOSURE_COMPAT, DEMO_PRICE_GRID, DIMENSIONS, FAMILIES, FAMILY_CONTENT, FINISHES, INSTALLATION_RATES, OPTION_COMPAT, PROMOTIONS, SHIPPING_RULES, buildVariants,
 } from "../src/server/catalog/demo-data";
-import { CONTENT_PAGES } from "../src/server/content/default-pages";
+import { CONTENT_PAGES, PREVIOUS_DEFAULT_BODY_SHA256 } from "../src/server/content/default-pages";
 import { seedDemoRenders } from "../src/server/media/demo-renders";
 import { seedReferenceValidations } from "../src/server/validation/seed";
 import { seedHeliostores, setLegacyCatalogue } from "../src/server/catalog/heliostores-seed";
@@ -108,7 +109,12 @@ export async function runSeed(prisma: PrismaClient) {
     await prisma.promotion.upsert({ where: { code: p.code }, update: {}, create: { code: p.code, label: p.label, familySlugs: p.familySlugs === "*" ? [] : p.familySlugs, allFamilies: p.familySlugs === "*", percentBps: p.percentBps, active: p.active } });
   }
   for (const page of CONTENT_PAGES) {
-    await prisma.contentPage.upsert({ where: { slug: page.slug }, update: {}, create: page });
+    const existing = await prisma.contentPage.findUnique({ where: { slug: page.slug } });
+    if (!existing) await prisma.contentPage.create({ data: page });
+    else if (PREVIOUS_DEFAULT_BODY_SHA256[page.slug]?.includes(createHash("sha256").update(existing.body).digest("hex"))) {
+      // texte par défaut jamais modifié : remplacé par la version courante (statut conservé)
+      await prisma.contentPage.update({ where: { slug: page.slug }, data: { body: page.body, missingFields: [...page.missingFields] } });
+    }
   }
   // Réalisations / showroom : structure de démonstration, non publiée
   if ((await prisma.realisation.count()) === 0) {

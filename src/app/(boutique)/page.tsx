@@ -70,7 +70,7 @@ export default async function HomePage() {
               [LayoutGrid, "1. Choisir", "Pergola, screen ou store banne : comparez les modèles et leurs caractéristiques.", "/pergolas"],
               [Ruler, "2. Configurer", "Saisissez vos cotes, la pose, la teinte et les équipements ; la 3D et le prix suivent vos choix.", "/configurateur"],
               [MessageCircle, "3. Être conseillé", "Un conseiller vérifie la faisabilité, les fixations et les points à confirmer.", "/contact"],
-              [FileText, "4. Recevoir le devis", "Options, pose, délai et conditions établis sur la base de votre configuration et de sa visualisation.", "/devis"],
+              [FileText, "4. Commander ou demander un devis", "La structure seule se commande en ligne au prix de la grille ; options, pose, livraison et délai sont établis par devis.", "/devis"],
             ].map(([Icon, t, d, href]) => {
               const I = Icon as typeof Ruler;
               return <li key={String(t)}><I className="size-7 text-brand-700" aria-hidden="true" /><h3 className="mt-3 font-display text-xl"><Link href={String(href)}>{String(t)}</Link></h3><p className="mt-1 text-sm text-stone-700">{String(d)}</p></li>;

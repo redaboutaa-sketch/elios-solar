@@ -51,3 +51,15 @@ export async function fillQuote(page: Page, email: string, firstName = "Sam") {
   await page.getByTestId("quote-done").waitFor({ timeout: 40_000 });
   return (await page.getByTestId("quote-done").textContent())!.match(/DEV-\d{6}-[A-Z0-9]{6}/)![0];
 }
+
+/** Coordonnées fictives du formulaire de commande (paiement simulé). */
+export async function fillCheckout(page: Page, email: string) {
+  await page.getByLabel("E-mail").fill(email);
+  await page.getByLabel("Prénom").fill("Camille");
+  await page.getByLabel("Nom", { exact: true }).fill("Durand");
+  await page.getByLabel("Adresse", { exact: true }).fill("12 rue des Lilas");
+  await page.getByLabel("Code postal").fill("69000");
+  await page.getByLabel("Ville").fill("Lyon");
+  await page.getByLabel(/Téléphone/).fill("0612345678");
+  await page.getByLabel(/J'ai lu et j'accepte/).check();
+}

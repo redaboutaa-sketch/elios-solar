@@ -475,10 +475,13 @@ export interface EvaluationResult {
   purchasable: boolean;
   /** un devis est le parcours recommandé */
   quoteRecommended: boolean;
-  /** « quote » : parcours devis, sans panier ni total TTC calculé (systèmes HELIOSTORES). Absent = ancien résultat chiffré. */
+  /** « quote » : système HELIOSTORES, affiché par son récapitulatif et le prix de la grille (une configuration entièrement
+   * tarifée porte en plus sa ligne de structure TTC et peut aller au panier, voir `onlineOrder`). Absent = ancien résultat chiffré. */
   priceMode?: "priced" | "quote";
   /** système : prix de la grille « Prix final HELIOSTORES » pour la cote demandée (null = hors grille, chiffré au devis) */
   systemPrice?: SystemPrice | null;
+  /** système : commande en ligne possible (configuration entièrement tarifée) ou motifs du passage au devis */
+  onlineOrder?: { ok: boolean; reasons: string[] };
   /** récapitulatif lisible de la configuration (devis sans prix, PDF, administration) */
   recap?: RecapItem[];
 }

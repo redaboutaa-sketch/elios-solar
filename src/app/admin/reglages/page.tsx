@@ -54,7 +54,7 @@ export default async function SettingsPage(props: PageProps<"/admin/reglages">) 
             <Field name="countryCode" label="Pays (code ISO)" value={s?.countryCode ?? "FR"} />
             <Field name="phone" label="Téléphone" value={s?.phone} type="tel" missing={isMissing("phone")} />
             <Field name="contactEmail" label="E-mail de contact" value={s?.contactEmail} type="email" missing={isMissing("contactEmail")} />
-            <Field name="domain" label="Nom de domaine" value={s?.domain} missing={isMissing("domain")} hint="sans https://, ex. elios-solar.fr" />
+            <Field name="domain" label="Nom de domaine" value={s?.domain} missing={isMissing("domain")} hint="sans https://, ex. exemple.fr" />
           </div>
         </Section>
         <Section title="Fiscalité, indexation et mesure d'audience">

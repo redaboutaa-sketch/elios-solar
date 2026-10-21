@@ -15,9 +15,31 @@ Aucun montant n'est versionné dans ce dépôt : les prix sont en base. Ils sont
 | Configurateur | « Prix de la structure … € HT » pour la cote saisie, avec la cellule de grille retenue |
 | Devis (compte, PDF, administration), projets | prix de la structure enregistré avec la configuration |
 
-La commande reste un **devis** :
-- pas de panier ni de paiement en ligne ;
-- options, pose et livraison sont chiffrées au devis : le classeur ne les contient pas.
+| Panier, commande, confirmation, e-mail | ligne de structure **TTC** (prix HT de la grille + TVA du catalogue, 20 %), « soit … € HT », livraison et pose « non comprises » |
+
+## Commande en ligne (décision client du 2026-10-21)
+
+Une configuration **entièrement tarifée** peut être ajoutée au panier et payée (paiement **simulé** tant que `PAYMENT_PROVIDER=demo`).
+Elle l'est si toutes ces conditions sont réunies (`onlineOrderBlockers`, `src/domain/engine.ts`) :
+- la cote est couverte par la grille (prix trouvé), sans blocage ;
+- la grille a une devise (EUR) et une base fiscale (HT ou TTC) ;
+- **aucune option** choisie (le classeur ne les chiffre pas) ;
+- **pas de pose professionnelle** demandée ;
+- **aucun choix à confirmer** : teinte hors standard, toile ou commande à confirmer, cote au-delà de la limite concordante, fermeture latérale souhaitée, installation en plusieurs modules.
+
+Sinon le configurateur affiche les motifs et propose le devis. Le serveur réévalue chaque ligne à l'ajout, au panier et à la commande : aucun montant ne vient du navigateur.
+
+- **TVA** : un prix HT reçoit la TVA du catalogue (`SiteSettings.defaultTaxRateBps`, 20 % par défaut). Le taux reste à confirmer (question T3).
+- **Livraison et pose** : non comprises. Un panier de systèmes n'utilise pas les règles de livraison de l'ancienne démonstration. La commande porte la mention « Livraison et pose non comprises : organisées avec un conseiller après la commande », reprise dans la confirmation, le compte, l'administration et l'e-mail.
+- **Délais** : aucun délai n'est affiché ; il est confirmé par un conseiller.
+- **Code promotionnel** : masqué pour un panier de systèmes (aucune promotion n'est établie).
+
+Inventaire sur la grille active (préproduction, 2026-10-21), sans option ni pose : toutes les cellules SB400 et SB500 sont commandables. Le REFLEKSOL l'est pour environ 30 % des combinaisons cote × moteur × toile ; les autres ont une largeur au-delà de 4 m ou un choix à confirmer. Le CASABLANCA l'est pour 75 % des combinaisons ; la commande électrique reste à confirmer.
+
+**Points de vigilance avant toute vente réelle :**
+- SB500 : la correspondance des deux grilles (« murale/autoportante » ou « premier module/module suivant ») n'est pas confirmée (question T8) ;
+- SB400 : 10 cellules diffèrent entre la fiche et le classeur (T7) ; le classeur fait foi ;
+- devise, TVA et périmètre du prix (T1 à T4) ne sont pas encore confirmés par le fournisseur.
 
 ## Règle de lecture de la grille
 

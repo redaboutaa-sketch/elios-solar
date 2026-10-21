@@ -1,3 +1,4 @@
+import { formatSystemPrice } from "@/domain/system-pricing";
 import type { Attribution } from "@/domain/attribution";
 import { prisma } from "@/lib/prisma";
 import type { ConfigurationInput, EvaluationResult } from "@/domain/types";
@@ -46,8 +47,12 @@ export async function createQuote(req: QuoteRequest, owner: Owner): Promise<Awai
   });
   // Visualisation figée à l'émission ; un échec n'empêche jamais l'enregistrement du devis.
   const visual = req.input ? await attachQuoteVisual({ quoteId: quote.id, dataUrl: req.visual, input: req.input, result: req.result ?? null, catalog: await loadCatalog(), configurationId: req.configurationId ?? null }) : { kind: "NONE" as const };
-  const lines = req.result?.lines.map((l) => ({ label: l.label, qty: l.qty, totalGrossCents: l.totalGrossCents, included: l.included })) ?? undefined;
-  await enqueueEmail({ to: quote.email, subject: `Votre demande de devis ${number}`, template: "quote-received", payload: { number, firstName: quote.firstName, lines, demo: quote.containsDemoData }, dedupeKey: `quote-ack:${quote.id}` });
+  // système HELIOSTORES : prix de la structure (grille, HT) ; aucun total TTC calculé dans un devis
+  const system = req.result?.priceMode === "quote";
+  const lines = system ? undefined : (req.result?.lines.map((l) => ({ label: l.label, qty: l.qty, totalGrossCents: l.totalGrossCents, included: l.included })) ?? undefined);
+  const sp = system ? req.result?.systemPrice : null;
+  const structurePrice = sp ? formatSystemPrice(sp.amountMinor, sp.currency, sp.taxBasis) : undefined;
+  await enqueueEmail({ to: quote.email, subject: `Votre demande de devis ${number}`, template: "quote-received", payload: { number, firstName: quote.firstName, lines, structurePrice, demo: quote.containsDemoData }, dedupeKey: `quote-ack:${quote.id}` });
   const admin = process.env.ADMIN_NOTIFICATION_EMAIL;
   if (admin) await enqueueEmail({ to: admin, subject: `Nouvelle demande de devis ${number}`, template: "quote-admin-notification", payload: { number, quoteId: quote.id, email: quote.email, kind: quote.kind, message: quote.message, demo: quote.containsDemoData }, dedupeKey: `quote-admin:${quote.id}` });
   return { ...quote, visualKind: visual.kind };

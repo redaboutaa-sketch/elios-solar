@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { PUBLIC_SECTIONS } from "@/config/brand";
 import { prisma } from "@/lib/prisma";
 import { PergolaArt } from "@/components/illustrations/pergola";
 export const metadata: Metadata = { title: "Réalisations", description: "Projets réalisés : pergolas, fermetures et stores bannes installés chez nos clients." };
+/** Rubrique masquée tant qu'aucun contenu réel n'est fourni (PUBLIC_SECTIONS). */
 export default async function Page() {
+  if (!PUBLIC_SECTIONS.realisations) notFound();
   const items = await prisma.realisation.findMany({ where: { published: true }, include: { media: true }, orderBy: { sortOrder: "asc" } });
   return (
     <div className="container-x py-8"><Breadcrumbs items={[{ label: "Réalisations" }]} /><h1 className="mt-4 font-display text-4xl">Réalisations</h1>

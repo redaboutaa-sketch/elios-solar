@@ -16,6 +16,11 @@ import { GET as getMedia } from "@/app/api/media/[...path]/route";
 import { ensureCatalogSnapshot } from "@/server/catalog/public-snapshot";
 import { PUBLIC_PRICE_SOURCE_KEY } from "@/server/pricing/source";
 import { PUBLIC_FORBIDDEN_NAMES } from "@/domain/public-sanitize";
+import { formatSystemPrice } from "@/domain/system-pricing";
+import { addLine, CartError, evaluateCart, findActiveCart } from "@/server/cart/service";
+import { createOrderFromCart } from "@/server/order/service";
+import { ingestPaymentEvent, startPayment } from "@/server/payment";
+import { renderTemplate } from "@/server/mail/templates";
 
 const quotes: string[] = [];
 const medias: string[] = [];
@@ -163,6 +168,66 @@ describe("prix publics : colonne « Prix final HELIOSTORES » de la version acti
       expect(pubSb.manufacturer ?? null).toBeNull();
       expect(JSON.stringify(pub.families.filter((f) => f.systemRules))).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
     } finally {
+      await prisma.supplierPriceList.delete({ where: { id: list.id } });
+      for (const b of before) await prisma.supplierPriceList.update({ where: { id: b.id }, data: { status: b.status } });
+      invalidateCatalogCache();
+    }
+  });
+});
+
+describe("commande en ligne d'une configuration entièrement tarifée (paiement de démonstration)", () => {
+  it("structure seule : panier, commande TTC sans livraison ni pose, paiement simulé, e-mails sans nom du fabricant ; option → refus", async () => {
+    // version SYNTHÉTIQUE (montant fictif) sous la clé publique, dans la base de test uniquement
+    const before = await prisma.supplierPriceList.findMany({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY }, select: { id: true, status: true } });
+    const last = await prisma.supplierPriceList.findFirst({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY }, orderBy: { version: "desc" }, select: { version: true } });
+    const list = await prisma.supplierPriceList.create({ data: { sourceKey: PUBLIC_PRICE_SOURCE_KEY, version: (last?.version ?? 0) + 1, label: "test", sourceFile: "synthetique.xlsx", sourceSha256: randomBytes(8).toString("hex"), status: "DRAFT", currency: "EUR", taxBasis: "HT" } });
+    await prisma.supplierPriceRow.create({ data: { listId: list.id, familySlug: "pergola-sb400", variantKey: "murale", kind: "GRID", dimAKey: "projection", dimAmm: 5000, widthMinMm: 4000, widthMaxMm: 4000, amountMinor: 1_000_000, amountRole: "PRIX_FINAL", sourceRef: "test", status: "OK" } });
+    const g = randomBytes(12).toString("hex");
+    try {
+      await prisma.supplierPriceList.updateMany({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY, status: "ACTIVE" }, data: { status: "ARCHIVED" } });
+      await prisma.supplierPriceList.update({ where: { id: list.id }, data: { status: "ACTIVE" } });
+      invalidateCatalogCache();
+      const catalog = await loadCatalog({ fresh: true });
+      const input = await systemInput("pergola-sb400", { widthMm: 4000, depthMm: 5000, mounting: "wall", options: [], installation: "self", sides: {} });
+      const withOption = { ...input, options: [{ code: (catalog.families.find((f) => f.slug === "pergola-sb400")!.systemRules as SystemRules).options[0]!.code, qty: 1 }] };
+      await expect(addLine({ guestKey: g }, withOption)).rejects.toBeInstanceOf(CartError);
+      await addLine({ guestKey: g }, input);
+      const ev = await evaluateCart((await findActiveCart({ guestKey: g }))!);
+      const gross = 1_000_000 + Math.round((1_000_000 * catalog.taxRateBps) / 10_000);
+      expect(ev).toMatchObject({ purchasable: true, systemOnly: true, shippingStatus: "not_included", shippingCents: 0, goodsCents: gross, totalCents: gross, isFinal: true });
+      const order = await createOrderFromCart({ owner: { guestKey: g }, email: "systeme@test.invalid", shippingAddress: { firstName: "Test", lastName: "Client", line1: "1 rue des Tests", postalCode: "69000", city: "Lyon", countryCode: "FR", phone: "0600000000" } });
+      expect(order.totalCents).toBe(gross);
+      expect(order.isDemo).toBe(true);
+      expect(order.lines.map((l) => l.kind)).toEqual(["base"]);
+      expect(order.delivery).toMatchObject({ shippingIncluded: false });
+      const { payment } = await startPayment(order.id);
+      expect(payment.amountCents).toBe(gross);
+      await ingestPaymentEvent({ provider: "DEMO", eventId: `evt_sys_${g}`, type: "demo.payment.succeeded", normalized: "payment_succeeded", providerRef: payment.providerRef, amountCents: payment.amountCents, payload: {} });
+      expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).status).toBe("PAID");
+      const mail = await prisma.emailOutbox.findFirstOrThrow({ where: { dedupeKey: `order-confirmation:${order.id}` } });
+      const { html } = renderTemplate(mail.template, mail.payload as Record<string, unknown>);
+      expect(html).toContain("Livraison et pose non comprises");
+      expect(html).toContain("Total TTC");
+      expect(html).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
+      // devis de la même configuration avec une option : prix de la structure HT dans l'accusé de réception
+      const r = await evaluateInput(withOption);
+      const q = await createQuote({ kind: "system", firstName: "Test", lastName: "Devis", email: "devis-systeme@test.invalid", input: withOption, result: r }, { userId: null, guestKey: g });
+      quotes.push(q.id);
+      const ack = await prisma.emailOutbox.findFirstOrThrow({ where: { dedupeKey: `quote-ack:${q.id}` } });
+      const ackHtml = renderTemplate(ack.template, ack.payload as Record<string, unknown>).html;
+      expect(ackHtml).toContain(formatSystemPrice(1_000_000, "EUR", "HT"));
+      expect(ackHtml).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
+      // textes repris dans le PDF et l'administration : récapitulatif et lignes du moteur
+      expect(JSON.stringify({ recap: r.recap, lines: r.lines, issues: r.issues })).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
+    } finally {
+      const orders = await prisma.order.findMany({ where: { guestKey: g }, select: { id: true } });
+      const ids = orders.map((o) => o.id);
+      await prisma.emailOutbox.deleteMany({ where: { OR: [{ dedupeKey: { in: ids.flatMap((id) => [`order-confirmation:${id}`, `order-admin:${id}`]) } }, { toEmail: { in: ["systeme@test.invalid", "devis-systeme@test.invalid"] } }] } });
+      await prisma.paymentEvent.deleteMany({ where: { payment: { orderId: { in: ids } } } });
+      await prisma.payment.deleteMany({ where: { orderId: { in: ids } } });
+      await prisma.orderLine.deleteMany({ where: { orderId: { in: ids } } });
+      await prisma.order.deleteMany({ where: { id: { in: ids } } });
+      await prisma.cart.deleteMany({ where: { guestKey: g } });
       await prisma.supplierPriceList.delete({ where: { id: list.id } });
       for (const b of before) await prisma.supplierPriceList.update({ where: { id: b.id }, data: { status: b.status } });
       invalidateCatalogCache();

@@ -60,7 +60,7 @@ describe("prix : toujours sur devis tant que les tarifs ne sont pas établis", (
       expect(r.quoteRecommended).toBe(true);
       expect(r.issues.some((i) => i.code === "system_quote_only")).toBe(true);
       expect(r.issues.filter((i) => i.severity === "blocking")).toEqual([]);
-      expect(r.recap?.find((x) => x.label === "Prix")?.value).toBe("établi sur devis");
+      expect(r.recap?.some((x) => x.label.startsWith("Prix"))).toBe(false);
     });
   }
 });
