@@ -1,11 +1,14 @@
 # État réel du projet
 
-Mis à jour : 2026-10-21 (refonte visuelle) — **migration HELIOSTORES** (branche `feat/heliostores`, draft PR #2 vers `feat/storefront-configurator`).
+Mis à jour : 2026-10-21 (refonte « catalogue fabricant ») — **migration HELIOSTORES** (branche `feat/heliostores`, draft PR #2 vers `feat/storefront-configurator`).
 Le bilan complet est dans `docs/heliostores/README.md`, avec les sources, correspondances, médias, la revue tarifaire, l'import et l'identité.
 
 ## HELIOSTORES (en cours de revue)
 
-- **Refonte visuelle** (commits d421f5c → 9c6b318, déployé 9c6b318) : accueil à sélecteur par dessins SVG (pergola, screen, store banne),
+- **Refonte « catalogue fabricant »** (déployé 0d16dc4) : grand visuel à vues manuelles, en-tête superposé puis compact, panneaux
+  « Nos solutions » extensibles avec dessins au trait blanc, modèles sur fond blanc, galerie Photos / 3D / Dessins, Montserrat ;
+  matrice : `docs/design/reference-matrice.md`, QA : `docs/design/visual-qa.md` (itération 2). Sauvegarde : `backups/preprod/db_20261021_165710.dump`.
+- **Refonte visuelle, itération 1** (commits d421f5c → 9c6b318) : accueil à sélecteur par dessins SVG (pergola, screen, store banne),
   méga-menu illustré, collections en rangées avec comparatif, fiche avec bloc Inclus / En option, configurateur avec aperçu,
   récapitulatif et prix collants et barre de prix mobile ; Manrope + Inter ; aucune dépendance ajoutée ; règles, prix, formulaires,
   API et 3D inchangés. Brief, direction artistique, plan et QA : `docs/design/`. Sauvegarde avant déploiement :

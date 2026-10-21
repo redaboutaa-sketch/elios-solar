@@ -31,23 +31,32 @@ async function main() {
     const expected = HELIOSTORES_MEDIA.filter((m) => m.familySlug === f.slug);
     await page.goto(base + productHref(f.category!, f.slug), { waitUntil: "load" });
     const gallery = page.getByTestId("system-gallery");
-    const thumbs = gallery.locator("ul button");
-    const count = await thumbs.count();
-    report(count === expected.length, `${f.slug} : ${count} visuel(s) en galerie, ${expected.length} attendu(s)`);
-    const alts = await thumbs.evaluateAll((els) => els.map((e) => (e.getAttribute("aria-label") ?? "").replace(/^Afficher : /, "")));
+    // la galerie répartit les visuels en modes (« Photos et rendus », « Dessins techniques ») : chaque mode est parcouru
+    const modes = gallery.locator("[data-testid=gallery-mode-photos], [data-testid=gallery-mode-technique]");
+    const modeCount = await modes.count();
+    const alts: string[] = [];
+    let count = 0, broken = 0;
+    for (let mi = 0; mi < Math.max(1, modeCount); mi += 1) {
+      if (modeCount) await modes.nth(mi).click();
+      const thumbs = gallery.locator("ul button");
+      const n = await thumbs.count();
+      const items = Math.max(n, (await gallery.locator("figure img").count()) ? 1 : 0);
+      for (let i = 0; i < items; i += 1) {
+        if (n) await thumbs.nth(i).click();
+        const main = gallery.locator("figure img");
+        await main.evaluate((el: HTMLImageElement) => (el.complete ? null : new Promise((res) => { el.onload = el.onerror = () => res(null); })));
+        const info = await main.evaluate((el: HTMLImageElement) => ({ src: el.currentSrc || el.src, w: el.naturalWidth, alt: el.alt }));
+        const thumbSrc = n ? await thumbs.nth(i).locator("img").getAttribute("src") : null;
+        const [a, b] = await Promise.all([fetchImage(info.src), fetchImage(thumbSrc ?? info.src)]);
+        const ok = info.w > 0 && a.status === 200 && b.status === 200 && a.type.startsWith("image/") && b.type.startsWith("image/") && a.bytes > 1000;
+        if (!ok) { broken += 1; console.log(`    image cassée : « ${info.alt} » (principale ${a.status} ${a.type}, vignette ${b.status} ${b.type}, largeur ${info.w})`); }
+        alts.push(info.alt);
+        count += 1;
+      }
+    }
+    report(count === expected.length, `${f.slug} : ${count} visuel(s) en galerie (tous modes), ${expected.length} attendu(s)`);
     const missing = expected.filter((m) => !alts.includes(m.alt)).map((m) => m.key);
     report(missing.length === 0, `${f.slug} : visuels du manifeste présents${missing.length ? ` — absents : ${missing.join(", ")}` : ""}`);
-    let broken = 0;
-    for (let i = 0; i < count; i += 1) {
-      await thumbs.nth(i).click();
-      const main = gallery.locator("figure img");
-      await main.evaluate((el: HTMLImageElement) => (el.complete ? null : new Promise((res) => { el.onload = el.onerror = () => res(null); })));
-      const info = await main.evaluate((el: HTMLImageElement) => ({ src: el.currentSrc || el.src, w: el.naturalWidth, alt: el.alt }));
-      const thumbSrc = await thumbs.nth(i).locator("img").getAttribute("src");
-      const [a, b] = await Promise.all([fetchImage(info.src), fetchImage(thumbSrc ?? info.src)]);
-      const ok = info.w > 0 && a.status === 200 && b.status === 200 && a.type.startsWith("image/") && b.type.startsWith("image/") && a.bytes > 1000;
-      if (!ok) { broken += 1; console.log(`    image cassée : « ${info.alt} » (principale ${a.status} ${a.type}, vignette ${b.status} ${b.type}, largeur ${info.w})`); }
-    }
     report(broken === 0, `${f.slug} : ${count - broken}/${count} images principales et vignettes chargées et décodées`);
     // aucune référence au fabricant ni au fournisseur (décision du 2026-10-21) : ni crédit, ni nom dans la page
     report((await gallery.getByTestId("media-credit").count()) === 0, `${f.slug} : aucun crédit fabricant affiché`);
@@ -58,7 +67,8 @@ async function main() {
     await page.goto(base + path, { waitUntil: "load" });
     await page.evaluate(async () => { for (const img of Array.from(document.querySelectorAll("main img"))) { img.scrollIntoView(); await new Promise((r) => setTimeout(r, 150)); } });
     await page.waitForTimeout(800);
-    const imgs = await page.$$eval("main img", (els) => els.map((e) => ({ src: (e as HTMLImageElement).currentSrc || (e as HTMLImageElement).src, w: (e as HTMLImageElement).naturalWidth })));
+    // images affichées uniquement (un onglet masqué ne charge pas ses images différées : ce n'est pas une image cassée)
+    const imgs = await page.$$eval("main img", (els) => els.filter((e) => e.checkVisibility()).map((e) => ({ src: (e as HTMLImageElement).currentSrc || (e as HTMLImageElement).src, w: (e as HTMLImageElement).naturalWidth })));
     const bad = imgs.filter((i) => i.w === 0);
     report(imgs.length > 0 && bad.length === 0, `${path} : ${imgs.length} image(s), ${bad.length} cassée(s)`);
   }
