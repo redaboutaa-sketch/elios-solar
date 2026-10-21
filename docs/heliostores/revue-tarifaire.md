@@ -26,7 +26,7 @@ Constats sur le classeur :
 - Aucune source ne dit s'il s'agit d'un prix d'achat, d'un prix public conseillé ou d'un prix de vente. Aucune ne précise la devise du classeur, la fiscalité, la validité, ni ce qui est compris : transport, pose, motorisation.
 - La commission commerciale évoquée dans le partenariat n'est pas une règle de majoration. Aucune marge n'est calculée.
 
-**Conséquence :** aucun prix n'est publié. Tous les produits sont « prix sur devis » ; les montants restent internes, consultables par les administrateurs.
+**Conséquence (mise à jour du 2026-10-21) :** sur décision du client, la colonne « Prix final HELIOSTORES » du classeur est publiée en € HT (voir `prix-publics.md`). Les autres colonnes et les fiches DOCX restent internes. Les questions T1 à T10 restent ouvertes auprès du fournisseur.
 
 ## Contradictions entre sources (catégories)
 

@@ -23,7 +23,7 @@ export async function generateMetadata(props: PageProps<"/configurateur/[slug]">
   const { slug } = await props.params;
   const s = await systemFamily(slug);
   if (!s) return {};
-  return { title: `Configurer ${s.family.name}`, description: `Configurez ${s.family.name} à vos cotes : dimensions, pose, teinte et équipements, avec vue 3D indicative. Prix établi sur devis.`, alternates: { canonical: `/configurateur/${slug}` } };
+  return { title: `Configurer ${s.family.name}`, description: `Configurez ${s.family.name} à vos cotes : dimensions, pose, teinte et équipements, avec vue 3D indicative et prix selon vos dimensions.`, alternates: { canonical: `/configurateur/${slug}` } };
 }
 
 export default async function SystemConfiguratorPage(props: PageProps<"/configurateur/[slug]">) {
@@ -52,7 +52,7 @@ export default async function SystemConfiguratorPage(props: PageProps<"/configur
     <div className="container-x py-8">
       <Breadcrumbs items={[{ href: cat.href, label: cat.label }, { href: productHref(cat.key, family.slug), label: family.name }, { label: "Configurer" }]} />
       <h1 className="mt-4 font-display text-4xl">Configurer {family.name}</h1>
-      <p className="mt-2 max-w-2xl text-stone-700">Saisissez vos cotes et vos choix : les règles affichées viennent des documents du fabricant et des fiches du modèle. Les points non établis sont signalés et étudiés au devis ; le prix est établi sur devis.</p>
+      <p className="mt-2 max-w-2xl text-stone-700">Saisissez vos cotes et vos choix : le prix de la structure s'affiche selon vos dimensions. Les points à confirmer sont signalés et étudiés au devis, avec les options, la pose et la livraison.</p>
       <div className="mt-8"><SystemConfigurator catalog={catalog} familySlug={family.slug} art={art} initial={initial} existing={existing} /></div>
     </div>
   );

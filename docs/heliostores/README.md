@@ -2,9 +2,10 @@
 
 État au 2026-10-21, branche `feat/heliostores` (draft PR #2, base `feat/storefront-configurator`).
 
-Préproduction : https://demo-elios.beaverdata.eu. Elle est protégée par identifiant, non indexable, avec le paiement en mode test et des prix sur devis.
+Préproduction : https://demo-elios.beaverdata.eu. Elle est protégée par identifiant, non indexable, avec le paiement en mode test. Les prix de la structure sont affichés selon la grille « Prix final HELIOSTORES » du classeur, en € HT (décision client du 2026-10-21, voir `prix-publics.md`) ; la commande passe par un devis.
 
 Documents liés :
+- `prix-publics.md` : prix affichés (grille, arrondi, publication) et retrait des références fabricant/fournisseur du site ;
 - `sources.md` : registre et matrice des sources ;
 - `correspondances.md` : ALUPROF, THYSENS, SELT ;
 - `medias.md` : registre des médias ;
@@ -47,10 +48,10 @@ Les jetons, contrastes et déclinaisons sont dans `identite.md`. Aucun logo vect
 
 | Produit | Famille publique | Statut | Rattachement |
 |---|---|---|---|
-| Pergola SB400 | Pergolas | publié, prix sur devis | SB 400 ALUPROF (SELT by Aluprof) |
-| Pergola SB500 | Pergolas | publié, prix sur devis | SELT ; page ALUPROF absente |
-| Screen REFLEKSOL 120 ZiiiP | Screens | publié, prix sur devis | R 120 ZiiiP ALUPROF |
-| Store banne CASABLANCA | Stores bannes | publié, prix sur devis | CASABLANCA AWNING ALUPROF |
+| Pergola SB400 | Pergolas | publié, prix affiché | SB 400 ALUPROF (SELT by Aluprof) |
+| Pergola SB500 | Pergolas | publié, prix affiché | SELT ; page ALUPROF absente |
+| Screen REFLEKSOL 120 ZiiiP | Screens | publié, prix affiché | R 120 ZiiiP ALUPROF |
+| Store banne CASABLANCA | Stores bannes | publié, prix affiché | CASABLANCA AWNING ALUPROF |
 | Store de véranda VERANDA FTS | aucune | **brouillon** | voir § 4 |
 
 La navigation principale compte exactement trois familles : **Pergolas — Screens — Stores bannes**. Les équipements (LED, spots, poteaux, ensemble solaire, moteurs, automatisme) sont rattachés aux produits compatibles.

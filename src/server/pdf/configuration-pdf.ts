@@ -3,6 +3,7 @@ import path from "node:path";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import type { EvaluationResult } from "@/domain/types";
 import { formatEur } from "@/domain/money";
+import { formatSystemPrice } from "@/domain/system-pricing";
 import { BRAND } from "@/config/brand";
 
 function clean(s: string): string {
@@ -116,7 +117,7 @@ export async function buildConfigurationPdf(opts: {
     line(6);
   }
   if (result.priceMode === "quote") {
-    // configuration sur devis : aucun total ni TVA (aucun tarif public validé)
+    // parcours devis : prix de la structure selon la grille publique (sinon « sur devis ») ; options, pose et livraison au devis
     if (result.recap?.length) {
       text("Recapitulatif de la configuration", 40, 10, bold, GREEN); line(6);
       page.drawLine({ start: { x: 40, y }, end: { x: 555, y }, thickness: 0.5, color: rgb(0.7, 0.7, 0.7) }); line(12);
@@ -136,7 +137,14 @@ export async function buildConfigurationPdf(opts: {
       line(4);
     }
     page.drawLine({ start: { x: 40, y }, end: { x: 555, y }, thickness: 0.5, color: rgb(0.7, 0.7, 0.7) }); line(14);
-    text("Prix : etabli sur devis (aucun tarif public valide)", 40, 12, bold, GREEN); line(20);
+    const sp = result.systemPrice;
+    if (sp) {
+      text("Prix de la structure", 40, 12, bold, GREEN); text(clean(formatSystemPrice(sp.amountMinor, sp.currency, sp.taxBasis)), 455, 12, bold, GREEN); line(14);
+      text(clean(`Grille tarifaire HELIOSTORES : ${sp.grid.widthMm / 1000} m de largeur x ${sp.grid.dimMm / 1000} m (${sp.grid.dimLabel.toLowerCase()})${sp.roundedUp ? ", dimension de grille immediatement superieure" : ""}.`), 40, 9); line(12);
+      text("Options, pose et livraison : chiffrees sur le devis.", 40, 9); line(20);
+    } else {
+      text("Prix : sur devis pour ces dimensions", 40, 12, bold, GREEN); line(20);
+    }
   } else {
     text("Designation", 40, 10, bold); text("Ref.", 330, 10, bold); text("Qte", 430, 10, bold); text("Montant TTC", 470, 10, bold); line(6);
     page.drawLine({ start: { x: 40, y }, end: { x: 555, y }, thickness: 0.5, color: rgb(0.7, 0.7, 0.7) }); line(12);

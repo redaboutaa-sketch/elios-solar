@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import type { Availability, CatalogSnapshot, DataStatus, Family, FamilyKind, LeadUnit, Mounting, PriceGridSnapshot, SurchargeKind, Variant, VariantAttributes } from "@/domain/types";
 import type { DataStatus as DbDataStatus, FamilyKind as DbFamilyKind, FamilyStatus as DbFamilyStatus, Mounting as DbMounting, CompatStatus as DbCompatStatus } from "@/generated/prisma/enums";
 import type { SpecSource } from "@/domain/technical-spec";
+import { loadPublicSystemPrices } from "@/server/pricing/system-prices";
 
 export function dataStatusFromDb(s: DbDataStatus): DataStatus {
   return s.toLowerCase() as DataStatus;
@@ -47,8 +48,9 @@ export async function loadCatalog(opts: { fresh?: boolean } = {}): Promise<Catal
     prisma.customPergolaSettings.findUnique({ where: { id: 1 } }),
     prisma.priceGrid.findMany({ where: { status: "PUBLISHED" }, include: { cells: true, surcharges: { orderBy: { sortOrder: "asc" } } } }),
   ]);
+  const systemPrices = await loadPublicSystemPrices();
   const latest = [...families.map((f) => f.updatedAt.getTime()), ...variants.map((v) => v.updatedAt.getTime()), ...closureCompat.map((r) => r.updatedAt.getTime()), ...optionCompat.map((r) => r.updatedAt.getTime()), ...installationRates.map((r) => r.updatedAt.getTime()), ...shippingRules.map((r) => r.updatedAt.getTime()), ...promotions.map((p) => p.updatedAt.getTime()), custom?.updatedAt.getTime() ?? 0, settings?.updatedAt.getTime() ?? 0, ...grids.map((g) => g.updatedAt.getTime())].reduce((a, b) => Math.max(a, b), 0);
-  const version = createHash("sha1").update(`${latest}:${variants.length}:${closureCompat.length}:${optionCompat.length}:${grids.map((g) => `${g.id}@${g.version}`).join(",")}`).digest("hex").slice(0, 12);
+  const version = createHash("sha1").update(`${latest}:${variants.length}:${closureCompat.length}:${optionCompat.length}:${grids.map((g) => `${g.id}@${g.version}`).join(",")}:${systemPrices.version}`).digest("hex").slice(0, 12);
 
   const snapshot: CatalogSnapshot = {
     version,
@@ -78,6 +80,8 @@ export async function loadCatalog(opts: { fresh?: boolean } = {}): Promise<Catal
       manufacturer: f.manufacturer,
       supplierRef: f.supplierRef,
       systemRules: (f.systemRules as Family["systemRules"]) ?? null,
+      // une famille en brouillon (ex. VERANDA FTS) ne reçoit aucun prix public
+      systemPrices: f.status === "PUBLISHED" || f.status === "QUOTE_ONLY" ? (systemPrices.tables.get(f.slug) ?? null) : null,
       legacy: f.legacy,
     })),
     variants: variants.map(

@@ -1,6 +1,7 @@
 import type { TechnicalSpecValue } from "./technical-spec";
 import type { SystemInput, SystemRules } from "./system";
 import type { CategoryKey } from "./categories";
+import type { SystemPrice, SystemPriceTable } from "./system-pricing";
 /**
  * Types du catalogue tels que vus par le moteur de configuration.
  * Le moteur ne dépend ni de Prisma ni de React : il reçoit un instantané
@@ -75,6 +76,8 @@ export interface Family {
   supplierRef?: string | null;
   /** règles du configurateur à la cote (systèmes HELIOSTORES) */
   systemRules?: SystemRules | null;
+  /** grille publique « Prix final HELIOSTORES » (version active du classeur) ; absente = prix au devis */
+  systemPrices?: SystemPriceTable | null;
   /** ancien produit de démonstration conservé pour l'historique */
   legacy?: boolean;
 }
@@ -472,8 +475,10 @@ export interface EvaluationResult {
   purchasable: boolean;
   /** un devis est le parcours recommandé */
   quoteRecommended: boolean;
-  /** « quote » : aucun tarif public validé — le prix est établi sur devis (pas de total affiché). Absent = ancien résultat chiffré. */
+  /** « quote » : parcours devis, sans panier ni total TTC calculé (systèmes HELIOSTORES). Absent = ancien résultat chiffré. */
   priceMode?: "priced" | "quote";
+  /** système : prix de la grille « Prix final HELIOSTORES » pour la cote demandée (null = hors grille, chiffré au devis) */
+  systemPrice?: SystemPrice | null;
   /** récapitulatif lisible de la configuration (devis sans prix, PDF, administration) */
   recap?: RecapItem[];
 }

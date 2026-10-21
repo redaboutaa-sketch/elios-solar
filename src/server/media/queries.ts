@@ -33,14 +33,15 @@ export async function publishedMediaFor(familySlug: string, ctx: MediaContext = 
     nature: r.media.nature,
     caption: r.caption,
     role: r.role,
-    credit: r.media.credit,
+    // crédit et provenance restent dans la médiathèque : le site public ne cite ni fabricant ni fournisseur
+    credit: "",
     visibleOptions: r.media.visibleOptions,
     width: r.media.width,
     height: r.media.height,
     finishCode: r.finishCode,
     mounting: r.mounting,
     smallPath: (r.media.provenance as { variants?: { small?: { path?: string } } } | null)?.variants?.small?.path ?? null,
-    sourceLabel: r.media.source || null,
+    sourceLabel: null,
     match: (r.media.provenance as { match?: string } | null)?.match ?? null,
   }));
 }

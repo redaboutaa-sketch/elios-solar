@@ -131,7 +131,7 @@ describe("Pergola SB500", () => {
   });
   it("plusieurs modules : documenté, composé au devis", () => {
     const r = evaluate(catalog, input("pergola-sb500", { multiModule: true }));
-    expect(r.issues.find((i) => i.code === "multi_module")!.message).toMatch(/possible selon/);
+    expect(r.issues.find((i) => i.code === "multi_module")!.message).toMatch(/plusieurs modules : possible — composition/);
   });
 });
 

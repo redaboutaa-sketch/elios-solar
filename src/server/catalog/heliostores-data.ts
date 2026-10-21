@@ -135,7 +135,7 @@ const sb400: HelioFamily = {
   shortDescription: "Pergola à lames orientables motorisées, murale ou autoportante, jusqu'à 4 × 7 m par module.",
   description:
     "La SB400 (SunBreaker 400) est une pergola en aluminium extrudé avec éléments en acier, à toiture de lames orientables motorisées. L'évacuation des eaux est intégrée à la structure. Un module mesure de 1,4 m à 4 m de largeur et de 1,4 m à 7 m de projection, en version murale ou autoportante. Éclairage LED périphérique ou spots dans les lames en option, automatisme météo possible.",
-  seoTitle: "Pergola SB400 à lames orientables — configuration sur devis",
+  seoTitle: "Pergola SB400 à lames orientables — prix selon vos dimensions",
   seoDescription: "Pergola bioclimatique SB400 (SunBreaker 400) : lames orientables motorisées, murale ou autoportante, jusqu'à 4 × 7 m. Configurez vos cotes et demandez un devis.",
   rules: {
     type: "pergola",
@@ -217,7 +217,7 @@ const sb400: HelioFamily = {
     { key: "colours_standard", label: "Teintes standard", valueText: "RAL 9016 mat, FSM 71319, RAL 7016 mat", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 10 ; catalogue SB400 p. 1" },
   ],
   faq: [
-    { q: "Le prix est-il affiché en ligne ?", a: "Pas encore : les tarifs transmis doivent être validés (nature, devise, fiscalité). Votre configuration est enregistrée et le prix vous est communiqué sur devis." },
+    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix de la structure selon vos dimensions (grille tarifaire HELIOSTORES, à la dimension de grille immédiatement supérieure à votre cote). Les options, la pose et la livraison sont chiffrées sur votre devis." },
     { q: "Quelles dimensions sont possibles ?", a: "Un module mesure de 1,4 m à 4 m de largeur et de 1,4 m à 7 m de projection, par pas de 20 cm en projection (l'entraxe des lames). Le fabricant indique un système modulaire : une installation de plusieurs modules est composée au devis." },
     { q: "Quelle hauteur de passage ?", a: "Le catalogue et la page du fabricant indiquent 2,8 m au maximum ; une déclaration du fabricant mentionne 3 020 mm. Au-delà de 2,8 m, la hauteur est confirmée au devis. La hauteur minimale n'est pas documentée." },
     { q: "Peut-on fermer les côtés ?", a: "Le fabricant cite des panneaux latéraux (Slide, systèmes Ziiip, Sunbreaker 210) sans préciser les modèles. Une fermeture latérale dépend des ouvertures réelles : nous l'étudions au devis." },
@@ -249,7 +249,7 @@ const sb500: HelioFamily = {
   shortDescription: "Grande pergola à lames orientables, jusqu'à 5 × 7 m par module, extensible par modules.",
   description:
     "La SB500 (SunBreaker 500) est une pergola en aluminium extrudé avec éléments en acier, à lames orientables motorisées. Ses sections renforcées autorisent un module jusqu'à 5 m de largeur et 7 m de projection. Elle existe en version murale ou autoportante et accepte l'assemblage de plusieurs modules. Deux gouttières sont fournies ; l'éclairage LED, les spots, l'ensemble solaire et les poteaux supplémentaires sont en option.",
-  seoTitle: "Pergola SB500 à lames orientables — grandes dimensions, sur devis",
+  seoTitle: "Pergola SB500 à lames orientables — grandes dimensions",
   seoDescription: "Pergola SB500 (SunBreaker 500) : lames orientables motorisées, jusqu'à 5 × 7 m par module, modulable. Configurez vos cotes et demandez un devis.",
   rules: {
     type: "pergola",
@@ -337,7 +337,7 @@ const sb500: HelioFamily = {
     { key: "colours_standard", label: "Teintes standard", valueText: "RAL 9016 mat, FSM 71319, RAL 7016 mat", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 6" },
   ],
   faq: [
-    { q: "Le prix est-il affiché en ligne ?", a: "Pas encore : les tarifs transmis doivent être validés (nature, devise, fiscalité). Le prix est établi sur devis à partir de votre configuration." },
+    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix de la structure selon vos dimensions (grille tarifaire HELIOSTORES, à la dimension de grille immédiatement supérieure à votre cote). Les options, la pose et la livraison sont chiffrées sur votre devis." },
     { q: "Peut-on couvrir plus de 5 m de largeur ?", a: "Oui, la SB500 accepte l'assemblage de plusieurs modules. La composition (modules, poteaux, gouttières) est établie au devis." },
     { q: "Quels moteurs sont proposés ?", a: "Elero Picolo XL en commande RTS ou IO, ou moteur Pergola 24 V en commande IO uniquement." },
     { q: "Les gouttières sont-elles fournies ?", a: "Deux gouttières sont incluses, sans évacuation : le raccordement des descentes est prévu au devis." },
@@ -376,11 +376,11 @@ const refleksol: HelioFamily = {
   sortOrder: 30,
   brand: "SELT by Aluprof",
   manufacturer: "ALUPROF SA (usine d'Opole, ex-SELT)",
-  supplierRef: "REFLEKSOL 120 ZiiiP (ALUPROF « R 120 ZiiiP »)",
+  supplierRef: "REFLEKSOL 120 ZiiiP",
   shortDescription: "Screen à toile tendue et mécanisme ZiiiP, motorisé, pose en niche ou en façade.",
   description:
     "Le REFLEKSOL 120 ZiiiP est un screen extérieur à coffre en aluminium extrudé de 126 mm, pour une pose en niche ou en façade. Le mécanisme ZiiiP tient la toile dans des coulisses en deux parties avec joints de compensation. La commande est uniquement électrique. Le catalogue indique une résistance au vent de classe 6 (classe 4 au-delà de 4 001 mm de largeur) et la technologie ZOOMTECH® au-delà de 5 m de largeur.",
-  seoTitle: "Screen REFLEKSOL 120 ZiiiP motorisé — configuration sur devis",
+  seoTitle: "Screen REFLEKSOL 120 ZiiiP motorisé — prix selon vos dimensions",
   seoDescription: "Screen extérieur REFLEKSOL 120 ZiiiP : toile tendue par coulisses ZiiiP, commande électrique, pose en niche ou façade. Configurez et demandez un devis.",
   rules: {
     type: "screen",
@@ -437,10 +437,10 @@ const refleksol: HelioFamily = {
     { key: "drive", label: "Commande", valueText: "électrique uniquement", source: "CLIENT_SHEET", sourceRef: "Fiche REFLEKSOL — Spécifications" },
     { key: "use", label: "Usage", valueText: "extérieur", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 66" },
     { key: "zoomtech", label: "Grandes largeurs", valueText: "technologie ZOOMTECH® au-delà de 5 m", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 67" },
-    { key: "colours", label: "Teintes", valueText: "palette SELT (catalogue p. 150–151), autre RAL en option", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 66–67, 150" },
+    { key: "colours", label: "Teintes", valueText: "palette de 26 teintes standard, autre RAL en option", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 66–67, 150" },
   ],
   faq: [
-    { q: "Le prix est-il affiché en ligne ?", a: "Pas encore : les tarifs transmis doivent être validés. Le prix est établi sur devis." },
+    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix de la structure selon vos dimensions (grille tarifaire HELIOSTORES, à la dimension de grille immédiatement supérieure à votre cote). Les options, la pose et la livraison sont chiffrées sur votre devis." },
     { q: "Quelle largeur maximale ?", a: "Le catalogue indique 7 m, la fiche transmise 4 m. Jusqu'à 4 m, les deux sources concordent ; au-delà, la faisabilité est confirmée au devis." },
     { q: "Peut-on le manœuvrer à la main ?", a: "Non : le REFLEKSOL 120 ZiiiP est uniquement à commande électrique. Le choix du moteur fixe la largeur minimale du screen." },
     { q: "Peut-il fermer le côté d'une pergola ?", a: "Un screen vendu seul n'est pas automatiquement compatible avec une pergola : l'intégration se vérifie au devis selon les ouvertures et les fixations." },
@@ -468,11 +468,11 @@ const casablanca: HelioFamily = {
   sortOrder: 40,
   brand: "SELT by Aluprof",
   manufacturer: "ALUPROF SA (usine d'Opole, ex-SELT)",
-  supplierRef: "CASABLANCA (ALUPROF « CASABLANCA AWNING »)",
+  supplierRef: "CASABLANCA",
   shortDescription: "Store de terrasse à coffre, jusqu'à 6 m de largeur et 3,6 m d'avancée.",
   description:
     "Le CASABLANCA est un store de terrasse à coffre en aluminium extrudé. Le joint du coffre protège la toile, les bras sont à chaînes Flyer et un support de tube d'enroulement équipe les grandes largeurs. Il se pose au mur, au plafond ou sur chevrons, avec une inclinaison de 5° à 40°. La fiche transmise décrit la commande manuelle par manivelle.",
-  seoTitle: "Store banne CASABLANCA à coffre — configuration sur devis",
+  seoTitle: "Store banne CASABLANCA à coffre — prix selon vos dimensions",
   seoDescription: "Store banne coffre CASABLANCA : jusqu'à 6 m de largeur et 3,6 m d'avancée, pose murale, plafond ou chevrons. Configurez et demandez un devis.",
   rules: {
     type: "awning",
@@ -530,7 +530,7 @@ const casablanca: HelioFamily = {
     { key: "colours_standard", label: "Teintes standard", valueText: "RAL 9010, RAL 1015, RAL 8014, RAL 9006, FSM 71319", source: "CLIENT_SHEET", sourceRef: "Fiche CASABLANCA — Couleurs disponibles" },
   ],
   faq: [
-    { q: "Le prix est-il affiché en ligne ?", a: "Pas encore : les tarifs transmis doivent être validés. Le prix est établi sur devis à partir de votre configuration." },
+    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix de la structure selon vos dimensions (grille tarifaire HELIOSTORES, à la dimension de grille immédiatement supérieure à votre cote). Les options, la pose et la livraison sont chiffrées sur votre devis." },
     { q: "Quelles avancées sont proposées ?", a: "1,6 m, 2,1 m, 2,6 m, 3,1 m et 3,6 m. Les grandes avancées demandent une largeur minimale : 2,91 m pour 2,6 m d'avancée, 3,51 m pour 3,1 m et 3,6 m." },
     { q: "Existe-t-il une version motorisée ?", a: "Le catalogue cite une commande électrique ; la fiche transmise décrit la version à manivelle. La motorisation est donc étudiée au devis." },
     { q: "Où peut-on le poser ?", a: "Au mur, au plafond ou sur chevrons. Les fixations dépendent du support et se déterminent au relevé." },

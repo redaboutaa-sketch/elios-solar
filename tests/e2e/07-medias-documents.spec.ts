@@ -13,7 +13,7 @@ async function makePdf(title: string): Promise<Buffer> {
   return Buffer.from(await doc.save());
 }
 
-test("médiathèque et documents : nouvelle version PDF publiée, visible sur la fiche ; galerie fabricant avec nature et crédit", async ({ page }) => {
+test("médiathèque et documents : nouvelle version PDF publiée, visible sur la fiche ; galerie avec nature, sans crédit fabricant", async ({ page }) => {
   const title = `Guide e2e ${uid()}`;
   try {
     await loginAdmin(page);
@@ -54,19 +54,19 @@ test("médiathèque et documents : nouvelle version PDF publiée, visible sur la
     await expect(page.getByRole("heading", { name: "Médiathèque" })).toBeVisible();
     await shot(page, "admin-medias");
 
-    // 5. fiche produit : onglet Documents + galerie fabricant (nature et crédit affichés)
+    // 5. fiche produit : onglet Documents + galerie (nature affichée ; crédit et provenance réservés à la médiathèque)
     await page.goto("/pergolas/pergola-sb400");
     await acceptNecessaryOnly(page);
     const imported = Number((await one<{ n: string }>(`SELECT count(*) AS n FROM "ProductMedia" pm JOIN "ProductFamily" f ON f.id = pm."familyId" JOIN "Media" m ON m.id = pm."mediaId" WHERE f.slug = 'pergola-sb400' AND m.status = 'PUBLISHED' AND m.provenance IS NOT NULL`))!.n);
     if (imported > 0) {
-      await expect(page.getByTestId("media-nature").first()).toHaveText("Photographie fournisseur");
-      await expect(page.getByTestId("media-credit").first()).toContainText("Catalogue THYSENS");
+      await expect(page.getByTestId("media-nature").first()).toHaveText("Photographie");
+      await expect(page.getByTestId("media-credit")).toHaveCount(0);
       await page.getByRole("button", { name: /Afficher : Vue de dessous de la toiture/ }).click();
-      await expect(page.getByTestId("media-nature").first()).toHaveText("Rendu fabricant");
+      await expect(page.getByTestId("media-nature").first()).toHaveText("Rendu");
       await expect(page.getByTestId("media-options").first()).toContainText("non inclus d'office : éclairage LED périphérique (option)");
     } else {
       test.info().annotations.push({ type: "médias", description: "aucun visuel fabricant importé dans cet environnement : état vide vérifié" });
-      await expect(page.getByText("Visuels du fabricant en cours d'intégration.")).toBeVisible();
+      await expect(page.getByText("Visuels en cours d'intégration.")).toBeVisible();
     }
     await shot(page, "fiche-galerie-rendu");
     await page.getByRole("tab", { name: /^Documents/ }).click();

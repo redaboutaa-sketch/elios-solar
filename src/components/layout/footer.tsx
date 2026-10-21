@@ -40,7 +40,7 @@ export function Footer({ settings, categories = [] }: { settings?: FooterSetting
       </div>
       <div className="border-t border-white/10">
         <div className="container-x py-4 flex flex-col gap-2 text-xs text-sand-300">
-          <p>Photographies produits : documentation fabricant (ALUPROF / catalogue THYSENS), non représentatives de réalisations {BRAND.name}.</p>
+          <p>Visuels non contractuels.</p>
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
             <p>© {new Date().getFullYear()} {BRAND.name}. Préproduction : identité juridique du vendeur en cours de validation.</p>
             <span className="[&_button:hover]:text-white"><CookiePreferencesButton /></span>

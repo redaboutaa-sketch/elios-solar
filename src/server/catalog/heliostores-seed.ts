@@ -10,7 +10,6 @@
  */
 import type { PrismaClient } from "@/generated/prisma/client";
 import { HELIOSTORES_FAMILIES, HELIOSTORES_SLUGS } from "./heliostores-data";
-import { HELIOSTORES_DOCUMENTS } from "./heliostores-documents";
 
 export const HELIOSTORES_SEED_TAG = "seed:heliostores";
 
@@ -45,25 +44,18 @@ export async function seedHeliostores(prisma: PrismaClient): Promise<{ families:
       specs += 1;
     }
   }
-  const documents = await seedHeliostoresDocuments(prisma);
+  const documents = await withdrawManufacturerDocuments(prisma);
   return { families: HELIOSTORES_FAMILIES.length, specs, documents };
 }
 
-/** Documents officiels du fabricant (liens externes) : créés une fois par produit, jamais republiés par-dessus une décision d'administration. */
-async function seedHeliostoresDocuments(prisma: PrismaClient): Promise<number> {
-  let created = 0;
-  for (const d of HELIOSTORES_DOCUMENTS) {
-    for (const slug of d.familySlugs) {
-      const fam = await prisma.productFamily.findUnique({ where: { slug }, select: { id: true } });
-      if (!fam) continue;
-      const groupKey = `helio-${d.key}-${slug}`;
-      if (await prisma.document.count({ where: { groupKey } })) continue;
-      const media = await prisma.media.create({ data: { kind: "document", nature: "DOCUMENT", status: "PUBLISHED", path: "", externalUrl: d.url, mimeType: "application/pdf", alt: d.title, title: d.title, source: d.url, credit: "ALUPROF SA (aluprof.com)", license: "Lien vers le document public du fabricant (non ré-hébergé)", provenance: { key: groupKey, url: d.url, retrievedAt: "2026-10-20", language: d.language } as never } });
-      await prisma.document.create({ data: { groupKey, version: 1, familyId: fam.id, mediaId: media.id, title: d.title, kind: d.kind, summary: d.summary, status: "PUBLISHED", audience: "PUBLIC", dataStatus: "OBSERVED", source: d.url, notes: "Lien vers le document du fabricant ; ne pas modifier ni présenter comme un document HELIOSTORES.", publishedAt: new Date("2026-10-20T00:00:00Z"), createdBy: HELIOSTORES_SEED_TAG } });
-      created += 1;
-    }
-  }
-  return created;
+/**
+ * Documents du fabricant (liens externes) : retirés du site public (décision client du 2026-10-21 : aucune
+ * référence au fabricant ni au fournisseur). Les versions semées sont archivées, jamais supprimées ; le registre
+ * `heliostores-documents.ts` reste une référence interne.
+ */
+async function withdrawManufacturerDocuments(prisma: PrismaClient): Promise<number> {
+  const r = await prisma.document.updateMany({ where: { createdBy: HELIOSTORES_SEED_TAG, status: { not: "ARCHIVED" } }, data: { status: "ARCHIVED" } });
+  return r.count;
 }
 
 /**

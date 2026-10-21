@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "./fixtures";
 import { acceptNecessaryOnly, fillQuote, shot, uid } from "./helpers";
-import { one } from "./db";
+import { one, publicCell, publicPricesActive } from "./db";
 
 test.use({ launchOptions: { args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] } });
 
@@ -35,8 +35,11 @@ test("screen REFLEKSOL 120 ZiiiP : largeur contradictoire signalée, largeur min
   await shot(page, "configurateur-screen-3d");
   const number = await fillQuote(page, `screen-${uid()}@test.invalid`);
   await expect(page.getByTestId("quote-visual-status")).toContainText("visualisation 3D de votre configuration est jointe");
-  const q = await one<{ snapshot: { input: { widthMm: number; heightMm: number; mounting: string; fabricCode: string } } }>('SELECT snapshot FROM "Quote" WHERE number = $1', [number]);
+  const q = await one<{ snapshot: { input: { widthMm: number; heightMm: number; mounting: string; fabricCode: string }; result: { systemPrice?: { amountMinor: number } | null } } }>('SELECT snapshot FROM "Quote" WHERE number = $1', [number]);
   expect(q!.snapshot.input).toMatchObject({ widthMm: 2400, heightMm: 2600, mounting: "niche", fabricCode: "serge" });
+  // prix : hauteur 2,6 m → 2,75 m, largeur 2,4 m → 2,5 m (dimensions de grille supérieures)
+  const expected = (await publicPricesActive()) ? await publicCell("screen-refleksol-120-ziiip", "", 2750, 2500) : null;
+  expect(q!.snapshot.result.systemPrice?.amountMinor ?? null).toBe(expected);
 });
 
 test("store banne CASABLANCA : avancées et largeurs documentées, commande électrique à confirmer, aucune hypothèse héritée", async ({ page }) => {
@@ -63,6 +66,9 @@ test("store banne CASABLANCA : avancées et largeurs documentées, commande éle
   await shot(page, "configurateur-store-3d");
   await page.getByTestId("view-3d-toggle").click();
   const number = await fillQuote(page, `store-${uid()}@test.invalid`);
-  const q = await one<{ snapshot: { result: { issues: Array<{ code: string }> } } }>('SELECT snapshot FROM "Quote" WHERE number = $1', [number]);
+  const q = await one<{ snapshot: { result: { issues: Array<{ code: string }>; systemPrice?: { amountMinor: number } | null } } }>('SELECT snapshot FROM "Quote" WHERE number = $1', [number]);
   expect(q!.snapshot.result.issues.map((i) => i.code)).toContain("control_to_confirm");
+  // prix : avancée 3,1 m, largeur 4,2 m dans la plage 4,11–4,7 m
+  const expected = (await publicPricesActive()) ? await publicCell("store-banne-casablanca", "", 3100, 4700) : null;
+  expect(q!.snapshot.result.systemPrice?.amountMinor ?? null).toBe(expected);
 });

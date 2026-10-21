@@ -13,6 +13,9 @@ import { buildQuotePdf } from "@/server/pdf/quote-pdf";
 import { sanitizeAttribution } from "@/domain/attribution";
 import { MEDIA_URL_PREFIX, mediaDir, resolveMediaFile } from "@/server/media/storage";
 import { GET as getMedia } from "@/app/api/media/[...path]/route";
+import { ensureCatalogSnapshot } from "@/server/catalog/public-snapshot";
+import { PUBLIC_PRICE_SOURCE_KEY } from "@/server/pricing/source";
+import { PUBLIC_FORBIDDEN_NAMES } from "@/domain/public-sanitize";
 
 const quotes: string[] = [];
 const medias: string[] = [];
@@ -62,7 +65,7 @@ describe("catalogue HELIOSTORES en base", () => {
     }
   });
 
-  it("l'instantané public transporte les règles et les sources, jamais de tarif fournisseur", async () => {
+  it("sans grille active : l'instantané ne transporte aucun tarif", async () => {
     const c = await loadCatalog({ fresh: true });
     const sb400 = c.families.find((f) => f.slug === "pergola-sb400")!;
     expect(sb400.systemRules?.dims.depth?.stepMm).toBe(200);
@@ -126,5 +129,43 @@ describe("médiathèque : variantes réduites", () => {
     const get = (name: string) => getMedia(new Request(`http://localhost/api/media/${name}`), { params: Promise.resolve({ path: [name] }) } as never);
     expect((await get(await make("PUBLISHED"))).status).toBe(200);
     expect((await get(await make("DRAFT"))).status).toBe(404);
+  });
+});
+
+describe("prix publics : colonne « Prix final HELIOSTORES » de la version active du classeur", () => {
+  it("seule la colonne publique de la version ACTIVE est chargée ; brouillon (FTS) jamais tarifé ; instantané sans source", async () => {
+    // version SYNTHÉTIQUE (montants fictifs) sous la clé publique, dans la base de test uniquement
+    const before = await prisma.supplierPriceList.findMany({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY }, select: { id: true, status: true } });
+    const last = await prisma.supplierPriceList.findFirst({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY }, orderBy: { version: "desc" }, select: { version: true } });
+    const list = await prisma.supplierPriceList.create({ data: { sourceKey: PUBLIC_PRICE_SOURCE_KEY, version: (last?.version ?? 0) + 1, label: "test", sourceFile: "synthetique.xlsx", sourceSha256: randomBytes(8).toString("hex"), status: "DRAFT", currency: "EUR", taxBasis: "HT" } });
+    const row = (familySlug: string, variantKey: string, amountRole: string, amountMinor: number, dimAKey = "projection") => ({ listId: list.id, familySlug, variantKey, kind: "GRID", dimAKey, dimAmm: 5000, widthMinMm: 4000, widthMaxMm: 4000, amountMinor, amountRole, sourceRef: "test", status: "OK" as const });
+    await prisma.supplierPriceRow.createMany({ data: [row("pergola-sb400", "murale", "PRIX_FINAL", 1_234_567), row("pergola-sb400", "murale", "PRIX_SOURCE", 7_654_321), row("veranda-fts", "", "PRIX_FINAL", 999_999, "hauteur")] });
+    try {
+      invalidateCatalogCache();
+      let c = await loadCatalog({ fresh: true });
+      expect(c.families.find((f) => f.slug === "pergola-sb400")!.systemPrices).toBeNull(); // brouillon : rien de public
+      await prisma.supplierPriceList.updateMany({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY, status: "ACTIVE" }, data: { status: "ARCHIVED" } });
+      await prisma.supplierPriceList.update({ where: { id: list.id }, data: { status: "ACTIVE" } });
+      invalidateCatalogCache();
+      c = await loadCatalog({ fresh: true });
+      const sb400 = c.families.find((f) => f.slug === "pergola-sb400")!;
+      expect(sb400.systemPrices).toMatchObject({ currency: "EUR", taxBasis: "HT", cells: [{ variantKey: "murale", dimAmm: 5000, widthMaxMm: 4000, amountMinor: 1_234_567 }] });
+      expect(c.families.find((f) => f.slug === "veranda-fts")?.systemPrices ?? null).toBeNull();
+      const json = JSON.stringify(c);
+      expect(json).not.toContain("7654321");
+      expect(json).not.toContain("999999");
+      const r = await evaluateInput(await systemInput("pergola-sb400", { widthMm: 4000, depthMm: 5000, mounting: "wall" }));
+      expect(r.issues.filter((i) => i.severity === "blocking")).toEqual([]);
+      expect(r.systemPrice).toMatchObject({ amountMinor: 1_234_567, currency: "EUR", taxBasis: "HT", roundedUp: false });
+      const pub = await ensureCatalogSnapshot();
+      const pubSb = pub.families.find((f) => f.slug === "pergola-sb400")!;
+      expect(pubSb.brand ?? null).toBeNull();
+      expect(pubSb.manufacturer ?? null).toBeNull();
+      expect(JSON.stringify(pub.families.filter((f) => f.systemRules))).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
+    } finally {
+      await prisma.supplierPriceList.delete({ where: { id: list.id } });
+      for (const b of before) await prisma.supplierPriceList.update({ where: { id: b.id }, data: { status: b.status } });
+      invalidateCatalogCache();
+    }
   });
 });

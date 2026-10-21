@@ -148,7 +148,6 @@ export const MOUNTING_FR: Record<SystemMounting, string> = {
 };
 
 const fmtM = (mm: number) => `${(mm / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 3 })} m`;
-const srcText = (s: SourceRef[]) => s.map((x) => `${x.label}${x.loc ? ` (${x.loc})` : ""}`).join(" ; ");
 
 /** Libellé d'une plage documentée, sans inventer de minimum. */
 export function dimRangeText(r: DimRule): string {
@@ -226,7 +225,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
       return;
     }
     if (v > r.maxMm || (r.minMm != null && v < r.minMm)) {
-      add({ code: "dimension_out_of_bounds", severity: "blocking", message: `${r.label} : ${dimRangeText(r)} (${srcText(r.sources)}).`, path });
+      add({ code: "dimension_out_of_bounds", severity: "blocking", message: `${r.label} : ${dimRangeText(r)}.`, path });
       return;
     }
     if (r.stepMm && r.minMm != null && (v - r.minMm) % r.stepMm !== 0) {
@@ -248,7 +247,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
   if (rules.depthWidthMin && input.depthMm != null) {
     const c = rules.depthWidthMin.find((x) => x.depthMm === input.depthMm);
     if (c && input.widthMm < c.widthMinMm) {
-      add({ code: "depth_width_combination", severity: "blocking", message: `Avancée ${fmtM(input.depthMm)} : largeur minimale ${fmtM(c.widthMinMm)} (${srcText(c.sources)}).`, path: "widthMm" });
+      add({ code: "depth_width_combination", severity: "blocking", message: `Avancée ${fmtM(input.depthMm)} : largeur minimale ${fmtM(c.widthMinMm)}.`, path: "widthMm" });
     }
   }
 
@@ -272,7 +271,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
     control = rules.controls.find((c) => c.code === input.controlCode);
     if (!control) add({ code: "control_unavailable", severity: "blocking", message: "Commande non proposée pour ce système.", path: "controlCode" });
     else {
-      if (control.minWidthMm && input.widthMm < control.minWidthMm) add({ code: "control_min_width", severity: "blocking", message: `${control.label} : largeur minimale du système ${fmtM(control.minWidthMm)} (${srcText(control.sources)}).`, path: "controlCode" });
+      if (control.minWidthMm && input.widthMm < control.minWidthMm) add({ code: "control_min_width", severity: "blocking", message: `${control.label} : largeur minimale du système ${fmtM(control.minWidthMm)}.`, path: "controlCode" });
       if (control.status === "to_confirm") add({ code: "control_to_confirm", severity: "review", message: `${control.label} : ${control.note ?? "à confirmer au devis"}.`, path: "controlCode", quoteSuggested: true });
     }
   }
@@ -313,7 +312,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
     }
     if (input.multiModule) {
       const m = rules.modules;
-      add({ code: "multi_module", severity: "review", message: m?.multiModule === "documented" ? `Installation en plusieurs modules : possible selon ${srcText(m.sources)} — composition (modules, poteaux, gouttières) établie au devis.` : "Installation en plusieurs modules : non documentée pour ce système — étude au devis.", path: "multiModule", quoteSuggested: true });
+      add({ code: "multi_module", severity: "review", message: m?.multiModule === "documented" ? `Installation en plusieurs modules : possible — composition (modules, poteaux, gouttières) établie au devis.` : "Installation en plusieurs modules : non documentée pour ce système — étude au devis.", path: "multiModule", quoteSuggested: true });
     }
   }
 

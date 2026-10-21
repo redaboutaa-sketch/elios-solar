@@ -1,3 +1,4 @@
+import { formatSystemPrice } from "@/domain/system-pricing";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -60,7 +61,7 @@ export default async function QuoteAdminPage(props: PageProps<"/admin/devis/[id]
               result.priceMode === "quote" ? (
                 <>
                   <dl data-testid="quote-recap" className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[12rem_1fr]">{(result.recap ?? []).map((r, i) => <div key={`${r.label}-${i}`} className="contents"><dt className="text-stone-700">{r.label}</dt><dd>{r.value}{r.status === "to_confirm" ? <span className="badge-warn ml-2">à confirmer</span> : r.status === "included" ? <span className="badge-ok ml-2">inclus</span> : null}</dd></div>)}</dl>
-                  <p className="mt-3 text-sm">Prix : <strong>établi sur devis</strong> (aucun tarif public validé). Les tarifs fournisseurs internes sont consultables dans <Link className="underline" href="/admin/catalogue/tarifs-fournisseur">Tarifs fournisseurs</Link> (administrateurs).</p>
+                  <p className="mt-3 text-sm" data-testid="quote-system-price">{result.systemPrice ? <>Prix de la structure affiché au client : <strong>{formatSystemPrice(result.systemPrice.amountMinor, result.systemPrice.currency, result.systemPrice.taxBasis)}</strong> (grille « Prix final HELIOSTORES » v{result.systemPrice.listVersion}, cellule {result.systemPrice.grid.widthMm} × {result.systemPrice.grid.dimMm} mm{result.systemPrice.variantKey ? `, ${result.systemPrice.variantKey}` : ""}). Options, pose et livraison à chiffrer.</> : <>Prix : <strong>sur devis</strong> (cote hors grille ou aucune grille active).</>} Tarifs : <Link className="underline" href="/admin/catalogue/tarifs-fournisseur">Tarifs fournisseurs</Link> (administrateurs).</p>
                   <h3 className="mt-4 text-sm font-medium">Points signalés</h3>
                   {result.issues.length ? <IssueList issues={result.issues} className="mt-2" /> : <p className="text-sm text-stone-700">Aucun.</p>}
                   {result.layout && <div className="mt-4 rounded-lg border border-sand-200 p-2"><PlanPreview layout={result.layout} segments={{}} /></div>}

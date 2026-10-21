@@ -141,7 +141,7 @@ export async function runSeed(prisma: PrismaClient) {
   const legacyMode = process.env.SEED_LEGACY_DEMO === "active" ? "active" : "archived";
   const helio = await seedHeliostores(prisma);
   const legacy = await setLegacyCatalogue(prisma, FAMILIES.map((f) => f.slug), legacyMode);
-  console.log(`HELIOSTORES : ${helio.families} familles, ${helio.specs} données sourcées, ${helio.documents} document(s) fabricant ajouté(s) ; ancien catalogue (${legacy} familles) : ${legacyMode === "active" ? "jeu d'essai actif" : "archivé"}`);
+  console.log(`HELIOSTORES : ${helio.families} familles, ${helio.specs} données sourcées, ${helio.documents} document(s) fabricant retiré(s) du site ; ancien catalogue (${legacy} familles) : ${legacyMode === "active" ? "jeu d'essai actif" : "archivé"}`);
 
   // Rendus originaux (scènes procédurales) de l'ancien catalogue : seulement comme jeu d'essai (SEED_SKIP_RENDERS=1 pour les ignorer)
   if (process.env.SEED_SKIP_RENDERS !== "1" && legacyMode === "active") {

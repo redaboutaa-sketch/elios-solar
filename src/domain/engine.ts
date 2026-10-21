@@ -8,6 +8,7 @@ import { applyBps, taxIncludedIn, type Cents } from "./money";
 import { activeGridFor, priceFromGrid } from "./pricing-grid";
 import { includedCablePublicText } from "./technical-spec";
 import { evaluateSystemRules, type SystemInput } from "./system";
+import { lookupSystemPrice } from "./system-pricing";
 import type {
   AccessoryStandaloneInput,
   AwningInput,
@@ -31,7 +32,7 @@ import type {
   Variant,
 } from "./types";
 
-export const ENGINE_VERSION = "1.2.0";
+export const ENGINE_VERSION = "1.3.0";
 
 /* ------------------------------------------------------------------ */
 /* Utilitaires catalogue                                               */
@@ -682,7 +683,8 @@ function evaluateAccessory(catalog: CatalogSnapshot, input: AccessoryStandaloneI
 const SYSTEM_KINDS = new Set(["pergola_system", "screen_system", "awning_system", "roof_blind_system"]);
 
 /**
- * Système configurable à la cote : règles sourcées de la famille, aucun prix (devis).
+ * Système configurable à la cote : règles sourcées de la famille ; prix lu dans la grille publique (system-pricing.ts),
+ * la commande passant toujours par un devis (options, pose, livraison).
  * Une famille en brouillon (ex. système dont le classement reste à décider) n'est pas configurable publiquement.
  */
 function evaluateSystem(catalog: CatalogSnapshot, input: SystemInput): EvaluationResult {
@@ -710,7 +712,10 @@ function evaluateSystem(catalog: CatalogSnapshot, input: SystemInput): Evaluatio
     }
   }
   const result = finish(b, input, layout, null, true);
-  return { ...result, containsDemoData: family.dataStatus === "demo", purchasable: false, quoteRecommended: true, priceMode: "quote", recap: ev.recap };
+  // prix de la grille publique : seulement pour une cote sans blocage, couverte par la grille
+  const lookup = result.issues.some((i) => i.severity === "blocking") ? null : lookupSystemPrice(family.systemPrices, rules, input);
+  const systemPrice = lookup?.ok ? lookup.price : null;
+  return { ...result, containsDemoData: family.dataStatus === "demo", purchasable: false, quoteRecommended: true, priceMode: "quote", recap: ev.recap, systemPrice };
 }
 
 /* ------------------------------------------------------------------ */

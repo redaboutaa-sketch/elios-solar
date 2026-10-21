@@ -1,7 +1,8 @@
 /**
  * Service d'import des tarifs fournisseur : aperçu (aucune écriture), création d'une version
  * en brouillon, activation, retour arrière. Tout est journalisé (AuditLog) sans aucun montant.
- * Les lignes importées ne sont JAMAIS lues par le catalogue public.
+ * Seule la colonne « Prix final HELIOSTORES » de la version ACTIVE du classeur est lue par le catalogue public
+ * (src/server/pricing/system-prices.ts) ; les autres lignes restent internes.
  */
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/server/audit";

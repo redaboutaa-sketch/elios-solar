@@ -15,7 +15,7 @@ export function Header({ cartCount = 0, signedIn = false, isAdmin = false, categ
   return (
     <header className="sticky top-0 z-40 surface-night border-b border-white/10">
       {process.env.SITE_INDEXABLE !== "true" && (
-        <div className="bg-brand-900 text-sand-50 text-center text-xs py-1 px-2">Préproduction — catalogue en cours de validation, prix sur devis, paiement en mode test.</div>
+        <div className="bg-brand-900 text-sand-50 text-center text-xs py-1 px-2">Préproduction — paiement en ligne en mode test.</div>
       )}
       <div className="container-x flex h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-2">

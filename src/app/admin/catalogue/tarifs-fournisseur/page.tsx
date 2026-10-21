@@ -26,7 +26,7 @@ export default async function SupplierPricesPage(props: PageProps<"/admin/catalo
     <div className="space-y-6">
       <PageTitle title="Tarifs fournisseur (privé)" />
       <Flash searchParams={props.searchParams} />
-      <Notice tone="warn"><strong>Montants internes — nature non établie, jamais publiés.</strong> Ces versions conservent les cellules des sources telles quelles (formule, valeur en cache, référence). Elles ne sont lues ni par le catalogue public, ni par le configurateur, ni par le calcul des prix.</Notice>
+      <Notice tone="warn"><strong>Prix publics : colonne « Prix final HELIOSTORES » de la version ACTIVE du classeur <code>xlsx-situation-des-tarif</code></strong> (décision client du 2026-10-21), avec sa devise. Activer une autre version du classeur change les prix affichés sur le site. Les colonnes « Prix » / « Prix fournisseur » et les fiches DOCX ne sont jamais publiées ni lues par le configurateur.</Notice>
       <Section title="Importer">
         <p className="text-sm text-stone-700">L'import se fait en ligne de commande, depuis un dossier privé monté en lecture seule (procédure : <code>docs/heliostores/import-tarifs.md</code>). Par défaut l'outil n'écrit rien (aperçu) ; <code>--apply</code> crée une nouvelle version en <strong>brouillon</strong> ; une empreinte identique déjà importée est sans effet.</p>
         <pre className="mt-2 overflow-x-auto rounded-lg bg-sand-100 p-3 text-xs">pnpm supplier-prices:import --file &quot;&lt;classeur.xlsx&gt;&quot; --file &quot;&lt;fiche.docx&gt;&quot; [--apply]</pre>
@@ -74,7 +74,7 @@ export default async function SupplierPricesPage(props: PageProps<"/admin/catalo
           </Section>
         );
       })}
-      <p className="text-xs text-stone-700">Activer une version archive la version active de la même source ; « Revenir à la version précédente » réactive la dernière version archivée qui avait été active. Chaque opération est inscrite au journal (sans montant).</p>
+      <p className="text-xs text-stone-700">Activer une version archive la version active de la même source ; « Revenir à la version précédente » réactive la dernière version archivée qui avait été active. Chaque opération est inscrite au journal (sans montant). Une version active du classeur sans devise renseignée ne publie aucun prix.</p>
     </div>
   );
 }

@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import type { CategoryKey } from "@/domain/categories";
 import type { SystemRules } from "@/domain/system";
 import type { SpecSource, TechnicalSpecValue } from "@/domain/technical-spec";
+import { publicSystemRules } from "@/domain/public-sanitize";
+import { minSystemPrice } from "@/domain/system-pricing";
+import { loadPublicSystemPrices } from "@/server/pricing/system-prices";
 
 export interface OpenQuestion { field: string; question: string; sources: string[]; blocks: string }
 
@@ -13,17 +16,23 @@ export async function listSystemFamilies(category: CategoryKey) {
     include: { media: { where: { media: { status: "PUBLISHED", nature: { not: "DOCUMENT" } } }, include: { media: true }, orderBy: { sortOrder: "asc" }, take: 1 } },
     orderBy: { sortOrder: "asc" },
   });
-  return rows.map((f) => ({ ...f, rules: f.systemRules as unknown as SystemRules, hero: f.media[0]?.media ?? null }));
+  const { tables } = await loadPublicSystemPrices();
+  return rows.map((f) => ({ ...f, brand: null, manufacturer: null, rules: publicSystemRules(f.systemRules as unknown as SystemRules), hero: f.media[0]?.media ?? null, fromPrice: minSystemPrice(tables.get(f.slug)) }));
 }
 
 /** Fiche d'un système publié de la famille publique demandée (null sinon : brouillon, archive, autre famille). */
 export async function getSystemFamily(category: CategoryKey, slug: string) {
   const f = await prisma.productFamily.findUnique({ where: { slug }, include: { technicalSpecs: { orderBy: { createdAt: "asc" } } } });
   if (!f || f.category !== category || f.legacy || !f.systemRules || !["PUBLISHED", "QUOTE_ONLY"].includes(f.status)) return null;
-  const specs: TechnicalSpecValue[] = f.technicalSpecs.map((s) => ({ key: s.key, label: s.label, valueNum: s.valueNum, unit: s.unit, valueText: s.valueText, source: s.source.toLowerCase() as SpecSource, sourceRef: s.sourceRef, observedAt: null, variantSku: s.variantSku, note: s.note || null }));
+  // page publique : ni fabricant, ni marque, ni référence de source (conservés pour l'administration)
+  const specs: TechnicalSpecValue[] = f.technicalSpecs.map((s) => ({ key: s.key, label: s.label, valueNum: s.valueNum, unit: s.unit, valueText: s.valueText, source: s.source.toLowerCase() as SpecSource, sourceRef: "", observedAt: null, variantSku: s.variantSku, note: s.note || null }));
+  const { tables } = await loadPublicSystemPrices();
   return {
     ...f,
-    rules: f.systemRules as unknown as SystemRules,
+    brand: null,
+    manufacturer: null,
+    rules: publicSystemRules(f.systemRules as unknown as SystemRules),
+    fromPrice: minSystemPrice(tables.get(f.slug)),
     specValues: specs,
     faqItems: (f.faq as Array<{ q: string; a: string }>) ?? [],
     questions: (f.openQuestions as unknown as OpenQuestion[]) ?? [],

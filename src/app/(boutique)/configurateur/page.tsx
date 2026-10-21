@@ -6,7 +6,7 @@ import { Notice } from "@/components/ui/alert";
 import { CATEGORIES, configuratorHref, productHref } from "@/domain/categories";
 import { prisma } from "@/lib/prisma";
 
-export const metadata: Metadata = { title: "Configurateurs", description: "Configurez une pergola, un screen ou un store banne HELIOSTORES à vos cotes, avec vue 3D indicative. Prix établi sur devis." };
+export const metadata: Metadata = { title: "Configurateurs", description: "Configurez une pergola, un screen ou un store banne HELIOSTORES à vos cotes, avec vue 3D indicative et prix selon vos dimensions." };
 
 /**
  * Choix du configurateur. Les liens de l'ancien configurateur (`?gamme=`, `?projet=`, `?ligne=`) ne sont jamais
@@ -22,7 +22,7 @@ export default async function ConfiguratorIndex(props: PageProps<"/configurateur
     <div className="container-x py-8">
       <Breadcrumbs items={[{ label: "Configurateurs" }]} />
       <h1 className="mt-4 font-display text-4xl">Configurer votre projet</h1>
-      <p className="mt-2 max-w-2xl text-stone-700">Choisissez un modèle : dimensions, pose, teinte et équipements selon les règles documentées par le fabricant, vue 3D indicative et demande de devis.</p>
+      <p className="mt-2 max-w-2xl text-stone-700">Choisissez un modèle : dimensions, pose, teinte et équipements vue 3D indicative, prix selon vos dimensions et demande de devis.</p>
       {legacy && <div className="mt-6" data-testid="legacy-notice"><Notice tone="warn">Ce lien concerne un produit de l&apos;ancien catalogue de démonstration, qui n&apos;est plus proposé. Vos projets et devis existants restent consultables dans votre compte ; pour poursuivre, recommencez une configuration avec l&apos;un des modèles ci-dessous.</Notice></div>}
       <div className="mt-8 grid gap-8">
         {CATEGORIES.map((c) => {

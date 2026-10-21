@@ -1,6 +1,7 @@
 /**
  * Tarifs fournisseur — types partagés (modules purs, sans accès base).
- * Les montants importés restent INTERNES : jamais dans l'instantané public ni dans les journaux.
+ * Les montants importés restent internes, sauf la colonne « Prix final HELIOSTORES » de la version ACTIVE du classeur
+ * (src/server/pricing/system-prices.ts) ; jamais de montant dans les journaux.
  */
 
 export type RowKind = "GRID" | "OPTION";

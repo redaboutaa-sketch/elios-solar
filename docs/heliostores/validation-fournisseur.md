@@ -4,8 +4,8 @@
 
 Chaque point correspond à un dossier « à vérifier » dans **Administration → Catalogue → Validation des références**, sauf les tarifs, consultables dans **Tarifs fournisseur**. Aucune divergence n'est tranchée sans réponse écrite. En attendant :
 - les valeurs contradictoires restent affichées « à confirmer » ;
-- les produits restent sur devis ;
-- les tarifs restent en brouillon.
+- les prix affichés sont ceux du classeur (décision client du 2026-10-21) ;
+- les fiches DOCX restent en brouillon.
 
 **Format de réponse souhaité :** un écrit daté et signé (courriel du fournisseur, fiche technique ou déclaration à jour) qui cite la référence exacte et la variante.
 
@@ -28,7 +28,7 @@ Sources :
 - le classeur `SITUATION DES TARIF.xlsx` (feuilles SB500, SB400, REFLEKSOL 120 ZIP, STORE BANNE CASA, VERANDA FTS) ;
 - les fiches « …_AVEC_PRIX » / « Fiche Technique & Tarification ».
 
-Tant que ces questions restent sans réponse, **aucun prix n'est publié**, les versions importées restent en brouillon et chaque configuration aboutit à un devis.
+**Mise à jour du 2026-10-21 :** sur décision du client, la colonne « Prix final HELIOSTORES » du classeur est affichée sur le site en € HT (voir `prix-publics.md`). Les questions ci-dessous restent à confirmer par écrit : une réponse qui modifie un montant, la devise ou la base fiscale demande un nouvel import puis une nouvelle publication.
 
 | N° | Question | Réponse attendue |
 |---|---|---|
@@ -47,4 +47,4 @@ Tant que ces questions restent sans réponse, **aucun prix n'est publié**, les 
 
 1. Joindre l'écrit au dossier de validation correspondant : source « document fournisseur », avec le document justificatif.
 2. Faire passer le dossier de « à vérifier » à « validé » ou « rejeté » ; la validation porte sur une version précise des données.
-3. Pour les tarifs : renseigner la nature, la devise et la fiscalité de la version importée, puis l'activer. **L'activation ne publie aucun prix** : l'affichage public d'un prix demande une évolution distincte du configurateur, décidée explicitement.
+3. Pour les tarifs : importer la version corrigée du classeur, puis la publier (`pnpm system-prices:publish --currency EUR --tax HT`). L'activation d'une version du classeur change les prix affichés.

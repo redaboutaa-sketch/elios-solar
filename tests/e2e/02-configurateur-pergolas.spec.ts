@@ -1,6 +1,6 @@
 import { test, expect, newClientContext, type Page } from "./fixtures";
 import { acceptNecessaryOnly, createAccount, fillQuote, loginAdmin, shot, uid } from "./helpers";
-import { one } from "./db";
+import { one, publicCell, publicPricesActive } from "./db";
 
 // Chromium headless : rendu WebGL logiciel (SwiftShader).
 test.use({ launchOptions: { args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] } });
@@ -49,8 +49,19 @@ test("SB400 : règles de cotes, options, fermeture souhaitée, 3D, projet enregi
   const recap = page.getByTestId("system-recap");
   await expect(recap).toContainText("Pergola SB400");
   await expect(recap).toContainText("5 m");
-  await expect(page.getByTestId("system-price")).toContainText("Prix établi sur devis");
-  await expect(recap).not.toContainText("€");
+  // prix : cellule « Prix final HELIOSTORES » autoportante 5 m × 4 m (largeur 3,6 m arrondie à la dimension supérieure)
+  const priced = await publicPricesActive();
+  const expectedCell = priced ? await publicCell("pergola-sb400", "autoportante", 5000, 4000) : null;
+  if (priced) {
+    expect(expectedCell).not.toBeNull();
+    await expect(page.getByTestId("system-price")).toHaveAttribute("data-priced", "true");
+    await expect(page.getByTestId("system-price-amount")).toContainText(/€\s?HT/);
+    await expect(page.getByTestId("system-price")).toContainText("4 m de largeur × 5 m (projection)");
+  } else {
+    await expect(page.getByTestId("system-price")).toHaveAttribute("data-priced", "false");
+    await expect(page.getByTestId("system-price")).toContainText("Prix sur devis");
+    await expect(recap).not.toContainText("€");
+  }
 
   // 3D : même configuration que le devis
   await page.getByTestId("view-3d-toggle").click();
@@ -74,10 +85,13 @@ test("SB400 : règles de cotes, options, fermeture souhaitée, 3D, projet enregi
 
   const number = await fillQuote(page, email);
   await expect(page.getByTestId("quote-visual-status")).toContainText("visualisation 3D de votre configuration est jointe");
-  const quote = await one<{ id: string; kind: string; snapshot: { result: { priceMode: string; lines: unknown[] } }; attribution: { params: Record<string, string> } | null; configurationId: string | null }>('SELECT id, kind, snapshot, attribution, "configurationId" FROM "Quote" WHERE number = $1', [number]);
+  const quote = await one<{ id: string; kind: string; snapshot: { result: { priceMode: string; lines: unknown[]; systemPrice?: { amountMinor: number; currency: string; taxBasis: string } | null } }; attribution: { params: Record<string, string> } | null; configurationId: string | null }>('SELECT id, kind, snapshot, attribution, "configurationId" FROM "Quote" WHERE number = $1', [number]);
   expect(quote!.kind).toBe("system");
   expect(quote!.snapshot.result.priceMode).toBe("quote");
   expect(quote!.snapshot.result.lines).toEqual([]);
+  // prix recalculé par le serveur : même cellule que l'aperçu
+  expect(quote!.snapshot.result.systemPrice?.amountMinor ?? null).toBe(expectedCell);
+  if (priced) expect(quote!.snapshot.result.systemPrice).toMatchObject({ currency: "EUR", taxBasis: "HT" });
   expect(quote!.attribution?.params).toMatchObject({ utm_source: "e2e", utm_campaign: "recette-heliostores" });
   expect(quote!.configurationId).toBeTruthy();
   const visual = await one<{ kind: string; represented: string[] }>('SELECT kind, represented FROM "QuoteVisual" WHERE "quoteId" = $1', [quote!.id]);
@@ -86,15 +100,16 @@ test("SB400 : règles de cotes, options, fermeture souhaitée, 3D, projet enregi
 
   await page.goto("/compte/devis");
   const card = page.getByTestId("account-quote").filter({ hasText: number });
-  await expect(card).toContainText("Pergola SB400 · prix sur devis");
+  await expect(card).toContainText(priced ? /Pergola SB400 · structure \d[\d\s\u00a0\u202f]*(,\d+)?\s€\sHT/ : /Pergola SB400 · prix sur devis/);
   await expect.poll(() => card.getByTestId("quote-visual").locator("img").evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBeGreaterThan(0);
   const pdf = await page.request.get(`/api/devis/${quote!.id}/pdf`);
   expect(pdf.status()).toBe(200);
   expect(pdf.headers()["content-type"]).toBe("application/pdf");
+  expect(Buffer.from(await pdf.body()).toString("latin1")).not.toMatch(/aluprof|thysens/i);
 
   await page.goto("/compte/projets");
   const project = page.locator("li").filter({ hasText: title });
-  await expect(project).toContainText("prix sur devis");
+  await expect(project).toContainText(priced ? "structure" : "prix sur devis");
   await project.getByRole("link", { name: "Reprendre" }).click();
   await expect(page.locator("#dim-width")).toHaveValue("3600");
   await expect(page.locator("#dim-depth")).toHaveValue("5000");
@@ -105,6 +120,7 @@ test("SB400 : règles de cotes, options, fermeture souhaitée, 3D, projet enregi
   const adminPage = await admin.newPage();
   await loginAdmin(adminPage, `/admin/devis/${quote!.id}`);
   await expect(adminPage.getByTestId("quote-recap")).toContainText("Pergola SB400");
+  await expect(adminPage.getByTestId("quote-system-price")).toContainText(priced ? "Prix de la structure affiché au client" : "sur devis");
   await expect(adminPage.getByTestId("quote-attribution")).toContainText("utm_source=e2e");
   await expect(adminPage.getByTestId("quote-qualification")).toHaveText("À qualifier");
   await adminPage.getByLabel("Qualification du prospect").selectOption("QUALIFIED");

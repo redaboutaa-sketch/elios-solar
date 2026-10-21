@@ -111,16 +111,15 @@ fournit sa typographie.
 ## 6. Application
 
 - En-tête : surface `night` avec le logo transparent, trois familles (Pergolas — Screens — Stores bannes) avec
-  sous-menus produits, puis Conseil, Aide et bouton Devis ; bandeau « Préproduction — catalogue en cours de
-  validation, prix sur devis, paiement en mode test. » tant que le site n'est pas indexable.
+  sous-menus produits, puis Conseil, Aide et bouton Devis ; bandeau « Préproduction — paiement en ligne en
+  mode test. » tant que le site n'est pas indexable.
 - Pied de page : logo, familles, liens légaux, coordonnées **uniquement** issues de Réglages (SiteSettings), mention
-  « Photographies produits : documentation fabricant (ALUPROF / catalogue THYSENS), non représentatives de
-  réalisations HELIOSTORES. »
+  « Visuels non contractuels. » (aucune référence au fabricant ni au fournisseur, décision du 2026-10-21).
 - Métadonnées : titre « %s — HELIOSTORES », `openGraph.siteName`, `theme-color` `#0B0F0D` ; indexation inchangée
   (préproduction non indexable).
 - PDF configuration/devis : bandeau `night` avec le logo PNG intégré, titres en `brand-700`. Les configurations
-  « sur devis » (`priceMode: "quote"`) impriment le récapitulatif et « Prix : établi sur devis (aucun tarif public
-  validé) », sans total ni TVA.
+  de systèmes (`priceMode: "quote"`) impriment le récapitulatif et le prix de la structure (€ HT, grille du
+  classeur), ou « Prix : sur devis pour ces dimensions » hors grille ; options, pose et livraison au devis.
 - E-mails : bandeau sombre avec le logo (image distante, `alt` « HELIOSTORES »), titres et liens `brand-700`.
 - Les documents déjà émis (numéros de devis, PDF et instantanés stockés) ne sont pas réécrits.
 

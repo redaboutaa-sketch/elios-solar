@@ -2,34 +2,40 @@
 /**
  * Configurateur d'un système HELIOSTORES (pergola, screen, store banne) à partir des règles sourcées de la
  * famille. Le même objet `input` alimente l'évaluation (même moteur que le serveur), la 3D, le plan 2D et la
- * demande de devis. Aucun prix n'est affiché : il est établi sur devis.
+ * demande de devis. Le prix affiché est celui de la grille publique (structure à la cote) ; options, pose et
+ * livraison sont chiffrées au devis.
  */
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { Save, Share2 } from "lucide-react";
 import { saveConfigurationAction } from "@/server/actions/configurator";
 import { evaluate } from "@/domain/engine";
-import { defaultSystemInput, dimRangeText, nearestAllowed, spotsFor, type DimRule, type SourceRef, type SystemInput, type SystemRules } from "@/domain/system";
-import type { CatalogSnapshot, SideKey } from "@/domain/types";
+import { defaultSystemInput, dimRangeText, nearestAllowed, spotsFor, type DimRule, type SystemInput, type SystemRules } from "@/domain/system";
+import type { CatalogSnapshot, EvaluationResult, SideKey } from "@/domain/types";
+import { formatSystemPrice } from "@/domain/system-pricing";
 import { IssueList, Notice } from "@/components/ui/alert";
 import { PlanPreview } from "./plan-preview";
 import { QuoteForm } from "./quote-form";
 import { SystemVisuals } from "./scene-3d/visuals";
 import { useQuoteVisual } from "./quote-visual";
 
-const SIDES: Array<[SideKey, string]> = [["front", "Avant"], ["left", "Gauche"], ["right", "Droite"], ["back", "Arrière"]];
-
-function Sources({ sources }: { sources: SourceRef[] }) {
-  if (!sources.length) return null;
+/** Prix de la grille publique pour la cote saisie, ou renvoi au devis (cote hors grille, blocage). */
+function SystemPriceBox({ result }: { result: EvaluationResult }) {
+  const p = result.systemPrice;
+  if (!p) {
+    return <p data-testid="system-price" data-priced="false" className="mt-4 rounded-lg bg-brand-100 px-3 py-2 text-sm text-ink"><strong>Prix sur devis</strong> pour ces dimensions : un conseiller vous le communique avec votre devis.</p>;
+  }
   return (
-    <details className="mt-1 text-xs text-stone-700">
-      <summary className="cursor-pointer">Sources</summary>
-      <ul className="mt-1 list-disc pl-4">
-        {sources.map((s, i) => <li key={`${s.id}-${i}`}>{s.url ? <a href={s.url} rel="noopener noreferrer" target="_blank" className="underline">{s.label}</a> : s.label}{s.loc ? ` — ${s.loc}` : ""}</li>)}
-      </ul>
-    </details>
+    <div data-testid="system-price" data-priced="true" className="mt-4 rounded-lg bg-brand-100 px-3 py-2 text-sm text-ink">
+      <p className="flex flex-wrap items-baseline justify-between gap-2"><span>Prix de la structure</span><strong className="font-display text-2xl tabular-nums" data-testid="system-price-amount">{formatSystemPrice(p.amountMinor, p.currency, p.taxBasis)}</strong></p>
+      <p className="mt-1 text-xs text-stone-700">Tarif pour {fmtM(p.grid.widthMm)} de largeur × {fmtM(p.grid.dimMm)} ({p.grid.dimLabel.toLowerCase()}){p.roundedUp ? ", dimension de la grille immédiatement supérieure à votre cote" : ""}. Options, pose et livraison chiffrées au devis.</p>
+    </div>
   );
 }
+
+const fmtM = (mm: number) => `${(mm / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 3 })} m`;
+
+const SIDES: Array<[SideKey, string]> = [["front", "Avant"], ["left", "Gauche"], ["right", "Droite"], ["back", "Arrière"]];
 
 function DimField({ id, rule, value, onChange }: { id: string; rule: DimRule; value: number | undefined; onChange: (v: number | undefined) => void }) {
   if (rule.valuesMm?.length) {
@@ -40,7 +46,6 @@ function DimField({ id, rule, value, onChange }: { id: string; rule: DimRule; va
           {rule.valuesMm.map((v) => <option key={v} value={v}>{(v / 1000).toLocaleString("fr-FR")} m</option>)}
         </select>
         <p className="mt-1 text-xs text-stone-700">{dimRangeText(rule)}</p>
-        <Sources sources={rule.sources} />
       </div>
     );
   }
@@ -52,7 +57,6 @@ function DimField({ id, rule, value, onChange }: { id: string; rule: DimRule; va
       {value != null && rule.stepMm && rule.minMm != null && (value - rule.minMm) % rule.stepMm !== 0 && value >= rule.minMm && value <= rule.maxMm && (
         <button type="button" className="mt-1 text-xs underline" onClick={() => onChange(nearestAllowed(rule, value))}>Utiliser {nearestAllowed(rule, value)} mm</button>
       )}
-      <Sources sources={rule.sources} />
     </div>
   );
 }
@@ -89,7 +93,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
     <div className="grid gap-8 lg:grid-cols-[1fr_1fr]" data-testid="system-configurator" data-family={familySlug}>
       <div className="space-y-4 lg:sticky lg:top-24 self-start">
         <SystemVisuals catalog={catalog} input={input} result={result} art={art} plan={plan} onImage={visual.onImage} onCaptureReady={visual.onCaptureReady} />
-        <p className="text-xs text-stone-700">Photographies : documentation fabricant / fournisseur, non représentatives d'une réalisation HELIOSTORES. La vue 3D est indicative et ne valide ni la faisabilité ni la structure.</p>
+        <p className="text-xs text-stone-700">Visuels non contractuels. La vue 3D est indicative et ne valide ni la faisabilité ni la structure.</p>
       </div>
 
       <div className="space-y-6">
@@ -122,7 +126,6 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
               </select>
             </div>
             <p className="mt-1 text-xs text-stone-700">Pastille d'aperçu indicative : la teinte réelle se vérifie sur nuancier.</p>
-            <Sources sources={finish?.sources ?? []} />
           </div>
           {rules.fabrics?.length ? (
             <div className="mt-4">
@@ -130,7 +133,6 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
               <select id="fabric" className="input" value={input.fabricCode ?? ""} onChange={(e) => set({ fabricCode: e.target.value })}>
                 {rules.fabrics.map((f) => <option key={f.code} value={f.code}>{f.label}{f.status === "to_confirm" ? " — à confirmer" : ""}</option>)}
               </select>
-              <Sources sources={rules.fabrics.find((f) => f.code === input.fabricCode)?.sources ?? []} />
             </div>
           ) : null}
           {rules.controls?.length ? (
@@ -140,7 +142,6 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
                 {rules.controls.map((c) => <option key={c.code} value={c.code}>{c.label}{c.minWidthMm ? ` — largeur min. ${c.minWidthMm / 10} cm` : ""}{c.status === "to_confirm" ? " — à confirmer" : ""}</option>)}
               </select>
               {(() => { const c = rules.controls!.find((x) => x.code === input.controlCode); return c?.cable ? <p className="mt-1 text-xs text-stone-700">Fourni avec {c.cable}.</p> : null; })()}
-              <Sources sources={rules.controls.find((c) => c.code === input.controlCode)?.sources ?? []} />
             </div>
           ) : null}
         </section>
@@ -198,7 +199,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
               <div key={`${r.label}-${i}`} className="contents"><dt className="text-stone-700">{r.label}</dt><dd>{r.value}{r.status === "to_confirm" ? <span className="badge-warn ml-2">à confirmer</span> : null}</dd></div>
             ))}
           </dl>
-          <p data-testid="system-price" className="mt-4 rounded-lg bg-brand-100 px-3 py-2 text-sm text-ink"><strong>Prix établi sur devis.</strong> Les tarifs transmis par nos fournisseurs sont en cours de validation (nature, devise, fiscalité) : aucun prix n'est affiché en ligne.</p>
+          <SystemPriceBox result={result} />
         </section>
 
         <IssueList issues={result.issues.filter((i) => i.code !== "system_quote_only")} />

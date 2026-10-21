@@ -144,7 +144,7 @@ describe("import des tarifs fournisseur", () => {
     expect(json).not.toContain(KEY);
   });
 
-  it("aucun module public ne lit les tarifs fournisseur", () => {
+  it("aucun module public ne lit les tarifs fournisseur (sauf le chargeur unique de la colonne publique)", () => {
     const root = path.resolve(import.meta.dirname, "../../src");
     const offenders: string[] = [];
     const walk = (dir: string) => {
@@ -157,7 +157,9 @@ describe("import des tarifs fournisseur", () => {
         }
         if (!/\.(ts|tsx)$/.test(n)) continue;
         const rel = path.relative(root, p).split(path.sep).join("/");
-        const allowed = rel.startsWith("server/supplier-prices/") || rel === "server/actions/admin/supplier-prices.ts" || rel.startsWith("app/admin/catalogue/tarifs-fournisseur/");
+        const allowed = rel.startsWith("server/supplier-prices/") || rel === "server/actions/admin/supplier-prices.ts" || rel.startsWith("app/admin/catalogue/tarifs-fournisseur/")
+          // seul lecteur public : colonne « Prix final HELIOSTORES » de la version ACTIVE du classeur
+          || rel === "server/pricing/system-prices.ts";
         if (allowed) continue;
         const src = readFileSync(p, "utf8");
         // import du module ou accès Prisma aux modèles (les simples mentions en commentaire sont ignorées)
