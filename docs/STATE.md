@@ -8,16 +8,20 @@ Le bilan complet est dans `docs/heliostores/README.md`, avec les sources, corres
 - **Marque** HELIOSTORES (logo client), trois familles publiques : Pergolas (SB400, SB500), Screens (REFLEKSOL 120 ZiiiP), Stores bannes (CASABLANCA).
   VERANDA FTS reste en brouillon, son classement est à décider.
 - **Configurateur générique des systèmes** (`src/domain/system.ts`, `/configurateur/<produit>`) : règles sourcées, 3D pour pergola, screen et store,
-  **prix toujours sur devis** (`priceMode: "quote"`).
-- **Tarifs fournisseur** importés en privé (`pnpm supplier-prices:import`, Administration → Tarifs fournisseur), jamais lus par la boutique.
+  prix de la structure lu dans la grille « Prix final HELIOSTORES » du classeur, en **€ HT** (décision client du 2026-10-21,
+  `docs/heliostores/prix-publics.md`) ; commande toujours par devis (`priceMode: "quote"`), options, pose et livraison au devis.
+- **Tarifs fournisseur** importés en privé (`pnpm supplier-prices:import`, Administration → Tarifs fournisseur). Seule la colonne
+  « Prix final HELIOSTORES » de la version active du classeur est publiée (`pnpm system-prices:publish --currency EUR --tax HT`).
+- **Site public sans référence au fabricant ni au fournisseur** : pas de sources, marque, crédits photo ni documents fabricant (archivés) ;
+  les sources restent dans l'administration.
 - **Médias fabricant** importés par `pnpm media:heliostores --dir private/heliostores/media-staging --apply` ; les fichiers restent privés.
 - **Ancien catalogue de démonstration** archivé (`legacy`), conservé pour l'historique ; `SEED_LEGACY_DEMO=active` le réactive pour les seuls tests d'intégration.
-- **Vérifications** (commit déployé `4bfb76c`) :
-  - typecheck ✅, lint ✅ (0 erreur), unitaires 194/194 ✅, intégration 80/80 ✅ ;
-  - **recette navigateur complète contre Docker : 29/29 en une campagne, sans relance** ✅ ;
-  - CI `verify` et `e2e-docker` (29/29) ✅ sur push et PR ;
-  - contrôle externe HTTPS (identité, images, 3D des trois types, compte, devis) ✅.
-- **Décisions client (2026-10-21)** : VERANDA FTS hors catalogue public (brouillon) ; tout sur devis ; tarifs en brouillon jusqu'à un écrit du fournisseur ; 7 dossiers de validation ouverts. Questions : `docs/heliostores/validation-fournisseur.md` ; revue : `docs/heliostores/revue-client.md`.
+- **Vérifications** (commit déployé `12d7aca`, prix publiés et références fabricant retirées) :
+  - typecheck ✅, lint ✅ (0 erreur), unitaires 202/202 ✅, intégration 81/81 ✅ ;
+  - **recette navigateur complète contre Docker : 29/29 en une campagne, sans relance**, avec la grille active ✅ ;
+  - contrôle HTTPS : prix « à partir de » et configurateur, aucune mention du fabricant ou du fournisseur, galeries 16/3/9/13 ✅.
+  - Sauvegarde avant déploiement : `backups/preprod/db_20261021_090234.dump` et `media_20261021_090234.tar.gz`.
+- **Décisions client (2026-10-21)** : VERANDA FTS hors catalogue public (brouillon) ; prix du classeur affichés en € HT (mise à jour du jour, remplace « tout sur devis ») ; 7 dossiers de validation ouverts. Questions : `docs/heliostores/validation-fournisseur.md` ; revue : `docs/heliostores/revue-client.md`.
 - **Médias** : volume `elios_solar_uploads` conservé entre redéploiements ; sauvegarde `MEDIA_VOLUME=elios_solar_uploads scripts/backup.sh backups/preprod` ; contrôle `scripts/check-public-media.ts` (voir `docs/heliostores/medias.md`).
 - **Préproduction** https://demo-elios.beaverdata.eu (identifiants de revue inchangés). Dernière sauvegarde : `backups/preprod/db_20261020_210852.dump` et `media_20261020_210852.tar.gz`, avec leurs empreintes.
 - **Recette contre Docker** : remettre temporairement `NEXT_PUBLIC_SITE_URL` et `BETTER_AUTH_URL` sur `http://127.0.0.1:3401`, lancer `scripts/e2e-docker.sh .env.prod`, puis rétablir l'URL HTTPS (procédure suivie pour cette livraison).

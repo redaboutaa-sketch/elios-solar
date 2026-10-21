@@ -49,8 +49,9 @@ async function main() {
       if (!ok) { broken += 1; console.log(`    image cassée : « ${info.alt} » (principale ${a.status} ${a.type}, vignette ${b.status} ${b.type}, largeur ${info.w})`); }
     }
     report(broken === 0, `${f.slug} : ${count - broken}/${count} images principales et vignettes chargées et décodées`);
-    const credit = await gallery.getByTestId("media-credit").first().textContent();
-    report(/ALUPROF|THYSENS/.test(credit ?? ""), `${f.slug} : crédit affiché (${credit})`);
+    // aucune référence au fabricant ni au fournisseur (décision du 2026-10-21) : ni crédit, ni nom dans la page
+    report((await gallery.getByTestId("media-credit").count()) === 0, `${f.slug} : aucun crédit fabricant affiché`);
+    report(!/aluprof|thysens|\bselt\b|euro[\s-]?confort/i.test(await page.content()), `${f.slug} : aucune mention du fabricant ou du fournisseur`);
   }
 
   for (const path of ["/", "/pergolas", "/screens", "/stores-bannes"]) {
