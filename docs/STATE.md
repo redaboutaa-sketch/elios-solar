@@ -1,6 +1,6 @@
 # État réel du projet
 
-Mis à jour : 2026-10-21 — **migration HELIOSTORES** (branche `feat/heliostores`, draft PR #2 vers `feat/storefront-configurator`).
+Mis à jour : 2026-10-21 (commande en ligne) — **migration HELIOSTORES** (branche `feat/heliostores`, draft PR #2 vers `feat/storefront-configurator`).
 Le bilan complet est dans `docs/heliostores/README.md`, avec les sources, correspondances, médias, la revue tarifaire, l'import et l'identité.
 
 ## HELIOSTORES (en cours de revue)
@@ -9,19 +9,23 @@ Le bilan complet est dans `docs/heliostores/README.md`, avec les sources, corres
   VERANDA FTS reste en brouillon, son classement est à décider.
 - **Configurateur générique des systèmes** (`src/domain/system.ts`, `/configurateur/<produit>`) : règles sourcées, 3D pour pergola, screen et store,
   prix de la structure lu dans la grille « Prix final HELIOSTORES » du classeur, en **€ HT** (décision client du 2026-10-21,
-  `docs/heliostores/prix-publics.md`) ; commande toujours par devis (`priceMode: "quote"`), options, pose et livraison au devis.
+  `docs/heliostores/prix-publics.md`). **Commande en ligne** d'une configuration entièrement tarifée (structure seule : prix de grille,
+  sans option, pose ni choix à confirmer), TVA ajoutée au panier, livraison et pose non comprises, paiement simulé ; sinon devis.
+- **Réalisations et Showroom masqués** (404, `PUBLIC_SECTIONS`) ; autres pages provisoires conservées (audit : `docs/heliostores/audit-pages.md`).
+  Bilan à transmettre au client : `docs/heliostores/bilan-client.md`.
 - **Tarifs fournisseur** importés en privé (`pnpm supplier-prices:import`, Administration → Tarifs fournisseur). Seule la colonne
   « Prix final HELIOSTORES » de la version active du classeur est publiée (`pnpm system-prices:publish --currency EUR --tax HT`).
 - **Site public sans référence au fabricant ni au fournisseur** : pas de sources, marque, crédits photo ni documents fabricant (archivés) ;
   les sources restent dans l'administration.
 - **Médias fabricant** importés par `pnpm media:heliostores --dir private/heliostores/media-staging --apply` ; les fichiers restent privés.
 - **Ancien catalogue de démonstration** archivé (`legacy`), conservé pour l'historique ; `SEED_LEGACY_DEMO=active` le réactive pour les seuls tests d'intégration.
-- **Vérifications** (commit déployé `12d7aca`, prix publiés et références fabricant retirées) :
-  - typecheck ✅, lint ✅ (0 erreur), unitaires 202/202 ✅, intégration 81/81 ✅ ;
-  - **recette navigateur complète contre Docker : 29/29 en une campagne, sans relance**, avec la grille active ✅ ;
-  - contrôle HTTPS : prix « à partir de » et configurateur, aucune mention du fabricant ou du fournisseur, galeries 16/3/9/13 ✅.
-  - Sauvegarde avant déploiement : `backups/preprod/db_20261021_090234.dump` et `media_20261021_090234.tar.gz`.
-- **Décisions client (2026-10-21)** : VERANDA FTS hors catalogue public (brouillon) ; prix du classeur affichés en € HT (mise à jour du jour, remplace « tout sur devis ») ; 7 dossiers de validation ouverts. Questions : `docs/heliostores/validation-fournisseur.md` ; revue : `docs/heliostores/revue-client.md`.
+- **Vérifications** (commit déployé `d367e97`, commande en ligne de la structure seule ; libellé d'authentification Traefik « HELIOSTORES - revue ») :
+  - typecheck ✅, lint ✅ (0 erreur), unitaires 204/204 ✅, intégration 82/82 ✅ (panier → commande → paiement simulé → e-mails) ;
+  - recette navigateur en dev avec la grille active : 33/33 ✅ ;
+  - recette HTTPS directe de la commande en ligne (`E2E_BASE_URL=https://… E2E_HTTP_USER/E2E_HTTP_PASSWORD scripts/e2e-docker.sh .env.prod tests/e2e/08-commande-systeme.spec.ts --no-deps`) : 4/4 ✅ ;
+  - contrôle HTTPS : 20 pages en 200, Réalisations/Showroom/VERANDA FTS en 404, aucune mention du fabricant, du fournisseur ni d'ELIOS SOLAR, noindex ✅ ; médias conformes ✅.
+  - Sauvegarde avant déploiement : `backups/preprod/db_20261021_105905.dump` et `media_20261021_105905.tar.gz`.
+- **Décisions client (2026-10-21)** : VERANDA FTS hors catalogue public (brouillon) ; prix du classeur affichés en € HT (mise à jour du jour, remplace « tout sur devis ») ; commande en ligne de la structure seule (paiement simulé) ; Réalisations et Showroom masqués ; 7 dossiers de validation ouverts. Questions : `docs/heliostores/validation-fournisseur.md` ; revue : `docs/heliostores/revue-client.md`.
 - **Médias** : volume `elios_solar_uploads` conservé entre redéploiements ; sauvegarde `MEDIA_VOLUME=elios_solar_uploads scripts/backup.sh backups/preprod` ; contrôle `scripts/check-public-media.ts` (voir `docs/heliostores/medias.md`).
 - **Préproduction** https://demo-elios.beaverdata.eu (identifiants de revue inchangés). Dernière sauvegarde : `backups/preprod/db_20261020_210852.dump` et `media_20261020_210852.tar.gz`, avec leurs empreintes.
 - **Recette contre Docker** : remettre temporairement `NEXT_PUBLIC_SITE_URL` et `BETTER_AUTH_URL` sur `http://127.0.0.1:3401`, lancer `scripts/e2e-docker.sh .env.prod`, puis rétablir l'URL HTTPS (procédure suivie pour cette livraison).
