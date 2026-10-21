@@ -12,7 +12,7 @@ importés, grille de prix active). Les captures restent hors du dépôt, comme t
 | Détails et interactions | méga-menu, survol et focus des dessins, galerie, onglets, choix en tuiles | ✅ (captures d'état) |
 | Mobile et tablette | 320, 360, 390, 720, 768, 1024, 1440 px, 13 pages | ✅ 0 défilement horizontal (`scrollWidth − innerWidth`) |
 | Zoom | 200 % ≈ 720 px CSS, 400 % ≈ 320 px CSS | ✅ réagencement sans perte ni débordement |
-| Parcours de conversion | e2e : catalogue, configurateurs SB400 / SB500 / REFLEKSOL / CASABLANCA, devis, commande, chat, médias | ✅ 33 parcours en dev (après correctif), 6/6 en HTTPS sur la préproduction |
+| Parcours de conversion | e2e : catalogue, configurateurs SB400 / SB500 / REFLEKSOL / CASABLANCA, devis, commande, chat, médias | ✅ dev : 32/33, puis 9/9 sur les specs 02 et 08 après le correctif TR-DES-010 ; HTTPS sur la préproduction : 6/6 (specs 01 et 08) |
 | Accessibilité | axe-core 4.10 (WCAG 2.0/2.1/2.2 A et AA), 13 pages × 390 / 1440 px | ✅ 0 violation |
 | Clavier | ordre de tabulation, lien d'évitement, sous-menus, Échap du menu mobile, retour du focus | ✅ |
 | Réduction des animations | `reducedMotion: reduce` : dessins statiques, pas de glissement | ✅ |
