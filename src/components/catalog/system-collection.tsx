@@ -7,6 +7,8 @@ import { categoryByKey, configuratorHref, productHref, type CategoryKey } from "
 import { dimRangeText } from "@/domain/system";
 import { formatSystemPrice } from "@/domain/system-pricing";
 import type { listSystemFamilies } from "@/server/catalog/systems";
+import { publishedMediaFor } from "@/server/media/queries";
+import type { PublishedMedia } from "@/server/media/types";
 
 type Item = Awaited<ReturnType<typeof listSystemFamilies>>[number];
 
@@ -26,7 +28,7 @@ function Comparison({ items }: { items: Item[] }) {
     <section className="section-y border-t border-sand-200" aria-labelledby="comparatif">
       <h2 id="comparatif" className="font-display text-display font-semibold">Comparer les modèles</h2>
       <p className="mt-2 max-w-2xl text-stone-700">Cotes et poses documentées pour un module ; les points « à confirmer » sont vérifiés au devis.</p>
-      <div className="mt-8 overflow-hidden rounded-xl border border-sand-200 bg-white">
+      <div className="mt-8 overflow-hidden border border-sand-200 bg-white">
         <table className="w-full table-fixed text-left text-sm" data-testid="collection-compare">
           <caption className="sr-only">Comparatif des modèles</caption>
           <thead className="bg-sand-100">
@@ -49,31 +51,38 @@ function Comparison({ items }: { items: Item[] }) {
   );
 }
 
-/** Page d'une famille publique : bandeau dessiné, modèles en rangées alternées, comparatif, accès fiche et configurateur. */
-export function SystemCollection({ category, items }: { category: CategoryKey; items: Item[] }) {
+/** Rendu produit sur fond clair pour la présentation « catalogue » ; sinon le visuel principal. */
+const productShot = (items: PublishedMedia[]) => items.find((m) => m.role === "gallery" && m.nature === "RENDER" && (m.width ?? 0) >= 600) ?? items.find((m) => m.role === "gallery") ?? items[0] ?? null;
+
+/** Page d'une famille publique : bandeau photographique, modèles en grandes présentations, comparatif. */
+export async function SystemCollection({ category, items }: { category: CategoryKey; items: Item[] }) {
   const cat = categoryByKey(category)!;
+  const shots = new Map(await Promise.all(items.map(async (f) => [f.slug, productShot(await publishedMediaFor(f.slug))] as const)));
+  const banner = items[0]?.hero ?? null;
   return (
     <>
-      <section className="border-b border-sand-200 bg-gradient-to-b from-white to-sand-50">
-        <div className="container-x grid items-center gap-6 py-8 md:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] md:py-10">
+      <section className="relative isolate overflow-hidden bg-night text-white" aria-labelledby="famille-titre">
+        {banner && <MediaImage media={banner} sizes="100vw" eager className="absolute inset-0 -z-10 size-full object-cover" />}
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgb(11_15_13/0.8)_0%,rgb(11_15_13/0.45)_55%,rgb(11_15_13/0.2)_100%)]" aria-hidden="true" />
+        <div className="container-x grid min-h-[22rem] items-end gap-6 py-10 md:min-h-[26rem] md:grid-cols-[minmax(0,1fr)_auto] md:py-12">
           <div>
-            <Breadcrumbs items={[{ label: cat.label }]} />
-            <h1 className="mt-5 font-display text-hero font-semibold">{cat.label}</h1>
-            <p className="mt-3 max-w-xl text-lg text-stone-800 text-pretty">{cat.intro} Chaque modèle affiche son prix selon vos dimensions.</p>
-            {items.length > 1 && <p className="mt-4 text-sm text-stone-700">{items.length} modèles · <a href="#comparatif" className="link-brand">comparer</a></p>}
+            <Breadcrumbs items={[{ label: cat.label }]} tone="light" />
+            <h1 id="famille-titre" className="mt-5 font-display text-hero font-semibold">{cat.label}</h1>
+            <p className="mt-3 max-w-xl text-lg text-sand-100 text-pretty">{cat.intro} Chaque modèle affiche son prix selon vos dimensions.</p>
+            {items.length > 1 && <p className="mt-4 text-sm text-sand-200">{items.length} modèles · <a href="#comparatif" className="text-white underline underline-offset-4">comparer</a></p>}
           </div>
-          <FamilySketch kind={category} decorative={false} className="sketch-trigger mx-auto hidden w-full max-w-sm md:block" />
+          <FamilySketch kind={category} tone="light" sun={false} decorative={false} className="sketch-trigger hidden w-56 md:block" />
         </div>
       </section>
       <div className="container-x">
         {items.length === 0 ? (
-          <div className="my-12 rounded-2xl border border-dashed border-sand-300 bg-white p-10 text-center"><p className="font-display text-2xl">Modèles en cours d'intégration.</p><p className="mt-2 text-stone-700"><Link href="/devis" className="underline">Décrivez votre projet</Link> : un conseiller vous répond.</p></div>
+          <div className="my-12 border border-dashed border-sand-300 bg-white p-10 text-center"><p className="font-display text-2xl">Modèles en cours d'intégration.</p><p className="mt-2 text-stone-700"><Link href="/devis" className="underline">Décrivez votre projet</Link> : un conseiller vous répond.</p></div>
         ) : (
           <ul className="divide-y divide-sand-200" data-testid="collection">
             {items.map((f, i) => (
               <li key={f.slug} className="grid items-center gap-6 py-10 md:grid-cols-2 md:gap-12 md:py-14">
-                <Link href={productHref(category, f.slug)} className={`group block overflow-hidden rounded-2xl bg-white ${i % 2 ? "md:order-2" : ""}`} tabIndex={-1} aria-hidden="true">
-                  {f.hero ? <MediaImage media={f.hero} sizes="(min-width: 768px) 46vw, 92vw" eager={i === 0} className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" /> : <span className="grid aspect-[4/3] place-items-center text-sm text-stone-700">Visuel à venir</span>}
+                <Link href={productHref(category, f.slug)} className={`group relative block aspect-[4/3] overflow-hidden border border-sand-200 bg-white ${i % 2 ? "md:order-2" : ""}`} tabIndex={-1} aria-hidden="true">
+                  {shots.get(f.slug) ? <MediaImage media={shots.get(f.slug)!} sizes="(min-width: 768px) 46vw, 92vw" className="absolute inset-0 size-full object-contain p-8 transition-transform duration-500 group-hover:scale-[1.03]" /> : <span className="grid size-full place-items-center text-sm text-stone-700">Visuel à venir</span>}
                 </Link>
                 <div className="min-w-0">
                   <p className="eyebrow">{cat.singular}</p>
@@ -86,8 +95,8 @@ export function SystemCollection({ category, items }: { category: CategoryKey; i
                   </dl>
                   <p className="mt-5 text-base" data-testid="collection-price">{priceText(f) ? <>À partir de <span className="font-display text-2xl font-semibold tabular-nums">{priceText(f)}</span></> : "Prix sur devis"}</p>
                   <div className="mt-6 flex flex-wrap gap-2">
+                    <Link href={productHref(category, f.slug)} className="btn-secondary">Découvrir</Link>
                     <Link href={configuratorHref(f.slug)} className="btn-accent">Configurer <ArrowRight className="size-4" aria-hidden="true" /></Link>
-                    <Link href={productHref(category, f.slug)} className="btn-secondary">Voir la fiche</Link>
                   </div>
                 </div>
               </li>

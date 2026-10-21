@@ -163,10 +163,10 @@ function Viewer3D({ model, selected = null, onSelect, onImage, fallback, onCaptu
       <div className="flex flex-wrap items-center gap-2">
         <div role="group" aria-label="Vues prédéfinies" className="flex flex-wrap gap-1">
           {VIEW_PRESETS.map((p) => (
-            <button key={p.id} type="button" aria-pressed={view === p.id} onClick={() => { setView(p.id); if (view === p.id) engine?.setView(p.id); }} className={`rounded-full border px-3 py-1.5 text-xs min-h-9 ${view === p.id ? "border-ink bg-anthracite text-sand-50" : "border-sand-300 bg-white"}`}>{p.label}</button>
+            <button key={p.id} type="button" aria-pressed={view === p.id} onClick={() => { setView(p.id); if (view === p.id) engine?.setView(p.id); }} className={`rounded-[2px] border px-3 py-1.5 text-xs min-h-9 ${view === p.id ? "border-ink bg-anthracite text-sand-50" : "border-sand-300 bg-white"}`}>{p.label}</button>
           ))}
         </div>
-        <button type="button" aria-pressed={night} onClick={() => setNight((n) => !n)} className="inline-flex items-center gap-1 rounded-full border border-sand-300 bg-white px-3 py-1.5 text-xs min-h-9">
+        <button type="button" aria-pressed={night} onClick={() => setNight((n) => !n)} className="inline-flex items-center gap-1 rounded-[2px] border border-sand-300 bg-white px-3 py-1.5 text-xs min-h-9">
           {night ? <Sun className="size-3.5" aria-hidden="true" /> : <Moon className="size-3.5" aria-hidden="true" />} {night ? "Ambiance jour" : "Ambiance nuit"}
         </button>
       </div>

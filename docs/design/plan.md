@@ -13,3 +13,15 @@ Chaque tâche : besoin, changement visuel, pages, critère d'acceptation, contr�
 | TR-DES-007 | US-DES-004/005 | Configurateur : aperçu + récapitulatif + prix collants (desktop), repères d'étapes, barre de prix mobile, chat relevé | `/configurateur/*` | prix visible pendant toute la saisie ; aucun champ masqué par la barre ou le chat | e2e 02/03/08, captures mobile |
 | TR-DES-008 | US-DES-006 | Micro-interactions : menus, galerie, sélection, retours d'envoi ; `prefers-reduced-motion` | toutes | aucune animation > 600 ms ; rien de caché sans JS | revue, `reducedMotion` |
 | TR-DES-009 | tous | QA : 5 largeurs, zoom 200 %, axe-core, mesures avant/après | pages représentatives | 0 débordement ; 0 violation axe sérieuse | `docs/design/visual-qa.md` |
+
+## Itération 2 — composition « catalogue fabricant » (2026-10-21 b)
+
+| ID | Besoin | Changement | Pages | Critère d'acceptation | Contrôle |
+|---|---|---|---|---|---|
+| TR-DES-020 | US-DES-001 | En-tête superposé au grand visuel, compact au défilement, « Nos solutions » en panneau illustré, menu mobile fermé par Retour | toutes | logo lisible sur photo ; Retour ferme le menu sans quitter la page | capture, scénario Retour |
+| TR-DES-021 | US-DES-001 | Grand visuel à 3 vues manuelles | `/` | aucune lecture automatique ; vues 2–3 chargées à l'affichage | clavier, réseau |
+| TR-DES-022 | US-DES-001 | Panneaux « Nos solutions » extensibles avec dessin au trait blanc | `/` | actif ≈ 50 % au survol et au focus ; empilés sur tactile | largeurs mesurées |
+| TR-DES-023 | US-DES-002 | « Nos modèles » par onglets ; « Composez votre projet » avec 3D à la demande | `/` | prix « à partir de » visibles ; three.js chargé au clic | e2e 01, scénario |
+| TR-DES-024 | US-DES-002 | Bandeau photo des familles, modèles sur fond blanc | collections | 2 modèles = 2 présentations ; comparatif conservé | captures, e2e 01 |
+| TR-DES-025 | US-DES-003 | Galerie à modes Photos / 3D / Dessins, agrandissement `<dialog>`, rangées « en détail » | fiches | mode vide masqué ; Échap ferme | scénario, e2e 07 |
+| TR-DES-026 | — | Index `/guides` (page de navigation, contenus inchangés) | `/guides` | lien « Guides » de l'en-tête valide | 200 |

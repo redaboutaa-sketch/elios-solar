@@ -12,6 +12,8 @@ import type { PublishedMedia } from "@/server/media/types";
 import type { PublicDocument } from "@/server/documents/queries";
 import type { SystemFamily } from "@/server/catalog/systems";
 import { BRAND } from "@/config/brand";
+import { defaultSceneModel } from "@/server/catalog/scene-preview";
+import { MediaImage } from "@/components/ui/media-image";
 
 const USAGE: Record<string, string> = {
   pergola: "Couvrir une terrasse, contre la maison ou en espace libre, et régler l'ensoleillement par l'orientation des lames.",
@@ -20,14 +22,16 @@ const USAGE: Record<string, string> = {
   roof_blind: "Ombrager une toiture vitrée.",
 };
 
-export function SystemProductPage({ family: f, category, media, docs }: { family: SystemFamily; category: CategoryKey; media: PublishedMedia[]; docs: PublicDocument[] }) {
+export async function SystemProductPage({ family: f, category, media, docs }: { family: SystemFamily; category: CategoryKey; media: PublishedMedia[]; docs: PublicDocument[] }) {
   const cat = categoryByKey(category)!;
+  const scene = await defaultSceneModel(f.slug);
+  const details = media.filter((m) => m.role === "detail" && (m.width ?? 0) >= 500).slice(0, 4);
   const r = f.rules;
   const d = r.dims;
   const jsonLd = { "@context": "https://schema.org", "@type": "Product", name: f.name, description: f.shortDescription, ...(f.fromPrice ? { offers: { "@type": "AggregateOffer", priceCurrency: f.fromPrice.currency, lowPrice: (f.fromPrice.amountMinor / 100).toFixed(2) } } : {}), image: media.slice(0, 3).map((m) => `${BRAND.siteUrl}${m.path}`) };
   const tabs = [
     {
-      id: "description", label: "Description", content: (
+      id: "description", label: "Présentation", content: (
         <div className="prose-shop">
           <p>{f.description}</p>
           <h3>Usage</h3>
@@ -55,7 +59,7 @@ export function SystemProductPage({ family: f, category, media, docs }: { family
       ),
     },
     {
-      id: "teintes", label: r.fabrics?.length ? "Teintes et toiles" : "Teintes", content: (
+      id: "teintes", label: r.fabrics?.length ? "Finitions et toiles" : "Finitions", content: (
         <div className="space-y-4" data-testid="system-finishes">
           <ul className="flex flex-wrap gap-2">{r.finishes.map((c) => <li key={c.code} className="flex items-center gap-2 rounded-full border border-sand-300 bg-white px-3 py-1.5 text-sm"><span aria-hidden="true" className="size-5 rounded-full border border-sand-300" style={{ background: c.swatch ?? "repeating-linear-gradient(45deg,#ddd,#ddd 3px,#fff 3px,#fff 6px)" }} />{c.label}</li>)}</ul>
           {r.customFinish && <p className="text-sm">{r.customFinish.label} : {r.customFinish.note}.</p>}
@@ -81,13 +85,13 @@ export function SystemProductPage({ family: f, category, media, docs }: { family
       <Breadcrumbs items={[{ href: cat.href, label: cat.label }, { label: f.name }]} />
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-12">
         <div className="min-w-0">
-          <SystemGallery name={f.name} media={media} />
+          <SystemGallery name={f.name} media={media} scene={scene} />
           <section className="mt-10 grid gap-4 sm:grid-cols-2" aria-label="Équipement" data-testid="system-included-options">
-            <div className="rounded-xl border border-sand-200 bg-white p-5">
+            <div className="border border-sand-200 bg-white p-5">
               <h2 className="font-display text-lg font-semibold">Inclus</h2>
               <ul className="mt-3 space-y-2 text-sm">{r.included.map((i) => <li key={i.label} className="flex gap-2"><Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" /><span>{i.label}{i.status === "to_confirm" ? " (à confirmer)" : ""}</span></li>)}</ul>
             </div>
-            <div className="rounded-xl border border-dashed border-sand-300 bg-sand-50 p-5">
+            <div className="border border-dashed border-sand-300 bg-sand-50 p-5">
               <h2 className="font-display text-lg font-semibold">En option</h2>
               {r.options.length > 0 ? <ul className="mt-3 space-y-2 text-sm">{r.options.map((o) => <li key={o.code} className="flex gap-2"><Plus className="mt-0.5 size-4 shrink-0 text-brand-700" aria-hidden="true" /><span>{o.label}{o.status === "to_confirm" ? " — à confirmer au devis" : ""}{o.note && o.status !== "to_confirm" ? ` — ${o.note}` : ""}</span></li>)}</ul> : <p className="mt-3 text-sm text-stone-700">Aucune option documentée.</p>}
               <p className="mt-4 text-xs text-stone-700">Options chiffrées sur devis ; une option visible sur une photo n'est jamais incluse d'office.</p>
@@ -95,7 +99,7 @@ export function SystemProductPage({ family: f, category, media, docs }: { family
           </section>
           <section className="mt-10"><ProductTabs tabs={tabs} /></section>
         </div>
-        <aside className="min-w-0 self-start lg:sticky lg:top-24 rounded-2xl border border-sand-200 bg-white p-6 shadow-soft">
+        <aside className="min-w-0 self-start border border-sand-200 bg-white p-6 lg:sticky lg:top-[calc(var(--header-h)+1rem)]">
           <p className="eyebrow">{cat.singular}</p>
           <h1 className="mt-2 font-display text-3xl font-semibold sm:text-4xl">{f.name}</h1>
           <p className="mt-2 text-stone-800 text-pretty">{f.shortDescription}</p>
@@ -106,15 +110,28 @@ export function SystemProductPage({ family: f, category, media, docs }: { family
             {d.height && <><dt className="text-stone-700">{d.height.label}</dt><dd>{dimRangeText(d.height)}</dd></>}
           </dl>
           {f.fromPrice ? (
-            <p data-testid="from-price" className="mt-5 rounded-xl bg-brand-50 p-4 text-sm"><span className="block text-xs text-stone-700">À partir de</span><strong className="font-display text-3xl font-semibold tabular-nums">{formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis)}</strong><span className="mt-1 block text-xs text-stone-700">Prix selon vos dimensions, calculé dans le configurateur ; options, pose et livraison chiffrées au devis.</span></p>
+            <p data-testid="from-price" className="mt-5 bg-brand-50 p-4 text-sm"><span className="block text-xs text-stone-700">À partir de</span><strong className="font-display text-3xl font-semibold tabular-nums">{formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis)}</strong><span className="mt-1 block text-xs text-stone-700">Prix selon vos dimensions, calculé dans le configurateur ; options, pose et livraison chiffrées au devis.</span></p>
           ) : (
-            <p data-testid="price-on-quote" className="mt-5 flex gap-2 rounded-xl bg-brand-50 p-4 text-sm"><Info className="size-4 mt-0.5 shrink-0 text-brand-700" aria-hidden="true" /><span><strong>Prix sur devis.</strong> Configurez vos dimensions pour recevoir votre devis.</span></p>
+            <p data-testid="price-on-quote" className="mt-5 flex gap-2 bg-brand-50 p-4 text-sm"><Info className="size-4 mt-0.5 shrink-0 text-brand-700" aria-hidden="true" /><span><strong>Prix sur devis.</strong> Configurez vos dimensions pour recevoir votre devis.</span></p>
           )}
           <Link href={configuratorHref(f.slug)} className="btn-accent w-full mt-5 text-base">Configurer à mes cotes</Link>
           <Link href={`/devis?produit=${f.slug}`} className="btn-secondary w-full mt-2">Demander un devis</Link>
           <Link href="/contact" className="btn-ghost w-full mt-2">Parler à un conseiller</Link>
         </aside>
       </div>
+      {details.length > 0 && (
+        <section className="mt-16 border-t border-sand-200 pt-10" aria-labelledby="en-detail">
+          <h2 id="en-detail" className="font-display text-display"><span className="font-normal">{f.name}</span> <span className="font-semibold">en détail</span></h2>
+          <ul className="mt-8 divide-y divide-sand-200 border-y border-sand-200">
+            {details.map((m, k) => (
+              <li key={m.id} className={`grid items-center gap-6 py-6 md:gap-10 ${k % 2 ? "md:grid-cols-[1fr_minmax(0,22rem)]" : "md:grid-cols-[minmax(0,22rem)_1fr]"}`}>
+                <div className={`relative aspect-[4/3] border border-sand-200 bg-white ${k % 2 ? "md:order-2" : ""}`}><MediaImage media={m} sizes="(min-width: 768px) 22rem, 92vw" className="absolute inset-0 size-full object-contain p-3" /></div>
+                <div><h3 className="font-display text-xl font-semibold">{m.caption || m.title}</h3><p className="mt-1 text-sm text-stone-700">{m.nature === "PHOTO" ? "Photographie" : m.nature === "RENDER" ? "Rendu" : "Schéma"} issu de la documentation du produit{m.visibleOptions ? ` ; visible sur l'image, non inclus d'office : ${m.visibleOptions}` : ""}.</p></div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <section className="mt-16 grid gap-6 border-t border-sand-200 pt-10 sm:grid-cols-3" aria-labelledby="accompagnement">
         <h2 id="accompagnement" className="sr-only">Accompagnement</h2>
         {[

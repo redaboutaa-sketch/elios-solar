@@ -23,9 +23,9 @@ function ModeSwitch({ mode, onChange, withPlan }: { mode: Mode; onChange: (m: Mo
     { id: "3d", label: "Vue 3D", icon: <Box className="size-4" aria-hidden="true" /> },
   ];
   return (
-    <div role="group" aria-label="Mode de visualisation" className="inline-flex rounded-full border border-sand-300 bg-white p-1">
+    <div role="group" aria-label="Mode de visualisation" className="inline-flex rounded-[3px] border border-sand-300 bg-white p-1">
       {items.map((it) => (
-        <button key={it.id} type="button" aria-pressed={mode === it.id} data-testid={it.id === "3d" ? "view-3d-toggle" : undefined} onClick={() => onChange(it.id)} className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm min-h-9 ${mode === it.id ? "bg-anthracite text-sand-50" : "text-stone-800"}`}>
+        <button key={it.id} type="button" aria-pressed={mode === it.id} data-testid={it.id === "3d" ? "view-3d-toggle" : undefined} onClick={() => onChange(it.id)} className={`inline-flex items-center gap-1.5 rounded-[2px] px-3 py-1.5 text-sm min-h-9 ${mode === it.id ? "bg-anthracite text-sand-50" : "text-stone-800"}`}>
           {it.icon}{it.label}
         </button>
       ))}

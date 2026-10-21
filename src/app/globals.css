@@ -2,7 +2,7 @@
 
 @theme {
   /* Polices du SITE (choix d'interface, pas la typographie du logo) — docs/design/direction-artistique.md. */
-  --font-display: var(--font-manrope), "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-display: var(--font-montserrat), "Avenir Next", "Segoe UI", system-ui, sans-serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;
 
   /* HELIOSTORES — valeurs, dérivation et contrastes : docs/heliostores/identite.md.
@@ -38,11 +38,13 @@
 
   --shadow-soft: 0 10px 30px -12px rgb(26 32 28 / 0.18);
   --shadow-lift: 0 22px 44px -20px rgb(26 32 28 / 0.28);
-  --radius-xl: 0.75rem;
-  --radius-2xl: 1.25rem;
+  /* contours nets, rayons discrets (direction 2026-10-21 b) */
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.375rem;
+  --radius-2xl: 0.5rem;
 
   /* échelle typographique fluide (titres) */
-  --text-hero: clamp(2.25rem, 1.5rem + 3vw, 3.75rem);
+  --text-hero: clamp(2.25rem, 1.4rem + 3.4vw, 4rem);
   --text-hero--line-height: 1.02;
   --text-display: clamp(1.875rem, 1.45rem + 1.9vw, 2.75rem);
   --text-display--line-height: 1.08;
@@ -58,7 +60,7 @@
 @layer base {
   html { scroll-behavior: smooth; }
   body { @apply bg-sand-50 text-ink font-sans antialiased; }
-  h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.02em; }
+  h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.015em; }
   :focus-visible { outline: 2px solid var(--color-brand-500); outline-offset: 3px; }
   .surface-night :focus-visible { outline-color: var(--color-sage-400); }
   a { text-underline-offset: 0.18em; }
@@ -67,7 +69,7 @@
   }
 }
 
-@utility btn { @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 min-h-11; }
+@utility btn { @apply inline-flex items-center justify-center gap-2 rounded-[3px] px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 min-h-11; }
 @utility badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium; }
 @utility card { @apply rounded-xl border border-sand-200 bg-white shadow-soft; }
 @utility input { @apply w-full rounded-lg border border-sand-300 bg-white px-3 py-2.5 text-base text-ink placeholder:text-stone-700/60 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25 focus:outline-none min-h-11; }
@@ -139,7 +141,31 @@
 body:has(:is(input, select, textarea):focus) .cfg-bar { visibility: hidden; transition-delay: 0s; }
 
 /* Hauteur de l'en-tête collant (bandeau de préproduction inclus) : repère des éléments collants et des ancres. */
-:root { --header-h: 4rem; }
-:root:has(.preprod-banner) { --header-h: 5.5rem; }
+:root { --header-h: 4.5rem; }
+:root:has(.preprod-banner) { --header-h: 6rem; }
 /* Menu mobile ouvert : le bouton du chat ne recouvre pas le menu. */
 body:has(nav[aria-label="Navigation mobile"]) [data-chat-launcher] { display: none; }
+
+/* En-tête : collant sur fond plein ; superposé et transparent sur l'accueil tant que la page n'a pas défilé ;
+   compact au défilement. Les états sont portés par data-overlay / data-scrolled (HeaderShell). */
+.site-header { position: sticky; --bar-h: 4.5rem; }
+.site-header .header-bar { background: var(--color-night); border-bottom: 1px solid rgb(255 255 255 / 0.08); transition: background-color 300ms var(--ease-out), border-color 300ms; }
+.site-header[data-scrolled] { --bar-h: 4rem; box-shadow: 0 8px 24px -16px rgb(0 0 0 / 0.5); }
+.site-header[data-overlay] { position: fixed; inset-inline: 0; }
+/* transparent : le voile du grand visuel assure la lisibilité (pas de second dégradé, qui marquait une ligne) */
+.site-header[data-overlay]:not([data-scrolled]) .header-bar { background: transparent; border-color: transparent; }
+/* panneau « Nos solutions » ouvert sur l'en-tête transparent : fond plein pour la lisibilité */
+.site-header[data-overlay]:not([data-scrolled]):has(.group\/sol:hover, .group\/sol:focus-within) .header-bar { background: var(--color-night); }
+@media (prefers-reduced-motion: reduce) { .site-header .header-bar, .site-header .header-bar > div { transition: none; } }
+
+/* « Nos solutions » : panneaux extensibles (desktop, pointeur fin). Le panneau survolé ou focalisé prend ~50 % de la
+   largeur ; transition de flex-grow en CSS uniquement. Sur écran tactile et mobile : panneaux empilés, CTA visible. */
+.solution-panel { flex: 1 1 0%; }
+.solution-panel .panel-cta { transition: opacity 300ms var(--ease-out), transform 300ms var(--ease-out); }
+@media (min-width: 1024px) and (hover: hover) {
+  .solution-panel { transition: flex-grow 500ms var(--ease-out); }
+  .solution-panels:has(.solution-panel:is(:hover, :focus-within)) .solution-panel:is(:hover, :focus-within) { flex-grow: 2; }
+  .solution-panel .panel-cta { opacity: 0; transform: translateY(6px); }
+  .solution-panel:is(:hover, :focus-within) .panel-cta { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .solution-panel, .solution-panel .panel-cta { transition: none; } }

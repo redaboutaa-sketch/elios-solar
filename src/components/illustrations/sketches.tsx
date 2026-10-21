@@ -13,10 +13,12 @@ import type { CategoryKey } from "@/domain/categories";
 type V3 = readonly [number, number, number];
 type Proj = (p: V3) => string;
 
-const INK = "#1a201c";
-const SAGE = "#8ab4a8";
-const GROUND = "#e2ece5";
-const GLASS = "#eef3f1";
+/** Palette du dessin : `ink` (trait sombre sur fond clair) ou `light` (trait blanc sur photographie). */
+interface Palette { /** faces translucides : les arêtes cachées sont omises */ seeThrough: boolean; ink: string; face: string; blade: string; sage: string; ground: string; glass: string; shadow: number; width: number }
+const PALETTES: Record<"ink" | "light", Palette> = {
+  ink: { seeThrough: false, ink: "#1a201c", face: "#fff", blade: "#c4dbd3", sage: "#8ab4a8", ground: "#e2ece5", glass: "#eef3f1", shadow: 0.06, width: 1.6 },
+  light: { seeThrough: true, ink: "#fff", face: "rgb(255 255 255 / 0.06)", blade: "rgb(138 180 168 / 0.45)", sage: "rgb(138 180 168 / 0.55)", ground: "rgb(255 255 255 / 0.10)", glass: "rgb(255 255 255 / 0.08)", shadow: 0, width: 1.8 },
+};
 
 function projector(ox: number, oy: number, s: number): Proj {
   const c = Math.cos(Math.PI / 6), k = 0.5;
@@ -34,35 +36,37 @@ type Morph = (off: string, on: string) => { d: string; style?: CSSProperties };
 /** Élément mobile : tracé de repos, plus les deux états d'animation sauf en dessin statique (menus). */
 const morpher = (animated: boolean): Morph => (off, on) => (animated ? { d: off, style: { "--off": `path("${off}")`, "--on": `path("${on}")` } as CSSProperties } : { d: off });
 
-const stroke = { stroke: INK, strokeWidth: 1.6, strokeLinejoin: "round" as const, strokeLinecap: "round" as const, vectorEffect: "non-scaling-stroke" as const };
-const thin = { ...stroke, strokeWidth: 0.9 };
+const strokeOf = (c: Palette) => ({ stroke: c.ink, strokeWidth: c.width, strokeLinejoin: "round" as const, strokeLinecap: "round" as const, vectorEffect: "non-scaling-stroke" as const });
+const thinOf = (c: Palette) => ({ ...strokeOf(c), strokeWidth: c.width * 0.56 });
 
-function Sun({ cx = 352, cy = 34 }: { cx?: number; cy?: number }) {
+function Sun({ c, cx = 352, cy = 34 }: { c: Palette; cx?: number; cy?: number }) {
+  const thin = thinOf(c);
   return (
     <g className="sk-sun">
-      <circle cx={cx} cy={cy} r="13" fill={SAGE} fillOpacity="0.55" />
+      <circle cx={cx} cy={cy} r="13" fill={c.sage} fillOpacity="0.55" />
       <circle cx={cx} cy={cy} r="13" fill="none" {...thin} />
       {Array.from({ length: 8 }, (_, i) => { const a = (i * Math.PI) / 4; return <line key={i} x1={cx + Math.cos(a) * 18} y1={cy + Math.sin(a) * 18} x2={cx + Math.cos(a) * 23} y2={cy + Math.sin(a) * 23} {...thin} />; })}
     </g>
   );
 }
 
-function PergolaSketch(morph: Morph) {
+function PergolaSketch(morph: Morph, c: Palette) {
+  const stroke = strokeOf(c), thin = thinOf(c);
   const P = projector(186, 128, 40);
   const W = 4, D = 3.2, H = 2.5, bh = 0.24, t = 0.14, f = 0.12, n = 13;
-  const post = (px: number, pz: number) => <g key={`${px}-${pz}`} fill="#fff" {...stroke}><path d={faceZ(P, pz + t, px, px + t, 0, H)} /><path d={faceX(P, px + t, 0, H, pz, pz + t)} /></g>;
+  const post = (px: number, pz: number) => <g key={`${px}-${pz}`} fill={c.face} {...stroke}><path d={faceZ(P, pz + t, px, px + t, 0, H)} /><path d={faceX(P, px + t, 0, H, pz, pz + t)} /></g>;
   const pitch = (D - 2 * f) / n, hw = pitch * 0.5 * 0.96, yc = H + bh * 0.55;
   // lame tournant autour de son axe (parallèle à la largeur) ; vers 27° elle est vue par la tranche : toiture ouverte
   const blade = (zc: number, a: number) => { const dy = hw * Math.sin(a), dz = hw * Math.cos(a); return poly(P, [[f, yc - dy, zc - dz], [W - f, yc - dy, zc - dz], [W - f, yc + dy, zc + dz], [f, yc + dy, zc + dz]]); };
   return (
     <>
-      <path d={faceY(P, 0, -0.5, W + 0.5, -0.5, D + 0.5)} fill={GROUND} />
-      <path d={faceY(P, 0, 0.35, W + 0.35, 0.45, D + 0.45)} fill={INK} fillOpacity="0.06" />
-      {post(0, 0)}{post(W - t, 0)}{post(0, D - t)}
+      <path d={faceY(P, 0, -0.5, W + 0.5, -0.5, D + 0.5)} fill={c.ground} />
+      <path d={faceY(P, 0, 0.35, W + 0.35, 0.45, D + 0.45)} fill={c.ink} fillOpacity={c.shadow} />
+      {!c.seeThrough && post(0, 0)}{post(W - t, 0)}{post(0, D - t)}
       {/* faces intérieures du cadre vues par l'ouverture */}
-      <g fill="#fff" {...thin}><path d={faceZ(P, f, f, W - f, H, H + bh)} /><path d={faceX(P, f, H, H + bh, f, D - f)} /></g>
-      {Array.from({ length: n }, (_, i) => { const zc = f + pitch * (i + 0.5); return <path key={i} className="sk-move" fill="#c4dbd3" {...thin} {...morph(blade(zc, -0.08), blade(zc, 0.42))} />; })}
-      <g fill="#fff" {...stroke}>
+      <g fill={c.face} {...thin}><path d={faceZ(P, f, f, W - f, H, H + bh)} /><path d={faceX(P, f, H, H + bh, f, D - f)} /></g>
+      {Array.from({ length: n }, (_, i) => { const zc = f + pitch * (i + 0.5); return <path key={i} className="sk-move" fill={c.blade} {...thin} {...morph(blade(zc, -0.08), blade(zc, 0.42))} />; })}
+      <g fill={c.face} {...stroke}>
         <path d={faceZ(P, D, 0, W, H, H + bh)} />
         <path d={faceX(P, W, H, H + bh, 0, D)} />
         <path fillRule="evenodd" d={`${faceY(P, H + bh, 0, W, 0, D)} ${faceY(P, H + bh, f, W - f, f, D - f)}`} />
@@ -72,28 +76,29 @@ function PergolaSketch(morph: Morph) {
   );
 }
 
-function ScreenSketch(morph: Morph) {
+function ScreenSketch(morph: Morph, c: Palette) {
+  const stroke = strokeOf(c), thin = thinOf(c);
   const P = projector(151, 145, 42);
   const WW = 4.6, WH = 3.0, x0 = 0.9, x1 = 3.7, oh = 2.5, r = 0.08;
   const fabric = (drop: number) => faceZ(P, 0.05, x0 + r, x1 - r, oh - drop, oh);
   const bar = (drop: number) => faceZ(P, 0.07, x0 + r, x1 - r, oh - drop - 0.06, oh - drop);
   return (
     <>
-      <path d={faceY(P, 0, -0.2, WW + 0.2, 0, 2.2)} fill={GROUND} />
+      <path d={faceY(P, 0, -0.2, WW + 0.2, 0, 2.2)} fill={c.ground} />
       {/* façade et épaisseur du mur */}
-      <g fill="#fff" {...stroke}>
+      <g fill={c.face} {...stroke}>
         <path fillRule="evenodd" d={`${faceZ(P, 0, 0, WW, 0, WH)} ${faceZ(P, 0, x0, x1, 0, oh)}`} />
         <path d={faceX(P, WW, 0, WH, -0.3, 0)} />
         <path d={faceY(P, WH, 0, WW, -0.3, 0)} />
       </g>
       {/* baie vitrée en retrait */}
-      <path d={faceZ(P, -0.25, x0, x1, 0, oh)} fill={GLASS} {...thin} />
-      <path d={faceX(P, x0, 0, oh, -0.25, 0)} fill="#fff" {...thin} />
+      <path d={faceZ(P, -0.25, x0, x1, 0, oh)} fill={c.glass} {...thin} />
+      <path d={faceX(P, x0, 0, oh, -0.25, 0)} fill={c.face} {...thin} />
       <path d={line(P, [[(x0 + x1) / 2, 0, -0.25], [(x0 + x1) / 2, oh, -0.25]])} fill="none" {...thin} />
       {/* toile, barre de charge, coulisses et coffre */}
-      <path className="sk-move" fill={SAGE} fillOpacity="0.75" {...thin} {...morph(fabric(0.95), fabric(2.4))} />
-      <path className="sk-move" fill={INK} {...thin} {...morph(bar(0.95), bar(2.4))} />
-      <g fill="#fff" {...stroke}>
+      <path className="sk-move" fill={c.sage} fillOpacity="0.75" {...thin} {...morph(fabric(0.95), fabric(2.4))} />
+      <path className="sk-move" fill={c.ink} {...thin} {...morph(bar(0.95), bar(2.4))} />
+      <g fill={c.face} {...stroke}>
         <path d={faceZ(P, 0.1, x0 - 0.05, x0 + r, 0, oh)} /><path d={faceX(P, x0 + r, 0, oh, 0, 0.1)} />
         <path d={faceZ(P, 0.1, x1 - r, x1 + 0.05, 0, oh)} /><path d={faceX(P, x1 + 0.05, 0, oh, 0, 0.1)} />
         <path d={faceZ(P, 0.15, x0 - 0.05, x1 + 0.05, oh, oh + 0.2)} />
@@ -104,7 +109,8 @@ function ScreenSketch(morph: Morph) {
   );
 }
 
-function AwningSketch(morph: Morph) {
+function AwningSketch(morph: Morph, c: Palette) {
+  const stroke = strokeOf(c), thin = thinOf(c);
   const P = projector(169, 130, 40);
   const WW = 4.8, WH = 3.0, cy = 2.45, cz = 0.22, slope = 0.27, L = 1.45;
   const fx0 = 0.5, fx1 = 4.3;
@@ -121,22 +127,22 @@ function AwningSketch(morph: Morph) {
   const OFF = 1.3, ON = 2.6;
   return (
     <>
-      <path d={faceY(P, 0, -0.2, WW + 0.2, 0, 3)} fill={GROUND} />
-      <path className="sk-move" fill={INK} fillOpacity="0.06" {...morph(faceY(P, 0, fx0 + 0.3, fx1 + 0.3, 0.3, OFF + 0.3), faceY(P, 0, fx0 + 0.3, fx1 + 0.3, 0.3, ON + 0.3))} />
-      <g fill="#fff" {...stroke}>
+      <path d={faceY(P, 0, -0.2, WW + 0.2, 0, 3)} fill={c.ground} />
+      <path className="sk-move" fill={c.ink} fillOpacity={c.shadow} {...morph(faceY(P, 0, fx0 + 0.3, fx1 + 0.3, 0.3, OFF + 0.3), faceY(P, 0, fx0 + 0.3, fx1 + 0.3, 0.3, ON + 0.3))} />
+      <g fill={c.face} {...stroke}>
         <path fillRule="evenodd" d={`${faceZ(P, 0, 0, WW, 0, WH)} ${faceZ(P, 0, 1.6, 3.2, 0, 2.15)}`} />
         <path d={faceX(P, WW, 0, WH, -0.3, 0)} />
         <path d={faceY(P, WH, 0, WW, -0.3, 0)} />
       </g>
-      <path d={faceZ(P, -0.22, 1.6, 3.2, 0, 2.15)} fill={GLASS} {...thin} />
-      <path d={faceX(P, 1.6, 0, 2.15, -0.22, 0)} fill="#fff" {...thin} />
+      <path d={faceZ(P, -0.22, 1.6, 3.2, 0, 2.15)} fill={c.glass} {...thin} />
+      <path d={faceX(P, 1.6, 0, 2.15, -0.22, 0)} fill={c.face} {...thin} />
       {/* bras articulés (vus à travers la toile), toile, barre de charge et lambrequin */}
       <path className="sk-move" fill="none" {...thin} {...morph(arm(0.85, 1, OFF), arm(0.85, 1, ON))} />
       <path className="sk-move" fill="none" {...thin} {...morph(arm(3.95, -1, OFF), arm(3.95, -1, ON))} />
-      <path className="sk-move" fill={SAGE} fillOpacity="0.62" {...stroke} {...morph(fabric(OFF), fabric(ON))} />
-      <path className="sk-move" fill={SAGE} {...thin} {...morph(valance(OFF), valance(ON))} />
-      <path className="sk-move" fill="#fff" {...stroke} {...morph(bar(OFF), bar(ON))} />
-      <g fill="#fff" {...stroke}>
+      <path className="sk-move" fill={c.sage} fillOpacity="0.62" {...stroke} {...morph(fabric(OFF), fabric(ON))} />
+      <path className="sk-move" fill={c.sage} {...thin} {...morph(valance(OFF), valance(ON))} />
+      <path className="sk-move" fill={c.face} {...stroke} {...morph(bar(OFF), bar(ON))} />
+      <g fill={c.face} {...stroke}>
         <path d={faceZ(P, cz, 0.4, 4.4, cy, cy + 0.22)} />
         <path d={faceY(P, cy + 0.22, 0.4, 4.4, 0, cz)} />
         <path d={faceX(P, 4.4, cy, cy + 0.22, 0, cz)} />
@@ -145,19 +151,20 @@ function AwningSketch(morph: Morph) {
   );
 }
 
-const SKETCHES: Record<CategoryKey, { draw: (morph: Morph) => React.ReactNode; label: string }> = {
+const SKETCHES: Record<CategoryKey, { draw: (morph: Morph, c: Palette) => React.ReactNode; label: string }> = {
   PERGOLAS: { draw: PergolaSketch, label: "Dessin d'une pergola à lames orientables" },
   SCREENS: { draw: ScreenSketch, label: "Dessin d'un screen à toile verticale devant une baie" },
   STORES_BANNES: { draw: AwningSketch, label: "Dessin d'un store banne à bras articulés" },
 };
 
 /** Dessin d'une famille. `decorative` (défaut) : masqué des lecteurs d'écran, le lien parent porte le nom. */
-export function FamilySketch({ kind, className = "", decorative = true, sun = true, animated = true }: { kind: CategoryKey; className?: string; decorative?: boolean; sun?: boolean; animated?: boolean }) {
+export function FamilySketch({ kind, className = "", decorative = true, sun = true, animated = true, tone = "ink" }: { kind: CategoryKey; className?: string; decorative?: boolean; sun?: boolean; animated?: boolean; tone?: "ink" | "light" }) {
   const s = SKETCHES[kind];
-  const body = s.draw(morpher(animated));
+  const c = PALETTES[tone];
+  const body = s.draw(morpher(animated), c);
   return (
     <svg viewBox="0 0 400 300" className={`sketch ${className}`} {...(decorative ? { "aria-hidden": true } : { role: "img", "aria-label": s.label })} focusable="false">
-      {sun && <Sun />}
+      {sun && <Sun c={c} />}
       {body}
     </svg>
   );

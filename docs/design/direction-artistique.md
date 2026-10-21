@@ -1,5 +1,12 @@
 # Direction artistique HELIOSTORES
 
+> **Mise à jour 2026-10-21 (b)** — refonte « catalogue fabricant » demandée par le client : grands visuels photographiques,
+> en-tête superposé puis compact, panneaux de familles extensibles, présentation des modèles sur fond blanc, contours nets.
+> Elle remplace la composition « sketches avant tout visuel » ; les dessins restent la signature, au trait blanc sur les
+> panneaux photo. Typographie des titres : **Montserrat** (au lieu de Manrope) ; rayons ramenés à 2–8 px ; boutons
+> rectangulaires. Matrice de correspondance avec la référence : `reference-matrice.md`. Les sections ci-dessous restent
+> valables sauf mention contraire (couleurs, mouvement, accessibilité).
+
 **Univers : architecture contemporaine, précision du produit, lumière naturelle et confort extérieur.**
 Composition sobre, grands blancs, trait fin ; la couleur forte est réservée à l'action et aux éléments qui aident à choisir.
 
@@ -18,7 +25,7 @@ Composition sobre, grands blancs, trait fin ; la couleur forte est réservée à
 
 ## Typographie
 
-- Titres : **Manrope** (600–700, interlettrage -0,02 em), échelle fluide `clamp()` : `--text-hero` 2,5→4,25 rem, `h2` 1,9→2,75 rem.
+- Titres : **Montserrat** (600–700, interlettrage -0,015 em ; Manrope avant le 2026-10-21 b), échelle fluide `clamp()` : `--text-hero` 2,5→4,25 rem, `h2` 1,9→2,75 rem.
 - Texte et interface : **Inter** (400–600), 16 px minimum pour le texte, 14 px pour les légendes.
 - Surtitres : Inter 12 px, capitales, interlettrage 0,16 em, vert `brand-700`.
 - Chiffres tabulaires pour les prix et les cotes.
@@ -27,7 +34,7 @@ Composition sobre, grands blancs, trait fin ; la couleur forte est réservée à
 
 - Largeur maximale 80 rem (`container-x`), gouttières 16 / 24 / 32 px.
 - Rythme vertical des sections : `--section-y` = clamp(4 rem, 8 vw, 7 rem).
-- Rayons : 6 px (champs), 12 px (cartes), 20 px (grands panneaux), pilule (boutons).
+- Rayons : 2–3 px (boutons, commandes), 6 px (cartes), 8 px au plus ; panneaux photo et grilles sans arrondi.
 - Ombres : une seule ombre douce (`shadow-soft`) ; séparation de préférence par filets 1 px.
 
 ## Dessins (signature)

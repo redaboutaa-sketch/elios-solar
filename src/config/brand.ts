@@ -24,14 +24,15 @@ export const BRAND = {
  */
 export const PUBLIC_SECTIONS = { realisations: false, showroom: false } as const;
 
-/** Navigation principale : les trois familles (avec sous-menus produits, voir publicNavigation()) puis les services. */
+/** Navigation principale : les trois familles (« Nos solutions », sous-menus produits, voir publicNavigation()) puis les services. */
 export const NAV = [
   { href: "/pergolas", label: "Pergolas" },
   { href: "/screens", label: "Screens" },
   { href: "/stores-bannes", label: "Stores bannes" },
-  { href: "/contact", label: "Conseil" },
+  ...(PUBLIC_SECTIONS.realisations ? [{ href: "/realisations", label: "Réalisations" }] : []),
+  { href: "/guides", label: "Guides" },
+  { href: "/contact", label: "Contact" },
   { href: "/devis", label: "Devis" },
-  { href: "/aide", label: "Aide" },
 ] as const;
 
 /** Liens de service (hors familles) de la navigation principale. */

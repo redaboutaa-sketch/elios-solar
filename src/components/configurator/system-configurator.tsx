@@ -79,10 +79,10 @@ function StepNav() {
     return () => io.disconnect();
   }, []);
   return (
-    <nav aria-label="Étapes de la configuration" className="sticky top-[var(--header-h)] z-20 -mx-4 overflow-x-auto border-b border-sand-200 bg-sand-50/95 px-4 py-2 backdrop-blur sm:mx-0 sm:rounded-full sm:border sm:px-2 lg:top-[calc(var(--header-h)+0.75rem)]">
+    <nav aria-label="Étapes de la configuration" className="sticky top-[var(--header-h)] z-20 -mx-4 overflow-x-auto border-b border-sand-200 bg-sand-50/95 px-4 py-2 backdrop-blur sm:mx-0 sm:rounded-[3px] sm:border sm:px-2 lg:top-[calc(var(--header-h)+0.75rem)]">
       <ol className="flex min-w-max gap-1 text-sm">
         {STEPS.map(([id, label], i) => (
-          <li key={id}><a href={`#${id}`} aria-current={active === id ? "step" : undefined} className={`inline-flex min-h-9 items-center gap-1 rounded-full px-2.5 transition-colors duration-150 ${active === id ? "bg-anthracite text-sand-50" : "text-stone-800 hover:bg-white"}`}><span className="tabular-nums opacity-70">{i + 1}</span>{label}</a></li>
+          <li key={id}><a href={`#${id}`} aria-current={active === id ? "step" : undefined} className={`inline-flex min-h-9 items-center gap-1 rounded-[2px] px-2.5 transition-colors duration-150 ${active === id ? "bg-anthracite text-sand-50" : "text-stone-800 hover:bg-white"}`}><span className="tabular-nums opacity-70">{i + 1}</span>{label}</a></li>
         ))}
       </ol>
     </nav>

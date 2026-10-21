@@ -104,7 +104,7 @@ ajustée), pas des couleurs de marque officielles.
 ## 5. Typographie
 
 Aucune typographie de marque n'a été fournie. Le lettrage du logo ressemble à une linéale géométrique grasse ;
-**le site utilise, par choix d'interface**, Manrope (titres, depuis la refonte visuelle du 2026-10-21) et Inter (texte), chargées par `next/font/google`. Ce ne
+**le site utilise, par choix d'interface**, Montserrat (titres, depuis la refonte « catalogue » du 2026-10-21) et Inter (texte), chargées par `next/font/google`. Ce ne
 sont pas les polices de la marque et elles ne doivent pas être présentées comme telles. À remplacer si le client
 fournit sa typographie.
 
