@@ -40,8 +40,8 @@ export default async function HomePage() {
     // composant client : seuls chemin, texte alternatif et dimensions partent au navigateur (jamais la provenance)
     return f && h ? [{ id: f.slug, media: { path: h.path, alt: h.alt, width: h.width, height: h.height, smallPath: smallPathOf(h) }, label: f.name, href: productHref(c.key, f.slug), nature: NATURE[h.nature] ?? h.nature }] : [];
   });
-  // panneaux : visuel du dernier modèle de la famille (une autre vue que le grand visuel quand il y en a plusieurs)
-  const panels = families.map(({ c, items }) => ({ c, items, img: heroOf(items[items.length - 1]) }));
+  // panneaux : une famille par panneau, illustrée par son dessin
+  const panels = families.map(({ c, items }) => ({ c, items }));
 
   // aperçu 3D : configuration par défaut du premier modèle de pergola, calculée côté serveur
   const p0 = byCat.PERGOLAS?.[0];
@@ -63,26 +63,26 @@ export default async function HomePage() {
         </div>
       </HeroSlider>
 
-      {/* Nos solutions : panneaux photographiques extensibles, un dessin au trait par famille */}
+      {/* Nos solutions : panneaux extensibles, le dessin de la famille en grand sur fond clair */}
       <section id="solutions" className="scroll-mt-16 pt-16 pb-4 sm:pt-20" aria-labelledby="solutions-titre">
         <div className="container-x flex flex-wrap items-end justify-between gap-4">
           <h2 id="solutions-titre" className="font-display text-display"><span className="font-normal">HELIOSTORES</span> <span className="font-semibold">Nos solutions</span></h2>
           <p className="max-w-md text-stone-700">Choisissez votre famille : chaque modèle se configure à vos cotes.</p>
         </div>
-        <ul className="solution-panels mx-auto mt-8 flex max-w-[110rem] flex-col gap-1 px-1 sm:px-4 lg:h-[36rem] lg:flex-row" data-testid="family-picker">
-          {panels.map(({ c, items, img }) => {
+        <ul className="solution-panels mx-auto mt-8 flex max-w-[110rem] flex-col gap-2 px-4 lg:h-[36rem] lg:flex-row lg:gap-1" data-testid="family-picker">
+          {panels.map(({ c, items }) => {
             const prices = items.map((f) => f.fromPrice).filter((p): p is NonNullable<typeof p> => !!p);
             const min = prices.length ? prices.reduce((a, b) => (b.amountMinor < a.amountMinor ? b : a)) : null;
             return (
-              <li key={c.key} className="solution-panel card-link sketch-trigger group relative isolate h-[22rem] overflow-hidden bg-night text-white sm:h-[26rem] lg:h-auto" data-testid={`home-${c.key}`}>
-                {img ? <MediaImage media={img} sizes="(min-width: 1024px) 50vw, 100vw" className="absolute inset-0 -z-10 size-full object-cover transition-transform duration-700 group-hover:scale-[1.03] motion-reduce:transition-none" /> : null}
-                <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_top,rgb(11_15_13/0.88)_0%,rgb(11_15_13/0.45)_45%,rgb(11_15_13/0.05)_75%)]" aria-hidden="true" />
-                <div className="flex h-full flex-col justify-end p-6 lg:p-8">
-                  <FamilySketch kind={c.key} tone="light" sun={false} className="w-40 drop-shadow lg:w-48" />
-                  <h3 className="mt-4 font-display text-2xl font-semibold lg:text-3xl"><Link href={c.href} className="stretched">{c.label}</Link></h3>
-                  <p className="mt-1 text-sm text-sand-100">{items.map((f) => f.name).join(" · ") || "Modèles en cours d'intégration"}</p>
-                  {min && <p className="mt-1 text-sm text-sand-100">À partir de <span className="font-semibold tabular-nums text-white">{formatSystemPrice(min.amountMinor, min.currency, min.taxBasis)}</span></p>}
-                  <span className="panel-cta mt-5 inline-flex w-fit items-center gap-2 border border-white/70 px-4 py-2 text-sm font-semibold uppercase tracking-[0.12em]" aria-hidden="true">Découvrir la gamme <ArrowRight className="size-4" /></span>
+              <li key={c.key} className="solution-panel card-link sketch-trigger group relative flex min-w-0 flex-col overflow-hidden border border-sand-200 bg-sand-50 text-ink" data-testid={`home-${c.key}`}>
+                <div className="panel-sketch-zone flex aspect-[4/3] min-h-0 items-center justify-center p-6 sm:aspect-[16/9] lg:aspect-auto lg:flex-1 lg:p-8">
+                  <FamilySketch kind={c.key} className="panel-sketch size-full max-w-[38rem]" />
+                </div>
+                <div className="flex flex-col p-6 pt-0 lg:p-8 lg:pt-0">
+                  <h3 className="font-display text-2xl font-semibold lg:text-3xl"><Link href={c.href} className="stretched">{c.label}</Link></h3>
+                  <p className="mt-1 text-sm text-stone-800">{items.map((f) => f.name).join(" · ") || "Modèles en cours d'intégration"}</p>
+                  {min && <p className="mt-1 text-sm text-stone-800">À partir de <span className="font-semibold tabular-nums text-brand-700">{formatSystemPrice(min.amountMinor, min.currency, min.taxBasis)}</span></p>}
+                  <span className="panel-cta mt-5 inline-flex w-fit items-center gap-2 border border-brand-700 px-4 py-2 text-sm font-semibold uppercase tracking-[0.12em] text-brand-700 group-hover:bg-brand-700 group-hover:text-white group-focus-within:bg-brand-700 group-focus-within:text-white" aria-hidden="true">Découvrir la gamme <ArrowRight className="size-4" /></span>
                 </div>
               </li>
             );

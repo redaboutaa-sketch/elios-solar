@@ -160,12 +160,22 @@ body:has(nav[aria-label="Navigation mobile"]) [data-chat-launcher] { display: no
 
 /* « Nos solutions » : panneaux extensibles (desktop, pointeur fin). Le panneau survolé ou focalisé prend ~50 % de la
    largeur ; transition de flex-grow en CSS uniquement. Sur écran tactile et mobile : panneaux empilés, CTA visible. */
-.solution-panel { flex: 1 1 0%; }
-.solution-panel .panel-cta { transition: opacity 300ms var(--ease-out), transform 300ms var(--ease-out); }
+/* Le dessin garde ses proportions (viewBox, « meet ») : il se réduit avec le panneau, sans recadrage. */
+.solution-panel { flex: 1 1 0%; transition: background-color 400ms var(--ease-out); }
+.solution-panel .panel-sketch { transition: transform 500ms var(--ease-out); transform-origin: center; }
+.solution-panel .panel-cta { transition: opacity 300ms var(--ease-out), transform 300ms var(--ease-out), background-color 150ms, color 150ms; }
+.solution-panel:focus-within { background-color: var(--color-brand-50); }
+@media (hover: hover) { .solution-panel:hover { background-color: var(--color-brand-50); } }
+@media (min-width: 1024px) {
+  .solution-panel:is(:hover, :focus-within) .panel-sketch { transform: scale(1.06); }
+}
 @media (min-width: 1024px) and (hover: hover) {
-  .solution-panel { transition: flex-grow 500ms var(--ease-out); }
+  .solution-panel { transition: flex-grow 500ms var(--ease-out), background-color 400ms var(--ease-out); }
   .solution-panels:has(.solution-panel:is(:hover, :focus-within)) .solution-panel:is(:hover, :focus-within) { flex-grow: 2; }
   .solution-panel .panel-cta { opacity: 0; transform: translateY(6px); }
   .solution-panel:is(:hover, :focus-within) .panel-cta { opacity: 1; transform: none; }
 }
-@media (prefers-reduced-motion: reduce) { .solution-panel, .solution-panel .panel-cta { transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .solution-panel, .solution-panel .panel-sketch, .solution-panel .panel-cta { transition: none; }
+  .solution-panel:is(:hover, :focus-within) .panel-sketch { transform: none; }
+}
