@@ -80,7 +80,7 @@ export async function loadCatalog(opts: { fresh?: boolean } = {}): Promise<Catal
       manufacturer: f.manufacturer,
       supplierRef: f.supplierRef,
       systemRules: (f.systemRules as Family["systemRules"]) ?? null,
-      // une famille en brouillon (ex. VERANDA FTS) ne reçoit aucun prix public
+      // une famille en brouillon (ex. HELIO Verrière) ne reçoit aucun prix public
       systemPrices: f.status === "PUBLISHED" || f.status === "QUOTE_ONLY" ? (systemPrices.tables.get(f.slug) ?? null) : null,
       legacy: f.legacy,
     })),

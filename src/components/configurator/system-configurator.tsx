@@ -233,6 +233,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
                     <input type="checkbox" className="mt-1 accent-brand-700" checked={!!on} onChange={(e) => toggleOption(o.code, e.target.checked, { qty: o.maxQty != null ? 1 : undefined, value: o.values?.[0]?.code })} />
                     <span>{o.label}{o.status === "to_confirm" ? " — à confirmer au devis" : ""}{o.spotTable ? (spots != null ? ` (${spots} points pour ces dimensions)` : " (nombre de points hors tableau : devis)") : ""}{o.note && o.status !== "to_confirm" ? ` — ${o.note}` : ""}</span>
                   </label>
+                  {o.description && <p className="ml-6 mt-0.5 text-xs text-stone-700">{o.description}</p>}
                   {on && (o.maxQty != null || o.values?.length) ? (
                     <div className="ml-6 mt-1 flex flex-wrap gap-2">
                       {o.values?.length ? <select aria-label={`${o.label} : valeur`} className="input max-w-56" value={on.value ?? ""} onChange={(e) => toggleOption(o.code, true, { qty: on.qty, value: e.target.value })}>{o.values.map((v) => <option key={v.code} value={v.code}>{v.label}</option>)}</select> : null}

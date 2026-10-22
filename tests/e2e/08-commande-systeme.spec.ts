@@ -11,8 +11,8 @@ async function setDim(page: Page, id: string, value: number) {
 const fmt = (minor: number) => new Intl.NumberFormat("fr-FR", { minimumFractionDigits: minor % 100 ? 2 : 0, maximumFractionDigits: 2 }).format(minor / 100);
 const norm = (s: string | null) => (s ?? "").replace(/[  ]/g, " ");
 
-test("SB400 structure seule : commande en ligne au prix de la grille, paiement simulé ; avec option, devis seulement", async ({ page }) => {
-  await page.goto("/configurateur/pergola-sb400");
+test("HELIO Horizon structure seule : commande en ligne au prix de la grille, paiement simulé ; avec option, devis seulement", async ({ page }) => {
+  await page.goto("/configurateur/helio-horizon");
   await acceptNecessaryOnly(page);
   const order = page.getByTestId("online-order");
   if (!(await publicPricesActive())) {
@@ -23,7 +23,7 @@ test("SB400 structure seule : commande en ligne au prix de la grille, paiement s
     return;
   }
   // cellule murale de la grille active couvrant une cote exacte du configurateur (pas de 20 cm dès 1,4 m, largeur ≤ 4 m)
-  const cell = await one<{ dimAmm: number; widthMaxMm: number; amountMinor: number }>(`SELECT r."dimAmm", r."widthMaxMm", r."amountMinor" FROM "SupplierPriceRow" r JOIN "SupplierPriceList" l ON l.id = r."listId" WHERE l."sourceKey" = 'xlsx-situation-des-tarif' AND l.status = 'ACTIVE' AND r."amountRole" = 'PRIX_FINAL' AND r.kind = 'GRID' AND r."familySlug" = 'pergola-sb400' AND r."variantKey" = 'murale' AND r.status <> 'REJECTED' AND r."widthMinMm" = r."widthMaxMm" AND r."widthMaxMm" <= 4000 AND (r."dimAmm" - 1400) % 200 = 0 AND r."dimAmm" <= 7000 ORDER BY r."dimAmm", r."widthMaxMm" LIMIT 1`);
+  const cell = await one<{ dimAmm: number; widthMaxMm: number; amountMinor: number }>(`SELECT r."dimAmm", r."widthMaxMm", r."amountMinor" FROM "SupplierPriceRow" r JOIN "SupplierPriceList" l ON l.id = r."listId" WHERE l."sourceKey" = 'xlsx-situation-des-tarif' AND l.status = 'ACTIVE' AND r."amountRole" = 'PRIX_FINAL' AND r.kind = 'GRID' AND r."familySlug" = 'helio-horizon' AND r."variantKey" = 'murale' AND r.status <> 'REJECTED' AND r."widthMinMm" = r."widthMaxMm" AND r."widthMaxMm" <= 4000 AND (r."dimAmm" - 1400) % 200 = 0 AND r."dimAmm" <= 7000 ORDER BY r."dimAmm", r."widthMaxMm" LIMIT 1`);
   expect(cell).not.toBeNull();
   await setDim(page, "dim-width", cell!.widthMaxMm);
   await setDim(page, "dim-depth", cell!.dimAmm);
@@ -41,7 +41,7 @@ test("SB400 structure seule : commande en ligne au prix de la grille, paiement s
 
   await page.getByTestId("add-to-cart").click();
   await page.waitForURL(/\/panier/);
-  await expect(page.getByTestId("cart-lines")).toContainText("SB400");
+  await expect(page.getByTestId("cart-lines")).toContainText("HELIO Horizon");
   expect(norm(await page.getByTestId("cart-line-ht").textContent())).toContain(`${norm(fmt(cell!.amountMinor))} € HT`);
   await expect(page.getByTestId("cart-delivery-not-included")).toContainText("non comprises");
   await expect(page.getByTestId("cart-system-note")).toContainText("Livraison et pose non comprises");

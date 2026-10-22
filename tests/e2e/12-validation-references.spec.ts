@@ -2,13 +2,13 @@ import { test, expect } from "./fixtures";
 import { loginAdmin, shot, uid } from "./helpers";
 import { pool } from "./db";
 
-test("validation des références : contradiction REFLEKSOL (fiche 4 m / catalogue 7 m), puis un dossier de test soumis et rejeté avec historique", async ({ page }) => {
+test("validation des références : contradiction HELIO Ombra (fiche 4 m / catalogue 7 m), puis un dossier de test soumis et rejeté avec historique", async ({ page }) => {
   const id = uid();
   await loginAdmin(page, "/admin/catalogue/validations");
   await expect(page.getByRole("heading", { name: "Validation des références" })).toBeVisible();
 
   // 1. dossier initial « à vérifier » sur la largeur maximale du screen : sources divergentes, rien n'est tranché
-  await page.getByRole("link", { name: /Screen REFLEKSOL 120 ZiiiP — Largeur maximale/ }).first().click();
+  await page.getByRole("link", { name: /HELIO Ombra — Largeur maximale/ }).first().click();
   await expect(page.getByTestId("divergences")).toContainText("Valeurs divergentes selon les sources");
   await expect(page.getByTestId("spec-candidates")).toContainText("Fiche du modèle (client)");
   await expect(page.getByTestId("spec-candidates")).toContainText("Document fournisseur");
@@ -17,8 +17,8 @@ test("validation des références : contradiction REFLEKSOL (fiche 4 m / catalog
   await shot(page, "validation-refleksol-largeur");
 
   // 2. dossier de test sur une donnée technique (création → à vérifier → rejet), sans modifier la donnée
-  const specsBefore = (await pool.query(`SELECT source, "valueNum", "sourceRef" FROM "TechnicalSpec" t JOIN "ProductFamily" f ON f.id = t."familyId" WHERE f.slug = 'pergola-sb400' AND t.key = 'height_max' ORDER BY source, "valueNum", "sourceRef"`)).rows;
-  await page.goto(`/admin/catalogue/validations/nouveau?type=FAMILY_SPEC&cible=${encodeURIComponent("pergola-sb400#height_max")}`);
+  const specsBefore = (await pool.query(`SELECT source, "valueNum", "sourceRef" FROM "TechnicalSpec" t JOIN "ProductFamily" f ON f.id = t."familyId" WHERE f.slug = 'helio-horizon' AND t.key = 'height_max' ORDER BY source, "valueNum", "sourceRef"`)).rows;
+  await page.goto(`/admin/catalogue/validations/nouveau?type=FAMILY_SPEC&cible=${encodeURIComponent("helio-horizon#height_max")}`);
   await page.getByLabel(/^Valeur numérique/).fill("2950");
   await page.getByLabel("Référence et contexte de la source").fill(`Test e2e ${id} : valeur fictive de test, aucune source réelle`);
   await page.getByRole("button", { name: "Créer le dossier (brouillon)" }).click();
@@ -36,7 +36,7 @@ test("validation des références : contradiction REFLEKSOL (fiche 4 m / catalog
     await expect(history).toContainText("À vérifier → Rejeté");
     await expect(history).toContainText(`rejet e2e ${id}`);
     // un dossier rejeté ne modifie aucune donnée technique (les divergences sourcées restent intactes)
-    expect((await pool.query(`SELECT source, "valueNum", "sourceRef" FROM "TechnicalSpec" t JOIN "ProductFamily" f ON f.id = t."familyId" WHERE f.slug = 'pergola-sb400' AND t.key = 'height_max' ORDER BY source, "valueNum", "sourceRef"`)).rows).toEqual(specsBefore);
+    expect((await pool.query(`SELECT source, "valueNum", "sourceRef" FROM "TechnicalSpec" t JOIN "ProductFamily" f ON f.id = t."familyId" WHERE f.slug = 'helio-horizon' AND t.key = 'height_max' ORDER BY source, "valueNum", "sourceRef"`)).rows).toEqual(specsBefore);
   } finally {
     await pool.query('DELETE FROM "ReferenceValidation" WHERE id = $1', [dossierId]);
   }

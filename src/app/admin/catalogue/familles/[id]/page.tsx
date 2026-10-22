@@ -7,6 +7,8 @@ import { DataStatus } from "@/generated/prisma/enums";
 import { DATA_STATUS_FR, DataStatusBadge, FAMILY_STATUS_FR, Flash, Options, PageTitle, Section, Table } from "@/components/admin/ui";
 import { SPEC_SOURCE_FR, formatSpecValue, reviewSpec, type SpecSource } from "@/domain/technical-spec";
 import { specTargetId } from "@/server/validation/targets";
+import { LEGACY_FAMILY_SLUGS } from "@/server/catalog/legacy-slugs";
+import type { SystemRules } from "@/domain/system";
 import { addFamilyDocumentAction, addFamilyMediaAction, removeFamilyDocumentAction, removeFamilyMediaAction, updateFamilyAction } from "@/server/actions/admin/catalog";
 
 export const metadata: Metadata = { title: "Édition de famille" };
@@ -26,6 +28,9 @@ export default async function FamilyEditPage(props: PageProps<"/admin/catalogue/
   const faq = [...((family.faq as Array<{ q: string; a: string }>) ?? []), ...Array.from({ length: 2 }, () => ({ q: "", a: "" }))];
   const included = ((family.included as string[]) ?? []).join("\n");
   const images = medias.filter((m) => m.kind === "image");
+  const legacySlugs = Object.entries(LEGACY_FAMILY_SLUGS).filter(([, to]) => to === family.slug).map(([from]) => from);
+  const rules = family.systemRules as unknown as SystemRules | null;
+  const supplierItems = rules ? [...(rules.controls ?? []), ...rules.included, ...rules.options].filter((x): x is typeof x & { supplierRef: string } => !!x.supplierRef && x.supplierRef !== x.label) : [];
   const pdfs = medias.filter((m) => m.kind === "document" || m.mimeType === "application/pdf");
   return (
     <div className="space-y-6">
@@ -33,6 +38,25 @@ export default async function FamilyEditPage(props: PageProps<"/admin/catalogue/
         <div className="flex gap-2 text-sm"><span className="font-mono">{family.slug}</span><span>· {family.kind} · {FAMILY_STATUS_FR[family.status]}</span><DataStatusBadge status={family.dataStatus} /></div>
       </PageTitle>
       <Flash searchParams={props.searchParams} />
+
+      {(family.supplierRef || family.manufacturer || family.brand) && (
+        <Section title="Correspondance fournisseur (interne)">
+          <p className="mb-3 text-xs text-stone-700">Données internes, jamais publiées : le site n'affiche que le nom commercial (nomenclature HELIOSTORES).</p>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm" data-testid="supplier-mapping">
+            <dt className="text-stone-700">Nom commercial</dt><dd>{family.name}</dd>
+            <dt className="text-stone-700">Référence fournisseur</dt><dd>{family.supplierRef ?? "—"}</dd>
+            <dt className="text-stone-700">Fabricant</dt><dd>{family.manufacturer ?? "—"}</dd>
+            <dt className="text-stone-700">Marque</dt><dd>{family.brand ?? "—"}</dd>
+            {legacySlugs.length > 0 && <><dt className="text-stone-700">Ancien identifiant</dt><dd className="font-mono">{legacySlugs.join(", ")} (redirigé)</dd></>}
+          </dl>
+          {supplierItems.length > 0 && (
+            <table className="mt-4 w-full text-sm">
+              <thead><tr className="text-left text-xs text-stone-700"><th className="py-1 pr-3 font-medium">Libellé public</th><th className="py-1 pr-3 font-medium">Désignation fournisseur</th></tr></thead>
+              <tbody>{supplierItems.map((x) => <tr key={x.label} className="border-t border-sand-200"><td className="py-1 pr-3">{x.label}</td><td className="py-1 pr-3">{x.supplierRef}</td></tr>)}</tbody>
+            </table>
+          )}
+        </Section>
+      )}
 
       <form action={updateFamilyAction} className="space-y-6">
         <input type="hidden" name="id" value={family.id} />

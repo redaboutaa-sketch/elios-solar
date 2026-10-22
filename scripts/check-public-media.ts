@@ -12,6 +12,7 @@ import { chromium } from "@playwright/test";
 import { HELIOSTORES_MEDIA } from "../src/server/media/heliostores-media";
 import { HELIOSTORES_FAMILIES } from "../src/server/catalog/heliostores-data";
 import { productHref } from "../src/domain/categories";
+import { PUBLIC_FORBIDDEN_NAMES } from "../src/domain/public-sanitize";
 
 const base = (process.argv[2] ?? "http://127.0.0.1:3401").replace(/\/$/, "");
 const credentials = process.env.REVIEW_USER && process.env.REVIEW_PASSWORD ? { username: process.env.REVIEW_USER, password: process.env.REVIEW_PASSWORD } : undefined;
@@ -60,7 +61,7 @@ async function main() {
     report(broken === 0, `${f.slug} : ${count - broken}/${count} images principales et vignettes chargées et décodées`);
     // aucune référence au fabricant ni au fournisseur (décision du 2026-10-21) : ni crédit, ni nom dans la page
     report((await gallery.getByTestId("media-credit").count()) === 0, `${f.slug} : aucun crédit fabricant affiché`);
-    report(!/aluprof|thysens|\bselt\b|euro[\s-]?confort/i.test(await page.content()), `${f.slug} : aucune mention du fabricant ou du fournisseur`);
+    report(!PUBLIC_FORBIDDEN_NAMES.test(await page.content()), `${f.slug} : aucune mention du fabricant, du fournisseur ni de ses références`);
   }
 
   for (const path of ["/", "/pergolas", "/screens", "/stores-bannes"]) {

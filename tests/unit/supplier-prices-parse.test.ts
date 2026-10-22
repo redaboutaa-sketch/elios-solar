@@ -144,7 +144,7 @@ describe("lecture XLSX synthétique", async () => {
   const at = (ref: string) => rows.find((r) => r.sourceRef.endsWith(ref));
 
   it("structure, blocs, familles et variantes", () => {
-    expect(src.families).toEqual(["pergola-sb400", "store-banne-casablanca", "screen-refleksol-120-ziiip"]);
+    expect(src.families).toEqual(["helio-horizon", "helio-riviera", "helio-ombra"]);
     const sb = src.xlsx!.sheets.find((s) => s.name === "SB400")!;
     expect(sb.blocks.map((b) => [b.variantKey, b.rows])).toEqual([["autoportante", 4], ["murale", 4]]);
     expect(src.xlsx!.structure.hiddenSheets).toEqual([]);
@@ -199,13 +199,13 @@ describe("lecture XLSX synthétique", async () => {
   });
 
   it("bandes de largeur (store banne)", () => {
-    const casa = rows.filter((r) => r.familySlug === "store-banne-casablanca" && r.amountRole === "PRIX_SOURCE");
+    const casa = rows.filter((r) => r.familySlug === "helio-riviera" && r.amountRole === "PRIX_SOURCE");
     expect(casa.map((r) => [r.dimAmm, r.widthMinMm, r.widthMaxMm])).toEqual([[1600, 2000, 2900], [1600, 2910, 3500], [2100, 2910, 3500]]);
     expect(casa[0]!.conditions.widthBand).toBe("200-290");
   });
 
   it("REFLEKSOL : « Projection » interprétée comme hauteur, signalée", () => {
-    const r = rows.filter((x) => x.familySlug === "screen-refleksol-120-ziiip");
+    const r = rows.filter((x) => x.familySlug === "helio-ombra");
     expect(r.every((x) => x.dimAKey === "hauteur" && x.status === "TO_CHECK" && x.issues.some((i) => /interprétée comme HAUTEUR/.test(i)))).toBe(true);
   });
 
@@ -215,8 +215,8 @@ describe("lecture XLSX synthétique", async () => {
     expect(dups.length).toBeGreaterThanOrEqual(1);
     expect(copy.filter((r) => r.issues.some((i) => /Doublon/.test(i))).length).toBeGreaterThanOrEqual(2);
     const gaps = findGridGaps(copy);
-    expect(gaps).toContainEqual({ familySlug: "pergola-sb400", variantKey: "murale", amountRole: "PRIX_SOURCE", dimAmm: 3500, widthKey: "2500" });
-    expect(gaps).toContainEqual({ familySlug: "store-banne-casablanca", variantKey: "", amountRole: "PRIX_SOURCE", dimAmm: 2100, widthKey: "2000-2900" });
+    expect(gaps).toContainEqual({ familySlug: "helio-horizon", variantKey: "murale", amountRole: "PRIX_SOURCE", dimAmm: 3500, widthKey: "2500" });
+    expect(gaps).toContainEqual({ familySlug: "helio-riviera", variantKey: "", amountRole: "PRIX_SOURCE", dimAmm: 2100, widthKey: "2000-2900" });
   });
 });
 
@@ -224,7 +224,7 @@ describe("lecture DOCX synthétique", () => {
   const src = parseDocx(sb400Docx(), { fileName: "fiche.docx" });
 
   it("grilles : devise DH ⇒ MAD, variantes, cellule vide ⇒ null", () => {
-    expect(src.families).toEqual(["pergola-sb400"]);
+    expect(src.families).toEqual(["helio-horizon"]);
     expect(src.currency).toBe("MAD");
     expect(src.currencyNote).toMatch(/DH/);
     const grid = src.rows.filter((r) => r.kind === "GRID");
@@ -275,7 +275,7 @@ describe("rapprochement DOCX ↔ XLSX", async () => {
 
   it("libellé de variante contradictoire (premier module ↔ autoportante)", async () => {
     const x = await parseXlsx(xlsxBytes, { fileName: "synthetique.xlsx" });
-    const sb500x = { ...x, families: ["pergola-sb500"], rows: x.rows.filter((r) => r.familySlug === "pergola-sb400").map((r) => ({ ...r, familySlug: "pergola-sb500" })) as ParsedRow[] };
+    const sb500x = { ...x, families: ["helio-panorama"], rows: x.rows.filter((r) => r.familySlug === "helio-horizon").map((r) => ({ ...r, familySlug: "helio-panorama" })) as ParsedRow[] };
     const doc = parseDocx(
       syntheticDocx(p("Fiche Technique — PERGOLA SB500") + p("Premier module") + tbl([GRID_HEAD, ["300", "200", "1000", "800"], ["300", "250", "1100", "880"]])),
       { fileName: "sb500.docx" },
@@ -287,8 +287,8 @@ describe("rapprochement DOCX ↔ XLSX", async () => {
   });
 
   it("grille de fiche sans aucune cellule commune", () => {
-    const x = { type: "xlsx" as const, fileName: "x.xlsx", sourceKey: "x", label: "", families: ["veranda-fts"], currency: null, currencyNote: "", natureNote: "", notes: [], rows: [] as ParsedRow[] };
-    const row = (role: "PRIX_SOURCE" | "PRIX_FINAL", w: number, amt: number, ref: string): ParsedRow => ({ familySlug: "veranda-fts", variantKey: "", kind: "GRID", code: "", label: "", dimAKey: "hauteur", dimAmm: 1500, widthMinMm: w, widthMaxMm: w, conditions: { dimAHeader: "Projection (cm)" }, amountMinor: amt, currency: null, amountRole: role, formula: null, cachedValue: null, sourceRef: ref, status: "OK", issues: [] });
+    const x = { type: "xlsx" as const, fileName: "x.xlsx", sourceKey: "x", label: "", families: ["helio-verriere"], currency: null, currencyNote: "", natureNote: "", notes: [], rows: [] as ParsedRow[] };
+    const row = (role: "PRIX_SOURCE" | "PRIX_FINAL", w: number, amt: number, ref: string): ParsedRow => ({ familySlug: "helio-verriere", variantKey: "", kind: "GRID", code: "", label: "", dimAKey: "hauteur", dimAmm: 1500, widthMinMm: w, widthMaxMm: w, conditions: { dimAHeader: "Projection (cm)" }, amountMinor: amt, currency: null, amountRole: role, formula: null, cachedValue: null, sourceRef: ref, status: "OK", issues: [] });
     x.rows.push(row("PRIX_SOURCE", 1000, 5000, "x.xlsx › V!C7"), row("PRIX_SOURCE", 1250, 5100, "x.xlsx › V!C8"));
     const doc = parseDocx(syntheticDocx(p("Fiche Technique — VERANDA FTS") + tbl([["Hauteur (cm)", "Largeur (cm)", "Prix fournisseur (DH)", "Prix final HELIOSTORES (DH)"], ["150", "100", "4000", "3000"], ["150", "125", "4010", "3010"]])), { fileName: "fts.docx" });
     const cmp = compareSources([x, doc]);

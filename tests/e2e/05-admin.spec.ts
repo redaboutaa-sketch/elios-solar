@@ -6,7 +6,7 @@ test("administration HELIOSTORES : familles du catalogue, tarifs fournisseur pri
   await expect(page.getByRole("heading", { name: "Tableau de bord" })).toBeVisible();
   await page.goto("/admin/catalogue/familles");
   await expect(page.getByRole("heading", { name: "Familles de produits" })).toBeVisible();
-  for (const n of ["Pergola SB400", "Pergola SB500", "Screen REFLEKSOL 120 ZiiiP", "Store banne CASABLANCA", "Store de véranda VERANDA FTS"]) await expect(page.getByRole("main")).toContainText(n);
+  for (const n of ["HELIO Horizon", "HELIO Panorama", "HELIO Ombra", "HELIO Riviera", "HELIO Verrière"]) await expect(page.getByRole("main")).toContainText(n);
   await shot(page, "admin-familles");
 
   await page.goto("/admin/catalogue/tarifs-fournisseur");

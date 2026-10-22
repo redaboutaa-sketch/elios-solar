@@ -182,7 +182,7 @@ export interface ScreenSceneModel {
   heightMm: number;
   mounting: "niche" | "facade";
   cassette: { widthMm: number; heightMm: number; color: string };
-  /** coulisses latérales (ZiiiP) */
+  /** coulisses latérales (guidage zip) */
   guides: { kind: "zip"; color: string };
   fabric: { code: string; label: string; color: string };
   control: string;
@@ -442,7 +442,7 @@ export function representedItems(catalog: CatalogSnapshot, model: SceneModel): s
       `Teinte de structure : ${model.finishLabel}`,
       `Toile : ${model.fabric.label} (teinte représentée indicative)`,
       `Commande : ${model.control}`,
-      `Coffre ${model.cassette.widthMm} mm et coulisses ZiiiP (sections indicatives)`,
+      `Coffre ${model.cassette.widthMm} mm et coulisses zip (sections indicatives)`,
       ...model.toConfirm.map((t) => `À confirmer : ${t}`),
     ];
   }
@@ -627,7 +627,7 @@ function pergolaSystemScene(family: Family, rules: SystemRules, input: SystemInp
 
 /** Libellé lisible d'un système de fermeture souhaité (slug de famille). */
 function catalog_name(slug: string) {
-  return slug === "screen-refleksol-120-ziiip" ? "Screen REFLEKSOL 120 ZiiiP" : slug;
+  return slug === "helio-ombra" ? "Screen HELIO Ombra" : slug;
 }
 
 export { MOUNTING_FR };

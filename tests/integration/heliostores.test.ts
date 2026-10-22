@@ -42,7 +42,7 @@ describe("catalogue HELIOSTORES en base", () => {
   it("navigation : exactement Pergolas, Screens, Stores bannes, sans ancien produit ni brouillon", async () => {
     const nav = await publicNavigation();
     expect(nav.map((c) => c.label)).toEqual(["Pergolas", "Screens", "Stores bannes"]);
-    expect(nav.flatMap((c) => c.items.map((i) => i.slug))).toEqual(["pergola-sb400", "pergola-sb500", "screen-refleksol-120-ziiip", "store-banne-casablanca"]);
+    expect(nav.flatMap((c) => c.items.map((i) => i.slug))).toEqual(["helio-horizon", "helio-panorama", "helio-ombra", "helio-riviera"]);
   });
 
   it("l'ancien catalogue est conservé (historique) mais marqué legacy, hors famille publique", async () => {
@@ -53,7 +53,7 @@ describe("catalogue HELIOSTORES en base", () => {
   });
 
   it("seed idempotent : statut décidé en administration et confirmation fournisseur jamais écrasés", async () => {
-    const fam = await prisma.productFamily.findUniqueOrThrow({ where: { slug: "store-banne-casablanca" } });
+    const fam = await prisma.productFamily.findUniqueOrThrow({ where: { slug: "helio-riviera" } });
     const before = await prisma.technicalSpec.count({ where: { familyId: fam.id, createdBy: HELIOSTORES_SEED_TAG } });
     await prisma.productFamily.update({ where: { id: fam.id }, data: { status: "PUBLISHED" } });
     const confirmed = await prisma.technicalSpec.create({ data: { familyId: fam.id, key: "test_confirmed", label: "Test", valueText: "x", source: "SUPPLIER_CONFIRMED", sourceRef: "écrit fournisseur (test)" } });
@@ -72,7 +72,7 @@ describe("catalogue HELIOSTORES en base", () => {
 
   it("sans grille active : l'instantané ne transporte aucun tarif", async () => {
     const c = await loadCatalog({ fresh: true });
-    const sb400 = c.families.find((f) => f.slug === "pergola-sb400")!;
+    const sb400 = c.families.find((f) => f.slug === "helio-horizon")!;
     expect(sb400.systemRules?.dims.depth?.stepMm).toBe(200);
     expect(sb400.category).toBe("PERGOLAS");
     expect(JSON.stringify(c)).not.toMatch(/SupplierPrice|amountMinor|Prix final/);
@@ -81,15 +81,15 @@ describe("catalogue HELIOSTORES en base", () => {
 
 describe("devis d'un système : sans prix, récapitulatif, visualisation et attribution", () => {
   it("pergola : priceMode quote, récapitulatif, plan 2D joint sans image 3D, attribution nettoyée", async () => {
-    const input = await systemInput("pergola-sb400", { widthMm: 3500, depthMm: 5000, mounting: "wall", options: [{ code: "led_spots" }] });
+    const input = await systemInput("helio-horizon", { widthMm: 3500, depthMm: 5000, mounting: "wall", options: [{ code: "led_spots" }] });
     const result = await evaluateInput(input);
     expect(result.priceMode).toBe("quote");
     expect(result.lines).toEqual([]);
-    const q = await createQuote({ kind: "system", firstName: "Test", lastName: "Helio", email: `helio-${randomBytes(4).toString("hex")}@test.invalid`, input, result, attribution: sanitizeAttribution({ params: { utm_source: "salon", utm_campaign: "automne" }, landingPath: "/pergolas/pergola-sb400", evil: "x" }) }, { userId: null, guestKey: randomBytes(8).toString("hex") });
+    const q = await createQuote({ kind: "system", firstName: "Test", lastName: "Helio", email: `helio-${randomBytes(4).toString("hex")}@test.invalid`, input, result, attribution: sanitizeAttribution({ params: { utm_source: "salon", utm_campaign: "automne" }, landingPath: "/pergolas/helio-horizon", evil: "x" }) }, { userId: null, guestKey: randomBytes(8).toString("hex") });
     quotes.push(q.id);
     expect(q.visualKind).toBe("PLAN_2D");
     const row = await prisma.quote.findUniqueOrThrow({ where: { id: q.id } });
-    expect(row.attribution).toEqual({ params: { utm_source: "salon", utm_campaign: "automne" }, landingPath: "/pergolas/pergola-sb400" });
+    expect(row.attribution).toEqual({ params: { utm_source: "salon", utm_campaign: "automne" }, landingPath: "/pergolas/helio-horizon" });
     expect(row.qualification).toBe("TO_QUALIFY");
     const snap = row.snapshot as { result: { recap: Array<{ label: string; value: string }> } };
     expect(snap.result.recap.find((r) => r.label === "Projection")?.value).toBe("5 m");
@@ -104,7 +104,7 @@ describe("devis d'un système : sans prix, récapitulatif, visualisation et attr
   });
 
   it("screen : pas de plan 2D possible → absence de visualisation indiquée, devis enregistré", async () => {
-    const input = await systemInput("screen-refleksol-120-ziiip", { widthMm: 2500, heightMm: 2200 });
+    const input = await systemInput("helio-ombra", { widthMm: 2500, heightMm: 2200 });
     const q = await createQuote({ kind: "system", firstName: "Test", lastName: "Screen", email: `screen-${randomBytes(4).toString("hex")}@test.invalid`, input, result: await evaluateInput(input) }, { userId: null, guestKey: randomBytes(8).toString("hex") });
     quotes.push(q.id);
     expect(q.visualKind).toBe("NONE");
@@ -112,7 +112,7 @@ describe("devis d'un système : sans prix, récapitulatif, visualisation et attr
   });
 
   it("une configuration hors règles est enregistrée avec ses blocages (jamais de prix inventé)", async () => {
-    const input = await systemInput("store-banne-casablanca", { widthMm: 2500, depthMm: 3600 });
+    const input = await systemInput("helio-riviera", { widthMm: 2500, depthMm: 3600 });
     const result = await evaluateInput(input);
     expect(result.issues.some((i) => i.code === "depth_width_combination" && i.severity === "blocking")).toBe(true);
     expect(result.totals.totalGrossCents).toBe(0);
@@ -144,26 +144,26 @@ describe("prix publics : colonne « Prix final HELIOSTORES » de la version acti
     const last = await prisma.supplierPriceList.findFirst({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY }, orderBy: { version: "desc" }, select: { version: true } });
     const list = await prisma.supplierPriceList.create({ data: { sourceKey: PUBLIC_PRICE_SOURCE_KEY, version: (last?.version ?? 0) + 1, label: "test", sourceFile: "synthetique.xlsx", sourceSha256: randomBytes(8).toString("hex"), status: "DRAFT", currency: "EUR", taxBasis: "HT" } });
     const row = (familySlug: string, variantKey: string, amountRole: string, amountMinor: number, dimAKey = "projection") => ({ listId: list.id, familySlug, variantKey, kind: "GRID", dimAKey, dimAmm: 5000, widthMinMm: 4000, widthMaxMm: 4000, amountMinor, amountRole, sourceRef: "test", status: "OK" as const });
-    await prisma.supplierPriceRow.createMany({ data: [row("pergola-sb400", "murale", "PRIX_FINAL", 1_234_567), row("pergola-sb400", "murale", "PRIX_SOURCE", 7_654_321), row("veranda-fts", "", "PRIX_FINAL", 999_999, "hauteur")] });
+    await prisma.supplierPriceRow.createMany({ data: [row("helio-horizon", "murale", "PRIX_FINAL", 1_234_567), row("helio-horizon", "murale", "PRIX_SOURCE", 7_654_321), row("helio-verriere", "", "PRIX_FINAL", 999_999, "hauteur")] });
     try {
       invalidateCatalogCache();
       let c = await loadCatalog({ fresh: true });
-      expect(c.families.find((f) => f.slug === "pergola-sb400")!.systemPrices).toBeNull(); // brouillon : rien de public
+      expect(c.families.find((f) => f.slug === "helio-horizon")!.systemPrices).toBeNull(); // brouillon : rien de public
       await prisma.supplierPriceList.updateMany({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY, status: "ACTIVE" }, data: { status: "ARCHIVED" } });
       await prisma.supplierPriceList.update({ where: { id: list.id }, data: { status: "ACTIVE" } });
       invalidateCatalogCache();
       c = await loadCatalog({ fresh: true });
-      const sb400 = c.families.find((f) => f.slug === "pergola-sb400")!;
+      const sb400 = c.families.find((f) => f.slug === "helio-horizon")!;
       expect(sb400.systemPrices).toMatchObject({ currency: "EUR", taxBasis: "HT", cells: [{ variantKey: "murale", dimAmm: 5000, widthMaxMm: 4000, amountMinor: 1_234_567 }] });
-      expect(c.families.find((f) => f.slug === "veranda-fts")?.systemPrices ?? null).toBeNull();
+      expect(c.families.find((f) => f.slug === "helio-verriere")?.systemPrices ?? null).toBeNull();
       const json = JSON.stringify(c);
       expect(json).not.toContain("7654321");
       expect(json).not.toContain("999999");
-      const r = await evaluateInput(await systemInput("pergola-sb400", { widthMm: 4000, depthMm: 5000, mounting: "wall" }));
+      const r = await evaluateInput(await systemInput("helio-horizon", { widthMm: 4000, depthMm: 5000, mounting: "wall" }));
       expect(r.issues.filter((i) => i.severity === "blocking")).toEqual([]);
       expect(r.systemPrice).toMatchObject({ amountMinor: 1_234_567, currency: "EUR", taxBasis: "HT", roundedUp: false });
       const pub = await ensureCatalogSnapshot();
-      const pubSb = pub.families.find((f) => f.slug === "pergola-sb400")!;
+      const pubSb = pub.families.find((f) => f.slug === "helio-horizon")!;
       expect(pubSb.brand ?? null).toBeNull();
       expect(pubSb.manufacturer ?? null).toBeNull();
       expect(JSON.stringify(pub.families.filter((f) => f.systemRules))).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
@@ -181,15 +181,15 @@ describe("commande en ligne d'une configuration entièrement tarifée (paiement 
     const before = await prisma.supplierPriceList.findMany({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY }, select: { id: true, status: true } });
     const last = await prisma.supplierPriceList.findFirst({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY }, orderBy: { version: "desc" }, select: { version: true } });
     const list = await prisma.supplierPriceList.create({ data: { sourceKey: PUBLIC_PRICE_SOURCE_KEY, version: (last?.version ?? 0) + 1, label: "test", sourceFile: "synthetique.xlsx", sourceSha256: randomBytes(8).toString("hex"), status: "DRAFT", currency: "EUR", taxBasis: "HT" } });
-    await prisma.supplierPriceRow.create({ data: { listId: list.id, familySlug: "pergola-sb400", variantKey: "murale", kind: "GRID", dimAKey: "projection", dimAmm: 5000, widthMinMm: 4000, widthMaxMm: 4000, amountMinor: 1_000_000, amountRole: "PRIX_FINAL", sourceRef: "test", status: "OK" } });
+    await prisma.supplierPriceRow.create({ data: { listId: list.id, familySlug: "helio-horizon", variantKey: "murale", kind: "GRID", dimAKey: "projection", dimAmm: 5000, widthMinMm: 4000, widthMaxMm: 4000, amountMinor: 1_000_000, amountRole: "PRIX_FINAL", sourceRef: "test", status: "OK" } });
     const g = randomBytes(12).toString("hex");
     try {
       await prisma.supplierPriceList.updateMany({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY, status: "ACTIVE" }, data: { status: "ARCHIVED" } });
       await prisma.supplierPriceList.update({ where: { id: list.id }, data: { status: "ACTIVE" } });
       invalidateCatalogCache();
       const catalog = await loadCatalog({ fresh: true });
-      const input = await systemInput("pergola-sb400", { widthMm: 4000, depthMm: 5000, mounting: "wall", options: [], installation: "self", sides: {} });
-      const withOption = { ...input, options: [{ code: (catalog.families.find((f) => f.slug === "pergola-sb400")!.systemRules as SystemRules).options[0]!.code, qty: 1 }] };
+      const input = await systemInput("helio-horizon", { widthMm: 4000, depthMm: 5000, mounting: "wall", options: [], installation: "self", sides: {} });
+      const withOption = { ...input, options: [{ code: (catalog.families.find((f) => f.slug === "helio-horizon")!.systemRules as SystemRules).options[0]!.code, qty: 1 }] };
       await expect(addLine({ guestKey: g }, withOption)).rejects.toBeInstanceOf(CartError);
       await addLine({ guestKey: g }, input);
       const ev = await evaluateCart((await findActiveCart({ guestKey: g }))!);

@@ -4,7 +4,10 @@
 
 Préproduction : https://demo-elios.beaverdata.eu. Elle est protégée par identifiant, non indexable, avec le paiement en mode test. Les prix de la structure sont affichés selon la grille « Prix final HELIOSTORES » du classeur, en € HT (décision client du 2026-10-21, voir `prix-publics.md`) ; une configuration entièrement tarifée (structure seule, sans option ni point à confirmer) se commande en ligne avec paiement simulé ; le reste passe par un devis. Réalisations et Showroom sont masqués.
 
+Nomenclature commerciale (décision client du 2026-10-22, détail dans `nomenclature.md`) : le site présente HELIO Horizon, HELIO Panorama, HELIO Ombra et HELIO Riviera (HELIO Verrière réservé, en brouillon). Les références fournisseur citées ci-dessous restent internes ; les anciennes URL sont redirigées.
+
 Documents liés :
+- `nomenclature.md` : noms commerciaux, URL, motorisations, équipements, migration et mentions conservées ;
 - `prix-publics.md` : prix affichés (grille, arrondi, publication) et retrait des références fabricant/fournisseur du site ;
 - `sources.md` : registre et matrice des sources ;
 - `correspondances.md` : ALUPROF, THYSENS, SELT ;
@@ -47,13 +50,13 @@ Les jetons, contrastes et déclinaisons sont dans `identite.md`. Aucun logo vect
 
 ## 3. Produits
 
-| Produit | Famille publique | Statut | Rattachement |
-|---|---|---|---|
-| Pergola SB400 | Pergolas | publié, prix affiché | SB 400 ALUPROF (SELT by Aluprof) |
-| Pergola SB500 | Pergolas | publié, prix affiché | SELT ; page ALUPROF absente |
-| Screen REFLEKSOL 120 ZiiiP | Screens | publié, prix affiché | R 120 ZiiiP ALUPROF |
-| Store banne CASABLANCA | Stores bannes | publié, prix affiché | CASABLANCA AWNING ALUPROF |
-| Store de véranda VERANDA FTS | aucune | **brouillon** | voir § 4 |
+| Nom commercial | Réf. fournisseur (interne) | Famille publique | Statut | Rattachement |
+|---|---|---|---|---|
+| HELIO Horizon | Pergola SB400 | Pergolas | publié, prix affiché | SB 400 ALUPROF (SELT by Aluprof) |
+| HELIO Panorama | Pergola SB500 | Pergolas | publié, prix affiché | SELT ; page ALUPROF absente |
+| HELIO Ombra | Screen REFLEKSOL 120 ZiiiP | Screens | publié, prix affiché | R 120 ZiiiP ALUPROF |
+| HELIO Riviera | Store banne CASABLANCA | Stores bannes | publié, prix affiché | CASABLANCA AWNING ALUPROF |
+| HELIO Verrière (réservé) | Store de véranda VERANDA FTS | aucune | **brouillon** | voir § 4 |
 
 La navigation principale compte exactement trois familles : **Pergolas — Screens — Stores bannes**. Les équipements (LED, spots, poteaux, ensemble solaire, moteurs, automatisme) sont rattachés aux produits compatibles.
 

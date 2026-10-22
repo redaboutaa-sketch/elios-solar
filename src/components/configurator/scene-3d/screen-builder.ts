@@ -1,5 +1,5 @@
 /**
- * Géométrie procédurale du screen (coffre, coulisses ZiiiP, toile, barre de charge) devant une baie.
+ * Géométrie procédurale du screen (coffre, coulisses zip, toile, barre de charge) devant une baie.
  * Unités : mètres ; x = largeur de la baie, y = hauteur, z = 0 sur le nu de la façade (z > 0 vers l'extérieur).
  * Coffre et coulisses : sections du catalogue quand elles existent ; teinte de toile indicative.
  */

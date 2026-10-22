@@ -11,7 +11,7 @@ async function setDim(page: Page, id: string, value: number) {
   await input.blur();
 }
 
-test("SB400 : règles de cotes, options, fermeture souhaitée, 3D, projet enregistré et devis avec visualisation", async ({ page }) => {
+test("HELIO Horizon : règles de cotes, options, fermeture souhaitée, 3D, projet enregistré et devis avec visualisation", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   // première page de la session avec paramètres de campagne : attribution jointe au devis
@@ -19,7 +19,7 @@ test("SB400 : règles de cotes, options, fermeture souhaitée, 3D, projet enregi
   await acceptNecessaryOnly(page);
   const email = `sb400-${uid()}@test.invalid`;
   await createAccount(page, email, `Mdp-${uid()}-${uid()}`);
-  await page.goto("/configurateur/pergola-sb400");
+  await page.goto("/configurateur/helio-horizon");
   await acceptNecessaryOnly(page);
   const issues = page.locator('ul[aria-live="polite"]');
 
@@ -39,19 +39,19 @@ test("SB400 : règles de cotes, options, fermeture souhaitée, 3D, projet enregi
 
   await page.getByRole("radio", { name: "Autoportante" }).check();
   await page.getByLabel("Teinte de structure").selectOption({ label: "FSM 71319" });
-  await page.getByLabel(/Spots LED dans les lames/).check();
-  await expect(page.getByText(/Spots LED dans les lames \(9 points pour ces dimensions\)/)).toBeVisible();
-  await page.getByLabel(/Éclairage LED périphérique/).check();
+  await page.getByLabel(/HELIO Lumière — spots LED dans les lames/).check();
+  await expect(page.getByText(/HELIO Lumière — spots LED dans les lames \(9 points pour ces dimensions\)/)).toBeVisible();
+  await page.getByLabel(/HELIO Lumière — bandeau LED périphérique/).check();
   await expect(issues).toContainText("cumul non documenté");
-  await page.locator("#side-front").selectOption({ label: "Screen REFLEKSOL 120 ZiiiP (à étudier)" });
-  await expect(issues).toContainText("intégration du REFLEKSOL 120 ZiiiP étudiée au devis");
+  await page.locator("#side-front").selectOption({ label: "Screen HELIO Ombra (à étudier)" });
+  await expect(issues).toContainText("intégration d'un screen HELIO Ombra étudiée au devis");
 
   const recap = page.getByTestId("system-recap");
-  await expect(recap).toContainText("Pergola SB400");
+  await expect(recap).toContainText("HELIO Horizon");
   await expect(recap).toContainText("5 m");
   // prix : cellule « Prix final HELIOSTORES » autoportante 5 m × 4 m (largeur 3,6 m arrondie à la dimension supérieure)
   const priced = await publicPricesActive();
-  const expectedCell = priced ? await publicCell("pergola-sb400", "autoportante", 5000, 4000) : null;
+  const expectedCell = priced ? await publicCell("helio-horizon", "autoportante", 5000, 4000) : null;
   if (priced) {
     expect(expectedCell).not.toBeNull();
     await expect(page.getByTestId("system-price")).toHaveAttribute("data-priced", "true");
@@ -70,7 +70,7 @@ test("SB400 : règles de cotes, options, fermeture souhaitée, 3D, projet enregi
   await expect(description).toContainText("largeur 3,6 m × projection 5 m, hauteur 2,6 m");
   await expect(description).toContainText("autoportée");
   await expect(description).toContainText("9 spots LED");
-  await expect(page.getByTestId("scene-3d-to-confirm")).toContainText("Screen REFLEKSOL 120 ZiiiP côté avant");
+  await expect(page.getByTestId("scene-3d-to-confirm")).toContainText("Screen HELIO Ombra côté avant");
   await setDim(page, "dim-depth", 1500);
   await expect(page.getByTestId("scene-3d-blocked")).toContainText("Vue 3D indisponible");
   await setDim(page, "dim-depth", 5000);
@@ -100,12 +100,12 @@ test("SB400 : règles de cotes, options, fermeture souhaitée, 3D, projet enregi
 
   await page.goto("/compte/devis");
   const card = page.getByTestId("account-quote").filter({ hasText: number });
-  await expect(card).toContainText(priced ? /Pergola SB400 · structure \d[\d\s\u00a0\u202f]*(,\d+)?\s€\sHT/ : /Pergola SB400 · prix sur devis/);
+  await expect(card).toContainText(priced ? /HELIO Horizon · structure \d[\d\s\u00a0\u202f]*(,\d+)?\s€\sHT/ : /HELIO Horizon · prix sur devis/);
   await expect.poll(() => card.getByTestId("quote-visual").locator("img").evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBeGreaterThan(0);
   const pdf = await page.request.get(`/api/devis/${quote!.id}/pdf`);
   expect(pdf.status()).toBe(200);
   expect(pdf.headers()["content-type"]).toBe("application/pdf");
-  expect(Buffer.from(await pdf.body()).toString("latin1")).not.toMatch(/aluprof|thysens/i);
+  expect(Buffer.from(await pdf.body()).toString("latin1")).not.toMatch(/aluprof|thysens|refleksol|casablanca|sunbreaker|blebox|elero/i);
 
   await page.goto("/compte/projets");
   const project = page.locator("li").filter({ hasText: title });
@@ -119,7 +119,7 @@ test("SB400 : règles de cotes, options, fermeture souhaitée, 3D, projet enregi
   const admin = await newClientContext(page.context().browser()!, { viewport: page.viewportSize() });
   const adminPage = await admin.newPage();
   await loginAdmin(adminPage, `/admin/devis/${quote!.id}`);
-  await expect(adminPage.getByTestId("quote-recap")).toContainText("Pergola SB400");
+  await expect(adminPage.getByTestId("quote-recap")).toContainText("HELIO Horizon");
   await expect(adminPage.getByTestId("quote-system-price")).toContainText(priced ? "Prix de la structure affiché au client" : "sur devis");
   await expect(adminPage.getByTestId("quote-attribution")).toContainText("utm_source=e2e");
   await expect(adminPage.getByTestId("quote-qualification")).toHaveText("À qualifier");
@@ -130,7 +130,7 @@ test("SB400 : règles de cotes, options, fermeture souhaitée, 3D, projet enregi
   await admin.close();
 });
 
-test("SB500 : pas de 25 cm, moteurs et poteaux documentés, modules au devis ; sans WebGL le plan 2D est joint", async ({ browser, page }) => {
+test("HELIO Panorama : pas de 25 cm, moteurs et poteaux documentés, modules au devis ; sans WebGL le plan 2D est joint", async ({ browser, page }) => {
   const ctx = await newClientContext(browser, { viewport: page.viewportSize() });
   await ctx.addInitScript(() => {
     const orig = HTMLCanvasElement.prototype.getContext;
@@ -140,7 +140,7 @@ test("SB500 : pas de 25 cm, moteurs et poteaux documentés, modules au devis ; s
     } as typeof orig;
   });
   const p = await ctx.newPage();
-  await p.goto("/configurateur/pergola-sb500");
+  await p.goto("/configurateur/helio-panorama");
   await acceptNecessaryOnly(p);
   const issues = p.locator('ul[aria-live="polite"]');
   await setDim(p, "dim-width", 4800);
@@ -148,7 +148,7 @@ test("SB500 : pas de 25 cm, moteurs et poteaux documentés, modules au devis ; s
   await expect(issues).toContainText("disponible par pas de 25 cm");
   await setDim(p, "dim-depth", 6250);
   await expect(issues).not.toContainText("Impossible");
-  await p.getByLabel("Commande", { exact: true }).selectOption({ label: "Moteur Pergola 24 V — commande IO uniquement" });
+  await p.getByLabel("Commande", { exact: true }).selectOption({ label: "Motorisation 24 V — commande radio io uniquement" });
   await p.getByLabel(/Poteau supplémentaire/).check();
   await p.getByLabel("Poteau supplémentaire : valeur").selectOption({ label: "longueur 280 cm" });
   await p.getByLabel(/Installation en plusieurs modules/).check();

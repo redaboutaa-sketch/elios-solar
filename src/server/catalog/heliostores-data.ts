@@ -7,6 +7,11 @@
  * Les tarifs transmis (fiches « AVEC_PRIX », classeur) sont importés à part, en privé (src/server/supplier-prices).
  *
  * Registre des sources et matrice détaillée : docs/heliostores/sources.md.
+ *
+ * Nomenclature (décision client du 2026-10-22, src/domain/nomenclature.ts) : `name`, descriptions, FAQ et libellés
+ * des règles sont PUBLICS et n'emploient que les noms commerciaux HELIOSTORES. Les références du fournisseur
+ * restent dans `supplierRef` (famille, moteur, équipement), `manufacturer`, `brand`, les sources et les
+ * `sourceRef` des caractéristiques : données internes, retirées de tout ce qui part vers le navigateur.
  */
 import type { SourceRef, SystemRules } from "@/domain/system";
 import type { CategoryKey } from "@/domain/categories";
@@ -118,13 +123,13 @@ const SB_STANDARD_COLOURS = (src: SourceRef[]) => [finish("RAL 7016 mat", src), 
 const SELT_PALETTE = ["RAL 9016", "RAL 7016", "RAL 9006", "RAL 9007", "FSM 71319", "RAL 9010", "RAL 9001", "RAL 1013", "RAL 1015", "RAL 7015", "RAL 7021", "RAL 7012", "RAL 7039", "RAL 7043", "RAL 7035", "RAL 7037", "RAL 7024", "RAL 7001", "RAL 7022", "RAL 9005", "RAL 8003", "RAL 8014", "RAL 8016", "DB 703", "VSR 240", "VSR 780"];
 
 /* ------------------------------------------------------------------ */
-/* Pergola SB400 (SunBreaker 400)                                     */
+/* HELIO Horizon — réf. fournisseur SB 400 (SunBreaker 400)            */
 /* ------------------------------------------------------------------ */
 
 const sb400Sheet = SOURCES.ficheSB400;
 const sb400: HelioFamily = {
-  slug: "pergola-sb400",
-  name: "Pergola SB400",
+  slug: "helio-horizon",
+  name: "HELIO Horizon",
   category: "PERGOLAS",
   kind: "PERGOLA_SYSTEM",
   status: "QUOTE_ONLY",
@@ -134,15 +139,15 @@ const sb400: HelioFamily = {
   supplierRef: "SB 400 (SunBreaker 400)",
   shortDescription: "Pergola à lames orientables motorisées, murale ou autoportante, jusqu'à 4 × 7 m par module.",
   description:
-    "La SB400 (SunBreaker 400) est une pergola en aluminium extrudé avec éléments en acier, à toiture de lames orientables motorisées. L'évacuation des eaux est intégrée à la structure. Un module mesure de 1,4 m à 4 m de largeur et de 1,4 m à 7 m de projection, en version murale ou autoportante. Éclairage LED périphérique ou spots dans les lames en option, automatisme météo possible.",
-  seoTitle: "Pergola SB400 à lames orientables — prix selon vos dimensions",
-  seoDescription: "Pergola bioclimatique SB400 (SunBreaker 400) : lames orientables motorisées, murale ou autoportante, jusqu'à 4 × 7 m. Configurez vos cotes et demandez un devis.",
+    "HELIO Horizon est une pergola en aluminium extrudé avec éléments en acier, à toiture de lames orientables motorisées. L'évacuation des eaux est intégrée à la structure. Un module mesure de 1,4 m à 4 m de largeur et de 1,4 m à 7 m de projection, en version murale ou autoportante. Éclairage HELIO Lumière en option (bandeau périphérique ou spots dans les lames), automatisme météo possible.",
+  seoTitle: "Pergola HELIO Horizon à lames orientables — prix selon vos dimensions",
+  seoDescription: "Pergola bioclimatique HELIO Horizon : lames orientables motorisées, murale ou autoportante, jusqu'à 4 × 7 m. Configurez vos cotes et demandez un devis.",
   rules: {
     type: "pergola",
     dims: {
       width: { label: "Largeur", minMm: 1400, maxMm: 4000, sources: [at(sb400Sheet, "Spécifications"), at(SOURCES.catalogueSB400, "p. 2"), T("p. 11")], note: "Pas de largeur non documenté : cote au centimètre, confirmée au relevé." },
       depth: { label: "Projection", minMm: 1400, maxMm: 7000, stepMm: 200, sources: [at(sb400Sheet, "Spécifications : « disponible tous les 20 cm »"), at(SOURCES.aluprofSB400, "« module projection is a multiple of the blade interval (20 cm) »"), at(SOURCES.catalogueSB400, "p. 2"), T("p. 11")] },
-      height: { label: "Hauteur de passage", minMm: null, maxMm: 3020, confirmAboveMm: 2800, confirmNote: "la page fabricant et le catalogue indiquent 2,8 m, la déclaration P/SB400/25 3 020 mm", sources: [at(SOURCES.aluprofSB400, "Maximum height 2.8 m"), at(SOURCES.catalogueSB400, "p. 1, schéma « max 2.8 m »"), T("p. 10"), at(SOURCES.dopStructSB400, "max. dimensions 7000x4000x3020 mm")], note: "Hauteur minimale non documentée." },
+      height: { label: "Hauteur de passage", minMm: null, maxMm: 3020, confirmAboveMm: 2800, confirmNote: "les documents techniques indiquent 2,8 m ou 3,02 m selon le document", sources: [at(SOURCES.aluprofSB400, "Maximum height 2.8 m"), at(SOURCES.catalogueSB400, "p. 1, schéma « max 2.8 m »"), T("p. 10"), at(SOURCES.dopStructSB400, "max. dimensions 7000x4000x3020 mm")], note: "Hauteur minimale non documentée." },
     },
     mountings: [
       { code: "wall", label: "Murale", status: "established", sources: [at(sb400Sheet, "titre"), T("p. 11")] },
@@ -152,18 +157,20 @@ const sb400: HelioFamily = {
     customFinish: { code: "RAL_CUSTOM", label: "Autre teinte RAL ou finition bois (option)", status: "to_confirm", sources: [T("p. 11 — « painted in any RAL colour (optional) »"), at(SOURCES.aluprofSB400, "32 teintes RAL et finitions bois « option at extra cost »")], note: "teinte hors standard : conditions et délai confirmés au devis" },
     included: [
       { label: "Toiture à lames orientables (rotation 120° ± 2°)", sources: [at(sb400Sheet, "Structure incluse"), at(SOURCES.aluprofSB400, "« angle of rotation is 120°±2° »"), T("p. 11")] },
-      { label: "Moteur 24 V", sources: [at(sb400Sheet, "Structure incluse")] },
+      { label: "Motorisation électrique 24 V", supplierRef: "Moteur 24 V", sources: [at(sb400Sheet, "Structure incluse")] },
       { label: "Supports muraux", sources: [at(sb400Sheet, "Structure incluse")] },
-      { label: "Commande radio BleBox 1 ou 6 canaux", sources: [at(sb400Sheet, "Structure incluse")] },
+      { label: "HELIO Pilot — télécommande radio 1 ou 6 canaux", description: "Ouvre, ferme et oriente les lames à distance.", supplierRef: "Commande radio BleBox 1 ou 6 canaux", sources: [at(sb400Sheet, "Structure incluse")] },
       { label: "Évacuation des eaux intégrée à la structure", sources: [T("p. 11")] },
       { label: "Joints noirs (seule teinte de joint proposée)", sources: [at(sb400Sheet, "Spécifications")] },
       { label: "Première révision du moteur", sources: [at(sb400Sheet, "Spécifications")] },
     ],
     options: [
-      { code: "led_perimeter", label: "Éclairage LED périphérique (COB 3200 K)", group: "lighting", status: "established", sources: [at(sb400Sheet, "Options"), T("p. 11")], cumulToConfirmWith: ["led_spots"] },
+      { code: "led_perimeter", label: "HELIO Lumière — bandeau LED périphérique (COB 3200 K)", description: "Éclairage blanc chaud intégré au pourtour de la structure.", supplierRef: "Éclairage LED périphérique COB 3200 K", group: "lighting", status: "established", sources: [at(sb400Sheet, "Options"), T("p. 11")], cumulToConfirmWith: ["led_spots"] },
       {
         code: "led_spots",
-        label: "Spots LED dans les lames",
+        label: "HELIO Lumière — spots LED dans les lames",
+        description: "Points lumineux encastrés dans les lames ; leur nombre dépend des dimensions.",
+        supplierRef: "Spots LED dans les lames",
         group: "lighting",
         status: "established",
         note: "spots non modifiables individuellement",
@@ -179,10 +186,10 @@ const sb400: HelioFamily = {
       },
       { code: "intermediate_post", label: "Poteau intermédiaire", group: "structure", status: "to_confirm", sources: [at(sb400Sheet, "« Poteaux intermédiaires non inclus (en option) »")], note: "option documentée ; nombre et position établis au devis" },
       { code: "overflow_4_gutters", label: "Trop-plein invisible entre gouttières (version 4 gouttières)", group: "structure", status: "to_confirm", sources: [T("p. 11")], note: "option du catalogue, non reprise dans la fiche — à confirmer" },
-      { code: "weather_automation", label: "Automatisme météo (capteurs)", group: "control", status: "to_confirm", sources: [T("p. 11 — « possibility of using weather automation »")], note: "capteurs et compatibilité avec la commande BleBox à confirmer" },
+      { code: "weather_automation", label: "Automatisme météo (capteurs)", group: "control", status: "to_confirm", sources: [T("p. 11 — « possibility of using weather automation »")], note: "capteurs et compatibilité avec la télécommande HELIO Pilot à confirmer" },
     ],
-    modules: { maxSingleWidthMm: 4000, multiModule: "documented", sources: [at(SOURCES.aluprofSB400, "« Modular system: Yes »")], note: "Système modulaire selon le fabricant ; composition (modules, poteaux, gouttières) établie au devis." },
-    closureWishes: [{ familySlug: "screen-refleksol-120-ziiip", label: "Screen REFLEKSOL 120 ZiiiP", status: "to_confirm", note: "le fabricant cite des « systèmes Ziiip » en panneaux latéraux de la SB 400 sans désigner de modèle — intégration du REFLEKSOL 120 ZiiiP étudiée au devis selon les ouvertures réelles." }],
+    modules: { maxSingleWidthMm: 4000, multiModule: "documented", sources: [at(SOURCES.aluprofSB400, "« Modular system: Yes »")], note: "Système modulaire ; composition (modules, poteaux, gouttières) établie au devis." },
+    closureWishes: [{ familySlug: "helio-ombra", label: "Screen HELIO Ombra", status: "to_confirm", note: "la documentation cite des screens en panneaux latéraux sans désigner de modèle — intégration d'un screen HELIO Ombra étudiée au devis selon les ouvertures réelles." }],
     structure3d: { postMm: [150, 85], beamMm: [212, 85], bladeMm: [216, 40] },
     notices: ["Fixations, fondations et raccordement électrique non inclus ; la tenue de l'ouvrage dépend du support et se vérifie au relevé."],
   },
@@ -204,25 +211,25 @@ const sb400: HelioFamily = {
     { key: "wind_class", label: "Résistance au vent (EN 13561)", valueText: "classe 3 ; classe 6 selon EN 13561:2015 (propriété complémentaire)", source: "SUPPLIER_DOCUMENT", sourceRef: "Déclaration des performances PD/SB400/25 (ALUPROF, 2025-12-05)" },
     { key: "structure_class", label: "Structure (EN 1090-1)", valueText: "classe d'exécution EXC2 (acier)", source: "SUPPLIER_DOCUMENT", sourceRef: "Déclaration des performances P/SB400/25" },
     { key: "height_max", label: "Hauteur maximale", valueNum: 2800, unit: "mm", source: "MANUFACTURER_WEBSITE", sourceRef: "aluprof.com/en/product/sb-400 — Maximum height" },
-    { key: "height_max", label: "Hauteur maximale", valueNum: 3020, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Déclaration des performances P/SB400/25 — « max. dimensions 7000x4000x3020 mm »", note: "La déclaration de structure indique 3 020 mm ; la page fabricant et le catalogue indiquent 2,8 m. À trancher par écrit du fournisseur." },
+    { key: "height_max", label: "Hauteur maximale", valueNum: 3020, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Déclaration des performances P/SB400/25 — « max. dimensions 7000x4000x3020 mm »", note: "Deux documents techniques diffèrent (2,8 m et 3,02 m) : au-delà de 2,8 m, la hauteur est confirmée au devis." },
     { key: "width_max", label: "Largeur maximale d'un module", valueNum: 4000, unit: "mm", source: "MANUFACTURER_WEBSITE", sourceRef: "aluprof.com/en/product/sb-400 — Maximum width" },
     { key: "projection_max", label: "Projection maximale d'un module", valueNum: 7000, unit: "mm", source: "MANUFACTURER_WEBSITE", sourceRef: "aluprof.com/en/product/sb-400 — Maximum projection" },
     { key: "projection_step", label: "Pas de projection", valueNum: 200, unit: "mm", source: "MANUFACTURER_WEBSITE", sourceRef: "aluprof.com/en/product/sb-400 — « multiple of the blade interval (20 cm) »" },
     { key: "blade_rotation", label: "Rotation des lames", valueText: "120° ± 2°", source: "MANUFACTURER_WEBSITE", sourceRef: "aluprof.com/en/product/sb-400" },
     { key: "modular", label: "Système modulaire", valueText: "oui", source: "MANUFACTURER_WEBSITE", sourceRef: "aluprof.com/en/product/sb-400 — Modular system" },
-    { key: "side_panels", label: "Panneaux latéraux cités par le fabricant", valueText: "Slide, systèmes Ziiip ou Sunbreaker 210", source: "MANUFACTURER_WEBSITE", sourceRef: "aluprof.com/en/product/sb-400", note: "Modèles et fixations non précisés : étude au devis." },
+    { key: "side_panels", label: "Fermetures latérales citées", valueText: "parois coulissantes, screens ou panneaux à lames", source: "MANUFACTURER_WEBSITE", sourceRef: "aluprof.com/en/product/sb-400 — « Slide, Ziiip systems or Sunbreaker 210 »", note: "Modèles et fixations non précisés : étude au devis." },
     { key: "drive", label: "Motorisation", valueText: "moteur 24 V inclus", source: "CLIENT_SHEET", sourceRef: "Fiche SB400 — Structure incluse" },
-    { key: "remote", label: "Commande", valueText: "radio BleBox 1 ou 6 canaux, incluse", source: "CLIENT_SHEET", sourceRef: "Fiche SB400 — Structure incluse" },
+    { key: "remote", label: "Commande", valueText: "télécommande radio HELIO Pilot 1 ou 6 canaux, incluse", source: "CLIENT_SHEET", sourceRef: "Fiche SB400 — Structure incluse (« commande radio BleBox 1 ou 6 canaux »)" },
     { key: "seals", label: "Joints", valueText: "noirs uniquement", source: "CLIENT_SHEET", sourceRef: "Fiche SB400 — Spécifications" },
     { key: "colours_standard", label: "Teintes standard", valueText: "RAL 9016 mat, FSM 71319, RAL 7016 mat", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 10 ; catalogue SB400 p. 1" },
   ],
   faq: [
     { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, à la dimension de grille immédiatement supérieure à votre cote). Les options, la pose et la livraison sont chiffrées sur votre devis." },
     { q: "Peut-on commander en ligne ?", a: "Oui pour la structure seule : aux dimensions couvertes par la grille, sans option ni choix à confirmer, la configuration s'ajoute au panier (TVA ajoutée au total). La livraison et la pose s'organisent ensuite avec un conseiller. Dans les autres cas, demandez un devis depuis le configurateur." },
-    { q: "Quelles dimensions sont possibles ?", a: "Un module mesure de 1,4 m à 4 m de largeur et de 1,4 m à 7 m de projection, par pas de 20 cm en projection (l'entraxe des lames). Le fabricant indique un système modulaire : une installation de plusieurs modules est composée au devis." },
-    { q: "Quelle hauteur de passage ?", a: "Le catalogue et la page du fabricant indiquent 2,8 m au maximum ; une déclaration du fabricant mentionne 3 020 mm. Au-delà de 2,8 m, la hauteur est confirmée au devis. La hauteur minimale n'est pas documentée." },
-    { q: "Peut-on fermer les côtés ?", a: "Le fabricant cite des panneaux latéraux (Slide, systèmes Ziiip, Sunbreaker 210) sans préciser les modèles. Une fermeture latérale dépend des ouvertures réelles : nous l'étudions au devis." },
-    { q: "Qu'est-ce qui est inclus ?", a: "Lames orientables, moteur 24 V, supports muraux, commande radio BleBox 1 ou 6 canaux, joints noirs et première révision du moteur. Les poteaux intermédiaires et l'éclairage sont en option." },
+    { q: "Quelles dimensions sont possibles ?", a: "Un module mesure de 1,4 m à 4 m de largeur et de 1,4 m à 7 m de projection, par pas de 20 cm en projection (l'entraxe des lames). La documentation indique un système modulaire : une installation de plusieurs modules est composée au devis." },
+    { q: "Quelle hauteur de passage ?", a: "La documentation technique indique 2,8 m au maximum ; un autre document mentionne 3 020 mm. Au-delà de 2,8 m, la hauteur est confirmée au devis. La hauteur minimale n'est pas documentée." },
+    { q: "Peut-on fermer les côtés ?", a: "La documentation cite des fermetures latérales (parois coulissantes, screens, panneaux à lames) sans préciser les modèles. Une fermeture latérale dépend des ouvertures réelles : nous l'étudions au devis." },
+    { q: "Qu'est-ce qui est inclus ?", a: "Lames orientables, motorisation électrique 24 V, supports muraux, télécommande radio HELIO Pilot (1 ou 6 canaux), joints noirs et première révision du moteur. Les poteaux intermédiaires et l'éclairage HELIO Lumière sont en option." },
   ],
   openQuestions: [
     { field: "Tarifs", question: "Nature des colonnes « Prix fournisseur » et « Prix final HELIOSTORES » (achat, vente, prix public ?), devise (DH dans la fiche, absente du classeur), HT ou TTC, validité, transport et pose.", sources: ["fiche-sb400", "classeur tarifaire (privé)"], blocks: "affichage d'un prix" },
@@ -233,13 +240,13 @@ const sb400: HelioFamily = {
 };
 
 /* ------------------------------------------------------------------ */
-/* Pergola SB500 (SunBreaker 500)                                     */
+/* HELIO Panorama — réf. fournisseur SB500 (SunBreaker 500)            */
 /* ------------------------------------------------------------------ */
 
 const sb500Sheet = SOURCES.ficheSB500;
 const sb500: HelioFamily = {
-  slug: "pergola-sb500",
-  name: "Pergola SB500",
+  slug: "helio-panorama",
+  name: "HELIO Panorama",
   category: "PERGOLAS",
   kind: "PERGOLA_SYSTEM",
   status: "QUOTE_ONLY",
@@ -249,9 +256,9 @@ const sb500: HelioFamily = {
   supplierRef: "SB500 (SunBreaker 500)",
   shortDescription: "Grande pergola à lames orientables, jusqu'à 5 × 7 m par module, extensible par modules.",
   description:
-    "La SB500 (SunBreaker 500) est une pergola en aluminium extrudé avec éléments en acier, à lames orientables motorisées. Ses sections renforcées autorisent un module jusqu'à 5 m de largeur et 7 m de projection. Elle existe en version murale ou autoportante et accepte l'assemblage de plusieurs modules. Deux gouttières sont fournies ; l'éclairage LED, les spots, l'ensemble solaire et les poteaux supplémentaires sont en option.",
-  seoTitle: "Pergola SB500 à lames orientables — grandes dimensions",
-  seoDescription: "Pergola SB500 (SunBreaker 500) : lames orientables motorisées, jusqu'à 5 × 7 m par module, modulable. Configurez vos cotes et demandez un devis.",
+    "HELIO Panorama est une pergola en aluminium extrudé avec éléments en acier, à lames orientables motorisées. Ses sections renforcées autorisent un module jusqu'à 5 m de largeur et 7 m de projection. Elle existe en version murale ou autoportante et accepte l'assemblage de plusieurs modules. Deux gouttières sont fournies ; l'éclairage HELIO Lumière (bandeau ou spots), l'ensemble solaire et les poteaux supplémentaires sont en option.",
+  seoTitle: "Pergola HELIO Panorama à lames orientables — grandes dimensions",
+  seoDescription: "Pergola HELIO Panorama : lames orientables motorisées, jusqu'à 5 × 7 m par module, modulable. Configurez vos cotes et demandez un devis.",
   rules: {
     type: "pergola",
     dims: {
@@ -266,23 +273,25 @@ const sb500: HelioFamily = {
     finishes: SB_STANDARD_COLOURS([T("p. 6 — couleurs standard")]),
     customFinish: { code: "RAL_CUSTOM", label: "Autre teinte RAL (option)", status: "to_confirm", sources: [T("p. 7 — « painted in any RAL colour (optional) »")], note: "teinte hors standard : conditions et délai confirmés au devis" },
     controls: [
-      { code: "elero_picolo_xl_rts", label: "Moteur Elero Picolo XL — commande RTS", kind: "electric", status: "established", sources: [at(sb500Sheet, "Motorisation")] },
-      { code: "elero_picolo_xl_io", label: "Moteur Elero Picolo XL — commande IO", kind: "electric", status: "established", sources: [at(sb500Sheet, "Motorisation")] },
-      { code: "pergola_24v_io", label: "Moteur Pergola 24 V — commande IO uniquement", kind: "electric", status: "established", sources: [at(sb500Sheet, "Motorisation")] },
+      { code: "radio_rts", label: "Motorisation radio — commande RTS", supplierRef: "Moteur Elero Picolo XL — commande RTS", kind: "electric", status: "established", sources: [at(sb500Sheet, "Motorisation")] },
+      { code: "radio_io", label: "Motorisation radio — commande io", supplierRef: "Moteur Elero Picolo XL — commande IO", kind: "electric", status: "established", sources: [at(sb500Sheet, "Motorisation")] },
+      { code: "motor_24v_io", label: "Motorisation 24 V — commande radio io uniquement", supplierRef: "Moteur Pergola 24 V — commande IO uniquement", kind: "electric", status: "established", sources: [at(sb500Sheet, "Motorisation")] },
     ],
     included: [
       { label: "Toiture à lames orientables", sources: [at(sb500Sheet, "Structure incluse"), T("p. 7")] },
-      { label: "Moteur", sources: [at(sb500Sheet, "Structure incluse")] },
-      { label: "Commande radio 5 canaux", sources: [at(sb500Sheet, "Structure incluse")] },
+      { label: "Motorisation (selon la commande choisie)", supplierRef: "Moteur", sources: [at(sb500Sheet, "Structure incluse")] },
+      { label: "HELIO Pilot — télécommande radio 5 canaux", description: "Ouvre, ferme et oriente les lames à distance.", supplierRef: "Commande radio 5 canaux", sources: [at(sb500Sheet, "Structure incluse")] },
       { label: "Supports muraux", sources: [at(sb500Sheet, "Structure incluse")] },
       { label: "2 gouttières (sans évacuation)", sources: [at(sb500Sheet, "Spécifications")] },
       { label: "Joints noirs (seule teinte de joint proposée)", sources: [at(sb500Sheet, "Spécifications")] },
     ],
     options: [
-      { code: "led_perimeter", label: "Éclairage LED périphérique (COB 3200 K)", group: "lighting", status: "established", sources: [at(sb500Sheet, "Options"), T("p. 7")], cumulToConfirmWith: ["led_spots"] },
+      { code: "led_perimeter", label: "HELIO Lumière — bandeau LED périphérique (COB 3200 K)", description: "Éclairage blanc chaud intégré au pourtour de la structure.", supplierRef: "Éclairage LED périphérique COB 3200 K", group: "lighting", status: "established", sources: [at(sb500Sheet, "Options"), T("p. 7")], cumulToConfirmWith: ["led_spots"] },
       {
         code: "led_spots",
-        label: "Spots LED dans les lames",
+        label: "HELIO Lumière — spots LED dans les lames",
+        description: "Points lumineux encastrés dans les lames ; leur nombre dépend des dimensions.",
+        supplierRef: "Spots LED dans les lames",
         group: "lighting",
         status: "established",
         note: "spots non modifiables individuellement",
@@ -307,11 +316,11 @@ const sb500: HelioFamily = {
         note: "position établie au devis",
         values: [200, 220, 240, 260, 280, 300, 320].map((cm) => ({ code: `${cm * 10}`, label: `longueur ${cm} cm` })),
       },
-      { code: "slide_wall", label: "Paroi coulissante « SLIDE » (jusqu'à 2,8 m de haut)", group: "closure", status: "to_confirm", sources: [T("p. 7 — « possibility of using sliding wall system SLIDE up to 2.8 m high »")], note: "système non référencé au catalogue HELIOSTORES — étude au devis" },
+      { code: "slide_wall", label: "Paroi coulissante (jusqu'à 2,8 m de haut)", supplierRef: "Paroi coulissante SLIDE", group: "closure", status: "to_confirm", sources: [T("p. 7 — « possibility of using sliding wall system SLIDE up to 2.8 m high »")], note: "système non référencé au catalogue HELIOSTORES — étude au devis" },
       { code: "weather_automation", label: "Automatisme météo (capteurs)", group: "control", status: "to_confirm", sources: [T("p. 7")], note: "capteurs et compatibilité avec la commande à confirmer" },
     ],
     modules: { maxSingleWidthMm: 5000, multiModule: "documented", sources: [T("p. 7 — « possibility of modular connection »"), at(sb500Sheet, "tableau « Module suivant (extension) »")] },
-    closureWishes: [{ familySlug: "screen-refleksol-120-ziiip", label: "Screen REFLEKSOL 120 ZiiiP", status: "to_confirm", note: "compatibilité avec la SB500 non documentée par les sources — étude des ouvertures réelles au devis." }],
+    closureWishes: [{ familySlug: "helio-ombra", label: "Screen HELIO Ombra", status: "to_confirm", note: "compatibilité avec HELIO Panorama non documentée par les sources — étude des ouvertures réelles au devis." }],
     structure3d: { postMm: [150, 150], beamMm: [290, 150], bladeMm: [267, 42], gutters: 2 },
     notices: ["Fixations, fondations et raccordement électrique non inclus ; la tenue de l'ouvrage dépend du support et se vérifie au relevé.", "Gouttières fournies sans évacuation : le raccordement des descentes d'eau est prévu au devis."],
   },
@@ -329,9 +338,9 @@ const sb500: HelioFamily = {
     { key: "modular", label: "Assemblage modulaire", valueText: "possible", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 7" },
     { key: "manufacturer_reference", label: "Référence chez le fabricant", valueText: "SB500 (SunBreaker 500)", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS (collection SELT) p. 6–7 ; kit LED SELT « SB400/SB400PRO/SB500 »" },
     { key: "manufacturer_reference", label: "Référence chez le fabricant", valueText: "aucune page « SB 500 » (gammes publiées : SB 350, SB 400, SB 450, SB 550)", source: "MANUFACTURER_WEBSITE", sourceRef: "aluprof.com — offre pergolas ; /en/product/sb-500 introuvable (404)", note: "Rien n'établit que la SB 550 remplace la SB500." },
-    { key: "side_panels", label: "Fermetures latérales citées", valueText: "paroi coulissante SLIDE jusqu'à 2,8 m de haut", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 7", note: "Compatibilité d'un screen REFLEKSOL 120 ZiiiP non documentée." },
+    { key: "side_panels", label: "Fermetures latérales citées", valueText: "paroi coulissante jusqu'à 2,8 m de haut", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 7 (« sliding wall system SLIDE »)", note: "Compatibilité d'un screen HELIO Ombra non documentée." },
     { key: "gutters", label: "Gouttières", valueText: "2 incluses, sans évacuation", source: "CLIENT_SHEET", sourceRef: "Fiche SB500 — Spécifications" },
-    { key: "drive", label: "Motorisation", valueText: "Elero Picolo XL (RTS ou IO) ou Pergola 24 V (IO uniquement)", source: "CLIENT_SHEET", sourceRef: "Fiche SB500 — Motorisation" },
+    { key: "drive", label: "Motorisation", valueText: "motorisation radio (commande RTS ou io) ou motorisation 24 V (commande io uniquement)", source: "CLIENT_SHEET", sourceRef: "Fiche SB500 — Motorisation (« Elero Picolo XL RTS / IO ; Pergola 24 V IO uniquement »)" },
     { key: "remote", label: "Commande", valueText: "radio 5 canaux, incluse", source: "CLIENT_SHEET", sourceRef: "Fiche SB500 — Structure incluse" },
     { key: "seals", label: "Joints", valueText: "noirs uniquement", source: "CLIENT_SHEET", sourceRef: "Fiche SB500 — Spécifications" },
     { key: "standards", label: "Normes de construction citées", valueText: "EN 1090 et EN 13659", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 7", note: "Mention du catalogue ; aucun certificat ni déclaration de performance n'a été transmis." },
@@ -340,10 +349,10 @@ const sb500: HelioFamily = {
   faq: [
     { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, à la dimension de grille immédiatement supérieure à votre cote). Les options, la pose et la livraison sont chiffrées sur votre devis." },
     { q: "Peut-on commander en ligne ?", a: "Oui pour la structure seule : aux dimensions couvertes par la grille, sans option ni choix à confirmer, la configuration s'ajoute au panier (TVA ajoutée au total). La livraison et la pose s'organisent ensuite avec un conseiller. Dans les autres cas, demandez un devis depuis le configurateur." },
-    { q: "Peut-on couvrir plus de 5 m de largeur ?", a: "Oui, la SB500 accepte l'assemblage de plusieurs modules. La composition (modules, poteaux, gouttières) est établie au devis." },
-    { q: "Quels moteurs sont proposés ?", a: "Elero Picolo XL en commande RTS ou IO, ou moteur Pergola 24 V en commande IO uniquement." },
+    { q: "Peut-on couvrir plus de 5 m de largeur ?", a: "Oui, HELIO Panorama accepte l'assemblage de plusieurs modules. La composition (modules, poteaux, gouttières) est établie au devis." },
+    { q: "Quels moteurs sont proposés ?", a: "Une motorisation radio en commande RTS ou io, ou une motorisation 24 V en commande io uniquement. Le moteur retenu est précisé sur votre devis." },
     { q: "Les gouttières sont-elles fournies ?", a: "Deux gouttières sont incluses, sans évacuation : le raccordement des descentes est prévu au devis." },
-    { q: "Peut-on fermer les côtés ?", a: "Le catalogue mentionne une paroi coulissante SLIDE jusqu'à 2,8 m de haut. Ce système et la compatibilité d'un screen se vérifient au devis selon les ouvertures réelles." },
+    { q: "Peut-on fermer les côtés ?", a: "La documentation mentionne une paroi coulissante jusqu'à 2,8 m de haut. Ce système et la compatibilité d'un screen se vérifient au devis selon les ouvertures réelles." },
   ],
   openQuestions: [
     { field: "Marque / fabricant", question: "aluprof.com ne publie pas de page « SB 500 » (gammes actuelles SB 350, SB 400, SB 450, SB 550) ; la SB500 figure au catalogue THYSENS (collection SELT) et dans le kit LED SELT « SB400/SB400PRO/SB500 ». Rien n'établit que la SB 550 la remplace : référence ALUPROF actuelle à confirmer.", sources: ["catalogue-thysens p. 6–7", "aluprof.com — offre pergolas"], blocks: "rapprochement avec une page fabricant" },
@@ -354,24 +363,29 @@ const sb500: HelioFamily = {
 };
 
 /* ------------------------------------------------------------------ */
-/* Screen REFLEKSOL 120 ZiiiP                                         */
+/* HELIO Ombra — réf. fournisseur REFLEKSOL 120 ZiiiP                  */
 /* ------------------------------------------------------------------ */
 
 const refSheet = SOURCES.ficheRefleksol;
-const REF_MOTORS: Array<[string, string, number, string]> = [
-  ["m45_10_26", "M45-10/26", 580, "3 m noir VVF"],
-  ["variieco_m_10_14", "VariEco M 10/14", 590, "2 m blanc RNF"],
-  ["jet_10_17", "Jet 10/17", 640, "2,5 m blanc VVF"],
-  ["suntop_m", "SunTop M", 580, "2 m blanc RNF"],
-  ["altus_wt", "Altus WT", 730, "3 m noir RRF"],
-  ["dm45eaf_s_10_26", "DM45EAF/S-10/26", 720, "3 m blanc VVF"],
-  ["suntop_868_m_10_14", "SunTop 868 M 10/14", 580, "2 m blanc RNF"],
-  ["altus_50_rts_10_17", "Altus 50 RTS 10/17", 680, "3 m blanc VVF"],
-  ["sunilus_scr_io_10_17", "SUNILUS SCR IO 10/17", 680, "5 m blanc VVF"],
+/**
+ * Moteurs de la fiche : libellé public « Motorisation électrique » ou « Motorisation radio » (seulement quand la
+ * référence nomme le protocole radio RTS ou IO) ; le modèle du fabricant reste dans `supplierRef`.
+ * [code, libellé public, modèle fournisseur, largeur minimale du système, câble]
+ */
+const REF_MOTORS: Array<[string, string, string, number, string]> = [
+  ["electric_1", "Motorisation électrique — modèle 1", "M45-10/26", 580, "3 m noir VVF"],
+  ["electric_2", "Motorisation électrique — modèle 2", "VariEco M 10/14", 590, "2 m blanc RNF"],
+  ["electric_3", "Motorisation électrique — modèle 3", "Jet 10/17", 640, "2,5 m blanc VVF"],
+  ["electric_4", "Motorisation électrique — modèle 4", "SunTop M", 580, "2 m blanc RNF"],
+  ["electric_5", "Motorisation électrique — modèle 5", "Altus WT", 730, "3 m noir RRF"],
+  ["electric_6", "Motorisation électrique — modèle 6", "DM45EAF/S-10/26", 720, "3 m blanc VVF"],
+  ["electric_7", "Motorisation électrique — modèle 7", "SunTop 868 M 10/14", 580, "2 m blanc RNF"],
+  ["radio_rts", "Motorisation radio — commande RTS", "Altus 50 RTS 10/17", 680, "3 m blanc VVF"],
+  ["radio_io", "Motorisation radio — commande io", "SUNILUS SCR IO 10/17", 680, "5 m blanc VVF"],
 ];
 const refleksol: HelioFamily = {
-  slug: "screen-refleksol-120-ziiip",
-  name: "Screen REFLEKSOL 120 ZiiiP",
+  slug: "helio-ombra",
+  name: "HELIO Ombra",
   category: "SCREENS",
   kind: "SCREEN_SYSTEM",
   status: "QUOTE_ONLY",
@@ -379,11 +393,11 @@ const refleksol: HelioFamily = {
   brand: "SELT by Aluprof",
   manufacturer: "ALUPROF SA (usine d'Opole, ex-SELT)",
   supplierRef: "REFLEKSOL 120 ZiiiP",
-  shortDescription: "Screen à toile tendue et mécanisme ZiiiP, motorisé, pose en niche ou en façade.",
+  shortDescription: "Screen à toile tendue guidée par fermeture zip, motorisé, pose en niche ou en façade.",
   description:
-    "Le REFLEKSOL 120 ZiiiP est un screen extérieur à coffre en aluminium extrudé de 126 mm, pour une pose en niche ou en façade. Le mécanisme ZiiiP tient la toile dans des coulisses en deux parties avec joints de compensation. La commande est uniquement électrique. Le catalogue indique une résistance au vent de classe 6 (classe 4 au-delà de 4 001 mm de largeur) et la technologie ZOOMTECH® au-delà de 5 m de largeur.",
-  seoTitle: "Screen REFLEKSOL 120 ZiiiP motorisé — prix selon vos dimensions",
-  seoDescription: "Screen extérieur REFLEKSOL 120 ZiiiP : toile tendue par coulisses ZiiiP, commande électrique, pose en niche ou façade. Configurez et demandez un devis.",
+    "HELIO Ombra est un screen extérieur à coffre en aluminium extrudé de 126 mm, pour une pose en niche ou en façade. Son guidage zip tient la toile dans des coulisses en deux parties avec joints de compensation. La commande est uniquement électrique. La documentation indique une résistance au vent de classe 6 (classe 4 au-delà de 4 001 mm de largeur) et un renfort de la toile pour les largeurs supérieures à 5 m.",
+  seoTitle: "Screen HELIO Ombra motorisé — prix selon vos dimensions",
+  seoDescription: "Screen extérieur HELIO Ombra : toile tendue par coulisses zip, commande électrique, pose en niche ou façade. Configurez et demandez un devis.",
   rules: {
     type: "screen",
     dims: {
@@ -409,24 +423,24 @@ const refleksol: HelioFamily = {
       { code: "sunworker", label: "Sunworker", status: "established", sources: [at(refSheet, "Tissus disponibles"), T("p. 157")] },
       { code: "serge", label: "Serge", status: "established", sources: [at(refSheet, "Tissus disponibles"), T("p. 157")] },
       { code: "polyscreen", label: "Polyscreen", status: "established", sources: [at(refSheet, "Tissus disponibles"), T("p. 157")] },
-      { code: "acrylique", label: "Acrylique", status: "to_confirm", sources: [at(refSheet, "Tissus disponibles")], note: "citée par la fiche, absente des toiles REFLEKSOL du catalogue — à confirmer" },
+      { code: "acrylique", label: "Acrylique", status: "to_confirm", sources: [at(refSheet, "Tissus disponibles")], note: "citée par la fiche, absente des toiles du catalogue pour ce screen — à confirmer" },
     ],
-    controls: REF_MOTORS.map(([c, label, minW, cable]) => ({ code: c, label: `Moteur ${label}`, kind: "electric" as const, minWidthMm: minW, cable: `câble ${cable}`, status: "established" as const, sources: [at(refSheet, "Options moteurs — largeur minimale du système et câble")] })),
+    controls: REF_MOTORS.map(([c, label, model, minW, cable]) => ({ code: c, label, supplierRef: `Moteur ${model}`, kind: "electric" as const, minWidthMm: minW, cable: `câble ${cable}`, status: "established" as const, sources: [at(refSheet, "Options moteurs — largeur minimale du système et câble")] })),
     included: [
       { label: "Coffre en aluminium extrudé (126 mm)", sources: [T("p. 66–67")] },
-      { label: "Mécanisme ZiiiP, coulisses en deux parties avec joints de compensation", sources: [T("p. 67")] },
+      { label: "Guidage zip : coulisses en deux parties avec joints de compensation", supplierRef: "Mécanisme ZiiiP", sources: [T("p. 67")] },
       { label: "Coulisses et barres anti-vent selon la configuration", sources: [at(refSheet, "Spécifications")], status: "to_confirm" },
     ],
     options: [
       { code: "group_installation", label: "Installation groupée (supports modulaires)", group: "structure", status: "to_confirm", sources: [T("p. 67 — « option to create modules using modular brackets »")], note: "nombre de modules et supports établis au devis" },
-      { code: "weather_automation", label: "Automatisme (capteurs vent / soleil)", group: "control", status: "to_confirm", sources: [T("p. 160")], note: "capteurs compatibles avec le moteur choisi à confirmer" },
+      { code: "weather_automation", label: "Automatisme HELIO Vent / HELIO Soleil (capteurs vent et soleil)", description: "Relève le screen par vent fort et le déroule selon l'ensoleillement.", supplierRef: "Automatisme (capteurs vent / soleil)", group: "control", status: "to_confirm", sources: [T("p. 160")], note: "capteurs compatibles avec le moteur choisi à confirmer" },
     ],
     structure3d: { cassetteMm: [126, 126] },
-    notices: ["Commande uniquement électrique : alimentation et raccordement à prévoir.", "Résistance au vent déclarée (EN 13659) : classe 6 jusqu'à 4 × 4 m, classe 4 de 4 à 5 m de largeur (hauteur ≤ 3 m), classe 2 pour 7 × 4 m (déclarations 52/RZ/2024 et 30/RZ/2023)."],
+    notices: ["Commande uniquement électrique : alimentation et raccordement à prévoir.", "Résistance au vent déclarée (EN 13659) : classe 6 jusqu'à 4 × 4 m, classe 4 de 4 à 5 m de largeur (hauteur ≤ 3 m), classe 2 pour 7 × 4 m (déclarations des performances du fabricant)."],
   },
   specs: [
     { key: "width_max", label: "Largeur maximale", valueNum: 7000, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 66" },
-    { key: "width_max", label: "Largeur maximale", valueNum: 4000, unit: "mm", source: "CLIENT_SHEET", sourceRef: "Fiche REFLEKSOL — « 400 cm (barre anti-vent) / 350 cm (guidage câble) »", note: "Contradiction avec le catalogue (7 m) ; le guidage câble ne correspond pas au mécanisme ZiiiP." },
+    { key: "width_max", label: "Largeur maximale", valueNum: 4000, unit: "mm", source: "CLIENT_SHEET", sourceRef: "Fiche REFLEKSOL — « 400 cm (barre anti-vent) / 350 cm (guidage câble) »", note: "Contradiction avec le catalogue (7 m) ; le guidage câble ne correspond pas au guidage zip." },
     { key: "height_max", label: "Hauteur maximale", valueNum: 4000, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 66" },
     { key: "height_max", label: "Hauteur maximale", valueNum: 4000, unit: "mm", source: "CLIENT_SHEET", sourceRef: "Fiche REFLEKSOL — Spécifications" },
     { key: "cassette", label: "Coffre", valueText: "aluminium extrudé, 126 × 126 mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 66" },
@@ -438,14 +452,14 @@ const refleksol: HelioFamily = {
     { key: "drive", label: "Commande", valueText: "électrique uniquement", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 66" },
     { key: "drive", label: "Commande", valueText: "électrique uniquement", source: "CLIENT_SHEET", sourceRef: "Fiche REFLEKSOL — Spécifications" },
     { key: "use", label: "Usage", valueText: "extérieur", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 66" },
-    { key: "zoomtech", label: "Grandes largeurs", valueText: "technologie ZOOMTECH® au-delà de 5 m", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 67" },
+    { key: "wide_width_reinforcement", label: "Grandes largeurs", valueText: "renfort de la toile au-delà de 5 m", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 67 (« ZOOMTECH® »)" },
     { key: "colours", label: "Teintes", valueText: "palette de 26 teintes standard, autre RAL en option", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 66–67, 150" },
   ],
   faq: [
     { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, à la dimension de grille immédiatement supérieure à votre cote). Les options, la pose et la livraison sont chiffrées sur votre devis." },
     { q: "Peut-on commander en ligne ?", a: "Oui pour la structure seule : aux dimensions couvertes par la grille, sans option ni choix à confirmer, la configuration s'ajoute au panier (TVA ajoutée au total). La livraison et la pose s'organisent ensuite avec un conseiller. Dans les autres cas, demandez un devis depuis le configurateur." },
     { q: "Quelle largeur maximale ?", a: "Le catalogue indique 7 m, la fiche transmise 4 m. Jusqu'à 4 m, les deux sources concordent ; au-delà, la faisabilité est confirmée au devis." },
-    { q: "Peut-on le manœuvrer à la main ?", a: "Non : le REFLEKSOL 120 ZiiiP est uniquement à commande électrique. Le choix du moteur fixe la largeur minimale du screen." },
+    { q: "Peut-on le manœuvrer à la main ?", a: "Non : HELIO Ombra est uniquement à commande électrique. Le choix du moteur fixe la largeur minimale du screen." },
     { q: "Peut-il fermer le côté d'une pergola ?", a: "Un screen vendu seul n'est pas automatiquement compatible avec une pergola : l'intégration se vérifie au devis selon les ouvertures et les fixations." },
   ],
   openQuestions: [
@@ -457,14 +471,14 @@ const refleksol: HelioFamily = {
 };
 
 /* ------------------------------------------------------------------ */
-/* Store banne CASABLANCA                                             */
+/* HELIO Riviera — réf. fournisseur CASABLANCA                         */
 /* ------------------------------------------------------------------ */
 
 const casaSheet = SOURCES.ficheCasablanca;
 const casaGrid = at(casaSheet, "tableau des dimensions (projection × largeur)");
 const casablanca: HelioFamily = {
-  slug: "store-banne-casablanca",
-  name: "Store banne CASABLANCA",
+  slug: "helio-riviera",
+  name: "HELIO Riviera",
   category: "STORES_BANNES",
   kind: "AWNING_SYSTEM",
   status: "QUOTE_ONLY",
@@ -474,9 +488,9 @@ const casablanca: HelioFamily = {
   supplierRef: "CASABLANCA",
   shortDescription: "Store de terrasse à coffre, jusqu'à 6 m de largeur et 3,6 m d'avancée.",
   description:
-    "Le CASABLANCA est un store de terrasse à coffre en aluminium extrudé. Le joint du coffre protège la toile, les bras sont à chaînes Flyer et un support de tube d'enroulement équipe les grandes largeurs. Il se pose au mur, au plafond ou sur chevrons, avec une inclinaison de 5° à 40°. La fiche transmise décrit la commande manuelle par manivelle.",
-  seoTitle: "Store banne CASABLANCA à coffre — prix selon vos dimensions",
-  seoDescription: "Store banne coffre CASABLANCA : jusqu'à 6 m de largeur et 3,6 m d'avancée, pose murale, plafond ou chevrons. Configurez et demandez un devis.",
+    "HELIO Riviera est un store de terrasse à coffre en aluminium extrudé. Le joint du coffre protège la toile, les bras sont à chaînes Flyer et un support de tube d'enroulement équipe les grandes largeurs. Il se pose au mur, au plafond ou sur chevrons, avec une inclinaison de 5° à 40°. La fiche transmise décrit la commande manuelle par manivelle.",
+  seoTitle: "Store banne HELIO Riviera à coffre — prix selon vos dimensions",
+  seoDescription: "Store banne coffre HELIO Riviera : jusqu'à 6 m de largeur et 3,6 m d'avancée, pose murale, plafond ou chevrons. Configurez et demandez un devis.",
   rules: {
     type: "awning",
     dims: {
@@ -499,7 +513,7 @@ const casablanca: HelioFamily = {
       { code: "crank_1500", label: "Manuelle — manivelle 150 cm", kind: "manual", status: "established", sources: [at(casaSheet, "Commande manuelle")] },
       { code: "crank_1800", label: "Manuelle — manivelle 180 cm", kind: "manual", status: "established", sources: [at(casaSheet, "Commande manuelle")] },
       { code: "crank_2200", label: "Manuelle — manivelle 220 cm", kind: "manual", status: "established", sources: [at(casaSheet, "Commande manuelle")] },
-      { code: "electric", label: "Électrique (moteur à définir)", kind: "electric", status: "to_confirm", sources: [T("p. 114 — « electric drive: yes »"), at(SOURCES.aluprofCasablanca, "commande manuelle ou électrique")], note: "motorisation citée par le catalogue mais absente de la fiche : moteur et conditions établis au devis" },
+      { code: "electric", label: "Motorisation électrique (moteur à définir)", kind: "electric", status: "to_confirm", sources: [T("p. 114 — « electric drive: yes »"), at(SOURCES.aluprofCasablanca, "commande manuelle ou électrique")], note: "motorisation citée par le catalogue mais absente de la fiche : moteur et conditions établis au devis" },
     ],
     included: [
       { label: "Coffre avec joint de protection de la toile", sources: [T("p. 115")] },
@@ -510,7 +524,7 @@ const casablanca: HelioFamily = {
     ],
     options: [{ code: "weather_automation", label: "Automatisme météo", group: "control", status: "to_confirm", sources: [T("p. 115 — « simple handling using full weather automation »")], note: "nécessite la version électrique — à confirmer au devis" }],
     structure3d: { tiltDeg: [5, 40] },
-    notices: ["Fixations adaptées au support (béton, maçonnerie, charpente) à déterminer au relevé ; pas de pose directe sur un support non porteur.", "Résistance au vent déclarée : classe 2 jusqu'à 4,10 × 3,10 m, classe 1 au-delà (déclaration 08/M/2018) — un store banne se replie par vent fort.", "Manivelles et engrenages disponibles en RAL 9010, 1013, 8017, 9006, 7016 (catalogue p. 114)."],
+    notices: ["Fixations adaptées au support (béton, maçonnerie, charpente) à déterminer au relevé ; pas de pose directe sur un support non porteur.", "Résistance au vent déclarée : classe 2 jusqu'à 4,10 × 3,10 m, classe 1 au-delà (déclaration des performances du fabricant) — un store banne se replie par vent fort.", "Manivelles et engrenages disponibles en RAL 9010, 1013, 8017, 9006, 7016."],
   },
   specs: [
     { key: "width_range", label: "Largeur", valueText: "200 à 600 cm", source: "CLIENT_SHEET", sourceRef: "Fiche CASABLANCA — Spécifications" },
@@ -547,13 +561,13 @@ const casablanca: HelioFamily = {
 };
 
 /* ------------------------------------------------------------------ */
-/* VERANDA FTS — brouillon (classement à décider)                      */
+/* HELIO Verrière — réf. VERANDA FTS — brouillon, hors catalogue public */
 /* ------------------------------------------------------------------ */
 
 const ftsSheet = SOURCES.ficheFts;
 const veranda: HelioFamily = {
-  slug: "veranda-fts",
-  name: "Store de véranda VERANDA FTS",
+  slug: "helio-verriere",
+  name: "HELIO Verrière",
   category: null,
   kind: "ROOF_BLIND_SYSTEM",
   status: "DRAFT",
@@ -563,9 +577,9 @@ const veranda: HelioFamily = {
   supplierRef: "VERANDA FTS",
   shortDescription: "Store textile de toiture vitrée (pose sur toiture ou au plafond), deux moteurs — en attente de classement.",
   description:
-    "La VERANDA FTS est un store textile en aluminium extrudé qui ombrage une toiture vitrée (véranda, verrière). Il se pose sur la toiture ou, à la demande, au plafond. Deux moteurs à capteurs de charge intégrés le commandent, et il couvre de grandes surfaces sans division du système, jusqu'à 4,5 m de largeur et 6,5 m de longueur selon le catalogue. Ce n'est ni une pergola, ni un screen vertical, ni un store banne à bras : son rattachement à l'une des trois familles reste à décider.",
-  seoTitle: "VERANDA FTS",
-  seoDescription: "Store de toiture VERANDA FTS (brouillon).",
+    "HELIO Verrière est un store textile en aluminium extrudé qui ombrage une toiture vitrée (véranda, verrière). Il se pose sur la toiture ou, à la demande, au plafond. Deux moteurs à capteurs de charge intégrés le commandent, et il couvre de grandes surfaces sans division du système, jusqu'à 4,5 m de largeur et 6,5 m de longueur selon le catalogue. Ce n'est ni une pergola, ni un screen vertical, ni un store banne à bras : son rattachement à l'une des trois familles reste à décider.",
+  seoTitle: "HELIO Verrière",
+  seoDescription: "Store de toiture HELIO Verrière (brouillon).",
   rules: {
     type: "roof_blind",
     dims: {
@@ -581,14 +595,14 @@ const veranda: HelioFamily = {
       { code: "soltis_92", label: "Soltis 92", status: "established", sources: [at(ftsSheet, "Tissus disponibles")] },
       { code: "acrylic", label: "Toile acrylique extérieure", status: "established", sources: [at(ftsSheet, "Tissus disponibles")] },
     ],
-    controls: [{ code: "two_motors_fts", label: "Électrique — deux moteurs + contrôleur FTS", kind: "electric", status: "established", sources: [at(ftsSheet, "Commande exclusivement électrique"), T("p. 109")] }],
+    controls: [{ code: "two_motors", label: "Motorisation électrique — deux moteurs et contrôleur", supplierRef: "Électrique — deux moteurs + contrôleur FTS", kind: "electric", status: "established", sources: [at(ftsSheet, "Commande exclusivement électrique"), T("p. 109")] }],
     included: [{ label: "Deux moteurs à capteurs de charge intégrés", sources: [T("p. 109")] }],
     options: [{ code: "weather_sensor", label: "Capteur météo", group: "control", status: "to_confirm", sources: [at(ftsSheet, "compatible capteur météo")], note: "modèle à confirmer" }],
   },
   specs: [
     { key: "width_range", label: "Largeur", valueText: "90 à 450 cm", source: "CLIENT_SHEET", sourceRef: "Fiche VERANDA FTS — Spécifications" },
     { key: "length_max", label: "Longueur maximale", valueNum: 6500, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 108" },
-    { key: "drive", label: "Commande", valueText: "électrique, deux moteurs + contrôleur FTS", source: "CLIENT_SHEET", sourceRef: "Fiche VERANDA FTS" },
+    { key: "drive", label: "Commande", valueText: "électrique, deux moteurs et contrôleur", source: "CLIENT_SHEET", sourceRef: "Fiche VERANDA FTS (« deux moteurs + contrôleur FTS »)" },
   ],
   faq: [],
   openQuestions: [

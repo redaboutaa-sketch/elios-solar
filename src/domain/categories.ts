@@ -7,7 +7,7 @@ export type CategoryKey = "PERGOLAS" | "SCREENS" | "STORES_BANNES";
 export interface CategoryDef {
   key: CategoryKey;
   label: string;
-  /** libellé au singulier, pour les titres (« Pergola SB400 ») */
+  /** libellé au singulier, pour les titres (« Pergola HELIO Horizon ») */
   singular: string;
   href: string;
   intro: string;

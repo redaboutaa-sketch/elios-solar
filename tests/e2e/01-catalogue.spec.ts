@@ -1,8 +1,10 @@
 import { test, expect, type Page } from "./fixtures";
 import { acceptNecessaryOnly, shot } from "./helpers";
 import { one, publicPricesActive } from "./db";
+import { PUBLIC_FORBIDDEN_NAMES } from "../../src/domain/public-sanitize";
 
-const FORBIDDEN = /aluprof|thysens|\bselt\b|euro[\s-]?confort/i;
+// fabricant, fournisseur et références (produits, moteurs) : jamais sur une page publique ni dans ses données
+const FORBIDDEN = PUBLIC_FORBIDDEN_NAMES;
 const AMOUNT = /\d[\d\s\u00a0\u202f]*(,\d+)?[\s\u00a0]?(€|EUR|DH|MAD)/;
 
 /** Page publique : aucune mention du fabricant ni du fournisseur (texte visible ET source HTML), prix « à partir de » si une grille est active. */
@@ -28,7 +30,7 @@ test("catalogue HELIOSTORES : trois familles, fiches sans référence fabricant/
   await expect(page.locator("footer")).not.toContainText(FORBIDDEN);
   await shot(page, "accueil");
 
-  const families: Array<[string, string[]]> = [["/pergolas", ["Pergola SB400", "Pergola SB500"]], ["/screens", ["Screen REFLEKSOL 120 ZiiiP"]], ["/stores-bannes", ["Store banne CASABLANCA"]]];
+  const families: Array<[string, string[]]> = [["/pergolas", ["HELIO Horizon", "HELIO Panorama"]], ["/screens", ["HELIO Ombra"]], ["/stores-bannes", ["HELIO Riviera"]]];
   for (const [path, names] of families) {
     await page.goto(path);
     const list = page.getByTestId("collection");
@@ -40,12 +42,12 @@ test("catalogue HELIOSTORES : trois familles, fiches sans référence fabricant/
   await shot(page, "collection");
 
   // fiche : galerie sans crédit fabricant, prix « à partir de » (ou sur devis), contradiction signalée sans citer de source
-  await page.goto("/screens/screen-refleksol-120-ziiip");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Screen REFLEKSOL 120 ZiiiP");
+  await page.goto("/screens/helio-ombra");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("HELIO Ombra");
   if (priced) await expect(page.getByTestId("from-price")).toContainText(/À partir de\s*\d/);
   else await expect(page.getByTestId("price-on-quote")).toContainText("Prix sur devis");
   // les visuels fabricant sont des fichiers privés importés par environnement (absents en CI) : on vérifie l'état réel
-  const imported = Number((await one<{ n: string }>(`SELECT count(*) AS n FROM "ProductMedia" pm JOIN "ProductFamily" f ON f.id = pm."familyId" JOIN "Media" m ON m.id = pm."mediaId" WHERE f.slug = 'screen-refleksol-120-ziiip' AND m.status = 'PUBLISHED' AND m.provenance IS NOT NULL`))!.n);
+  const imported = Number((await one<{ n: string }>(`SELECT count(*) AS n FROM "ProductMedia" pm JOIN "ProductFamily" f ON f.id = pm."familyId" JOIN "Media" m ON m.id = pm."mediaId" WHERE f.slug = 'helio-ombra' AND m.status = 'PUBLISHED' AND m.provenance IS NOT NULL`))!.n);
   if (imported > 0) {
     const img = page.getByTestId("system-gallery").locator("figure img");
     await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBeGreaterThan(0);
@@ -64,7 +66,7 @@ test("catalogue HELIOSTORES : trois familles, fiches sans référence fabricant/
   await expectPublicPage(page, priced);
   await shot(page, "fiche-screen");
 
-  await page.goto("/pergolas/pergola-sb400");
+  await page.goto("/pergolas/helio-horizon");
   await expect(page.getByRole("tab", { name: "Points à confirmer" })).toHaveCount(0);
   await expectPublicPage(page, priced);
   await page.getByRole("tab", { name: "Dimensions et pose" }).click();
@@ -72,7 +74,7 @@ test("catalogue HELIOSTORES : trois familles, fiches sans référence fabricant/
   await shot(page, "fiche-sb400");
 
   // brouillon (classement à décider) et ancien catalogue : jamais publics
-  for (const path of ["/stores-bannes/veranda-fts", "/configurateur/veranda-fts", "/pergolas/pergola-solis", "/stores-bannes/store-banne-ombra"]) {
+  for (const path of ["/stores-bannes/helio-verriere", "/configurateur/helio-verriere", "/pergolas/pergola-solis", "/stores-bannes/store-banne-ombra"]) {
     expect((await page.request.get(path)).status(), path).toBe(404);
   }
   await page.goto("/comparer");

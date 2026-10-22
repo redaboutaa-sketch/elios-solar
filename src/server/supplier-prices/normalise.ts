@@ -6,15 +6,15 @@ import type { GridGap, ParsedRow, RowStatus } from "./types";
 
 /** Familles du catalogue HELIOSTORES reconnues dans les sources. */
 export const FAMILY_RULES: { slug: string; test: RegExp }[] = [
-  { slug: "pergola-sb400", test: /\bSB\s*400\b/i },
-  { slug: "pergola-sb500", test: /\bSB\s*500\b/i },
-  { slug: "screen-refleksol-120-ziiip", test: /REFLEKSOL/i },
-  { slug: "store-banne-casablanca", test: /CASA(BLANCA)?\b/i },
-  { slug: "veranda-fts", test: /\bFTS\b/i },
+  { slug: "helio-horizon", test: /\bSB\s*400\b/i },
+  { slug: "helio-panorama", test: /\bSB\s*500\b/i },
+  { slug: "helio-ombra", test: /REFLEKSOL/i },
+  { slug: "helio-riviera", test: /CASA(BLANCA)?\b/i },
+  { slug: "helio-verriere", test: /\bFTS\b/i },
 ];
 
 /** Familles dont la dimension A est une hauteur (store vertical / toile de véranda). */
-export const HEIGHT_FAMILIES = new Set(["screen-refleksol-120-ziiip", "veranda-fts"]);
+export const HEIGHT_FAMILIES = new Set(["helio-ombra", "helio-verriere"]);
 
 export function familyFromText(text: string): string | null {
   for (const r of FAMILY_RULES) if (r.test.test(text)) return r.slug;

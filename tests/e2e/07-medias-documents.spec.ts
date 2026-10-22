@@ -22,7 +22,7 @@ test("médiathèque et documents : nouvelle version PDF publiée, visible sur la
     await page.locator("#new-title").fill(title);
     await page.locator("#new-kind").selectOption("guide");
     await page.locator("#new-audience").selectOption("PUBLIC");
-    await page.locator("#new-family").selectOption({ label: "Pergola SB400" });
+    await page.locator("#new-family").selectOption({ label: "HELIO Horizon" });
     await page.locator("#new-ds").selectOption("DEMO");
     await page.locator("#new-source").fill("Test automatisé");
     await page.locator("#new-summary").fill("Document de démonstration créé par le test de bout en bout.");
@@ -55,9 +55,9 @@ test("médiathèque et documents : nouvelle version PDF publiée, visible sur la
     await shot(page, "admin-medias");
 
     // 5. fiche produit : onglet Documents + galerie (nature affichée ; crédit et provenance réservés à la médiathèque)
-    await page.goto("/pergolas/pergola-sb400");
+    await page.goto("/pergolas/helio-horizon");
     await acceptNecessaryOnly(page);
-    const imported = Number((await one<{ n: string }>(`SELECT count(*) AS n FROM "ProductMedia" pm JOIN "ProductFamily" f ON f.id = pm."familyId" JOIN "Media" m ON m.id = pm."mediaId" WHERE f.slug = 'pergola-sb400' AND m.status = 'PUBLISHED' AND m.provenance IS NOT NULL`))!.n);
+    const imported = Number((await one<{ n: string }>(`SELECT count(*) AS n FROM "ProductMedia" pm JOIN "ProductFamily" f ON f.id = pm."familyId" JOIN "Media" m ON m.id = pm."mediaId" WHERE f.slug = 'helio-horizon' AND m.status = 'PUBLISHED' AND m.provenance IS NOT NULL`))!.n);
     if (imported > 0) {
       await expect(page.getByTestId("media-nature").first()).toHaveText("Photographie");
       await expect(page.getByTestId("media-credit")).toHaveCount(0);

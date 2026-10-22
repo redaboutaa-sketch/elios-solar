@@ -44,6 +44,10 @@ export interface Choice {
   note?: string;
   /** couleur d'aperçu indicative (rendu écran, jamais une référence de teinte) */
   swatch?: string;
+  /** descriptif fonctionnel public (équipements nommés HELIO …) */
+  description?: string;
+  /** désignation du fournisseur (modèle, référence) : interne, retirée des données publiques */
+  supplierRef?: string;
 }
 
 export interface MountingChoice extends Choice {
@@ -90,7 +94,7 @@ export interface SystemRules {
   customFinish?: Choice;
   fabrics?: Choice[];
   controls?: ControlChoice[];
-  included: Array<{ label: string; sources: SourceRef[]; status?: "established" | "to_confirm" }>;
+  included: Array<{ label: string; sources: SourceRef[]; status?: "established" | "to_confirm"; description?: string; supplierRef?: string }>;
   options: OptionDef[];
   /** pergola : un module seul, extension modulaire documentée ou non */
   modules?: { maxSingleWidthMm: number; multiModule: "documented" | "not_documented"; sources: SourceRef[]; note?: string };

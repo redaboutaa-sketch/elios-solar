@@ -89,11 +89,11 @@ export async function SystemProductPage({ family: f, category, media, docs }: { 
           <section className="mt-10 grid gap-4 sm:grid-cols-2" aria-label="Équipement" data-testid="system-included-options">
             <div className="border border-sand-200 bg-white p-5">
               <h2 className="font-display text-lg font-semibold">Inclus</h2>
-              <ul className="mt-3 space-y-2 text-sm">{r.included.map((i) => <li key={i.label} className="flex gap-2"><Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" /><span>{i.label}{i.status === "to_confirm" ? " (à confirmer)" : ""}</span></li>)}</ul>
+              <ul className="mt-3 space-y-2 text-sm">{r.included.map((i) => <li key={i.label} className="flex gap-2"><Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" /><span>{i.label}{i.status === "to_confirm" ? " (à confirmer)" : ""}{i.description && <span className="block text-xs text-stone-700">{i.description}</span>}</span></li>)}</ul>
             </div>
             <div className="border border-dashed border-sand-300 bg-sand-50 p-5">
               <h2 className="font-display text-lg font-semibold">En option</h2>
-              {r.options.length > 0 ? <ul className="mt-3 space-y-2 text-sm">{r.options.map((o) => <li key={o.code} className="flex gap-2"><Plus className="mt-0.5 size-4 shrink-0 text-brand-700" aria-hidden="true" /><span>{o.label}{o.status === "to_confirm" ? " — à confirmer au devis" : ""}{o.note && o.status !== "to_confirm" ? ` — ${o.note}` : ""}</span></li>)}</ul> : <p className="mt-3 text-sm text-stone-700">Aucune option documentée.</p>}
+              {r.options.length > 0 ? <ul className="mt-3 space-y-2 text-sm">{r.options.map((o) => <li key={o.code} className="flex gap-2"><Plus className="mt-0.5 size-4 shrink-0 text-brand-700" aria-hidden="true" /><span>{o.label}{o.status === "to_confirm" ? " — à confirmer au devis" : ""}{o.note && o.status !== "to_confirm" ? ` — ${o.note}` : ""}{o.description && <span className="block text-xs text-stone-700">{o.description}</span>}</span></li>)}</ul> : <p className="mt-3 text-sm text-stone-700">Aucune option documentée.</p>}
               <p className="mt-4 text-xs text-stone-700">Options chiffrées sur devis ; une option visible sur une photo n'est jamais incluse d'office.</p>
             </div>
           </section>
@@ -104,7 +104,7 @@ export async function SystemProductPage({ family: f, category, media, docs }: { 
           <h1 className="mt-2 font-display text-3xl font-semibold sm:text-4xl">{f.name}</h1>
           <p className="mt-2 text-stone-800 text-pretty">{f.shortDescription}</p>
           <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 border-t border-sand-200 pt-4 text-sm">
-            <dt className="text-stone-700">Référence</dt><dd>{f.supplierRef}</dd>
+            <dt className="text-stone-700">Gamme</dt><dd>{cat.label}</dd>
             <dt className="text-stone-700">{d.width.label}</dt><dd>{dimRangeText(d.width)}</dd>
             {d.depth && <><dt className="text-stone-700">{d.depth.label}</dt><dd>{dimRangeText(d.depth)}</dd></>}
             {d.height && <><dt className="text-stone-700">{d.height.label}</dt><dd>{dimRangeText(d.height)}</dd></>}

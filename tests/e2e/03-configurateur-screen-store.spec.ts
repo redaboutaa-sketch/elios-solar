@@ -10,8 +10,8 @@ async function setDim(page: Page, id: string, value: number) {
   await input.blur();
 }
 
-test("screen REFLEKSOL 120 ZiiiP : largeur contradictoire signalée, largeur minimale du moteur, 3D et devis", async ({ page }) => {
-  await page.goto("/configurateur/screen-refleksol-120-ziiip");
+test("screen HELIO Ombra : largeur contradictoire signalée, largeur minimale du moteur, 3D et devis", async ({ page }) => {
+  await page.goto("/configurateur/helio-ombra");
   await acceptNecessaryOnly(page);
   const issues = page.locator('ul[aria-live="polite"]');
   await setDim(page, "dim-width", 4500);
@@ -21,7 +21,7 @@ test("screen REFLEKSOL 120 ZiiiP : largeur contradictoire signalée, largeur min
   await setDim(page, "dim-width", 7200);
   await expect(issues).toContainText("Largeur : de 0,58 m à 7 m");
   await setDim(page, "dim-width", 700);
-  await page.getByLabel("Commande", { exact: true }).selectOption({ label: "Moteur Altus WT — largeur min. 73 cm" });
+  await page.getByLabel("Commande", { exact: true }).selectOption({ label: "Motorisation électrique — modèle 5 — largeur min. 73 cm" });
   await expect(issues).toContainText("largeur minimale du système 0,73 m");
   await setDim(page, "dim-width", 2400);
   await expect(issues).not.toContainText("Impossible");
@@ -38,12 +38,12 @@ test("screen REFLEKSOL 120 ZiiiP : largeur contradictoire signalée, largeur min
   const q = await one<{ snapshot: { input: { widthMm: number; heightMm: number; mounting: string; fabricCode: string }; result: { systemPrice?: { amountMinor: number } | null } } }>('SELECT snapshot FROM "Quote" WHERE number = $1', [number]);
   expect(q!.snapshot.input).toMatchObject({ widthMm: 2400, heightMm: 2600, mounting: "niche", fabricCode: "serge" });
   // prix : hauteur 2,6 m → 2,75 m, largeur 2,4 m → 2,5 m (dimensions de grille supérieures)
-  const expected = (await publicPricesActive()) ? await publicCell("screen-refleksol-120-ziiip", "", 2750, 2500) : null;
+  const expected = (await publicPricesActive()) ? await publicCell("helio-ombra", "", 2750, 2500) : null;
   expect(q!.snapshot.result.systemPrice?.amountMinor ?? null).toBe(expected);
 });
 
-test("store banne CASABLANCA : avancées et largeurs documentées, commande électrique à confirmer, aucune hypothèse héritée", async ({ page }) => {
-  await page.goto("/configurateur/store-banne-casablanca");
+test("store banne HELIO Riviera : avancées et largeurs documentées, commande électrique à confirmer, aucune hypothèse héritée", async ({ page }) => {
+  await page.goto("/configurateur/helio-riviera");
   await acceptNecessaryOnly(page);
   const issues = page.locator('ul[aria-live="polite"]');
   await setDim(page, "dim-width", 3000);
@@ -53,10 +53,10 @@ test("store banne CASABLANCA : avancées et largeurs documentées, commande éle
   await expect(issues).not.toContainText("Impossible");
   await page.getByRole("radio", { name: "Sur chevrons" }).check();
   await page.getByLabel("Teinte de structure").selectOption({ label: "RAL 8014" });
-  await page.getByLabel("Commande", { exact: true }).selectOption({ label: "Électrique (moteur à définir) — à confirmer" });
+  await page.getByLabel("Commande", { exact: true }).selectOption({ label: "Motorisation électrique (moteur à définir) — à confirmer" });
   await expect(issues).toContainText("motorisation citée par le catalogue");
   const recap = page.getByTestId("system-recap");
-  await expect(recap).toContainText("Store banne CASABLANCA");
+  await expect(recap).toContainText("HELIO Riviera");
   await expect(recap).not.toContainText(/LED|télécommande|câble/);
   await page.getByTestId("view-3d-toggle").click();
   await expect(page.locator("[data-testid=scene-3d] canvas")).toBeVisible({ timeout: 30_000 });
@@ -69,6 +69,6 @@ test("store banne CASABLANCA : avancées et largeurs documentées, commande éle
   const q = await one<{ snapshot: { result: { issues: Array<{ code: string }>; systemPrice?: { amountMinor: number } | null } } }>('SELECT snapshot FROM "Quote" WHERE number = $1', [number]);
   expect(q!.snapshot.result.issues.map((i) => i.code)).toContain("control_to_confirm");
   // prix : avancée 3,1 m, largeur 4,2 m dans la plage 4,11–4,7 m
-  const expected = (await publicPricesActive()) ? await publicCell("store-banne-casablanca", "", 3100, 4700) : null;
+  const expected = (await publicPricesActive()) ? await publicCell("helio-riviera", "", 3100, 4700) : null;
   expect(q!.snapshot.result.systemPrice?.amountMinor ?? null).toBe(expected);
 });

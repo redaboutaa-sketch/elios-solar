@@ -11,8 +11,8 @@ const input = (slug: string, over: Partial<SystemInput> = {}): SystemInput => ({
 const scene = (i: SystemInput) => buildSceneModel(catalog, i, evaluate(catalog, i));
 
 describe("3D des systèmes : même entrée que le devis", () => {
-  it("SB400 : sections du catalogue, lames parallèles au mur à l'entraxe documenté (20 cm), poteaux selon la pose", () => {
-    const m = scene(input("pergola-sb400", { widthMm: 3600, depthMm: 5000, heightMm: 2600, mounting: "freestanding", finishCode: "FSM_71319" }));
+  it("HELIO Horizon : sections du catalogue, lames parallèles au mur à l'entraxe documenté (20 cm), poteaux selon la pose", () => {
+    const m = scene(input("helio-horizon", { widthMm: 3600, depthMm: 5000, heightMm: 2600, mounting: "freestanding", finishCode: "FSM_71319" }));
     expect(m?.kind).toBe("pergola");
     if (m?.kind !== "pergola") return;
     expect(m.lengthMm).toBe(3600);
@@ -23,11 +23,11 @@ describe("3D des systèmes : même entrée que le devis", () => {
     expect(m.blades.count).toBe(25);
     expect(m.blades.maxAngleDeg).toBe(120);
     expect(m.posts).toHaveLength(4);
-    const wall = scene(input("pergola-sb400", { mounting: "wall" }));
+    const wall = scene(input("helio-horizon", { mounting: "wall" }));
     expect(wall?.kind === "pergola" && wall.posts.length).toBe(2);
   });
   it("options représentées : LED périphérique, nombre de spots documenté, fermeture souhaitée marquée à confirmer", () => {
-    const m = scene(input("pergola-sb500", { widthMm: 4000, depthMm: 6000, options: [{ code: "led_perimeter" }, { code: "led_spots" }], sides: { front: "screen-refleksol-120-ziiip" } }));
+    const m = scene(input("helio-panorama", { widthMm: 4000, depthMm: 6000, options: [{ code: "led_perimeter" }, { code: "led_spots" }], sides: { front: "helio-ombra" } }));
     if (m?.kind !== "pergola") throw new Error("pergola attendue");
     expect(m.lighting.gutter).toBe(true);
     expect(m.lighting.spots).toBe(12);
@@ -35,19 +35,19 @@ describe("3D des systèmes : même entrée que le devis", () => {
     expect(m.closures[0]!.assembly.toConfirm).toBe(true);
     const items = representedItems(catalog, m);
     expect(items.join("\n")).toMatch(/Spots LED dans les lames : 12 points/);
-    expect(items.join("\n")).toMatch(/À confirmer : Screen REFLEKSOL 120 ZiiiP côté avant/);
+    expect(items.join("\n")).toMatch(/À confirmer : Screen HELIO Ombra côté avant/);
   });
   it("cotes hors règles : pas de scène (jamais de cote bornée silencieusement)", () => {
-    expect(scene(input("pergola-sb400", { depthMm: 1500 }))).toBeNull();
-    expect(scene(input("screen-refleksol-120-ziiip", { widthMm: 7500 }))).toBeNull();
+    expect(scene(input("helio-horizon", { depthMm: 1500 }))).toBeNull();
+    expect(scene(input("helio-ombra", { widthMm: 7500 }))).toBeNull();
   });
   it("screen : coffre 126 mm du catalogue, cotes saisies, toile de teinte indicative", () => {
-    const m = scene(input("screen-refleksol-120-ziiip", { widthMm: 3000, heightMm: 2400, mounting: "niche" }));
+    const m = scene(input("helio-ombra", { widthMm: 3000, heightMm: 2400, mounting: "niche" }));
     expect(m).toMatchObject({ kind: "screen", widthMm: 3000, heightMm: 2400, mounting: "niche", cassette: { widthMm: 126, heightMm: 126 } });
     expect(representedItems(catalog, m!).join("\n")).toMatch(/teinte représentée indicative/);
   });
   it("store banne : inclinaison dans la plage documentée, ni LED ni anémomètre supposés", () => {
-    const m = scene(input("store-banne-casablanca", { widthMm: 5000, depthMm: 3100, mounting: "rafter" }));
+    const m = scene(input("helio-riviera", { widthMm: 5000, depthMm: 3100, mounting: "rafter" }));
     expect(m).toMatchObject({ kind: "awning", widthMm: 5000, projectionMm: 3100, bracketMount: "rafter", led: false, anemometer: false });
     if (m?.kind === "awning") { expect(m.tiltDeg).toBeGreaterThanOrEqual(5); expect(m.tiltDeg).toBeLessThanOrEqual(40); }
   });
@@ -65,7 +65,7 @@ describe("médias HELIOSTORES : provenance et rattachement", () => {
     }
   });
   it("une photo par produit publié en tête de galerie, aucune image d'un autre produit (SB 400 PRO, SB500 sur la page SB 400)", () => {
-    for (const slug of ["pergola-sb400", "pergola-sb500", "screen-refleksol-120-ziiip", "store-banne-casablanca"]) expect(HELIOSTORES_MEDIA.filter((m) => m.familySlug === slug && m.role === "hero")).toHaveLength(1);
+    for (const slug of ["helio-horizon", "helio-panorama", "helio-ombra", "helio-riviera"]) expect(HELIOSTORES_MEDIA.filter((m) => m.familySlug === slug && m.role === "hero")).toHaveLength(1);
     expect(HELIOSTORES_MEDIA.some((m) => /400_Pro|PRO|SB500/.test(m.source.type === "url" ? m.source.url : ""))).toBe(false);
   });
   it("aucune image présentée comme une réalisation HELIOSTORES", () => {

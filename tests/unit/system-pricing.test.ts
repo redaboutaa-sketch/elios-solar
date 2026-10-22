@@ -23,44 +23,44 @@ const input = (slug: string, over: Partial<SystemInput>): SystemInput => ({ ...d
 
 describe("prix publics des systèmes (grille « Prix final HELIOSTORES »)", () => {
   it("cote exacte de la grille : montant de la cellule, variante selon la pose", () => {
-    const r = lookupSystemPrice(pergolaTable, rules("pergola-sb400"), input("pergola-sb400", { widthMm: 2000, depthMm: 3600, mounting: "wall" }));
+    const r = lookupSystemPrice(pergolaTable, rules("helio-horizon"), input("helio-horizon", { widthMm: 2000, depthMm: 3600, mounting: "wall" }));
     expect(r).toMatchObject({ ok: true, price: { amountMinor: 111_055, variantKey: "murale", roundedUp: false, grid: { widthMm: 2000, dimMm: 3600 } } });
-    const f = lookupSystemPrice(pergolaTable, rules("pergola-sb400"), input("pergola-sb400", { widthMm: 2000, depthMm: 3600, mounting: "freestanding" }));
+    const f = lookupSystemPrice(pergolaTable, rules("helio-horizon"), input("helio-horizon", { widthMm: 2000, depthMm: 3600, mounting: "freestanding" }));
     expect(f.ok && f.price.variantKey).toBe("autoportante");
   });
 
   it("cote intermédiaire : dimension de grille immédiatement supérieure sur chaque axe", () => {
-    const r = lookupSystemPrice(pergolaTable, rules("pergola-sb400"), input("pergola-sb400", { widthMm: 1600, depthMm: 3401, mounting: "wall" }));
+    const r = lookupSystemPrice(pergolaTable, rules("helio-horizon"), input("helio-horizon", { widthMm: 1600, depthMm: 3401, mounting: "wall" }));
     expect(r).toMatchObject({ ok: true, price: { amountMinor: 111_055, roundedUp: true, grid: { widthMm: 2000, dimMm: 3600 } } });
   });
 
   it("hors grille (en deçà de la première ou au-delà de la dernière dimension) : pas de prix", () => {
-    expect(lookupSystemPrice(pergolaTable, rules("pergola-sb400"), input("pergola-sb400", { widthMm: 1400, depthMm: 3400, mounting: "wall" }))).toEqual({ ok: false, reason: "out_of_grid" });
-    expect(lookupSystemPrice(pergolaTable, rules("pergola-sb400"), input("pergola-sb400", { widthMm: 1500, depthMm: 3200, mounting: "wall" }))).toEqual({ ok: false, reason: "out_of_grid" });
-    expect(lookupSystemPrice(pergolaTable, rules("pergola-sb400"), input("pergola-sb400", { widthMm: 2100, depthMm: 3400, mounting: "wall" }))).toEqual({ ok: false, reason: "out_of_grid" });
-    expect(lookupSystemPrice(null, rules("pergola-sb400"), input("pergola-sb400", {}))).toEqual({ ok: false, reason: "no_table" });
+    expect(lookupSystemPrice(pergolaTable, rules("helio-horizon"), input("helio-horizon", { widthMm: 1400, depthMm: 3400, mounting: "wall" }))).toEqual({ ok: false, reason: "out_of_grid" });
+    expect(lookupSystemPrice(pergolaTable, rules("helio-horizon"), input("helio-horizon", { widthMm: 1500, depthMm: 3200, mounting: "wall" }))).toEqual({ ok: false, reason: "out_of_grid" });
+    expect(lookupSystemPrice(pergolaTable, rules("helio-horizon"), input("helio-horizon", { widthMm: 2100, depthMm: 3400, mounting: "wall" }))).toEqual({ ok: false, reason: "out_of_grid" });
+    expect(lookupSystemPrice(null, rules("helio-horizon"), input("helio-horizon", {}))).toEqual({ ok: false, reason: "no_table" });
   });
 
   it("largeurs par plages (store banne) et axe hauteur (screen)", () => {
-    const a = lookupSystemPrice(awningTable, rules("store-banne-casablanca"), input("store-banne-casablanca", { widthMm: 2905, depthMm: 1600 }));
+    const a = lookupSystemPrice(awningTable, rules("helio-riviera"), input("helio-riviera", { widthMm: 2905, depthMm: 1600 }));
     expect(a).toMatchObject({ ok: true, price: { amountMinor: 800_000, roundedUp: false } });
-    const s = lookupSystemPrice(screenTable, rules("screen-refleksol-120-ziiip"), input("screen-refleksol-120-ziiip", { widthMm: 1000, heightMm: 1100 }));
+    const s = lookupSystemPrice(screenTable, rules("helio-ombra"), input("helio-ombra", { widthMm: 1000, heightMm: 1100 }));
     expect(s).toMatchObject({ ok: true, price: { amountMinor: 320_000, grid: { dimMm: 1250 } } });
   });
 
   it("le moteur joint le prix au résultat (parcours devis conservé) et l'omet en cas de blocage", () => {
-    const cat = withPrices("pergola-sb400", pergolaTable);
-    const ok = evaluate(cat, input("pergola-sb400", { widthMm: 2000, depthMm: 3400, mounting: "wall" }));
+    const cat = withPrices("helio-horizon", pergolaTable);
+    const ok = evaluate(cat, input("helio-horizon", { widthMm: 2000, depthMm: 3400, mounting: "wall" }));
     expect(ok.priceMode).toBe("quote");
     expect(ok.systemPrice?.amountMinor).toBe(101_055);
-    const blocked = evaluate(cat, input("pergola-sb400", { widthMm: 9000, depthMm: 3400, mounting: "wall" }));
+    const blocked = evaluate(cat, input("helio-horizon", { widthMm: 9000, depthMm: 3400, mounting: "wall" }));
     expect(blocked.systemPrice).toBeNull();
-    expect(evaluate(base, input("pergola-sb400", { widthMm: 2000, depthMm: 3400 })).systemPrice).toBeNull();
+    expect(evaluate(base, input("helio-horizon", { widthMm: 2000, depthMm: 3400 })).systemPrice).toBeNull();
   });
 
   it("configuration entièrement tarifée : ligne de structure TTC (TVA du catalogue ajoutée au prix HT), commandable en ligne", () => {
-    const cat = withPrices("pergola-sb400", pergolaTable);
-    const r = evaluate(cat, input("pergola-sb400", { widthMm: 2000, depthMm: 3400, mounting: "wall", options: [], installation: "self", sides: {} }));
+    const cat = withPrices("helio-horizon", pergolaTable);
+    const r = evaluate(cat, input("helio-horizon", { widthMm: 2000, depthMm: 3400, mounting: "wall", options: [], installation: "self", sides: {} }));
     expect(r.onlineOrder).toEqual({ ok: true, reasons: [] });
     expect(r.purchasable).toBe(true);
     expect(r.lines).toHaveLength(1);
@@ -72,9 +72,9 @@ describe("prix publics des systèmes (grille « Prix final HELIOSTORES »)", () 
   });
 
   it("option, pose professionnelle, choix à confirmer, cote hors grille ou base fiscale absente : devis seulement", () => {
-    const cat = withPrices("pergola-sb400", pergolaTable);
-    const ok = input("pergola-sb400", { widthMm: 2000, depthMm: 3400, mounting: "wall", options: [], installation: "self", sides: {} });
-    const opt = rules("pergola-sb400").options[0]!;
+    const cat = withPrices("helio-horizon", pergolaTable);
+    const ok = input("helio-horizon", { widthMm: 2000, depthMm: 3400, mounting: "wall", options: [], installation: "self", sides: {} });
+    const opt = rules("helio-horizon").options[0]!;
     const cases: Array<[Partial<SystemInput>, string]> = [
       [{ options: [{ code: opt.code, qty: opt.maxQty != null ? 1 : undefined, value: opt.values?.[0]?.code }] }, "options"],
       [{ installation: "professional" }, "pose professionnelle"],
@@ -87,7 +87,7 @@ describe("prix publics des systèmes (grille « Prix final HELIOSTORES »)", () 
       expect(r.lines, reason).toEqual([]);
       expect(r.onlineOrder?.reasons.join(" "), reason).toContain(reason);
     }
-    const screen = evaluate(withPrices("screen-refleksol-120-ziiip", screenTable), input("screen-refleksol-120-ziiip", { widthMm: 1000, heightMm: 1000, options: [] }));
+    const screen = evaluate(withPrices("helio-ombra", screenTable), input("helio-ombra", { widthMm: 1000, heightMm: 1000, options: [] }));
     expect(screen.purchasable).toBe(false);
     expect(screen.onlineOrder?.reasons.join(" ")).toContain("base fiscale");
   });
@@ -109,7 +109,7 @@ describe("site public sans référence au fabricant ni au fournisseur", () => {
   });
 
   it("messages du moteur sans citation de source", () => {
-    const msgs = evaluate(base, input("pergola-sb400", { widthMm: 9000, depthMm: 1500 })).issues.map((i) => i.message).join(" ");
+    const msgs = evaluate(base, input("helio-horizon", { widthMm: 9000, depthMm: 1500 })).issues.map((i) => i.message).join(" ");
     expect(msgs).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
     expect(msgs).not.toMatch(/catalogue|fiche technique/i);
   });
