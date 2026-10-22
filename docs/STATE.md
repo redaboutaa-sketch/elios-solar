@@ -5,6 +5,12 @@ Le bilan complet est dans `docs/heliostores/README.md`, avec les sources, corres
 
 ## HELIOSTORES (en cours de revue)
 
+- **Nomenclature commerciale** (déployé c5c2619, migrations `20261022090000_heliostores_nomenclature` et `…091000_…_labels`) :
+  HELIO Horizon, Panorama, Ombra, Riviera (`/pergolas/helio-horizon`…), HELIO Verrière réservé en brouillon ; références
+  fournisseur en `supplierRef` (admin : « Correspondance fournisseur »), redirections 308 des anciennes URL, codes moteur
+  renommés, devis émis inchangés. Détail : `docs/heliostores/nomenclature.md`. **Reste à faire en préproduction** : réimporter
+  les métadonnées des médias (`pnpm media:heliostores --dir <staging monté en lecture seule> --apply` dans le conteneur
+  `migrate`) ; tant que ce n'est pas fait, 40 textes alternatifs et légendes gardent les anciens noms.
 - **Refonte « catalogue fabricant »** (déployé 0d16dc4) : grand visuel à vues manuelles, en-tête superposé puis compact, panneaux
   « Nos solutions » extensibles avec dessins au trait blanc, modèles sur fond blanc, galerie Photos / 3D / Dessins, Montserrat ;
   matrice : `docs/design/reference-matrice.md`, QA : `docs/design/visual-qa.md` (itération 2). Sauvegarde : `backups/preprod/db_20261021_165710.dump`.
