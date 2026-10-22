@@ -76,7 +76,7 @@ export default async function HomePage() {
             return (
               <li key={c.key} className="solution-panel card-link sketch-trigger group relative flex min-w-0 flex-col overflow-hidden border border-sand-200 bg-sand-50 text-ink" data-testid={`home-${c.key}`}>
                 <div className="panel-sketch-zone flex aspect-[4/3] min-h-0 items-center justify-center p-6 sm:aspect-[16/9] lg:aspect-auto lg:flex-1 lg:p-8">
-                  <FamilySketch kind={c.key} className="panel-sketch size-full max-w-[38rem]" />
+                  <FamilySketch kind={c.key} showWall={false} className="panel-sketch size-full max-w-[38rem]" />
                 </div>
                 <div className="flex flex-col p-6 pt-0 lg:p-8 lg:pt-0">
                   <h3 className="font-display text-2xl font-semibold lg:text-3xl"><Link href={c.href} className="stretched">{c.label}</Link></h3>
