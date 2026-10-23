@@ -7,6 +7,8 @@ import { allSegments, layoutForFamily, segmentLabel } from "./layout";
 import { applyBps, taxIncludedIn, type Cents } from "./money";
 import { activeGridFor, priceFromGrid } from "./pricing-grid";
 import { includedCablePublicText } from "./technical-spec";
+import { evaluateSystemRules, MOUNTING_FR, type SystemInput } from "./system";
+import { lookupSystemPrice, pricedSizes, type SystemPrice } from "./system-pricing";
 import type {
   AccessoryStandaloneInput,
   AwningInput,
@@ -30,7 +32,7 @@ import type {
   Variant,
 } from "./types";
 
-export const ENGINE_VERSION = "1.1.0";
+export const ENGINE_VERSION = "1.4.0";
 
 /* ------------------------------------------------------------------ */
 /* Utilitaires catalogue                                               */
@@ -675,6 +677,89 @@ function evaluateAccessory(catalog: CatalogSnapshot, input: AccessoryStandaloneI
 }
 
 /* ------------------------------------------------------------------ */
+/* Systèmes à la cote (catalogue HELIOSTORES)                           */
+/* ------------------------------------------------------------------ */
+
+const SYSTEM_KINDS = new Set(["pergola_system", "screen_system", "awning_system", "roof_blind_system"]);
+
+/**
+ * Système configurable à la cote : règles sourcées de la famille ; prix lu dans la grille publique (system-pricing.ts).
+ * Une configuration entièrement tarifée (structure seule, sans option ni point à confirmer) peut être commandée en ligne ;
+ * sinon la commande passe par un devis (options, pose, livraison, points à confirmer).
+ * Une famille en brouillon (ex. système dont le classement reste à décider) n'est pas configurable publiquement.
+ */
+function evaluateSystem(catalog: CatalogSnapshot, input: SystemInput): EvaluationResult {
+  const b = new Builder(catalog);
+  const family = findFamily(catalog, input.familySlug);
+  if (!family || !SYSTEM_KINDS.has(family.kind) || !family.systemRules) {
+    b.issue({ code: "family_unknown", severity: "blocking", message: "Système inconnu.", path: "familySlug" });
+    return { ...finish(b, input, undefined, null, true), priceMode: "quote" };
+  }
+  if (family.status === "archived" || family.status === "draft") {
+    b.issue({ code: "family_unavailable", severity: "blocking", message: `${family.name} : système non proposé à la configuration (classement ou données en cours de validation).`, path: "familySlug" });
+    return { ...finish(b, input, undefined, null, true), priceMode: "quote" };
+  }
+  const ev = evaluateSystemRules(family.systemRules, input, family.name);
+  for (const i of ev.issues) b.issue(i);
+  let layout: Layout | undefined;
+  const rules = family.systemRules;
+  if (rules.type === "pergola" && ev.geometry.depthMm != null && !b.issues.some((i) => i.severity === "blocking" && /^(widthMm|depthMm|mounting)$/.test(i.path ?? ""))) {
+    // repère du layout : « largeur » du layout = projection (côtés gauche/droit), « longueur » = largeur le long du mur.
+    // Aucun poteau intermédiaire automatique : ils sont une option dont la position est établie au devis.
+    try {
+      layout = layoutForFamily({ ...family, dividerThresholdMm: 1_000_000 }, ev.geometry.depthMm, input.widthMm, input.mounting === "wall" ? "wall" : "freestanding");
+    } catch {
+      layout = undefined;
+    }
+  }
+  const blocked = b.issues.some((i) => i.severity === "blocking");
+  // prix de la grille publique : seulement pour une cote sans blocage, couverte par la grille
+  const lookup = blocked ? null : lookupSystemPrice(family.systemPrices, rules, input);
+  const systemPrice = lookup?.ok ? lookup.price : null;
+  const reasons = onlineOrderBlockers(input, b.issues, systemPrice, blocked);
+  const orderable = reasons.length === 0 && systemPrice != null;
+  if (orderable) {
+    // configuration entièrement tarifée : structure seule au prix de la grille ; TVA du catalogue ajoutée à un prix HT
+    const net = systemPrice.amountMinor;
+    const taxRateBps = systemPrice.vatRateBps ?? catalog.taxRateBps;
+    const gross = systemPrice.taxBasis === "TTC" ? net : net + applyBps(net, taxRateBps);
+    const dims = [fmtM(input.widthMm), input.depthMm != null && rules.dims.depth ? fmtM(input.depthMm) : input.heightMm != null && rules.dims.height ? fmtM(input.heightMm) : null].filter(Boolean).join(" × ");
+    b.line({ kind: "base", code: `base:${family.slug}:grid:v${systemPrice.listVersion}`, label: `${family.name} — ${dims}, pose ${MOUNTING_FR[input.mounting]}`, qty: 1, unitGrossCents: gross, taxRateBps, dataStatus: family.dataStatus });
+  }
+  const issues = orderable ? b.issues.filter((i) => i.code !== "system_quote_only") : b.issues;
+  b.issues.splice(0, b.issues.length, ...issues);
+  const result = finish(b, input, layout, null, !orderable);
+  return {
+    ...result,
+    containsDemoData: family.dataStatus === "demo",
+    purchasable: orderable,
+    quoteRecommended: !orderable,
+    priceMode: "quote",
+    recap: ev.recap,
+    systemPrice,
+    pricedSizes: lookup && !lookup.ok && lookup.reason === "out_of_grid" ? pricedSizes(family.systemPrices, rules, input) : null,
+    onlineOrder: { ok: orderable, reasons },
+  };
+}
+
+const fmtM = (mm: number) => `${(mm / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 3 })} m`;
+
+/**
+ * Motifs pour lesquels une configuration de système ne peut pas être commandée en ligne : seule une configuration
+ * entièrement tarifée l'est (prix de la grille pour la cote, aucune option, aucun point à confirmer, pas de pose).
+ */
+function onlineOrderBlockers(input: SystemInput, issues: Issue[], price: SystemPrice | null, blocked: boolean): string[] {
+  const r: string[] = [];
+  if (blocked) r.push("un point est à corriger dans la configuration");
+  else if (!price) r.push("ces dimensions ne figurent pas dans la grille de prix");
+  else if (price.currency !== "EUR" || !price.taxBasis) r.push("le prix de la grille n'a pas de devise ou de base fiscale établie");
+  if (input.options.length) r.push("les options sont chiffrées au devis");
+  if (input.installation === "professional") r.push("la pose professionnelle est chiffrée au devis");
+  if (issues.some((i) => i.quoteSuggested && i.code !== "system_quote_only" && i.path !== "installation" && !/^options/.test(i.path ?? ""))) r.push("un choix est à confirmer au devis");
+  return r;
+}
+
+/* ------------------------------------------------------------------ */
 /* Point d'entrée                                                      */
 /* ------------------------------------------------------------------ */
 
@@ -688,6 +773,8 @@ export function evaluate(catalog: CatalogSnapshot, input: ConfigurationInput, no
       return evaluateAwning(catalog, input, now);
     case "accessory":
       return evaluateAccessory(catalog, input, now);
+    case "system":
+      return evaluateSystem(catalog, input);
     default: {
       const b = new Builder(catalog);
       b.issue({ code: "kind_unknown", severity: "blocking", message: "Type de configuration inconnu." });

@@ -29,17 +29,6 @@ export async function acceptNecessaryOnly(page: Page) {
   if (await btn.isVisible().catch(() => false)) await btn.click();
 }
 
-/** Configure une Solis 3x4 anthracite autoportée avec une paroi vitrée fixe à gauche et un code postal. */
-export async function configureStandard(page: Page) {
-  await page.goto("/configurateur?gamme=pergola-solis&dimension=3x4&finition=ANTHRACITE&implantation=autoportee");
-  await acceptNecessaryOnly(page);
-  await page.getByRole("button", { name: /^Gauche · 3 m/ }).click();
-  await page.getByRole("radio", { name: /Paroi vitrée/ }).check();
-  await page.getByRole("button", { name: /^fixe ·/ }).click();
-  await page.getByLabel("Code postal de livraison").fill("69000");
-  await page.getByTestId("price-confirmation").getByText("Prix confirmé par le serveur").waitFor({ timeout: 15_000 });
-}
-
 export async function createAccount(page: Page, email: string, password: string) {
   await page.goto("/compte/inscription");
   await page.getByLabel("Nom complet").fill("Client Test");
@@ -50,6 +39,20 @@ export async function createAccount(page: Page, email: string, password: string)
   await page.waitForURL((u) => u.pathname.startsWith("/compte") && !u.pathname.startsWith("/compte/inscription"), { timeout: 20_000 });
 }
 
+/** Remplit et envoie le formulaire « Demande de devis » ; retourne le numéro du devis. */
+export async function fillQuote(page: Page, email: string, firstName = "Sam") {
+  const form = page.getByRole("form", { name: "Demande de devis" });
+  await form.getByLabel("Prénom").fill(firstName);
+  await form.getByLabel("Nom", { exact: true }).fill("Recette");
+  await form.getByLabel("E-mail").fill(email);
+  await form.getByLabel("Code postal du projet").fill("69000");
+  await form.getByLabel(/J'accepte/).check();
+  await form.getByRole("button", { name: "Envoyer la demande de devis" }).click();
+  await page.getByTestId("quote-done").waitFor({ timeout: 40_000 });
+  return (await page.getByTestId("quote-done").textContent())!.match(/DEV-\d{6}-[A-Z0-9]{6}/)![0];
+}
+
+/** Coordonnées fictives du formulaire de commande (paiement simulé). */
 export async function fillCheckout(page: Page, email: string) {
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Prénom").fill("Camille");

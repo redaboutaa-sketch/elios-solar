@@ -13,7 +13,7 @@ async function makePdf(title: string): Promise<Buffer> {
   return Buffer.from(await doc.save());
 }
 
-test("médiathèque et documents : nouvelle version PDF publiée, visible sur la fiche ; galerie avec mention de rendu", async ({ page }) => {
+test("médiathèque et documents : nouvelle version PDF publiée, visible sur la fiche ; galerie avec nature, sans crédit fabricant", async ({ page }) => {
   const title = `Guide e2e ${uid()}`;
   try {
     await loginAdmin(page);
@@ -22,7 +22,7 @@ test("médiathèque et documents : nouvelle version PDF publiée, visible sur la
     await page.locator("#new-title").fill(title);
     await page.locator("#new-kind").selectOption("guide");
     await page.locator("#new-audience").selectOption("PUBLIC");
-    await page.locator("#new-family").selectOption({ label: "Pergola Solis Pro" });
+    await page.locator("#new-family").selectOption({ label: "HELIO Horizon" });
     await page.locator("#new-ds").selectOption("DEMO");
     await page.locator("#new-source").fill("Test automatisé");
     await page.locator("#new-summary").fill("Document de démonstration créé par le test de bout en bout.");
@@ -54,11 +54,20 @@ test("médiathèque et documents : nouvelle version PDF publiée, visible sur la
     await expect(page.getByRole("heading", { name: "Médiathèque" })).toBeVisible();
     await shot(page, "admin-medias");
 
-    // 5. fiche produit : onglet Documents + galerie avec mention de rendu
-    await page.goto("/pergolas/pergola-solis-pro");
+    // 5. fiche produit : onglet Documents + galerie (nature affichée ; crédit et provenance réservés à la médiathèque)
+    await page.goto("/pergolas/helio-horizon");
     await acceptNecessaryOnly(page);
-    await expect(page.getByTestId("media-nature").first()).toHaveText(/Visualisation 3D — rendu, pas une photographie/);
-    await expect(page.getByTestId("media-options").first()).toContainText("Options visibles non comprises dans le prix");
+    const imported = Number((await one<{ n: string }>(`SELECT count(*) AS n FROM "ProductMedia" pm JOIN "ProductFamily" f ON f.id = pm."familyId" JOIN "Media" m ON m.id = pm."mediaId" WHERE f.slug = 'helio-horizon' AND m.status = 'PUBLISHED' AND m.provenance IS NOT NULL`))!.n);
+    if (imported > 0) {
+      await expect(page.getByTestId("media-nature").first()).toHaveText("Photographie");
+      await expect(page.getByTestId("media-credit")).toHaveCount(0);
+      await page.getByRole("button", { name: /Afficher : Vue de dessous de la toiture/ }).click();
+      await expect(page.getByTestId("media-nature").first()).toHaveText("Rendu");
+      await expect(page.getByTestId("media-options").first()).toContainText("non inclus d'office : éclairage LED périphérique (option)");
+    } else {
+      test.info().annotations.push({ type: "médias", description: "aucun visuel fabricant importé dans cet environnement : état vide vérifié" });
+      await expect(page.getByText("Visuels en cours d'intégration.")).toBeVisible();
+    }
     await shot(page, "fiche-galerie-rendu");
     await page.getByRole("tab", { name: /^Documents/ }).click();
     const link = page.getByRole("link", { name: title });

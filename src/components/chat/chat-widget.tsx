@@ -150,6 +150,7 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
     <>
       <button
         ref={openerRef}
+        data-chat-launcher
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}

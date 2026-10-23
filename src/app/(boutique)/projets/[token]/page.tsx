@@ -1,3 +1,4 @@
+import { formatSystemPrice } from "@/domain/system-pricing";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -26,11 +27,13 @@ export default async function SharedProjectPage(props: PageProps<"/projets/[toke
       <div className="mt-6 grid gap-8 lg:grid-cols-2">
         <div className="card p-3">{result.layout ? <PlanPreview layout={result.layout} segments={input.kind === "pergola_standard" ? (input as PergolaStandardInput).segments : {}} /> : <p className="p-4 text-sm">Pas de plan pour ce type de configuration.</p>}</div>
         <div className="card p-5">
-          <table className="w-full text-sm"><tbody>{result.lines.map((l) => <tr key={l.code + (l.path ?? "")} className="border-b border-sand-200"><td className="py-2">{l.label}{l.qty > 1 && ` × ${l.qty}`}</td><td className="py-2 text-right">{l.included ? "inclus" : <Price cents={l.totalGrossCents} />}</td></tr>)}<tr className="font-semibold text-lg"><td className="pt-3">Total TTC {result.totals.isFinal ? "" : "(hors livraison)"}</td><td className="pt-3 text-right"><Price cents={result.totals.totalGrossCents} /></td></tr></tbody></table>
+          {result.priceMode === "quote" ? (
+            <><dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">{(result.recap ?? []).map((x, i) => <div key={`${x.label}-${i}`} className="contents"><dt className="text-stone-700">{x.label}</dt><dd>{x.value}{x.status === "to_confirm" ? " (à confirmer)" : ""}</dd></div>)}</dl><p className="mt-3 text-sm font-medium">{result.systemPrice ? <>Prix de la structure : {formatSystemPrice(result.systemPrice.amountMinor, result.systemPrice.currency, result.systemPrice.taxBasis)} — options, pose et livraison au devis.</> : "Prix sur devis pour ces dimensions."}</p></>
+          ) : <table className="w-full text-sm"><tbody>{result.lines.map((l) => <tr key={l.code + (l.path ?? "")} className="border-b border-sand-200"><td className="py-2">{l.label}{l.qty > 1 && ` × ${l.qty}`}</td><td className="py-2 text-right">{l.included ? "inclus" : <Price cents={l.totalGrossCents} />}</td></tr>)}<tr className="font-semibold text-lg"><td className="pt-3">Total TTC {result.totals.isFinal ? "" : "(hors livraison)"}</td><td className="pt-3 text-right"><Price cents={result.totals.totalGrossCents} /></td></tr></tbody></table>}
           {result.containsDemoData && <DemoBadge className="mt-2" />}
           <IssueList issues={result.issues.filter((i) => i.severity !== "info")} className="mt-4" />
           <div className="mt-5 flex flex-wrap gap-2">
-            {input.kind === "pergola_standard" && <Link href={`/configurateur?projet=${configuration.shareToken}`} className="btn-primary">Ouvrir dans le configurateur</Link>}
+            {input.kind === "system" && <Link href={`/configurateur/${input.familySlug}?projet=${configuration.shareToken}`} className="btn-primary">Ouvrir dans le configurateur</Link>}
             <a href={`/projets/${configuration.shareToken}/pdf`} className="btn-secondary">Télécharger le PDF</a>
           </div>
         </div>

@@ -5,8 +5,7 @@
  */
 import type { SceneModel } from "@/domain/scene-model";
 import { SceneEngine } from "./scene-engine";
-import { buildPergolaScene } from "./pergola-builder";
-import { buildAwningScene } from "./awning-builder";
+import { buildScene } from "./build-scene";
 import { captionOf, composeProjectImage } from "./export-image";
 
 export async function renderModelOffscreen(model: SceneModel, width = 1280, height = 800): Promise<string> {
@@ -19,7 +18,7 @@ export async function renderModelOffscreen(model: SceneModel, width = 1280, heig
   let engine: SceneEngine | null = null;
   try {
     engine = new SceneEngine(canvas, container);
-    engine.setBuilt(model.kind === "pergola" ? buildPergolaScene(model) : buildAwningScene(model));
+    engine.setBuilt(buildScene(model));
     engine.setView("three_quarter", false);
     const raw = engine.capture();
     return await composeProjectImage(raw, captionOf(model));

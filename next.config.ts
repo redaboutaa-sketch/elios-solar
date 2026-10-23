@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { legacyProductRedirects } from "./src/server/catalog/legacy-slugs";
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -10,6 +11,10 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
     qualities: [60, 75, 90],
+  },
+  // anciennes fiches et anciens configurateurs (références fournisseur) → noms commerciaux HELIOSTORES (308)
+  async redirects() {
+    return legacyProductRedirects();
   },
   async headers() {
     const preprod = process.env.SITE_INDEXABLE !== "true";

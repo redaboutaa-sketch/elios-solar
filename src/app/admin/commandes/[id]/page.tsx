@@ -58,7 +58,7 @@ export default async function OrderAdminPage(props: PageProps<"/admin/commandes/
           <dl className="mt-4 grid max-w-sm grid-cols-2 gap-y-1 text-sm">
             <dt>Produits</dt><dd className="text-right"><Price cents={order.goodsCents} showCents /></dd>
             <dt>Montage</dt><dd className="text-right"><Price cents={order.installationCents} showCents /></dd>
-            <dt>Livraison</dt><dd className="text-right"><Price cents={order.shippingCents} showCents /></dd>
+            <dt>Livraison</dt><dd className="text-right">{(order.delivery as { shippingIncluded?: boolean } | null)?.shippingIncluded === false ? "non comprise (à organiser)" : <Price cents={order.shippingCents} showCents />}</dd>
             <dt>Remise</dt><dd className="text-right">− <Price cents={order.discountCents} showCents /></dd>
             <dt className="font-semibold">Total TTC</dt><dd className="text-right font-semibold"><Price cents={order.totalCents} showCents /></dd>
             <dt className="text-stone-700">dont TVA</dt><dd className="text-right text-stone-700"><Price cents={order.taxCents} showCents /></dd>

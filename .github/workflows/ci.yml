@@ -59,6 +59,8 @@ jobs:
       - run: pnpm db:seed
       - run: pnpm test:integration
       - run: pnpm build
+      # les tests d'intégration réactivent l'ancien catalogue comme jeu d'essai : la recette navigateur repart du catalogue public
+      - run: pnpm db:seed
       - name: Tests navigateur (Playwright)
         run: |
           pnpm exec playwright install --with-deps chromium

@@ -1,5 +1,5 @@
 /**
- * Rendus originaux ELIOS SOLAR : les scènes SVG procédurales (TerraceScene, PergolaArt,
+ * Rendus originaux HELIOSTORES : les scènes SVG procédurales (TerraceScene, PergolaArt,
  * RoofDetailArt, AwningArt, ClosureArt) sont rendues en SVG (react-dom/server) puis en PNG
  * (sharp, 1600 px de large) et enregistrées dans la médiathèque (nature RENDER, statut PUBLISHED).
  *
@@ -19,7 +19,7 @@ import { AwningArt, ClosureArt, PergolaArt, RoofDetailArt, colorOf } from "../..
 import { artKind } from "../../components/illustrations/art-kind";
 import { MEDIA_URL_PREFIX, resolveMediaFile, storeMediaBuffer } from "./storage";
 
-export const RENDER_SOURCE = "Rendu original ELIOS SOLAR — scène procédurale";
+export const RENDER_SOURCE = "Rendu original HELIOSTORES — scène procédurale";
 const RENDER_WIDTH = 1600;
 const FABRICS: Record<string, { color: string; label: string }> = { GREY: { color: "#9a9a94", label: "toile grise" }, BEIGE: { color: "#d8c8a8", label: "toile beige" } };
 
@@ -195,7 +195,7 @@ export async function seedDemoRenders(prisma: PrismaClient, opts: { log?: (m: st
       const { url } = await storeMediaBuffer(png, "image/png");
       const data = {
         kind: "image", nature: "RENDER" as const, status: "PUBLISHED" as const, path: url, mimeType: "image/png", sizeBytes: png.length, width, height,
-        alt: spec.alt, title: spec.title, source: RENDER_SOURCE, license: "interne", credit: "ELIOS SOLAR",
+        alt: spec.alt, title: spec.title, source: RENDER_SOURCE, license: "interne", credit: "HELIOSTORES",
         rightsNote: "Création originale générée par le site (aucune photographie, aucun visuel de tiers).", visibleOptions: spec.visibleOptions,
         renderConfig: spec.config as never, sortOrder: spec.sortOrder, validatedBy: "seed (rendu procédural)", validatedAt: new Date(),
       };

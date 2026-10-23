@@ -16,7 +16,8 @@ export function OrderDetail({ order }: { order: Order & { lines: OrderLine[]; pa
         <tr className="font-semibold"><td className="pt-3">Total TTC</td><td className="pt-3 text-right"><Price cents={order.totalCents} /></td></tr>
         <tr className="text-xs text-stone-700"><td>dont TVA</td><td className="text-right"><Price cents={order.taxCents} showCents /></td></tr>
       </tbody></table>
-      <p className="mt-4 text-sm"><strong>Livraison :</strong> {addr.firstName} {addr.lastName}, {addr.line1}{addr.line2 ? `, ${addr.line2}` : ""}, {addr.postalCode} {addr.city}</p>
+      {(order.delivery as { shippingIncluded?: boolean } | null)?.shippingIncluded === false && <p className="mt-4 text-sm" data-testid="order-delivery-not-included">{(order.delivery as { shippingLabel?: string }).shippingLabel ?? "Livraison et pose non comprises"}.</p>}
+      <p className="mt-4 text-sm"><strong>Adresse de livraison :</strong> {addr.firstName} {addr.lastName}, {addr.line1}{addr.line2 ? `, ${addr.line2}` : ""}, {addr.postalCode} {addr.city}</p>
       <p className="mt-1 text-xs text-stone-700">Les libellés, références et prix sont figés à la commande : une mise à jour du catalogue ne les modifie pas.</p>
     </div>
   );

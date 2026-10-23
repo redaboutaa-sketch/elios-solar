@@ -12,7 +12,8 @@
  * - y : la hauteur (0 = sol).
  */
 import { layoutForFamily } from "./layout";
-import type { AwningInput, CatalogSnapshot, ConfigurationInput, EvaluationResult, Layout, Mounting, PergolaCustomInput, PergolaStandardInput, SideKey } from "./types";
+import type { AwningInput, CatalogSnapshot, ConfigurationInput, EvaluationResult, Family, Layout, Mounting, PergolaCustomInput, PergolaStandardInput, SideKey } from "./types";
+import { MOUNTING_FR, evaluateSystemRules, systemSceneBlocker, type SystemInput, type SystemRules } from "./system";
 
 export const SCENE_DISCLAIMER = "Visualisation indicative — ne constitue pas un plan d'exécution";
 /** Mention portée par toute image jointe à un devis (image, PDF, compte, administration). */
@@ -104,8 +105,13 @@ export interface PergolaSceneModel {
   beams: SceneBeam[];
   blades: {
     count: number;
-    /** les lames s'étendent de l'arrière vers l'avant (le long de la largeur) et se succèdent le long de la longueur */
-    orientation: "across_width";
+    /**
+     * `across_width` : les lames s'étendent de l'arrière vers l'avant et se succèdent le long de la longueur ;
+     * `along_length` : lames parallèles au mur, qui se succèdent sur la projection (SunBreaker).
+     */
+    orientation: "across_width" | "along_length";
+    /** angle d'ouverture maximal documenté (sinon 90°) */
+    maxAngleDeg?: number;
     pitchMm: number;
     spanMm: number;
     motorized: boolean;
@@ -128,7 +134,11 @@ export interface PergolaSceneModel {
     ledStrips: { color: LedColor } | null;
     /** couleur de l'éclairage de gouttière (inclus : couleur choisie à l'étape 6 ou blanc chaud par défaut) */
     color: LedColor;
+    /** spots LED dans les lames : nombre documenté pour ces dimensions */
+    spots?: number;
   };
+  /** sections issues des sources (coupes du catalogue) ; absentes = sections indicatives */
+  sections?: { postAlongMm: number; postAcrossMm: number; beamHeightMm: number; beamWidthMm: number; bladeWidthMm: number; bladeThicknessMm: number };
   heaters: { count: number; option?: string };
   lanterns: { count: number; option?: string };
   /** la hauteur est-elle indicative (gamme standard) ou saisie (sur mesure) ? */
@@ -147,8 +157,12 @@ export interface AwningSceneModel {
   widthMm: number;
   projectionMm: number;
   heightMm: number;
-  bracketMount: "wall" | "ceiling";
+  bracketMount: "wall" | "ceiling" | "rafter";
   bracketCount: number;
+  /** inclinaison représentée (degrés) — dans la plage documentée */
+  tiltDeg?: number;
+  control?: "manual" | "electric";
+  toConfirm?: string[];
   cabinet: { code: string; color: string; heightMm: number; depthMm: number };
   fabric: { code: string; color: string };
   /** éclairage LED intégré au coffre (inclus dans la gamme démo) */
@@ -158,7 +172,26 @@ export interface AwningSceneModel {
   disclaimer: string;
 }
 
-export type SceneModel = PergolaSceneModel | AwningSceneModel;
+export interface ScreenSceneModel {
+  kind: "screen";
+  familySlug: string;
+  familyName: string;
+  dimensionLabel: string;
+  finishLabel: string;
+  widthMm: number;
+  heightMm: number;
+  mounting: "niche" | "facade";
+  cassette: { widthMm: number; heightMm: number; color: string };
+  /** coulisses latérales (guidage zip) */
+  guides: { kind: "zip"; color: string };
+  fabric: { code: string; label: string; color: string };
+  control: string;
+  indicative: { fabricColor: true; railSection: true };
+  toConfirm: string[];
+  disclaimer: string;
+}
+
+export type SceneModel = PergolaSceneModel | AwningSceneModel | ScreenSceneModel;
 
 /** Catégorie visuelle d'une fermeture (même convention que `artFor` du configurateur). */
 export function closureTypeOf(familySlug: string): ClosureType {
@@ -379,6 +412,7 @@ export function buildAwningSceneModel(catalog: CatalogSnapshot, input: AwningInp
  * `result.layout` est utilisé s'il est fourni, sinon le layout est reconstruit depuis le catalogue.
  */
 export function buildSceneModel(catalog: CatalogSnapshot, input: ConfigurationInput, result?: Pick<EvaluationResult, "layout"> | null): SceneModel | null {
+  if (input.kind === "system") return buildSystemSceneModel(catalog, input, result?.layout ?? null);
   if (input.kind === "awning") return buildAwningSceneModel(catalog, input);
   if (input.kind === "pergola_custom") return buildCustomSceneModel(catalog, input, result?.layout ?? null);
   if (input.kind !== "pergola_standard") return null;
@@ -400,15 +434,30 @@ const SIDE_FR: Record<SideKey, string> = { back: "arrière", front: "avant", lef
  * Dérivée du modèle de scène : elle décrit exactement ce qui est dessiné, rien de plus.
  */
 export function representedItems(catalog: CatalogSnapshot, model: SceneModel): string[] {
+  if (model.kind === "screen") {
+    return [
+      `Produit : ${model.familyName}`,
+      `Dimensions : ${model.dimensionLabel} (largeur × hauteur)`,
+      `Pose : ${model.mounting === "niche" ? "en niche" : "en façade"}`,
+      `Teinte de structure : ${model.finishLabel}`,
+      `Toile : ${model.fabric.label} (teinte représentée indicative)`,
+      `Commande : ${model.control}`,
+      `Coffre ${model.cassette.widthMm} mm et coulisses zip (sections indicatives)`,
+      ...model.toConfirm.map((t) => `À confirmer : ${t}`),
+    ];
+  }
   if (model.kind === "awning") {
     return [
       `Gamme : ${model.familyName}`,
       `Dimensions : ${model.dimensionLabel} (largeur × avancée)`,
       `Finition : ${model.finishLabel}`,
-      `${model.bracketCount} supports ${model.bracketMount === "wall" ? "muraux" : "plafond"}`,
+      `${model.bracketCount} supports ${model.bracketMount === "wall" ? "muraux" : model.bracketMount === "rafter" ? "sur chevrons" : "plafond"}${model.toConfirm?.length ? " (nombre représenté indicatif)" : ""}`,
+      model.control ? `Commande : ${model.control === "manual" ? "manuelle (manivelle)" : "électrique"}` : null,
+      model.tiltDeg != null ? `Inclinaison représentée : ${model.tiltDeg}°` : null,
       model.led ? "Éclairage LED du coffre" : null,
       model.anemometer ? "Anémomètre" : null,
       `Hauteur de pose représentée : ${fmtM(model.heightMm)} m (indicative)`,
+      ...(model.toConfirm ?? []).map((t) => `À confirmer : ${t}`),
     ].filter((x): x is string => !!x);
   }
   const familyName = (slug: string) => catalog.families.find((f) => f.slug === slug)?.name ?? CLOSURE_FR[closureTypeOf(slug)];
@@ -425,10 +474,160 @@ export function representedItems(catalog: CatalogSnapshot, model: SceneModel): s
     const where = `Côté ${SIDE_FR[o.side]}${multi ? ` ${o.index}` : ""} (${fmtM(o.lengthMm)} m)`;
     items.push(o.closure ? `${where} : ${familyName(o.closure.familySlug)}${o.closure.option ? ` (${o.closure.option})` : ""}${o.closure.assembly.toConfirm ? " — assemblage à confirmer" : ""}` : `${where} : ouvert`);
   }
-  items.push(model.lighting.blades ? "Éclairage : LED intégrées aux lames" : model.lighting.gutter ? `Éclairage : LED de gouttière ${model.lighting.color === "rgb" ? "RGB" : "blanc chaud"}` : "Éclairage : aucun");
+  if (model.sections) items.push(`Sections représentées (catalogue) : poteau ${model.sections.postAcrossMm} × ${model.sections.postAlongMm} mm, poutre ${model.sections.beamWidthMm} × ${model.sections.beamHeightMm} mm, lame ${model.sections.bladeWidthMm} mm`);
+  if (model.lighting.spots) items.push(`Spots LED dans les lames : ${model.lighting.spots} points (emplacement indicatif)`);
+  items.push(model.lighting.blades ? "Éclairage : LED intégrées aux lames" : model.lighting.gutter ? `Éclairage : LED ${model.source === "custom" && model.sections ? "périphérique" : "de gouttière"} ${model.lighting.color === "rgb" ? "RGB" : "blanc chaud"}` : model.lighting.spots ? "Éclairage périphérique : aucun" : "Éclairage : aucun");
   if (model.heaters.count) items.push(`${model.heaters.count} lampe(s) chauffante(s)${model.heaters.option ? ` ${model.heaters.option}` : ""} (emplacement indicatif)`);
   if (model.lanterns.count) items.push(`${model.lanterns.count} lanterne(s)${model.lanterns.option ? ` ${model.lanterns.option}` : ""} (emplacement indicatif)`);
   items.push(model.indicative.heightMm ? `Hauteur représentée : ${fmtM(model.heightMm)} m (indicative)` : `Hauteur saisie : ${fmtM(model.heightMm)} m`);
   for (const t of model.toConfirm) items.push(`À confirmer : ${t}`);
   return items;
 }
+
+
+/* ------------------------------------------------------------------ */
+/* Systèmes à la cote (catalogue HELIOSTORES)                           */
+/* ------------------------------------------------------------------ */
+
+const NEUTRAL_FABRIC = "#8d8f8c";
+
+function finishOf(rules: SystemRules, code: string) {
+  return rules.finishes.find((f) => f.code === code) ?? (rules.customFinish?.code === code ? rules.customFinish : undefined);
+}
+
+/**
+ * Scène d'un système HELIOSTORES depuis la même entrée que le devis. Les sections et coffres viennent des
+ * coupes du catalogue quand elles existent ; la teinte de toile, la position des accessoires et le nombre de
+ * supports restent indicatifs. Retourne null si les cotes ne sont pas valides ou si le système n'est pas représentable.
+ */
+export function buildSystemSceneModel(catalog: CatalogSnapshot, input: SystemInput, layout?: Layout | null): SceneModel | null {
+  const family = catalog.families.find((f) => f.slug === input.familySlug);
+  const rules = family?.systemRules;
+  if (!family || !rules) return null;
+  if (systemSceneBlocker(rules, input)) return null;
+  const ev = evaluateSystemRules(rules, input, family.name);
+  const fin = finishOf(rules, input.finishCode);
+  const color = fin?.swatch ?? "#3a3d41";
+  const finishLabel = fin?.label ?? input.finishCode;
+  if (rules.type === "pergola") return pergolaSystemScene(family, rules, input, ev.geometry.depthMm!, ev.geometry.heightMm ?? 2500, color, finishLabel, ev.spots, layout);
+  if (rules.type === "screen") {
+    const fabric = rules.fabrics?.find((f) => f.code === input.fabricCode);
+    const control = rules.controls?.find((c) => c.code === input.controlCode);
+    const toConfirm = ev.issues.filter((i) => i.severity === "review" && i.code !== "system_quote_only").map((i) => i.message);
+    return {
+      kind: "screen",
+      familySlug: family.slug,
+      familyName: family.name,
+      dimensionLabel: `${fmtM(input.widthMm)} × ${fmtM(input.heightMm ?? 0)} m`,
+      finishLabel,
+      widthMm: input.widthMm,
+      heightMm: input.heightMm ?? 0,
+      mounting: input.mounting === "niche" ? "niche" : "facade",
+      cassette: { widthMm: rules.structure3d?.cassetteMm?.[0] ?? 120, heightMm: rules.structure3d?.cassetteMm?.[1] ?? 120, color },
+      guides: { kind: "zip", color },
+      fabric: { code: input.fabricCode ?? "", label: fabric?.label ?? "toile", color: NEUTRAL_FABRIC },
+      control: control?.label ?? "électrique",
+      indicative: { fabricColor: true, railSection: true },
+      toConfirm,
+      disclaimer: SCENE_DISCLAIMER,
+    };
+  }
+  if (rules.type === "awning") {
+    const control = rules.controls?.find((c) => c.code === input.controlCode);
+    const tilt = rules.structure3d?.tiltDeg ? Math.max(rules.structure3d.tiltDeg[0], Math.min(rules.structure3d.tiltDeg[1], 14)) : 14;
+    return {
+      kind: "awning",
+      familySlug: family.slug,
+      familyName: family.name,
+      dimensionLabel: `${fmtM(input.widthMm)} × ${fmtM(input.depthMm ?? 0)} m`,
+      finishLabel: `coffre ${finishLabel}, toile (teinte indicative)`,
+      widthMm: input.widthMm,
+      projectionMm: input.depthMm ?? 0,
+      heightMm: INDICATIVE_AWNING_HEIGHT_MM,
+      bracketMount: input.mounting === "ceiling" ? "ceiling" : input.mounting === "rafter" ? "rafter" : "wall",
+      bracketCount: 2,
+      cabinet: { code: input.finishCode, color, heightMm: 245, depthMm: 300 },
+      fabric: { code: input.fabricCode ?? "", color: "#b8b1a2" },
+      led: false,
+      anemometer: false,
+      tiltDeg: tilt,
+      control: control?.kind ?? "manual",
+      indicative: { heightMm: true, sections: true, armGeometry: true },
+      toConfirm: ["nombre de supports (2 ou 3 selon la largeur) établi au devis"],
+      disclaimer: SCENE_DISCLAIMER,
+    };
+  }
+  return null;
+}
+
+function pergolaSystemScene(family: Family, rules: SystemRules, input: SystemInput, depthMm: number, heightMm: number, color: string, finishLabel: string, spots: number | null, layout?: Layout | null): PergolaSceneModel | null {
+  const mounting: Mounting = input.mounting === "wall" ? "wall" : "freestanding";
+  const geo = layout ?? layoutForFamily({ ...family, dividerThresholdMm: 1_000_000 }, depthMm, input.widthMm, mounting);
+  const widthMm = geo.widthMm; // projection (z)
+  const lengthMm = geo.lengthMm; // largeur le long du mur (x)
+  const wall = mounting === "wall";
+  const posts: ScenePost[] = [];
+  if (!wall) posts.push({ id: "post-back-left", kind: "corner", xMm: 0, zMm: 0 }, { id: "post-back-right", kind: "corner", xMm: lengthMm, zMm: 0 });
+  posts.push({ id: "post-front-left", kind: "corner", xMm: 0, zMm: widthMm }, { id: "post-front-right", kind: "corner", xMm: lengthMm, zMm: widthMm });
+  const chosen = new Set(input.options.map((o) => o.code));
+  const perimeter = chosen.has("led_perimeter");
+  const beams: SceneBeam[] = [];
+  const openings: SceneOpening[] = [];
+  const closures: SceneClosure[] = [];
+  for (const side of geo.sides) {
+    const { from, to } = sideEndpoints(side.key, lengthMm, widthMm);
+    beams.push({ side: side.key, from, to, lengthMm: side.lengthMm, onWall: side.isWall, led: perimeter });
+    let acc = 0;
+    for (const seg of side.segments) {
+      const segFrom = pointAlong(from, to, acc);
+      acc += seg.lengthMm;
+      const segTo = pointAlong(from, to, acc);
+      const slug = input.sides?.[side.key] ?? null;
+      const closure: SceneClosure | null = slug && !side.isWall
+        ? { id: seg.id, side: side.key, index: seg.index, familySlug: slug, type: "screen", lengthMm: seg.lengthMm, from: segFrom, to: segTo, assembly: { kind: "made_to_measure", modules: 1, intermediatePosts: 0, toConfirm: true } }
+        : null;
+      if (closure) closures.push(closure);
+      openings.push({ id: seg.id, side: side.key, index: seg.index, lengthMm: seg.lengthMm, from: segFrom, to: segTo, closure });
+    }
+  }
+  const s3 = rules.structure3d ?? {};
+  const pitch = rules.dims.depth?.stepMm ?? s3.bladeMm?.[0] ?? INDICATIVE_BLADE_PITCH_MM;
+  const toConfirm: string[] = [];
+  for (const c of closures) toConfirm.push(`${catalog_name(c.familySlug)} côté ${SIDE_FR[c.side]} : souhait représenté, compatibilité et fixations étudiées au devis`);
+  if (chosen.has("intermediate_post") || chosen.has("extra_post")) toConfirm.push("poteaux supplémentaires en option : position établie au devis (non représentés)");
+  if (input.multiModule) toConfirm.push("installation en plusieurs modules : un seul module est représenté");
+  if (input.heightMm == null) toConfirm.push(`hauteur non saisie : ${fmtM(heightMm)} m représentés`);
+  return {
+    kind: "pergola",
+    source: "custom",
+    familySlug: family.slug,
+    familyName: family.name,
+    dimensionLabel: `largeur ${fmtM(lengthMm)} m × projection ${fmtM(widthMm)} m, hauteur ${fmtM(heightMm)} m`,
+    finishLabel,
+    widthMm,
+    lengthMm,
+    heightMm,
+    mounting,
+    wall,
+    posts,
+    beams,
+    blades: { count: Math.max(1, Math.round(widthMm / pitch)), orientation: "along_length", maxAngleDeg: rules.included.some((i) => /120°/.test(i.label)) ? 120 : 90, pitchMm: pitch, spanMm: lengthMm, motorized: true },
+    colors: { structureCode: input.finishCode, bladeCode: input.finishCode, structure: color, blades: color },
+    openings,
+    closures,
+    lighting: { gutter: perimeter, blades: false, ledStrips: perimeter ? { color: "warm_white" } : null, color: "warm_white", spots: chosen.has("led_spots") && spots ? spots : undefined },
+    heaters: { count: 0 },
+    lanterns: { count: 0 },
+    sections: s3.postMm && s3.beamMm && s3.bladeMm ? { postAlongMm: s3.postMm[0], postAcrossMm: s3.postMm[1], beamHeightMm: s3.beamMm[0], beamWidthMm: s3.beamMm[1], bladeWidthMm: s3.bladeMm[0], bladeThicknessMm: s3.bladeMm[1] } : undefined,
+    indicative: { heightMm: input.heightMm == null, sections: true, bladeCount: true, accessoryPlacement: true },
+    toConfirm,
+    disclaimer: `${SCENE_DISCLAIMER}. ${CUSTOM_FEASIBILITY_NOTE}`,
+  };
+}
+
+/** Libellé lisible d'un système de fermeture souhaité (slug de famille). */
+function catalog_name(slug: string) {
+  return slug === "helio-ombra" ? "Screen HELIO Ombra" : slug;
+}
+
+export { MOUNTING_FR };

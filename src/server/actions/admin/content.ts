@@ -31,9 +31,20 @@ export async function updateContentPageAction(formData: FormData) {
 
 /* ------------------------------ Réalisations ------------------------------ */
 
+/** Visuel du fournisseur ou du fabricant (médias importés de la documentation produit). */
+function isSupplierMedia(m: { provenance: unknown; credit: string } | null): boolean {
+  if (!m) return false;
+  const key = String((m.provenance as { key?: string } | null)?.key ?? "");
+  return /^(alu|thy)-/.test(key) || /fabricant|fournisseur/i.test(m.credit);
+}
+
 const realSchema = z.object({
   id: zOpt(64),
+  kind: z.enum(["REALISATION", "PRODUCTION"]).default("REALISATION"),
   title: zReq(160),
+  caption: zText(300),
+  partnerNote: zText(300),
+  placeholder: zBool,
   description: zText(5000),
   location: zOpt(160),
   familySlug: zOpt(80),
@@ -49,7 +60,15 @@ export async function saveRealisationAction(formData: FormData) {
   const parsed = realSchema.safeParse(fields(formData));
   if (!parsed.success) back(path, firstError(parsed.error), "err");
   const { id, ...data } = parsed.data;
-  if (data.mediaId && !(await prisma.media.findUnique({ where: { id: data.mediaId }, select: { id: true } }))) back(path, "Média introuvable", "err");
+  const media = data.mediaId ? await prisma.media.findUnique({ where: { id: data.mediaId }, select: { id: true, provenance: true, credit: true } }) : null;
+  if (data.mediaId && !media) back(path, "Média introuvable", "err");
+  if (data.published) {
+    // une réalisation publiée est un projet réel : ni emplacement vide, ni démonstration, ni visuel du fournisseur
+    if (data.placeholder || data.isDemo) back(path, "Un emplacement à compléter ou un exemple de démonstration ne peut pas être publié.", "err");
+    if (!media) back(path, "Ajoutez la photographie avant de publier.", "err");
+    if (data.kind === "REALISATION" && isSupplierMedia(media)) back(path, "Visuel du fournisseur : il ne peut pas être présenté comme une réalisation HELIOSTORES.", "err");
+    if (data.kind === "PRODUCTION" && isSupplierMedia(media) && !data.partnerNote.trim()) back(path, "Photo de production d'un partenaire : décrivez-la comme telle (mention « partenaire »).", "err");
+  }
   if (id) {
     const before = await prisma.realisation.findUnique({ where: { id } });
     if (!before) back(path, "Réalisation introuvable", "err");

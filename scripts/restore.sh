@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Restauration vérifiée dans une base ISOLÉE puis bascule explicite. Ne supprime jamais de volume.
 # Usage : scripts/restore.sh <db_dump> [media.tar.gz]
+#   MEDIA_RESTORE_VOLUME : volume Docker cible des médias (ex. elios_solar_uploads) ; sinon extraction dans MEDIA_RESTORE_DIR
 #   RESTORE_TARGET_URL : URL de la base cible (défaut : base de vérification temporaire elios_solar_restore_check)
 set -euo pipefail
 DUMP="${1:?dump requis}"; MEDIA_ARCHIVE="${2:-}"
@@ -22,6 +23,12 @@ else
   echo "2) Aucune cible (RESTORE_TARGET_URL absent) : vérification seulement."
 fi
 if [ -n "$MEDIA_ARCHIVE" ]; then
-  DEST="${MEDIA_RESTORE_DIR:-./uploads-restore}"; mkdir -p "$DEST"; tar -xzf "$MEDIA_ARCHIVE" -C "$DEST"; echo "   Médias extraits dans $DEST (à déplacer manuellement vers MEDIA_STORAGE_DIR)"
+  if [ -n "${MEDIA_RESTORE_VOLUME:-}" ]; then
+    # restauration dans un volume Docker (nommé explicitement) : ajoute ou remplace les fichiers, n'en supprime aucun
+    docker run --rm -v "$MEDIA_RESTORE_VOLUME":/u -v "$(cd "$(dirname "$MEDIA_ARCHIVE")" && pwd)":/b:ro "${TAR_IMAGE:-alpine:3.20}" tar -xzf "/b/$(basename "$MEDIA_ARCHIVE")" -C /u
+    echo "   Médias restaurés dans le volume $MEDIA_RESTORE_VOLUME ($(tar -tzf "$MEDIA_ARCHIVE" | grep -vc '/$') fichier(s))"
+  else
+    DEST="${MEDIA_RESTORE_DIR:-./uploads-restore}"; mkdir -p "$DEST"; tar -xzf "$MEDIA_ARCHIVE" -C "$DEST"; echo "   Médias extraits dans $DEST (à déplacer vers MEDIA_STORAGE_DIR, ou utiliser MEDIA_RESTORE_VOLUME)"
+  fi
 fi
 psql "$ADMIN_URL" -c "DROP DATABASE IF EXISTS $CHECK_DB;" >/dev/null

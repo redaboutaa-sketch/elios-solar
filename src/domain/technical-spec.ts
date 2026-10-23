@@ -4,10 +4,17 @@
  * Une même caractéristique (ex. longueur du câble fourni) peut avoir plusieurs valeurs de provenance différente :
  * - `demo_seed` : valeur fictive du jeu de démonstration ;
  * - `observed_reference` : relevée sur la fiche d'un site de référence (indice, pas une spécification) ;
- * - `supplier_confirmed` : confirmée par un document ou un écrit fournisseur.
- * Seule une valeur `supplier_confirmed` est présentée publiquement comme certaine.
+ * - `supplier_confirmed` : confirmée par un document ou un écrit fournisseur ;
+ * - `client_sheet` : fiche technique du modèle exact transmise par le client ;
+ * - `supplier_document` : catalogue ou document technique du fournisseur / fabricant ;
+ * - `manufacturer_website` : page officielle du fabricant.
+ * Les quatre dernières font autorité ; une valeur n'est présentée comme établie que si toutes les sources
+ * qui font autorité concordent. Démonstration et observation ne sont jamais présentées comme certaines.
  */
-export type SpecSource = "demo_seed" | "observed_reference" | "supplier_confirmed";
+export type SpecSource = "demo_seed" | "observed_reference" | "supplier_confirmed" | "client_sheet" | "supplier_document" | "manufacturer_website";
+
+/** Sources faisant autorité pour une caractéristique publique. */
+export const AUTHORITATIVE_SOURCES: readonly SpecSource[] = ["supplier_confirmed", "client_sheet", "supplier_document", "manufacturer_website"];
 
 export interface TechnicalSpecValue {
   key: string;
@@ -19,6 +26,8 @@ export interface TechnicalSpecValue {
   sourceRef?: string;
   observedAt?: string | null;
   variantSku?: string | null;
+  /** remarque publiable (contradiction, portée de la source) */
+  note?: string | null;
 }
 
 export const SPEC_KEYS = { includedCableLength: "included_cable_length" } as const;
@@ -27,6 +36,9 @@ export const SPEC_SOURCE_FR: Record<SpecSource, string> = {
   demo_seed: "Donnée fictive (démonstration)",
   observed_reference: "Observation sur la référence",
   supplier_confirmed: "Spécification fournisseur confirmée",
+  client_sheet: "Fiche du modèle (client)",
+  supplier_document: "Document fournisseur",
+  manufacturer_website: "Site du fabricant",
 };
 
 export function formatSpecValue(s: Pick<TechnicalSpecValue, "valueNum" | "unit" | "valueText">): string {
@@ -44,9 +56,9 @@ export function hasSpec(specs: TechnicalSpecValue[] | undefined, key: string): b
   return (specs ?? []).some((s) => s.key === key);
 }
 
-/** Valeur confirmée par le fournisseur, ou null. Deux confirmations divergentes = non confirmée. */
+/** Valeur établie par les sources qui font autorité, ou null. Deux valeurs divergentes = non établie. */
 export function confirmedSpec(specs: TechnicalSpecValue[] | undefined, key: string): TechnicalSpecValue | null {
-  const confirmed = (specs ?? []).filter((s) => s.key === key && s.source === "supplier_confirmed");
+  const confirmed = (specs ?? []).filter((s) => s.key === key && AUTHORITATIVE_SOURCES.includes(s.source));
   if (!confirmed.length) return null;
   return confirmed.every((c) => sameValue(c, confirmed[0]!)) ? confirmed[0]! : null;
 }

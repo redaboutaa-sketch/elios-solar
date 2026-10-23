@@ -2,6 +2,7 @@
 import { useState, useTransition } from "react";
 import { requestQuoteAction } from "@/server/actions/configurator";
 import { Notice } from "@/components/ui/alert";
+import { readAttribution } from "@/components/analytics/attribution";
 
 const VISUAL_TIMEOUT_MS = 10_000;
 
@@ -21,7 +22,7 @@ async function visualOrNull(getVisual?: () => Promise<string | null>): Promise<s
   }
 }
 
-export function QuoteForm({ input, kind, configurationId, onDone, compact = false, getVisual }: { input: unknown; kind: "configuration" | "custom" | "accessory" | "general"; configurationId: string | null; onDone?: (number: string, visualNote?: string) => void; compact?: boolean; /** visualisation à joindre (dataURL), voir useQuoteVisual */ getVisual?: () => Promise<string | null> }) {
+export function QuoteForm({ input, kind, configurationId, onDone, compact = false, getVisual }: { input: unknown; kind: "configuration" | "custom" | "accessory" | "general" | "system"; configurationId: string | null; onDone?: (number: string, visualNote?: string) => void; compact?: boolean; /** visualisation à joindre (dataURL), voir useQuoteVisual */ getVisual?: () => Promise<string | null> }) {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ number: string; visual: string } | null>(null);
   const [preparing, setPreparing] = useState(false);
@@ -34,7 +35,7 @@ export function QuoteForm({ input, kind, configurationId, onDone, compact = fals
       setPreparing(!!getVisual);
       const visual = await visualOrNull(getVisual);
       setPreparing(false);
-      const r = await requestQuoteAction(input, form, kind, configurationId, visual);
+      const r = await requestQuoteAction(input, form, kind, configurationId, visual, readAttribution());
       if (r.ok) { setDone({ number: r.data.number, visual: r.data.visual }); onDone?.(r.data.number, getVisual ? VISUAL_DONE[r.data.visual] ?? VISUAL_DONE.NONE : undefined); } else setError(r.error);
     });
   };

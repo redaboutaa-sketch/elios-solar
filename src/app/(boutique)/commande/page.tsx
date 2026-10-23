@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Price } from "@/components/ui/price";
 import { getSession } from "@/lib/session";
 import { getGuestKey } from "@/server/guest";
-import { evaluateCart, findActiveCart } from "@/server/cart/service";
+import { evaluateCart, findActiveCart, SYSTEM_DELIVERY_LABEL } from "@/server/cart/service";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { activeProviderName } from "@/server/payment";
 import { installmentsOfferFor } from "@/server/payment/installments";
@@ -37,10 +37,10 @@ export default async function CheckoutPage(props: PageProps<"/commande">) {
           <h2 className="font-display text-2xl">Votre commande</h2>
           <ul className="mt-3 text-sm space-y-2">{ev.lines.map((l) => <li key={l.line.id} className="flex justify-between gap-2"><span>{l.result.lines[0]?.label}{l.line.qty > 1 && ` × ${l.line.qty}`}</span><Price cents={l.lineTotalCents} /></li>)}</ul>
           <dl className="mt-4 border-t border-sand-200 pt-3 text-sm space-y-1">
-            <div className="flex justify-between"><dt>Livraison</dt><dd>{ev.shippingCents === null ? "à confirmer" : <Price cents={ev.shippingCents} />}</dd></div>
+            {ev.shippingStatus === "not_included" ? <div className="flex justify-between gap-3"><dt>Livraison et pose</dt><dd>non comprises</dd></div> : <div className="flex justify-between"><dt>Livraison</dt><dd>{ev.shippingCents === null ? "à confirmer" : <Price cents={ev.shippingCents} />}</dd></div>}
             <div className="flex justify-between text-lg font-semibold"><dt>Total TTC</dt><dd><Price cents={ev.totalCents} /></dd></div>
           </dl>
-          <p className="mt-3 text-xs text-stone-700">Le montant sera revalidé au moment du paiement en fonction de l'adresse de livraison saisie.</p>
+          {ev.systemOnly ? <p className="mt-3 text-xs text-stone-700">Structure au prix de la grille (HT), TVA de {ev.lines[0]?.result.lines[0] ? ev.lines[0].result.lines[0].taxRateBps / 100 : 20} % comprise. {SYSTEM_DELIVERY_LABEL}, avec le délai de fabrication.</p> : <p className="mt-3 text-xs text-stone-700">Le montant sera revalidé au moment du paiement en fonction de l'adresse de livraison saisie.</p>}
         </aside>
       </div>
     </div>

@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { PUBLIC_SECTIONS } from "@/config/brand";
 import { prisma } from "@/lib/prisma";
 export const metadata: Metadata = { title: "Showroom", description: "Venez voir nos pergolas et stores bannes en situation." };
+/** Rubrique masquée tant qu'aucun contenu réel n'est fourni (PUBLIC_SECTIONS). */
 export default async function Page() {
+  if (!PUBLIC_SECTIONS.showroom) notFound();
   const rooms = await prisma.showroom.findMany({ where: { published: true } });
   return (
     <div className="container-x py-8"><Breadcrumbs items={[{ label: "Showroom" }]} /><h1 className="mt-4 font-display text-4xl">Showroom</h1>

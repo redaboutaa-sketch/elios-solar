@@ -1,6 +1,6 @@
 # Blocages de lancement (à lever avant toute ouverture commerciale)
 
-Statut au 2026-10-19 — la préproduction fonctionne **intégralement en mode test**. Rien de ce qui suit
+Statut au 2026-10-21 — la préproduction fonctionne **intégralement en mode test**. Commande en ligne limitée à la structure seule au prix de la grille (paiement simulé, livraison et pose non comprises : `docs/heliostores/prix-publics.md`). Rien de ce qui suit
 n'empêche de poursuivre la réalisation ; tout empêche la vente réelle.
 
 ## Identité et vendeur
@@ -12,7 +12,7 @@ n'empêche de poursuivre la réalisation ; tout empêche la vente réelle.
 ## Contenus et médias
 - [ ] Mentions légales, CGV (paiement, livraison, garanties, médiation), confidentialité (DPO) : textes validés juridiquement ; passer les pages en PUBLISHED.
 - [ ] Photographies / vidéos autorisées avec registre des droits (Administration → Médias) ; remplacer les illustrations SVG.
-- [ ] Réalisations et showroom réels (actuellement structures non publiées marquées démo).
+- [ ] Réalisations et showroom réels : rubriques masquées (404) depuis le 2026-10-21 ; les rouvrir avec `PUBLIC_SECTIONS` (`src/config/brand.ts`) une fois le contenu fourni.
 - [ ] Notices de montage et fiches techniques PDF par gamme et accessoire.
 
 ## Catalogue fournisseur

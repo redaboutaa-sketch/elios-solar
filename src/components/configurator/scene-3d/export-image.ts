@@ -4,8 +4,8 @@
  */
 import { VISUAL_DISCLAIMER, type SceneModel } from "@/domain/scene-model";
 
-export const EXPORT_FILENAME = "projet-elios-solar.png";
-export const EXPORT_FOOTER = `${VISUAL_DISCLAIMER} — ELIOS SOLAR (démonstration)`;
+export const EXPORT_FILENAME = "projet-heliostores.png";
+export const EXPORT_FOOTER = `${VISUAL_DISCLAIMER} — HELIOSTORES (préproduction)`;
 
 export interface ImageCaption {
   title: string; // nom de la gamme

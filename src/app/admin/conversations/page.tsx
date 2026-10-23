@@ -61,7 +61,7 @@ export default async function ConversationsPage(props: PageProps<"/admin/convers
             const isUnread = c.status !== "CLOSED" && (!c.lastAdvisorReadAt || c.lastAdvisorReadAt < c.lastMessageAt);
             const last = c.messages[0];
             return (
-              <tr key={c.id} className={isUnread ? "bg-copper-100/40" : undefined}>
+              <tr key={c.id} className={isUnread ? "bg-brand-100/40" : undefined}>
                 <td className="whitespace-nowrap">{fmtDate(c.lastMessageAt)}{isUnread && <span className="ml-1 badge-warn">non lue</span>}</td>
                 <td><Link className="underline" href={`/admin/conversations/${c.id}`}>{c.name ?? (c.userId ? "Client connecté" : "Visiteur")}</Link>{c.email && <span className="block text-xs break-all">{c.email}</span>}{c.offline && <span className="block text-xs text-warning">hors ligne · réponse par e-mail</span>}</td>
                 <td className="max-w-sm"><span className="line-clamp-2">{last ? `${last.author === "CUSTOMER" ? "" : `[${last.author === "ADVISOR" ? "Conseiller" : last.author === "ASSISTANT" ? "Assistant" : "Système"}] `}${last.body}` : "—"}</span></td>
