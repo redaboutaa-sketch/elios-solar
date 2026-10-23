@@ -5,7 +5,7 @@ import { BRAND } from "@/config/brand";
  * Logo HELIOSTORES fourni par le client (détouré, couleurs d'origine, jamais redessiné ni recoloré).
  * - `variant="dark"` (défaut) : logo transparent, à poser sur une surface sombre (`surface-night`).
  * - `variant="plate"` : logo intact sur sa plaque sombre arrondie, pour les fonds clairs.
- * La hauteur est pilotée par `className` (ex. `h-7`), la largeur suit le ratio 1230:347.
+ * La hauteur est pilotée par `className` (ex. `h-7`), la largeur suit le ratio 1240:347.
  */
 export function Logo({ variant = "dark", className = "h-7", priority = false }: { variant?: "dark" | "plate"; className?: string; priority?: boolean }) {
   const img = variant === "plate" ? BRAND.logoPlate : BRAND.logo;

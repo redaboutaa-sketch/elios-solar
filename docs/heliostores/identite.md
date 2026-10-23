@@ -35,9 +35,9 @@ privé). Aucune lettre n'est redessinée ni recolorée ; aucun logo vectoriel n'
 
 | Fichier | Dérivation |
 | --- | --- |
-| `public/brand/heliostores-logo.png` | 1230 × 347 (dimensions et ratio d'origine, aucun rééchantillonnage), fond transparent. Alpha reconstruit pixel par pixel : le fond étant noir, chaque pixel vaut ≈ α × couleur de premier plan ; α est obtenu par projection (moindres carrés) du pixel sur la couleur connue de sa zone (HELIO + soleil : x < 516 ; ® : x ≥ 1160 et y < 129 ; STORES : le reste), bruit JPEG < 4 % ramené à 0. Couleur : pixel d'origine dé-prémultiplié (p / α) au cœur, glissement progressif vers la couleur mesurée sur les bords très transparents (pour éviter le bruit amplifié). Recomposé sur noir, l'écart avec l'original est de 0,16 niveau en moyenne (max. 18 sur quelques pixels de bord). **Variante pour fonds sombres** (couleurs d'origine). |
-| `public/brand/heliostores-logo.webp` | même image, WebP (qualité 92, alpha sans perte), 1230 × 347, sans version @2x. |
-| `public/brand/heliostores-logo-plaque.png` / `.webp` | **seule variante pour fonds clairs** : le logo intact posé sur une plaque sombre arrondie `#0B0F0D` (marges 60 / 40 px, rayon 36 px), 1350 × 427. |
+| `public/brand/heliostores-logo.png` | 1240 × 347, fond transparent (logo d'origine 1230 × 347, sans rééchantillonnage, élargi de 10 px à droite pour le ® agrandi). Alpha reconstruit pixel par pixel : le fond étant noir, chaque pixel vaut ≈ α × couleur de premier plan ; α est obtenu par projection (moindres carrés) du pixel sur la couleur connue de sa zone (HELIO + soleil : x < 516 ; ® : x ≥ 1160 et y < 129 ; STORES : le reste), bruit JPEG < 4 % ramené à 0. Couleur : pixel d'origine dé-prémultiplié (p / α) au cœur, glissement progressif vers la couleur mesurée sur les bords très transparents (pour éviter le bruit amplifié). Recomposé sur noir, l'écart avec l'original est de 0,16 niveau en moyenne (max. 18 sur quelques pixels de bord). **Variante pour fonds sombres** (couleurs d'origine). |
+| `public/brand/heliostores-logo.webp` | même image, WebP (qualité 92, alpha sans perte), 1240 × 347, sans version @2x. |
+| `public/brand/heliostores-logo-plaque.png` / `.webp` | **seule variante pour fonds clairs** : le logo intact posé sur une plaque sombre arrondie `#0B0F0D` (marges 60 / 40 px, rayon 36 px), 1360 × 427. |
 | `public/brand/heliostores-soleil.png` | recadrage 86 × 86 du soleil (point du i ; boîte mesurée x 311–384, y 48–121, marge 6 px), sans retouche. |
 | `src/app/icon.png` (512 × 512) | soleil agrandi (Lanczos, ≈ 4,7×, donc légèrement adouci) centré à 68 % sur un carré arrondi `#0B0F0D`, coins transparents. Remplace l'ancien `icon.svg` (marque ELIOS). |
 | `src/app/apple-icon.png` (180 × 180) | même composition, carré plein (iOS arrondit lui-même). |
@@ -128,3 +128,15 @@ fournit sa typographie.
 « HELIOSTORES » est la marque publique. L'identité juridique du vendeur (raison sociale, SIRET, adresse…) n'est pas
 validée : `BRAND.legalIdentityPending` reste `true` et ces données viennent exclusivement des Réglages. Les
 identifiants techniques (dépôt `elios-solar`, conteneurs, volumes, bases, cookies) sont volontairement inchangés.
+
+## Symbole ® (demande client du 2026-10-23)
+
+Le logo fourni porte déjà un ® (38 × 35 px, environ 30 % de la hauteur des capitales). À la taille d'affichage de
+l'en-tête (28 px de haut), il ne faisait plus que 3 px et n'était pas lisible. Sur demande du client, ce même glyphe
+a été agrandi 1,75 fois (88 × 81 px avec sa marge, rééchantillonnage Lanczos de ses propres pixels : même dessin, même
+couleur), bord gauche et bas conservés, au-dessus de la fin de « STORES ». Le reste du logo est inchangé au pixel près.
+La plaque est recomposée à l'identique (marges 60 / 40 px, rayon 36 px, `#0B0F0D`).
+
+Le symbole ® signale une marque **enregistrée** : son emploi suppose un enregistrement en vigueur (INPI, EUIPO ou
+OMPI) pour les produits concernés. À défaut, le retirer ou utiliser « ™ ».
+

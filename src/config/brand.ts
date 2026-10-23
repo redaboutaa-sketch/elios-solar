@@ -11,9 +11,9 @@ export const BRAND = {
   /** identité juridique du vendeur non validée (mentions légales, CGV, factures) — ne pas passer à false sans validation */
   legalIdentityPending: true,
   /** logo d'origine (couleurs du client) détouré, fond transparent — à poser sur fond sombre (`night`) */
-  logo: { src: "/brand/heliostores-logo.png", webp: "/brand/heliostores-logo.webp", width: 1230, height: 347 },
+  logo: { src: "/brand/heliostores-logo.png", webp: "/brand/heliostores-logo.webp", width: 1240, height: 347 },
   /** logo intact sur plaque sombre arrondie — seule variante autorisée sur fond clair */
-  logoPlate: { src: "/brand/heliostores-logo-plaque.png", webp: "/brand/heliostores-logo-plaque.webp", width: 1350, height: 427 },
+  logoPlate: { src: "/brand/heliostores-logo-plaque.png", webp: "/brand/heliostores-logo-plaque.webp", width: 1360, height: 427 },
   colors: { green: "#44664d", sage: "#8ab4a8", night: "#0b0f0d", greenDark: "#36523e", tint: "#f1f6f2" },
   themeColor: "#0b0f0d",
 } as const;

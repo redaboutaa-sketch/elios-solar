@@ -11,7 +11,7 @@ function esc(s: unknown): string {
 const C = { night: "#0b0f0d", green: "#44664d", page: "#f7f8f5", ink: "#1a201c", border: "#dfe4dd", muted: "#5b5f63", tint: "#eef1ec" };
 
 function layout(title: string, bodyHtml: string, demo = false): string {
-  const header = `<div style="background:${C.night};padding:18px 32px"><img src="${site()}/brand/heliostores-logo.png" width="180" height="51" alt="${esc(brand())}" style="display:block;border:0;color:#8ab4a8;font:bold 20px Arial,sans-serif"></div>`;
+  const header = `<div style="background:${C.night};padding:18px 32px"><img src="${site()}/brand/heliostores-logo.png" width="180" height="50" alt="${esc(brand())}" style="display:block;border:0;color:#8ab4a8;font:bold 20px Arial,sans-serif"></div>`;
   return `<!doctype html><html lang="fr"><body style="font-family:Arial,Helvetica,sans-serif;background:${C.page};color:${C.ink};padding:24px"><div style="max-width:600px;margin:auto;background:#fff;border:1px solid ${C.border}">${header}<div style="padding:32px">${demo ? '<p style="background:#fff3cd;border:1px solid #e0c36a;padding:8px;font-family:sans-serif;font-size:12px">DÉMONSTRATION — préproduction, aucune valeur contractuelle.</p>' : ""}<h1 style="font-weight:bold;font-size:22px;color:${C.green}">${esc(title)}</h1>${bodyHtml}<p style="color:${C.muted};font-size:12px;margin-top:32px">${esc(brand())} — <a href="${site()}" style="color:${C.green}">${site()}</a></p></div></div></body></html>`;
 }
 
