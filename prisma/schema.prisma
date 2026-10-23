@@ -1388,12 +1388,33 @@ enum TaxBasis {
 }
 
 enum PriceListStatus {
-  /// importée, en revue
+  /// importée, en revue (grille : brouillon modifiable)
   DRAFT
+  /// grille contrôlée, prête à publier (toute modification la ramène en brouillon)
+  VERIFIED
   /// version de référence (une seule active par source)
   ACTIVE
   ARCHIVED
   REJECTED
+}
+
+/// IMPORT = version d'un fichier importé (classeur, fiche) ; GRID = grille tarifaire administrée (une famille, une variante)
+enum PriceListScope {
+  IMPORT
+  GRID
+}
+
+/// Clientèle visée par une grille ; ALL = toutes (seules ALL et PARTICULIER alimentent la boutique)
+enum PriceClientele {
+  ALL
+  PARTICULIER
+  PROFESSIONNEL
+}
+
+/// Lecture d'une cote : EXACT = la cote doit être une dimension de la grille ; ROUND_UP = dimension supérieure (règle à confirmer)
+enum GridDimRule {
+  EXACT
+  ROUND_UP
 }
 
 enum PriceRowStatus {
@@ -1430,8 +1451,42 @@ model SupplierPriceList {
   updatedAt    DateTime           @updatedAt
   rows         SupplierPriceRow[]
 
+  // --- grille tarifaire administrée (scope = GRID) ---
+  scope         PriceListScope @default(IMPORT)
+  /// famille et variante tarifaires couvertes (GRID)
+  familySlug    String?
+  variantKey    String         @default("")
+  /// colonne d'origine (PRIX_FINAL, PRIX_SOURCE, MANUAL)
+  amountRole    String?
+  clientele     PriceClientele @default(ALL)
+  /// taux de TVA appliqué à un prix HT (points de base) ; null = taux du catalogue
+  vatRateBps    Int?
+  dimRule       GridDimRule    @default(EXACT)
+  /// justification d'une règle de lecture ROUND_UP (obligatoire pour publier)
+  dimRuleNote   String         @default("")
+  /// implantations / variantes concernées (texte libre affiché aux administrateurs)
+  scopeNote     String         @default("")
+  included      String         @default("")
+  excluded      String         @default("")
+  /// version importée d'où viennent les cellules
+  originListId  String?
+  /// version reprise (« reprendre en brouillon », recalcul)
+  basedOnId     String?
+  /// version en vigueur du même contexte quand le brouillon a été créé (détection d'un brouillon obsolète)
+  baseActiveId  String?
+  /// compteur de modifications (verrou optimiste)
+  revision      Int            @default(0)
+  zeroConfirmed Boolean        @default(false)
+  verifiedAt    DateTime?
+  verifiedBy    String?
+  publishedAt   DateTime?
+  publishedBy   String?
+  deactivatedAt DateTime?
+  deactivatedBy String?
+
   @@unique([sourceKey, version])
   @@index([sourceKey, status])
+  @@index([scope, familySlug, status])
 }
 
 /// Ligne de tarif : montant d'une cellule précise, avec sa provenance et ses contrôles.
@@ -1465,6 +1520,39 @@ model SupplierPriceRow {
   status      PriceRowStatus    @default(TO_CHECK)
   issues      String[]          @default([])
   createdAt   DateTime          @default(now())
+  /// IMPORT = cellule lue dans un fichier ; MANUAL = saisie dans l'administration
+  origin      String            @default("IMPORT")
+  editedBy    String?
+  editedAt    DateTime?
 
   @@index([listId, familySlug])
+}
+
+/// Téléversement d'un classeur ou d'une fiche depuis l'administration : fichiers privés gardés en base le temps de
+/// l'analyse, effacés après l'import ou l'abandon (seules l'empreinte et les métadonnées restent).
+model PriceImportUpload {
+  id         String            @id @default(cuid())
+  status     String            @default("ANALYSED")
+  createdBy  String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  /// correspondances corrigées par l'administrateur (feuille/bloc → famille/variante, colonnes → nature)
+  mapping    Json              @default("{}")
+  /// résultat de l'import (versions et grilles créées)
+  result     Json              @default("{}")
+  importedAt DateTime?
+  files      PriceImportFile[]
+}
+
+model PriceImportFile {
+  id        String            @id @default(cuid())
+  uploadId  String
+  upload    PriceImportUpload @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  fileName  String
+  sha256    String
+  size      Int
+  /// contenu (vidé après import ou abandon)
+  bytes     Bytes?
+
+  @@index([uploadId])
 }

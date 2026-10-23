@@ -60,10 +60,10 @@
 
 Statuts d'une ligne : `OK` (lue sans anomalie — ce n'est pas une validation commerciale), `TO_CHECK`, `REJECTED`.
 
-Statuts d'une version : `DRAFT` (importée, en revue) → `ACTIVE` (une seule par source ; l'activation archive
-l'ancienne) → `ARCHIVED` ; `REJECTED` (conservée, jamais activable). Le **retour arrière** réactive la
-dernière version archivée qui avait été active. Chaque import / activation / retour arrière / rejet est
-inscrit dans le journal d'audit (comptes et empreintes uniquement, aucun montant).
+Statuts d'une version de fichier : `DRAFT` (importée) ou `REJECTED` (conservée). Depuis le 2026-10-23, un fichier
+importé n'est plus « activé » : ses cellules alimentent des **brouillons de grille**, publiés depuis l'écran Tarifs
+(`administration-tarifs.md`). Un fichier de même empreinte n'est jamais importé deux fois, quel que soit son nom.
+Chaque import et rejet est inscrit dans le journal d'audit (comptes et empreintes uniquement, aucun montant).
 
 Le rapprochement fiche ↔ classeur n'a lieu qu'entre fichiers passés **dans le même lancement** : passer
 le classeur et toutes les fiches ensemble.
@@ -77,21 +77,15 @@ des références de cellules et des messages de contrôle.
 # Aperçu (par défaut, aucune écriture)
 pnpm supplier-prices:import --file "/chemin/prive/classeur.xlsx" --file "/chemin/prive/fiche.docx"
 
-# Création d'une nouvelle version en brouillon (DRAFT) par fichier ; empreinte identique = sans effet
+# Création d'une nouvelle version de fichier, puis des brouillons de grille ; empreinte identique = sans effet
 pnpm supplier-prices:import --file … --file … --apply
-
-# Création puis activation (à réserver aux versions revues)
-pnpm supplier-prices:import --file … --apply --activate
-
-# Retour arrière sur une source
-pnpm supplier-prices:import --rollback <sourceKey>
 ```
 
 Options : `--source-key <clé>` (un seul fichier) impose la clé de source ; sinon elle est dérivée du nom de
 fichier (`xlsx-…`, `docx-…`).
 
-Codes de sortie : `0` succès · `1` erreur inattendue · `2` usage · `3` fichier illisible ou non pris en
-charge · `4` source sans aucune ligne reconnue · `5` activation / retour arrière refusé.
+Codes de sortie : `0` succès · `1` erreur inattendue · `2` usage (dont `--activate` / `--rollback`, retirés) · `3` fichier
+illisible ou non pris en charge · `4` source sans aucune ligne reconnue.
 
 ### En production (Docker)
 
@@ -108,17 +102,10 @@ docker compose -f docker/compose.prod.yml --env-file .env.prod run --rm \
 
 ## Revue dans l'administration
 
-`/admin/catalogue/tarifs-fournisseur` — **administrateurs uniquement** (les gestionnaires n'y ont pas accès) :
-
-- liste des versions par source : statut, fichier, préfixe d'empreinte, badges nature / HT-TTC / devise,
-  comptes OK / à vérifier / rejetées, boutons Activer, Rejeter, Revenir à la version précédente ;
-- détail d'une version : feuilles et tableaux analysés, formules, écarts fiche ↔ classeur, combinaisons
-  manquantes, doublons, et le tableau des lignes filtrable (famille, variante, colonne, statut).
-  C'est le **seul** endroit où les montants sont affichés, sous un bandeau permanent
-  « Montants internes — nature non établie, jamais publiés ».
-
-Aucun téléversement depuis l'administration : les fichiers ne transitent jamais par `public/` ni par la
-médiathèque servie aux visiteurs.
+- **Tarifs** (`/admin/tarifs`, administrateurs) : grilles par produit et variante, éditeur, publication, simulateur,
+  et téléversement d'un classeur (Téléverser → Analyser → Prévisualiser → Corriger → Importer).
+- **Fichiers de tarifs importés** (`/admin/catalogue/tarifs-fournisseur`) : trace brute de chaque fichier (feuilles,
+  formules, écarts fiche ↔ classeur, combinaisons manquantes, doublons, lignes).
 
 ## Confidentialité (dépôt public)
 

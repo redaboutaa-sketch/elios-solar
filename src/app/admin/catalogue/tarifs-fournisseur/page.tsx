@@ -4,10 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
 import { Flash, PageTitle, Section, StatusBadge, Table, fmtDate } from "@/components/admin/ui";
 import { Notice } from "@/components/ui/alert";
-import { activateSupplierPriceListAction, rejectSupplierPriceListAction, rollbackSupplierPricesAction } from "@/server/actions/admin/supplier-prices";
+import { rejectSupplierPriceListAction } from "@/server/actions/admin/supplier-prices";
 import { InterpretationBadges, ListStatusBadge } from "./labels";
 
-export const metadata: Metadata = { title: "Tarifs fournisseur" };
+export const metadata: Metadata = { title: "Fichiers de tarifs importés" };
 
 /**
  * Versions importées des tarifs fournisseur. Réservé aux administrateurs : aucun montant n'est affiché
@@ -16,6 +16,7 @@ export const metadata: Metadata = { title: "Tarifs fournisseur" };
 export default async function SupplierPricesPage(props: PageProps<"/admin/catalogue/tarifs-fournisseur">) {
   await requireRole(["ADMIN"]);
   const lists = await prisma.supplierPriceList.findMany({
+    where: { scope: "IMPORT" },
     orderBy: [{ sourceKey: "asc" }, { version: "desc" }],
     select: { id: true, sourceKey: true, version: true, label: true, sourceFile: true, sourceSha256: true, status: true, currency: true, taxBasis: true, nature: true, importedBy: true, activatedAt: true, activatedBy: true, createdAt: true },
   });
@@ -24,25 +25,21 @@ export default async function SupplierPricesPage(props: PageProps<"/admin/catalo
   const keys = [...new Set(lists.map((l) => l.sourceKey))];
   return (
     <div className="space-y-6">
-      <PageTitle title="Tarifs fournisseur (privé)" />
+      <PageTitle title="Fichiers de tarifs importés (privé)" />
       <Flash searchParams={props.searchParams} />
-      <Notice tone="warn"><strong>Prix publics : colonne « Prix final HELIOSTORES » de la version ACTIVE du classeur <code>xlsx-situation-des-tarif</code></strong> (décision client du 2026-10-21), avec sa devise. Activer une autre version du classeur change les prix affichés sur le site. Les colonnes « Prix » / « Prix fournisseur » et les fiches DOCX ne sont jamais publiées ni lues par le configurateur.</Notice>
+      <Notice tone="warn"><strong>Trace brute des fichiers importés.</strong> Les prix du site ne sont plus lus ici : ils viennent des grilles publiées dans <Link className="underline" href="/admin/tarifs">Tarifs</Link> (une grille par produit et par variante, versionnée, publiée après vérification). Importer un fichier ne publie rien.</Notice>
       <Section title="Importer">
-        <p className="text-sm text-stone-700">L'import se fait en ligne de commande, depuis un dossier privé monté en lecture seule (procédure : <code>docs/heliostores/import-tarifs.md</code>). Par défaut l'outil n'écrit rien (aperçu) ; <code>--apply</code> crée une nouvelle version en <strong>brouillon</strong> ; une empreinte identique déjà importée est sans effet.</p>
+        <p className="text-sm text-stone-700">Depuis l'administration : <Link className="underline" href="/admin/tarifs/import">Tarifs → Importer un classeur</Link>. En ligne de commande, depuis un dossier privé monté en lecture seule (procédure : <code>docs/heliostores/import-tarifs.md</code>). Par défaut l'outil n'écrit rien (aperçu) ; <code>--apply</code> crée une nouvelle version en <strong>brouillon</strong> ; une empreinte identique déjà importée est sans effet.</p>
         <pre className="mt-2 overflow-x-auto rounded-lg bg-sand-100 p-3 text-xs">pnpm supplier-prices:import --file &quot;&lt;classeur.xlsx&gt;&quot; --file &quot;&lt;fiche.docx&gt;&quot; [--apply]</pre>
       </Section>
       {keys.length === 0 && <Section><p className="text-sm text-stone-700">Aucune version importée.</p></Section>}
       {keys.map((key) => {
         const versions = lists.filter((l) => l.sourceKey === key);
         const active = versions.find((v) => v.status === "ACTIVE");
-        const canRollback = versions.some((v) => v.status === "ARCHIVED" && v.activatedAt && v.id !== active?.id);
         return (
           <Section key={key} title={key}>
             <div className="mb-3 flex flex-wrap items-center gap-3 text-sm">
-              <span>Version active : {active ? <strong>v{active.version}</strong> : <StatusBadge tone="neutral">aucune</StatusBadge>}</span>
-              {canRollback && (
-                <form action={rollbackSupplierPricesAction}><input type="hidden" name="sourceKey" value={key} /><button className="btn-secondary min-h-0 py-1.5" type="submit">Revenir à la version précédente</button></form>
-              )}
+              <span>Version de référence (ancien mode de publication) : {active ? <strong>v{active.version}</strong> : <StatusBadge tone="neutral">aucune</StatusBadge>}</span>
             </div>
             <Table caption={`Versions de ${key}`}>
               <thead><tr><th>Version</th><th>Statut</th><th>Fichier source</th><th>Empreinte</th><th>Interprétation</th><th>OK</th><th>À vérifier</th><th>Rejetées</th><th>Import</th><th /></tr></thead>
@@ -58,9 +55,6 @@ export default async function SupplierPricesPage(props: PageProps<"/admin/catalo
                     <td className="text-xs">{fmtDate(v.createdAt)}<div className="text-stone-700">{v.importedBy ?? "—"}</div></td>
                     <td>
                       <div className="flex flex-wrap gap-2">
-                        {(v.status === "DRAFT" || v.status === "ARCHIVED") && (
-                          <form action={activateSupplierPriceListAction}><input type="hidden" name="id" value={v.id} /><button className="btn-primary min-h-0 py-1.5" type="submit">Activer</button></form>
-                        )}
                         {v.status === "DRAFT" && (
                           <form action={rejectSupplierPriceListAction}><input type="hidden" name="id" value={v.id} /><button className="btn-secondary min-h-0 py-1.5" type="submit">Rejeter</button></form>
                         )}
@@ -74,7 +68,7 @@ export default async function SupplierPricesPage(props: PageProps<"/admin/catalo
           </Section>
         );
       })}
-      <p className="text-xs text-stone-700">Activer une version archive la version active de la même source ; « Revenir à la version précédente » réactive la dernière version archivée qui avait été active. Chaque opération est inscrite au journal (sans montant). Une version active du classeur sans devise renseignée ne publie aucun prix.</p>
+      <p className="text-xs text-stone-700">Chaque import est inscrit au journal (sans montant). Un fichier de même empreinte n'est jamais importé deux fois.</p>
     </div>
   );
 }

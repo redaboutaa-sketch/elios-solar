@@ -47,4 +47,4 @@ Sources :
 
 1. Joindre l'écrit au dossier de validation correspondant : source « document fournisseur », avec le document justificatif.
 2. Faire passer le dossier de « à vérifier » à « validé » ou « rejeté » ; la validation porte sur une version précise des données.
-3. Pour les tarifs : importer la version corrigée du classeur, puis la publier (`pnpm system-prices:publish --currency EUR --tax HT`). L'activation d'une version du classeur change les prix affichés.
+3. Pour les tarifs : importer la version corrigée du classeur (Tarifs → Importer), compléter et vérifier les brouillons, puis les publier (`administration-tarifs.md`). Seule la publication d'une grille change les prix affichés.

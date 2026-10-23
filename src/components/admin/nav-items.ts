@@ -5,6 +5,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/commandes", label: "Commandes" },
   { href: "/admin/devis", label: "Devis" },
   { href: "/admin/contacts", label: "Contacts" },
+  { href: "/admin/tarifs", label: "Tarifs (admin)" },
   {
     href: "/admin/catalogue/familles",
     label: "Catalogue",
@@ -17,7 +18,7 @@ export const ADMIN_NAV: NavItem[] = [
       { href: "/admin/catalogue/stocks", label: "Stocks & délais" },
       { href: "/admin/catalogue/sur-mesure", label: "Sur mesure" },
       { href: "/admin/catalogue/grilles", label: "Grilles sur mesure" },
-      { href: "/admin/catalogue/tarifs-fournisseur", label: "Tarifs fournisseur (admin)" },
+      { href: "/admin/catalogue/tarifs-fournisseur", label: "Fichiers de tarifs importés (admin)" },
       { href: "/admin/catalogue/validations", label: "Validation des références" },
     ],
   },

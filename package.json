@@ -26,7 +26,7 @@
     "media:heliostores": "tsx scripts/import-heliostores-media.ts",
     "catalogue:import": "tsx scripts/import-catalogue.ts",
     "supplier-prices:import": "tsx scripts/import-supplier-prices.ts",
-    "system-prices:publish": "tsx scripts/publish-system-prices.ts",
+    "tariffs:init": "tsx scripts/init-tariffs.ts",
     "mail:worker": "tsx scripts/mail-worker.ts",
     "renders:generate": "tsx scripts/generate-renders.ts",
     "backup": "bash scripts/backup.sh",

@@ -14,7 +14,7 @@ import { sanitizeAttribution } from "@/domain/attribution";
 import { MEDIA_URL_PREFIX, mediaDir, resolveMediaFile } from "@/server/media/storage";
 import { GET as getMedia } from "@/app/api/media/[...path]/route";
 import { ensureCatalogSnapshot } from "@/server/catalog/public-snapshot";
-import { PUBLIC_PRICE_SOURCE_KEY } from "@/server/pricing/source";
+import { publishTestGrids } from "./helpers";
 import { PUBLIC_FORBIDDEN_NAMES } from "@/domain/public-sanitize";
 import { formatSystemPrice } from "@/domain/system-pricing";
 import { addLine, CartError, evaluateCart, findActiveCart } from "@/server/cart/service";
@@ -137,20 +137,17 @@ describe("médiathèque : variantes réduites", () => {
   });
 });
 
-describe("prix publics : colonne « Prix final HELIOSTORES » de la version active du classeur", () => {
-  it("seule la colonne publique de la version ACTIVE est chargée ; brouillon (FTS) jamais tarifé ; instantané sans source", async () => {
-    // version SYNTHÉTIQUE (montants fictifs) sous la clé publique, dans la base de test uniquement
-    const before = await prisma.supplierPriceList.findMany({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY }, select: { id: true, status: true } });
-    const last = await prisma.supplierPriceList.findFirst({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY }, orderBy: { version: "desc" }, select: { version: true } });
-    const list = await prisma.supplierPriceList.create({ data: { sourceKey: PUBLIC_PRICE_SOURCE_KEY, version: (last?.version ?? 0) + 1, label: "test", sourceFile: "synthetique.xlsx", sourceSha256: randomBytes(8).toString("hex"), status: "DRAFT", currency: "EUR", taxBasis: "HT" } });
-    const row = (familySlug: string, variantKey: string, amountRole: string, amountMinor: number, dimAKey = "projection") => ({ listId: list.id, familySlug, variantKey, kind: "GRID", dimAKey, dimAmm: 5000, widthMinMm: 4000, widthMaxMm: 4000, amountMinor, amountRole, sourceRef: "test", status: "OK" as const });
-    await prisma.supplierPriceRow.createMany({ data: [row("helio-horizon", "murale", "PRIX_FINAL", 1_234_567), row("helio-horizon", "murale", "PRIX_SOURCE", 7_654_321), row("helio-verriere", "", "PRIX_FINAL", 999_999, "hauteur")] });
+describe("prix publics : grilles de vente publiées (écran Tarifs)", () => {
+  it("seule une grille de VENTE publiée est chargée ; coût d'achat et produit en brouillon (Verrière) jamais tarifés ; instantané sans source", async () => {
+    // grilles SYNTHÉTIQUES (montants fictifs), dans la base de test uniquement
+    const cell = (familySlug: string, variantKey: string, amountMinor: number, dimAKey = "projection") => ({ familySlug, variantKey, dimAKey, dimAmm: 5000, widthMinMm: 4000, widthMaxMm: 4000, amountMinor });
+    const purchase = await publishTestGrids([cell("helio-horizon", "murale", 7_654_321)], { nature: "PURCHASE" });
+    let sale: Awaited<ReturnType<typeof publishTestGrids>> | null = null;
     try {
       invalidateCatalogCache();
       let c = await loadCatalog({ fresh: true });
-      expect(c.families.find((f) => f.slug === "helio-horizon")!.systemPrices).toBeNull(); // brouillon : rien de public
-      await prisma.supplierPriceList.updateMany({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY, status: "ACTIVE" }, data: { status: "ARCHIVED" } });
-      await prisma.supplierPriceList.update({ where: { id: list.id }, data: { status: "ACTIVE" } });
+      expect(JSON.stringify(c.families.find((f) => f.slug === "helio-horizon")!.systemPrices ?? null)).not.toContain("7654321"); // coût d'achat : jamais public
+      sale = await publishTestGrids([cell("helio-horizon", "murale", 1_234_567), cell("helio-verriere", "", 999_999, "hauteur")]);
       invalidateCatalogCache();
       c = await loadCatalog({ fresh: true });
       const sb400 = c.families.find((f) => f.slug === "helio-horizon")!;
@@ -168,8 +165,8 @@ describe("prix publics : colonne « Prix final HELIOSTORES » de la version acti
       expect(pubSb.manufacturer ?? null).toBeNull();
       expect(JSON.stringify(pub.families.filter((f) => f.systemRules))).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
     } finally {
-      await prisma.supplierPriceList.delete({ where: { id: list.id } });
-      for (const b of before) await prisma.supplierPriceList.update({ where: { id: b.id }, data: { status: b.status } });
+      await sale?.restore();
+      await purchase.restore();
       invalidateCatalogCache();
     }
   });
@@ -177,15 +174,10 @@ describe("prix publics : colonne « Prix final HELIOSTORES » de la version acti
 
 describe("commande en ligne d'une configuration entièrement tarifée (paiement de démonstration)", () => {
   it("structure seule : panier, commande TTC sans livraison ni pose, paiement simulé, e-mails sans nom du fabricant ; option → refus", async () => {
-    // version SYNTHÉTIQUE (montant fictif) sous la clé publique, dans la base de test uniquement
-    const before = await prisma.supplierPriceList.findMany({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY }, select: { id: true, status: true } });
-    const last = await prisma.supplierPriceList.findFirst({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY }, orderBy: { version: "desc" }, select: { version: true } });
-    const list = await prisma.supplierPriceList.create({ data: { sourceKey: PUBLIC_PRICE_SOURCE_KEY, version: (last?.version ?? 0) + 1, label: "test", sourceFile: "synthetique.xlsx", sourceSha256: randomBytes(8).toString("hex"), status: "DRAFT", currency: "EUR", taxBasis: "HT" } });
-    await prisma.supplierPriceRow.create({ data: { listId: list.id, familySlug: "helio-horizon", variantKey: "murale", kind: "GRID", dimAKey: "projection", dimAmm: 5000, widthMinMm: 4000, widthMaxMm: 4000, amountMinor: 1_000_000, amountRole: "PRIX_FINAL", sourceRef: "test", status: "OK" } });
+    // grille SYNTHÉTIQUE (montant fictif), dans la base de test uniquement
+    const grid = await publishTestGrids([{ familySlug: "helio-horizon", variantKey: "murale", dimAmm: 5000, widthMinMm: 4000, widthMaxMm: 4000, amountMinor: 1_000_000 }]);
     const g = randomBytes(12).toString("hex");
     try {
-      await prisma.supplierPriceList.updateMany({ where: { sourceKey: PUBLIC_PRICE_SOURCE_KEY, status: "ACTIVE" }, data: { status: "ARCHIVED" } });
-      await prisma.supplierPriceList.update({ where: { id: list.id }, data: { status: "ACTIVE" } });
       invalidateCatalogCache();
       const catalog = await loadCatalog({ fresh: true });
       const input = await systemInput("helio-horizon", { widthMm: 4000, depthMm: 5000, mounting: "wall", options: [], installation: "self", sides: {} });
@@ -228,8 +220,7 @@ describe("commande en ligne d'une configuration entièrement tarifée (paiement 
       await prisma.orderLine.deleteMany({ where: { orderId: { in: ids } } });
       await prisma.order.deleteMany({ where: { id: { in: ids } } });
       await prisma.cart.deleteMany({ where: { guestKey: g } });
-      await prisma.supplierPriceList.delete({ where: { id: list.id } });
-      for (const b of before) await prisma.supplierPriceList.update({ where: { id: b.id }, data: { status: b.status } });
+      await grid.restore();
       invalidateCatalogCache();
     }
   });

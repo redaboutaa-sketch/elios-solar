@@ -1,8 +1,8 @@
 /**
- * Service d'import des tarifs fournisseur : aperçu (aucune écriture), création d'une version
- * en brouillon, activation, retour arrière. Tout est journalisé (AuditLog) sans aucun montant.
- * Seule la colonne « Prix final HELIOSTORES » de la version ACTIVE du classeur est lue par le catalogue public
- * (src/server/pricing/system-prices.ts) ; les autres lignes restent internes.
+ * Service d'import des tarifs fournisseur : aperçu (aucune écriture), création d'une version de fichier
+ * (trace brute, dédupliquée par empreinte), rejet. Tout est journalisé (AuditLog) sans aucun montant.
+ * Les prix du site ne sont jamais lus ici : ils viennent des grilles administrées publiées
+ * (src/server/tariffs/grids.ts, lues par src/server/pricing/system-prices.ts).
  */
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/server/audit";
@@ -70,8 +70,9 @@ function toPreview(s: AnalysedSource, existing: SourcePreview["existing"]): Sour
   };
 }
 
+/** Fichier déjà importé : même empreinte, quel que soit son nom. */
 async function findSameSha(s: AnalysedSource) {
-  return prisma.supplierPriceList.findFirst({ where: { sourceKey: s.sourceKey, sourceSha256: s.sha256 }, orderBy: { version: "desc" }, select: { id: true, version: true, status: true } });
+  return prisma.supplierPriceList.findFirst({ where: { scope: "IMPORT", sourceSha256: s.sha256 }, orderBy: { version: "desc" }, select: { id: true, version: true, status: true } });
 }
 
 /** Aperçu (« dry-run ») : lecture seule, aucune écriture en base. */
@@ -155,35 +156,6 @@ export async function applySupplierPrices(files: SourceFile[], actor: Actor, opt
     results.push({ fileName: s.fileName, sourceKey: s.sourceKey, listId: list.id, version: list.version, status: list.status, unchanged: false, rows: counts.total });
   }
   return { analysis, results };
-}
-
-/** Active une version : l'ancienne version active de la même source est archivée. */
-export async function activateSupplierPriceList(id: string, actor: Actor, action = "supplierPrices.activate") {
-  const list = await prisma.supplierPriceList.findUnique({ where: { id }, select: { id: true, sourceKey: true, version: true, status: true } });
-  if (!list) throw new SupplierPriceError("Version introuvable.");
-  if (list.status === "REJECTED") throw new SupplierPriceError("Une version rejetée ne peut pas être activée.");
-  if (list.status === "ACTIVE") return { list, previous: null as { id: string; version: number } | null };
-  const previous = await prisma.$transaction(async (tx) => {
-    const prev = await tx.supplierPriceList.findFirst({ where: { sourceKey: list.sourceKey, status: "ACTIVE", id: { not: id } }, select: { id: true, version: true } });
-    await tx.supplierPriceList.updateMany({ where: { sourceKey: list.sourceKey, status: "ACTIVE", id: { not: id } }, data: { status: "ARCHIVED" } });
-    await tx.supplierPriceList.update({ where: { id }, data: { status: "ACTIVE", activatedBy: actor.actorEmail ?? null, activatedAt: new Date() } });
-    return prev;
-  });
-  await audit({ ...actor, action, entity: "SupplierPriceList", entityId: id, before: { status: list.status, previousActive: previous ? { id: previous.id, version: previous.version } : null }, after: { status: "ACTIVE", sourceKey: list.sourceKey, version: list.version } });
-  return { list: { ...list, status: "ACTIVE" as const }, previous };
-}
-
-/** Retour arrière : réactive la version précédemment active (la plus récente archivée après activation). */
-export async function rollbackSupplierPrices(sourceKey: string, actor: Actor) {
-  const current = await prisma.supplierPriceList.findFirst({ where: { sourceKey, status: "ACTIVE" }, select: { id: true, version: true } });
-  const previous = await prisma.supplierPriceList.findFirst({
-    where: { sourceKey, status: "ARCHIVED", activatedAt: { not: null }, ...(current ? { id: { not: current.id } } : {}) },
-    orderBy: [{ activatedAt: "desc" }, { version: "desc" }],
-    select: { id: true, version: true },
-  });
-  if (!previous) throw new SupplierPriceError(`Aucune version précédemment active pour « ${sourceKey} ».`);
-  await activateSupplierPriceList(previous.id, actor, "supplierPrices.rollback");
-  return { restored: previous, replaced: current };
 }
 
 /** Rejette une version en brouillon (elle reste consultable, jamais activable). */

@@ -164,5 +164,13 @@ export async function runSeed(prisma: PrismaClient) {
 
 if (process.argv[1] && /seed\.ts$/.test(process.argv[1])) {
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }) });
-  runSeed(prisma).catch((e) => { console.error(e); process.exit(1); }).finally(() => prisma.$disconnect());
+  runSeed(prisma)
+    // grilles de l'écran Tarifs depuis l'import existant du classeur (idempotent ; sans import : rien)
+    .then(async () => {
+      const { initTariffGrids } = await import("../src/server/tariffs/init");
+      const r = await initTariffGrids();
+      console.log(`Tarifs : ${r.status === "created" ? `${r.result!.created.length} grille(s) initialisée(s)` : r.status === "done" ? "grilles déjà initialisées" : "aucun import du classeur"}`);
+    })
+    .catch((e) => { console.error(e); process.exit(1); })
+    .finally(() => prisma.$disconnect());
 }

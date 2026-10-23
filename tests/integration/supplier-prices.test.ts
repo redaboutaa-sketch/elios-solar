@@ -1,7 +1,7 @@
 /**
  * Tarifs fournisseur — service d'import sur la base de test, avec des fichiers SYNTHÉTIQUES
  * générés pendant le test (montants inventés) : aperçu sans écriture, version brouillon,
- * ré-import identique sans effet, activation / retour arrière, et étanchéité du catalogue public.
+ * ré-import identique sans effet, nouvelle version, et étanchéité du catalogue public.
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
@@ -12,7 +12,7 @@ import { randomBytes } from "node:crypto";
 import ExcelJS from "exceljs";
 import { strToU8, zipSync } from "fflate";
 import { prisma } from "@/lib/prisma";
-import { activateSupplierPriceList, applySupplierPrices, previewSupplierPrices, rollbackSupplierPrices, SupplierPriceError } from "@/server/supplier-prices/import";
+import { applySupplierPrices, previewSupplierPrices } from "@/server/supplier-prices/import";
 import { invalidateCatalogCache, loadCatalog } from "@/server/catalog/load";
 import { ensureCatalogSnapshot } from "@/server/catalog/public-snapshot";
 
@@ -65,7 +65,6 @@ afterAll(async () => {
 
 describe("import des tarifs fournisseur", () => {
   let v1Id = "";
-  let v2Id = "";
 
   it("aperçu : n'écrit rien en base", async () => {
     const before = await counts();
@@ -112,25 +111,12 @@ describe("import des tarifs fournisseur", () => {
     expect(previews[0]!.existing?.id).toBe(v1Id);
   });
 
-  it("fichier modifié : nouvelle version ; activation, archivage et retour arrière", async () => {
+  it("fichier modifié : nouvelle version de fichier (l'ancienne reste consultable), rien n'est publié", async () => {
     const { results } = await applySupplierPrices([{ fileName: "synthetique.xlsx", bytes: v2Bytes, sourceKey: KEY }], ACTOR);
     expect(results[0]!.version).toBe(2);
-    v2Id = results[0]!.listId;
-    await expect(rollbackSupplierPrices(KEY, ACTOR)).rejects.toBeInstanceOf(SupplierPriceError);
-
-    await activateSupplierPriceList(v1Id, ACTOR);
-    expect((await prisma.supplierPriceList.findUniqueOrThrow({ where: { id: v1Id } })).status).toBe("ACTIVE");
-    const a2 = await activateSupplierPriceList(v2Id, ACTOR);
-    expect(a2.previous?.id).toBe(v1Id);
-    const status = async () => Object.fromEntries((await prisma.supplierPriceList.findMany({ where: { sourceKey: KEY }, select: { version: true, status: true } })).map((l) => [l.version, l.status]));
-    expect(await status()).toEqual({ 1: "ARCHIVED", 2: "ACTIVE" });
-    expect(await prisma.supplierPriceList.count({ where: { sourceKey: KEY, status: "ACTIVE" } })).toBe(1);
-
-    const rb = await rollbackSupplierPrices(KEY, ACTOR);
-    expect(rb.restored.id).toBe(v1Id);
-    expect(await status()).toEqual({ 1: "ACTIVE", 2: "ARCHIVED" });
-    const actions = (await prisma.auditLog.findMany({ where: { entity: "SupplierPriceList", entityId: { in: [v1Id, v2Id] } }, orderBy: { createdAt: "asc" } })).map((l) => l.action);
-    expect(actions).toEqual(expect.arrayContaining(["supplierPrices.import", "supplierPrices.activate", "supplierPrices.rollback"]));
+    expect(results[0]!.listId).not.toBe(v1Id);
+    const status = Object.fromEntries((await prisma.supplierPriceList.findMany({ where: { sourceKey: KEY }, select: { version: true, status: true } })).map((l) => [l.version, l.status]));
+    expect(status).toEqual({ 1: "DRAFT", 2: "DRAFT" });
   });
 
   it("le catalogue public et son instantané n'exposent aucune ligne de tarif fournisseur", async () => {
@@ -158,7 +144,8 @@ describe("import des tarifs fournisseur", () => {
         if (!/\.(ts|tsx)$/.test(n)) continue;
         const rel = path.relative(root, p).split(path.sep).join("/");
         const allowed = rel.startsWith("server/supplier-prices/") || rel === "server/actions/admin/supplier-prices.ts" || rel.startsWith("app/admin/catalogue/tarifs-fournisseur/")
-          // seul lecteur public : colonne « Prix final HELIOSTORES » de la version ACTIVE du classeur
+          // écran Tarifs (administrateurs) et seul lecteur public : grilles de vente publiées
+          || rel.startsWith("server/tariffs/") || rel.startsWith("app/admin/tarifs/") || rel === "server/actions/admin/tariffs.ts"
           || rel === "server/pricing/system-prices.ts";
         if (allowed) continue;
         const src = readFileSync(p, "utf8");

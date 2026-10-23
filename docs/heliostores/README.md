@@ -8,12 +8,13 @@ Nomenclature commerciale (décision client du 2026-10-22, détail dans `nomencla
 
 Documents liés :
 - `nomenclature.md` : noms commerciaux, URL, motorisations, équipements, migration et mentions conservées ;
-- `prix-publics.md` : prix affichés (grille, arrondi, publication) et retrait des références fabricant/fournisseur du site ;
+- `prix-publics.md` : prix affichés (grille, lecture des cotes, publication) et retrait des références fabricant/fournisseur du site ;
 - `sources.md` : registre et matrice des sources ;
 - `correspondances.md` : ALUPROF, THYSENS, SELT ;
 - `medias.md` : registre des médias ;
 - `revue-tarifaire.md` : revue tarifaire sans montant ;
 - `import-tarifs.md` : procédure d'import privé ;
+- `administration-tarifs.md` : écran Tarifs (grilles versionnées, publication, simulateur, import depuis l'administration) ;
 - `identite.md` : charte et logo ;
 - `validation-fournisseur.md` : questions au fournisseur (annexe chiffrée privée hors dépôt) ;
 - `revue-client.md` : fiche de revue pour le client ;

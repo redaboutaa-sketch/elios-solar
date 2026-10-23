@@ -25,7 +25,14 @@ import { useQuoteVisual } from "./quote-visual";
 function SystemPriceBox({ result }: { result: EvaluationResult }) {
   const p = result.systemPrice;
   if (!p) {
-    return <p data-testid="system-price" data-priced="false" className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink"><strong>Prix sur devis</strong> pour ces dimensions : un conseiller vous le communique avec votre devis.</p>;
+    const s = result.pricedSizes;
+    const list = (xs: string[]) => (xs.length > 8 ? `${xs.slice(0, 4).join(", ")} … ${xs.slice(-2).join(", ")}` : xs.join(", "));
+    return (
+      <div data-testid="system-price" data-priced="false" className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink">
+        <p><strong>Prix sur devis</strong> pour ces dimensions : un conseiller vous le communique avec votre devis.</p>
+        {s && <p className="mt-1 text-xs text-stone-700" data-testid="priced-sizes">Prix affiché en ligne pour les cotes de la grille : largeur {list(s.widths.map((w) => (w.min === w.max ? fmtM(w.max) : `${fmtM(w.min)} à ${fmtM(w.max)}`)))} ; {s.dimLabel.toLowerCase()} {list(s.dims.map(fmtM))}.</p>}
+      </div>
+    );
   }
   return (
     <div data-testid="system-price" data-priced="true" className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink">

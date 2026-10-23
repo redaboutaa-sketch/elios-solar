@@ -28,8 +28,10 @@ Le bilan complet est dans `docs/heliostores/README.md`, avec les sources, corres
   sans option, pose ni choix à confirmer), TVA ajoutée au panier, livraison et pose non comprises, paiement simulé ; sinon devis.
 - **Réalisations et Showroom masqués** (404, `PUBLIC_SECTIONS`) ; autres pages provisoires conservées (audit : `docs/heliostores/audit-pages.md`).
   Bilan à transmettre au client : `docs/heliostores/bilan-client.md`.
-- **Tarifs fournisseur** importés en privé (`pnpm supplier-prices:import`, Administration → Tarifs fournisseur). Seule la colonne
-  « Prix final HELIOSTORES » de la version active du classeur est publiée (`pnpm system-prices:publish --currency EUR --tax HT`).
+- **Écran Tarifs** (2026-10-23, `docs/heliostores/administration-tarifs.md`) : grilles versionnées par produit × variante, éditeur matriciel,
+  paramètres commerciaux, vérification, publication immédiate ou programmée, désactivation, reprise, comparaison, simulateur,
+  import depuis l'administration. Seules les grilles de vente publiées alimentent le site ; lecture **exacte** des cotes par défaut
+  (l'arrondi à la dimension supérieure n'est plus appliqué faute de confirmation). Fichiers importés : trace brute, plus d'activation.
 - **Site public sans référence au fabricant ni au fournisseur** : pas de sources, marque, crédits photo ni documents fabricant (archivés) ;
   les sources restent dans l'administration.
 - **Médias fabricant** importés par `pnpm media:heliostores --dir private/heliostores/media-staging --apply` ; les fichiers restent privés.

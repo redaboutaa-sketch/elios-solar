@@ -37,8 +37,8 @@ test("screen HELIO Ombra : largeur contradictoire signalée, largeur minimale du
   await expect(page.getByTestId("quote-visual-status")).toContainText("visualisation 3D de votre configuration est jointe");
   const q = await one<{ snapshot: { input: { widthMm: number; heightMm: number; mounting: string; fabricCode: string }; result: { systemPrice?: { amountMinor: number } | null } } }>('SELECT snapshot FROM "Quote" WHERE number = $1', [number]);
   expect(q!.snapshot.input).toMatchObject({ widthMm: 2400, heightMm: 2600, mounting: "niche", fabricCode: "serge" });
-  // prix : hauteur 2,6 m → 2,75 m, largeur 2,4 m → 2,5 m (dimensions de grille supérieures)
-  const expected = (await publicPricesActive()) ? await publicCell("helio-ombra", "", 2750, 2500) : null;
+  // prix : hauteur 2,6 m et largeur 2,4 m ne sont pas des cotes de la grille (lecture exacte) → prix sur devis
+  const expected = (await publicPricesActive()) ? await publicCell("helio-ombra", "", 2600, 2400) : null;
   expect(q!.snapshot.result.systemPrice?.amountMinor ?? null).toBe(expected);
 });
 
@@ -69,6 +69,6 @@ test("store banne HELIO Riviera : avancées et largeurs documentées, commande �
   const q = await one<{ snapshot: { result: { issues: Array<{ code: string }>; systemPrice?: { amountMinor: number } | null } } }>('SELECT snapshot FROM "Quote" WHERE number = $1', [number]);
   expect(q!.snapshot.result.issues.map((i) => i.code)).toContain("control_to_confirm");
   // prix : avancée 3,1 m, largeur 4,2 m dans la plage 4,11–4,7 m
-  const expected = (await publicPricesActive()) ? await publicCell("helio-riviera", "", 3100, 4700) : null;
+  const expected = (await publicPricesActive()) ? await publicCell("helio-riviera", "", 3100, 4200) : null;
   expect(q!.snapshot.result.systemPrice?.amountMinor ?? null).toBe(expected);
 });

@@ -49,14 +49,15 @@ test("HELIO Horizon : règles de cotes, options, fermeture souhaitée, 3D, proje
   const recap = page.getByTestId("system-recap");
   await expect(recap).toContainText("HELIO Horizon");
   await expect(recap).toContainText("5 m");
-  // prix : cellule « Prix final HELIOSTORES » autoportante 5 m × 4 m (largeur 3,6 m arrondie à la dimension supérieure)
-  const priced = await publicPricesActive();
-  const expectedCell = priced ? await publicCell("helio-horizon", "autoportante", 5000, 4000) : null;
+  // prix : 3,6 m n'est pas une largeur de la grille (lecture exacte, aucun arrondi) → prix sur devis, sauf grille
+  // publiée avec une autre règle ou une colonne 3,6 m
+  const expectedCell = (await publicPricesActive()) ? await publicCell("helio-horizon", "autoportante", 5000, 3600) : null;
+  const priced = expectedCell != null;
   if (priced) {
     expect(expectedCell).not.toBeNull();
     await expect(page.getByTestId("system-price")).toHaveAttribute("data-priced", "true");
     await expect(page.getByTestId("system-price-amount")).toContainText(/€\s?HT/);
-    await expect(page.getByTestId("system-price")).toContainText("4 m de largeur × 5 m (projection)");
+    await expect(page.getByTestId("system-price")).toContainText("3,6 m de largeur × 5 m (projection)");
   } else {
     await expect(page.getByTestId("system-price")).toHaveAttribute("data-priced", "false");
     await expect(page.getByTestId("system-price")).toContainText("Prix sur devis");

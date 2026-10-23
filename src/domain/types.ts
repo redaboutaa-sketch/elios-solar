@@ -480,6 +480,8 @@ export interface EvaluationResult {
   priceMode?: "priced" | "quote";
   /** système : prix de la grille « Prix final HELIOSTORES » pour la cote demandée (null = hors grille, chiffré au devis) */
   systemPrice?: SystemPrice | null;
+  /** cote absente de la grille : dimensions tarifées en ligne pour la variante choisie (lecture exacte) */
+  pricedSizes?: { dimLabel: string; dims: number[]; widths: { min: number; max: number }[]; roundUp: boolean } | null;
   /** système : commande en ligne possible (configuration entièrement tarifée) ou motifs du passage au devis */
   onlineOrder?: { ok: boolean; reasons: string[] };
   /** récapitulatif lisible de la configuration (devis sans prix, PDF, administration) */

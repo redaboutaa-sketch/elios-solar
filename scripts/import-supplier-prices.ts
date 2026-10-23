@@ -3,8 +3,8 @@
  *
  *   pnpm supplier-prices:import --file "<classeur.xlsx>" --file "<fiche.docx>"            # aperçu (aucune écriture)
  *   pnpm supplier-prices:import --file … --apply                                            # nouvelle version en brouillon
- *   pnpm supplier-prices:import --file … --apply --activate                                 # … puis activation
- *   pnpm supplier-prices:import --rollback <sourceKey>                                      # réactive la version précédente
+ * --apply crée aussi les brouillons de grille (nature, devise et HT/TTC non établis) ; la publication se fait
+ * uniquement dans l'administration (Tarifs). --activate et --rollback ont été retirés (ancien mode de publication).
  *
  * Aucun montant ni coefficient n'est imprimé (« montants masqués ») : seuls des comptes et des références.
  * Codes de sortie : 0 succès · 1 erreur inattendue · 2 usage · 3 fichier illisible / non pris en charge ·
@@ -19,15 +19,13 @@ const ACTOR = { actorUserId: null, actorEmail: "cli:supplier-prices:import" };
 
 function usage(msg?: string): never {
   if (msg) console.error(`Erreur : ${msg}`);
-  console.error('Usage : pnpm supplier-prices:import --file <chemin> [--file <chemin> …] [--apply] [--activate] [--source-key <clé>]\n        pnpm supplier-prices:import --rollback <sourceKey>');
+  console.error('Usage : pnpm supplier-prices:import --file <chemin> [--file <chemin> …] [--apply] [--source-key <clé>]\n(publication : administration → Tarifs)');
   process.exit(EXIT.USAGE);
 }
 
 function parseArgs(argv: string[]) {
   const files: string[] = [];
   let apply = false;
-  let activate = false;
-  let rollback: string | null = null;
   let sourceKey: string | null = null;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]!;
@@ -36,23 +34,17 @@ function parseArgs(argv: string[]) {
       if (!v) usage("--file attend un chemin");
       files.push(v);
     } else if (a === "--apply") apply = true;
-    else if (a === "--activate") activate = true;
-    else if (a === "--rollback") {
-      const v = argv[++i];
-      if (!v) usage("--rollback attend une clé de source");
-      rollback = v;
-    } else if (a === "--source-key") {
+    else if (a === "--activate" || a === "--rollback") usage(`${a} a été retiré : les grilles se publient dans l'administration (Tarifs)`);
+    else if (a === "--source-key") {
       const v = argv[++i];
       if (!v) usage("--source-key attend une clé");
       sourceKey = v;
     } else if (a === "--help" || a === "-h") usage();
     else usage(`argument inconnu « ${a} »`);
   }
-  if (activate && !apply) usage("--activate exige --apply");
-  if (rollback && files.length) usage("--rollback ne se combine pas avec --file");
-  if (!rollback && !files.length) usage("au moins un --file est requis");
+  if (!files.length) usage("au moins un --file est requis");
   if (sourceKey && files.length !== 1) usage("--source-key ne s'utilise qu'avec un seul --file");
-  return { files, apply, activate, rollback, sourceKey };
+  return { files, apply, sourceKey };
 }
 
 const mm = (v: number | null) => (v == null ? "—" : String(v));
@@ -63,19 +55,6 @@ async function main() {
   const { SourceError } = await import("../src/server/supplier-prices/analyse");
   const { prisma } = await import("../src/lib/prisma");
   try {
-    if (args.rollback) {
-      try {
-        const r = await svc.rollbackSupplierPrices(args.rollback, ACTOR);
-        console.log(`Retour arrière « ${args.rollback} » : v${r.restored.version} réactivée${r.replaced ? `, v${r.replaced.version} archivée` : ""}.`);
-        return EXIT.OK;
-      } catch (e) {
-        if (e instanceof svc.SupplierPriceError) {
-          console.error(e.message);
-          return EXIT.REFUSED;
-        }
-        throw e;
-      }
-    }
     const inputs = [];
     for (const f of args.files) {
       try {
@@ -131,20 +110,13 @@ async function main() {
     }
     const { results } = await svc.applySupplierPrices(inputs, ACTOR);
     for (const r of results) console.log(r.unchanged ? `= ${r.fileName} : identique à v${r.version} (${r.status}) — aucune écriture.` : `+ ${r.fileName} : v${r.version} créée en brouillon (${r.rows} lignes) — id ${r.listId}`);
-    if (args.activate) {
-      for (const r of results) {
-        try {
-          const a = await svc.activateSupplierPriceList(r.listId, ACTOR);
-          console.log(`✓ ${r.sourceKey} : v${r.version} active${a.previous ? ` (v${a.previous.version} archivée)` : ""}.`);
-        } catch (e) {
-          if (e instanceof svc.SupplierPriceError) {
-            console.error(`${r.sourceKey} : ${e.message}`);
-            return EXIT.REFUSED;
-          }
-          throw e;
-        }
-      }
-    } else console.log("\nVersions laissées en brouillon : revue et activation dans /admin/catalogue/tarifs-fournisseur.");
+    const { deriveGridsFromImport } = await import("../src/server/tariffs/grids");
+    const unknown = { enabled: true, nature: "UNKNOWN" as const, currency: null, taxBasis: "UNKNOWN" as const };
+    for (const r of results) {
+      const g = await deriveGridsFromImport(r.listId, { columns: { PRIX_FINAL: unknown, PRIX_SOURCE: unknown } }, ACTOR);
+      console.log(`  grilles : ${g.created.length} brouillon(s) créé(s), ${g.unchanged.length} inchangée(s)`);
+    }
+    console.log("\nRien n'est publié : complétez, vérifiez et publiez les grilles dans /admin/tarifs.");
     return EXIT.OK;
   } finally {
     await prisma.$disconnect();

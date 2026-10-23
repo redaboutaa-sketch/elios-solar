@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "./fixtures";
 import { acceptNecessaryOnly, fillCheckout, shot, uid } from "./helpers";
-import { one, publicPricesActive } from "./db";
+import { IN_FORCE_GRID_SQL, one, publicPricesActive } from "./db";
 
 async function setDim(page: Page, id: string, value: number) {
   const input = page.locator(`#${id}`);
@@ -23,7 +23,7 @@ test("HELIO Horizon structure seule : commande en ligne au prix de la grille, pa
     return;
   }
   // cellule murale de la grille active couvrant une cote exacte du configurateur (pas de 20 cm dès 1,4 m, largeur ≤ 4 m)
-  const cell = await one<{ dimAmm: number; widthMaxMm: number; amountMinor: number }>(`SELECT r."dimAmm", r."widthMaxMm", r."amountMinor" FROM "SupplierPriceRow" r JOIN "SupplierPriceList" l ON l.id = r."listId" WHERE l."sourceKey" = 'xlsx-situation-des-tarif' AND l.status = 'ACTIVE' AND r."amountRole" = 'PRIX_FINAL' AND r.kind = 'GRID' AND r."familySlug" = 'helio-horizon' AND r."variantKey" = 'murale' AND r.status <> 'REJECTED' AND r."widthMinMm" = r."widthMaxMm" AND r."widthMaxMm" <= 4000 AND (r."dimAmm" - 1400) % 200 = 0 AND r."dimAmm" <= 7000 ORDER BY r."dimAmm", r."widthMaxMm" LIMIT 1`);
+  const cell = await one<{ dimAmm: number; widthMaxMm: number; amountMinor: number }>(`SELECT r."dimAmm", r."widthMaxMm", r."amountMinor" FROM "SupplierPriceRow" r JOIN "SupplierPriceList" l ON l.id = r."listId" WHERE ${IN_FORCE_GRID_SQL} AND r.kind = 'GRID' AND r."familySlug" = 'helio-horizon' AND r."variantKey" = 'murale' AND r.status <> 'REJECTED' AND r."widthMinMm" = r."widthMaxMm" AND r."widthMaxMm" <= 4000 AND (r."dimAmm" - 1400) % 200 = 0 AND r."dimAmm" <= 7000 ORDER BY r."dimAmm", r."widthMaxMm" LIMIT 1`);
   expect(cell).not.toBeNull();
   await setDim(page, "dim-width", cell!.widthMaxMm);
   await setDim(page, "dim-depth", cell!.dimAmm);

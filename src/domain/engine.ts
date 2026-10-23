@@ -8,7 +8,7 @@ import { applyBps, taxIncludedIn, type Cents } from "./money";
 import { activeGridFor, priceFromGrid } from "./pricing-grid";
 import { includedCablePublicText } from "./technical-spec";
 import { evaluateSystemRules, MOUNTING_FR, type SystemInput } from "./system";
-import { lookupSystemPrice, type SystemPrice } from "./system-pricing";
+import { lookupSystemPrice, pricedSizes, type SystemPrice } from "./system-pricing";
 import type {
   AccessoryStandaloneInput,
   AwningInput,
@@ -721,9 +721,10 @@ function evaluateSystem(catalog: CatalogSnapshot, input: SystemInput): Evaluatio
   if (orderable) {
     // configuration entièrement tarifée : structure seule au prix de la grille ; TVA du catalogue ajoutée à un prix HT
     const net = systemPrice.amountMinor;
-    const gross = systemPrice.taxBasis === "TTC" ? net : net + applyBps(net, catalog.taxRateBps);
+    const taxRateBps = systemPrice.vatRateBps ?? catalog.taxRateBps;
+    const gross = systemPrice.taxBasis === "TTC" ? net : net + applyBps(net, taxRateBps);
     const dims = [fmtM(input.widthMm), input.depthMm != null && rules.dims.depth ? fmtM(input.depthMm) : input.heightMm != null && rules.dims.height ? fmtM(input.heightMm) : null].filter(Boolean).join(" × ");
-    b.line({ kind: "base", code: `base:${family.slug}:grid:v${systemPrice.listVersion}`, label: `${family.name} — ${dims}, pose ${MOUNTING_FR[input.mounting]}`, qty: 1, unitGrossCents: gross, taxRateBps: catalog.taxRateBps, dataStatus: family.dataStatus });
+    b.line({ kind: "base", code: `base:${family.slug}:grid:v${systemPrice.listVersion}`, label: `${family.name} — ${dims}, pose ${MOUNTING_FR[input.mounting]}`, qty: 1, unitGrossCents: gross, taxRateBps, dataStatus: family.dataStatus });
   }
   const issues = orderable ? b.issues.filter((i) => i.code !== "system_quote_only") : b.issues;
   b.issues.splice(0, b.issues.length, ...issues);
@@ -736,6 +737,7 @@ function evaluateSystem(catalog: CatalogSnapshot, input: SystemInput): Evaluatio
     priceMode: "quote",
     recap: ev.recap,
     systemPrice,
+    pricedSizes: lookup && !lookup.ok && lookup.reason === "out_of_grid" ? pricedSizes(family.systemPrices, rules, input) : null,
     onlineOrder: { ok: orderable, reasons },
   };
 }

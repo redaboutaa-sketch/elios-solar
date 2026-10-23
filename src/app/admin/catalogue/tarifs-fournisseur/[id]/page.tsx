@@ -6,7 +6,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { requireRole } from "@/lib/session";
 import { Flash, PageTitle, Pagination, Section, Table, fmtDate } from "@/components/admin/ui";
 import { Notice } from "@/components/ui/alert";
-import { activateSupplierPriceListAction, rejectSupplierPriceListAction } from "@/server/actions/admin/supplier-prices";
+import { rejectSupplierPriceListAction } from "@/server/actions/admin/supplier-prices";
 import type { SupplierPriceReport } from "@/server/supplier-prices/analyse";
 import { AMOUNT_ROLE_FR } from "@/server/supplier-prices/types";
 import { DISCREPANCY_FR, InterpretationBadges, ListStatusBadge, RowStatusBadge, fmtMinor } from "../labels";
@@ -71,7 +71,6 @@ export default async function SupplierPriceListPage(props: PageProps<"/admin/cat
         <p className="mt-1 text-sm text-stone-700"><strong>Nature :</strong> {list.natureNote || "—"}</p>
         {list.notes && <p className="mt-1 text-sm text-stone-700"><strong>Notes :</strong> {list.notes}</p>}
         <div className="mt-3 flex flex-wrap gap-2">
-          {(list.status === "DRAFT" || list.status === "ARCHIVED") && <form action={activateSupplierPriceListAction}><input type="hidden" name="id" value={list.id} /><input type="hidden" name="returnTo" value={`/admin/catalogue/tarifs-fournisseur/${list.id}`} /><button className="btn-primary" type="submit">Activer cette version</button></form>}
           {list.status === "DRAFT" && <form action={rejectSupplierPriceListAction}><input type="hidden" name="id" value={list.id} /><input type="hidden" name="returnTo" value={`/admin/catalogue/tarifs-fournisseur/${list.id}`} /><button className="btn-secondary" type="submit">Rejeter</button></form>}
         </div>
       </Section>

@@ -29,9 +29,23 @@ describe("prix publics des systèmes (grille « Prix final HELIOSTORES »)", () 
     expect(f.ok && f.price.variantKey).toBe("autoportante");
   });
 
-  it("cote intermédiaire : dimension de grille immédiatement supérieure sur chaque axe", () => {
-    const r = lookupSystemPrice(pergolaTable, rules("helio-horizon"), input("helio-horizon", { widthMm: 1600, depthMm: 3401, mounting: "wall" }));
-    expect(r).toMatchObject({ ok: true, price: { amountMinor: 111_055, roundedUp: true, grid: { widthMm: 2000, dimMm: 3600 } } });
+  it("cote intermédiaire, lecture exacte (défaut) : aucun arrondi ni interpolation, devis", () => {
+    expect(lookupSystemPrice(pergolaTable, rules("helio-horizon"), input("helio-horizon", { widthMm: 1600, depthMm: 3400, mounting: "wall" }))).toEqual({ ok: false, reason: "out_of_grid" });
+    expect(lookupSystemPrice(pergolaTable, rules("helio-horizon"), input("helio-horizon", { widthMm: 2000, depthMm: 3401, mounting: "wall" }))).toEqual({ ok: false, reason: "out_of_grid" });
+  });
+
+  it("cote intermédiaire, règle « dimension supérieure » confirmée par la grille : cellule supérieure sur chaque axe", () => {
+    const r = lookupSystemPrice({ ...pergolaTable, dimRule: "round_up" }, rules("helio-horizon"), input("helio-horizon", { widthMm: 1600, depthMm: 3401, mounting: "wall" }));
+    expect(r).toMatchObject({ ok: true, price: { amountMinor: 111_055, roundedUp: true, dimRule: "round_up", grid: { widthMm: 2000, dimMm: 3600 } } });
+  });
+
+  it("paramètres par variante : devise, base, règle et TVA propres à chaque grille", () => {
+    const t: SystemPriceTable = { ...pergolaTable, variants: { murale: { currency: "EUR", taxBasis: "HT", dimRule: "exact", vatRateBps: 1000, listVersion: 7, versionId: "v-murale" }, autoportante: { currency: "EUR", taxBasis: "TTC", dimRule: "round_up", vatRateBps: null, listVersion: 3 } } };
+    expect(lookupSystemPrice(t, rules("helio-horizon"), input("helio-horizon", { widthMm: 2000, depthMm: 3600, mounting: "wall" }))).toMatchObject({ ok: true, price: { listVersion: 7, versionId: "v-murale", vatRateBps: 1000, taxBasis: "HT" } });
+    expect(lookupSystemPrice(t, rules("helio-horizon"), input("helio-horizon", { widthMm: 1600, depthMm: 3500, mounting: "freestanding" }))).toMatchObject({ ok: true, price: { listVersion: 3, taxBasis: "TTC", roundedUp: true } });
+    // TVA de la grille appliquée à la ligne de structure
+    const r = evaluate(withPrices("helio-horizon", t), input("helio-horizon", { widthMm: 2000, depthMm: 3400, mounting: "wall", options: [], installation: "self", sides: {} }));
+    expect(r.lines[0]).toMatchObject({ taxRateBps: 1000, unitGrossCents: 101_055 + Math.round(101_055 / 10) });
   });
 
   it("hors grille (en deçà de la première ou au-delà de la dernière dimension) : pas de prix", () => {
@@ -42,10 +56,14 @@ describe("prix publics des systèmes (grille « Prix final HELIOSTORES »)", () 
   });
 
   it("largeurs par plages (store banne) et axe hauteur (screen)", () => {
-    const a = lookupSystemPrice(awningTable, rules("helio-riviera"), input("helio-riviera", { widthMm: 2905, depthMm: 1600 }));
+    const a = lookupSystemPrice(awningTable, rules("helio-riviera"), input("helio-riviera", { widthMm: 3200, depthMm: 1600 }));
     expect(a).toMatchObject({ ok: true, price: { amountMinor: 800_000, roundedUp: false } });
-    const s = lookupSystemPrice(screenTable, rules("helio-ombra"), input("helio-ombra", { widthMm: 1000, heightMm: 1100 }));
+    // entre deux plages (2,90 m < l < 2,91 m) : ambiguë, devis
+    expect(lookupSystemPrice(awningTable, rules("helio-riviera"), input("helio-riviera", { widthMm: 2905, depthMm: 1600 }))).toEqual({ ok: false, reason: "out_of_grid" });
+    expect(lookupSystemPrice(awningTable, rules("helio-riviera"), input("helio-riviera", { widthMm: 3600, depthMm: 1600 }))).toEqual({ ok: false, reason: "out_of_grid" });
+    const s = lookupSystemPrice(screenTable, rules("helio-ombra"), input("helio-ombra", { widthMm: 1000, heightMm: 1250 }));
     expect(s).toMatchObject({ ok: true, price: { amountMinor: 320_000, grid: { dimMm: 1250 } } });
+    expect(lookupSystemPrice(screenTable, rules("helio-ombra"), input("helio-ombra", { widthMm: 1000, heightMm: 1100 }))).toEqual({ ok: false, reason: "out_of_grid" });
   });
 
   it("le moteur joint le prix au résultat (parcours devis conservé) et l'omet en cas de blocage", () => {

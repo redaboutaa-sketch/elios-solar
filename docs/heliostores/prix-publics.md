@@ -44,27 +44,25 @@ Inventaire sur la grille active (préproduction, 2026-10-21), sans option ni pos
 ## Règle de lecture de la grille
 
 - **Pergolas** : la variante suit la pose (murale → « MURALE », autoportante → « AUTOPORTANTE »). La SB500 suit les intitulés du classeur (question T8 de la fiche fournisseur).
-- **Arrondi** : la cote saisie est arrondie, sur chaque axe, à la dimension de grille **immédiatement supérieure**. Pour le store banne, la largeur se lit dans des plages : il n'y a pas d'arrondi.
+- **Lecture des cotes (2026-10-23)** : **exacte** par défaut — la cote doit être une dimension de la grille sur chaque axe (pour le store banne, la largeur se lit dans des plages). Sinon « Prix sur devis », avec les cotes tarifées affichées. L'arrondi à la dimension supérieure, appliqué jusqu'au 2026-10-22, n'a jamais été confirmé : il ne s'applique qu'à une grille qui porte cette règle avec sa justification (écran Tarifs).
 - **Hors grille** : une cote inférieure à la première dimension de la grille ou supérieure à la dernière n'a pas de prix. Le configurateur affiche alors « Prix sur devis pour ces dimensions ». Exemples : SB400 de moins de 1,5 m de largeur ou de moins de 3,4 m de projection ; SB500 de moins de 3 m de projection.
 - **Configuration bloquante** (cote hors limites techniques) : aucun prix.
 - **Montant** : le montant de la cellule est affiché tel quel, centimes compris.
 - **Colonnes non publiées** : la colonne « Prix » (prix source) et les fiches DOCX ne sont jamais publiées. Elles ne sont chargées par aucune page publique, et un test le vérifie.
 - **VERANDA FTS** : brouillon, jamais tarifée publiquement.
 
-Code : `src/domain/system-pricing.ts` (lecture de la grille), `src/server/pricing/system-prices.ts` (seul module qui lit les tarifs pour le site).
+Code : `src/domain/system-pricing.ts` (lecture de la grille), `src/server/pricing/system-prices.ts` (seul module qui lit les tarifs pour le site : grilles de vente publiées et en vigueur).
 
 ## Publier, changer, revenir en arrière
 
-```bash
-# 1. importer une nouvelle version du classeur (brouillon) — voir import-tarifs.md
-pnpm supplier-prices:import --file "<classeur.xlsx>" --apply
-# 2. la publier (active la dernière version, fixe devise et base fiscale)
-pnpm system-prices:publish --currency EUR --tax HT
-# revenir à la version publiée précédente
-pnpm supplier-prices:import --rollback xlsx-situation-des-tarif
-```
+Dans l'administration : **Tarifs** (`/admin/tarifs`, administrateurs). Chaque produit × variante est une grille
+versionnée ; on modifie un brouillon, on le vérifie, puis on le publie immédiatement ou à une date. Procédure et
+règles : `administration-tarifs.md`. L'ancienne commande `pnpm system-prices:publish` et l'activation des fichiers
+importés ont été retirées (2026-10-23) : un import ne publie plus rien.
 
-En Docker, ces commandes passent par le service `migrate`, avec le dossier privé monté en lecture seule. Sans version active, ou si la version active n'a pas de devise, aucun prix n'est affiché : tout repasse « sur devis ».
+Le 2026-10-23, les six grilles « Prix final HELIOSTORES » des produits publiés ont été reprises **publiées** (même
+décision client, mêmes montants) ; HELIO Verrière et les sept grilles de la colonne « Prix » restent en brouillon.
+Sans grille en vigueur pour une variante, ses configurations repassent « sur devis ».
 
 ## Sans référence au fabricant ni au fournisseur
 
