@@ -12,9 +12,12 @@ import { createAccount, loginAdmin, shot, uid } from "./helpers";
 test("consultation des grilles importées", async ({ page }) => {
   await loginAdmin(page, "/admin/tarifs");
   await expect(page.getByRole("heading", { level: 1, name: "Tarifs" })).toBeVisible();
+  // grilles importées du classeur (préproduction, dev) ; sans import (CI) : produits listés, aucun tarif en vigueur
   const list = page.getByTestId("tariff-list");
-  await expect(list).toContainText("HELIO Horizon");
-  await expect(list).toContainText("HELIO Ombra");
+  const imported = (await list.getByRole("row").filter({ hasText: "Prix final" }).filter({ hasText: "HELIO Horizon" }).count()) > 0;
+  if (imported) await expect(list).toContainText("HELIO Ombra");
+  await expect(page.getByTestId("tariff-counts")).toBeVisible();
+  await expect(page.getByRole("table", { name: "Produits et tarif de vente en vigueur" })).toContainText("HELIO Horizon");
   await shot(page, "admin-tarifs");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });

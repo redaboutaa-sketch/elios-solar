@@ -10,8 +10,8 @@ test("administration HELIOSTORES : familles du catalogue, tarifs fournisseur pri
   await shot(page, "admin-familles");
 
   await page.goto("/admin/catalogue/tarifs-fournisseur");
-  await expect(page.getByRole("heading", { name: "Tarifs fournisseur (privé)" })).toBeVisible();
-  await expect(page.getByText(/Prix publics : colonne « Prix final HELIOSTORES »/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Fichiers de tarifs importés (privé)" })).toBeVisible();
+  await expect(page.getByText(/Les prix du site ne sont plus lus ici/)).toBeVisible();
   await shot(page, "admin-tarifs-fournisseur");
 
   // la boutique ne lit jamais ces données : ni montant, ni page d'administration accessible sans session
