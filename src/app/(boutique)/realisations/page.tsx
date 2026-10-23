@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Réalisations", description: "Projet
 /** Rubrique masquée tant qu'aucun contenu réel n'est fourni (PUBLIC_SECTIONS). */
 export default async function Page() {
   if (!PUBLIC_SECTIONS.realisations) notFound();
-  const items = await prisma.realisation.findMany({ where: { published: true }, include: { media: true }, orderBy: { sortOrder: "asc" } });
+  const items = await prisma.realisation.findMany({ where: { published: true, kind: "REALISATION", placeholder: false, isDemo: false }, include: { media: true }, orderBy: { sortOrder: "asc" } });
   return (
     <div className="container-x py-8"><Breadcrumbs items={[{ label: "Réalisations" }]} /><h1 className="mt-4 font-display text-4xl">Réalisations</h1>
       {items.length === 0 ? <div className="mt-8 card p-10 text-center"><p className="font-display text-2xl">Nos premières réalisations arrivent.</p><p className="mt-2 text-stone-700">Cette rubrique est administrable ; seules des réalisations réelles et autorisées y seront publiées.</p></div> : (

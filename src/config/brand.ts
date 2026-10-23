@@ -22,7 +22,7 @@ export const BRAND = {
  * Rubriques publiques masquées (réponse 404, hors navigation et sitemap) tant qu'aucun contenu réel et autorisé n'est
  * fourni — décision client du 2026-10-21. Les fiches restent gérables dans l'administration.
  */
-export const PUBLIC_SECTIONS = { realisations: false, showroom: false } as const;
+export const PUBLIC_SECTIONS = { realisations: false, production: false, showroom: false } as const;
 
 /** Navigation principale : les trois familles (« Nos solutions », sous-menus produits, voir publicNavigation()) puis les services. */
 export const NAV = [
@@ -30,7 +30,7 @@ export const NAV = [
   { href: "/screens", label: "Screens" },
   { href: "/stores-bannes", label: "Stores bannes" },
   ...(PUBLIC_SECTIONS.realisations ? [{ href: "/realisations", label: "Réalisations" }] : []),
-  { href: "/guides", label: "Guides" },
+  { href: "/guides", label: "Guides et installation" },
   { href: "/contact", label: "Contact" },
   { href: "/devis", label: "Devis" },
 ] as const;

@@ -14,6 +14,43 @@ type Item = Awaited<ReturnType<typeof listSystemFamilies>>[number];
 
 const priceText = (f: Item) => (f.fromPrice ? formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis) : null);
 
+/**
+ * Niveaux d'équipement d'un modèle (packs du même store) : Essentiel, Confort ; Premium renvoie à un autre modèle,
+ * présenté seulement après validation. Les montants ne concernent que la structure de la grille ; le reste est au devis.
+ */
+function Levels({ items }: { items: Item[] }) {
+  const withPacks = items.filter((f) => f.rules.packs?.length);
+  if (!withPacks.length) return null;
+  return (
+    <section className="section-y border-t border-sand-200" aria-labelledby="niveaux" data-testid="levels">
+      <h2 id="niveaux" className="font-display text-display font-semibold">Choisir son niveau d'équipement</h2>
+      {withPacks.map((f) => (
+        <div key={f.slug} className="mt-6">
+          <p className="max-w-2xl text-stone-700">{f.name} : {f.rules.packs!.filter((p) => !p.familySlug).length} niveaux d'un même store ; un niveau Premium, sur un autre modèle, est en préparation.</p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[640px] border-collapse text-sm">
+              <caption className="sr-only">Niveaux d'équipement {f.name}</caption>
+              <thead><tr className="border-b border-sand-300 text-left"><th className="py-2 pr-4 font-medium text-stone-700">Niveau</th><th className="py-2 pr-4 font-medium text-stone-700">Pour qui</th><th className="py-2 pr-4 font-medium text-stone-700">Compris</th><th className="py-2 pr-4 font-medium text-stone-700">Options</th><th className="py-2 pr-4 font-medium text-stone-700">Prix</th></tr></thead>
+              <tbody>
+                {f.rules.packs!.map((p) => (
+                  <tr key={p.code} className="border-b border-sand-200 align-top">
+                    <th scope="row" className="py-3 pr-4 font-display text-lg font-semibold">{p.label}{p.familySlug ? <span className="block text-xs font-normal text-stone-700">en préparation</span> : p.status === "to_confirm" ? <span className="block text-xs font-normal text-stone-700">composition à confirmer</span> : null}</th>
+                    <td className="py-3 pr-4">{p.summary}</td>
+                    <td className="py-3 pr-4">{p.familySlug ? "—" : p.includes.join(", ")}</td>
+                    <td className="py-3 pr-4">{p.familySlug ? "—" : (p.optionCodes ?? []).map((c) => f.rules.options.find((o) => o.code === c)?.label).filter(Boolean).join(", ") || "—"}</td>
+                    <td className="py-3 pr-4">{p.familySlug ? "—" : p.tier === 1 && priceText(f) ? `structure à partir de ${priceText(f)}` : "sur devis"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-2 text-xs text-stone-700">Dimensions identiques pour Essentiel et Confort : {f.rules.dims.width.label.toLowerCase()} {dimRangeText(f.rules.dims.width)}{f.rules.dims.depth ? `, ${f.rules.dims.depth.label.toLowerCase()} ${dimRangeText(f.rules.dims.depth)}` : ""}. Éclairage LED non proposé sur ce modèle.</p>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 /** Comparatif des cotes et poses documentées, lorsque la famille compte plusieurs modèles. */
 function Comparison({ items }: { items: Item[] }) {
   const rows: Array<[string, (f: Item) => string]> = [
@@ -104,6 +141,7 @@ export async function SystemCollection({ category, items }: { category: Category
           </ul>
         )}
         {items.length > 1 && <Comparison items={items} />}
+        <Levels items={items} />
       </div>
       <div className="h-6" aria-hidden="true" />
     </>

@@ -12,7 +12,7 @@ import type { TechnicalSpecValue } from "./technical-spec";
  * des tests et du contrôle des médias) : fabricant, fournisseur, références des produits et des moteurs.
  */
 export const PUBLIC_FORBIDDEN_NAMES =
-  /aluprof|thysens|\bselt\b|euro[\s-]?confort|\bsb\s?[45][05]0\b|refleksol|zi{2,}p|\bzip\s?120\b|casablanca|veranda\s?fts|\bfts\b|sunbreaker|zoomtech|blebox|elero|somfy|picolo|\baltus\b|sunilus|suntop|varieco|\bdm45/i;
+  /aluprof|thysens|\bselt\b|euro[\s-]?confort|\bsb\s?[45][05]0\b|refleksol|zi{2,}p|\bzip\s?120\b|casablanca|veranda\s?fts|\bfts\b|sunbreaker|zoomtech|blebox|elero|somfy|picolo|\baltus\b|sunilus|suntop|varieco|\bdm45|corsica|palladio|tahoma|eolis|soliris|ondeis/i;
 
 /** Clés internes retirées des règles publiques. */
 const INTERNAL_RULE_KEYS = new Set(["sources", "supplierRef"]);

@@ -28,7 +28,7 @@ export default async function FamilyEditPage(props: PageProps<"/admin/catalogue/
   const faq = [...((family.faq as Array<{ q: string; a: string }>) ?? []), ...Array.from({ length: 2 }, () => ({ q: "", a: "" }))];
   const included = ((family.included as string[]) ?? []).join("\n");
   const images = medias.filter((m) => m.kind === "image");
-  const legacySlugs = Object.entries(LEGACY_FAMILY_SLUGS).filter(([, to]) => to === family.slug).map(([from]) => from);
+  const legacySlugs = [...new Set([...family.legacySlugs, ...Object.entries(LEGACY_FAMILY_SLUGS).filter(([, to]) => to === family.slug).map(([from]) => from)])];
   const rules = family.systemRules as unknown as SystemRules | null;
   const supplierItems = rules ? [...(rules.controls ?? []), ...rules.included, ...rules.options].filter((x): x is typeof x & { supplierRef: string } => !!x.supplierRef && x.supplierRef !== x.label) : [];
   const pdfs = medias.filter((m) => m.kind === "document" || m.mimeType === "application/pdf");
@@ -43,12 +43,17 @@ export default async function FamilyEditPage(props: PageProps<"/admin/catalogue/
         <Section title="Correspondance fournisseur (interne)">
           <p className="mb-3 text-xs text-stone-700">Données internes, jamais publiées : le site n'affiche que le nom commercial (nomenclature HELIOSTORES).</p>
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm" data-testid="supplier-mapping">
-            <dt className="text-stone-700">Nom commercial</dt><dd>{family.name}</dd>
+            <dt className="text-stone-700">Identifiant interne (stable)</dt><dd className="font-mono">{family.id}</dd>
+            <dt className="text-stone-700">Nom commercial</dt><dd>{family.name} <span className="text-xs text-stone-700">(modifiable ci-dessous ; provisoire tant que le client ne l'a pas approuvé)</span></dd>
+            <dt className="text-stone-700">Slug public</dt><dd className="font-mono">{family.slug} <span className="font-sans text-xs text-stone-700">(changement par migration, avec redirection)</span></dd>
             <dt className="text-stone-700">Référence fournisseur</dt><dd>{family.supplierRef ?? "—"}</dd>
             <dt className="text-stone-700">Fabricant</dt><dd>{family.manufacturer ?? "—"}</dd>
             <dt className="text-stone-700">Marque</dt><dd>{family.brand ?? "—"}</dd>
             {legacySlugs.length > 0 && <><dt className="text-stone-700">Ancien identifiant</dt><dd className="font-mono">{legacySlugs.join(", ")} (redirigé)</dd></>}
+            <dt className="text-stone-700">Noms précédents</dt><dd data-testid="name-history">{(Array.isArray(family.nameHistory) ? (family.nameHistory as Array<{ name: string; until?: string; by?: string }>) : []).map((h) => `${h.name} (jusqu'au ${h.until ?? "?"}${h.by ? `, ${h.by}` : ""})`).join(" · ") || "—"}</dd>
+            <dt className="text-stone-700">Textes commerciaux</dt><dd>{family.commercialEditedAt ? `modifiés dans l'administration le ${family.commercialEditedAt.toLocaleString("fr-FR")} : conservés aux déploiements` : "valeurs du référentiel (mises à jour aux déploiements)"}</dd>
           </dl>
+          <p className="mt-2 text-xs text-stone-700">La référence fournisseur sert à la fabrication, aux achats, au SAV et à la traçabilité ; les documents officiels (notices, déclarations des performances) gardent leurs désignations d'origine.</p>
           {supplierItems.length > 0 && (
             <table className="mt-4 w-full text-sm">
               <thead><tr className="text-left text-xs text-stone-700"><th className="py-1 pr-3 font-medium">Libellé public</th><th className="py-1 pr-3 font-medium">Désignation fournisseur</th></tr></thead>

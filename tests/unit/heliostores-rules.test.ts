@@ -3,6 +3,7 @@ import { evaluate } from "@/domain/engine";
 import { defaultSystemInput, spotsFor, type SystemInput } from "@/domain/system";
 import { buildHeliostoresCatalog, HELIOSTORES_FAMILIES } from "@/server/catalog/heliostores-data";
 import { CATEGORIES } from "@/domain/categories";
+import { PUBLIC_FORBIDDEN_NAMES } from "@/domain/public-sanitize";
 
 const catalog = buildHeliostoresCatalog();
 const rules = (slug: string) => catalog.families.find((f) => f.slug === slug)!.systemRules!;
@@ -167,8 +168,10 @@ describe("HELIO Riviera", () => {
   it("largeur 2 à 6 m ; aucune hypothèse héritée (LED, télécommande, câble, 230 V)", () => {
     expect(codes("helio-riviera", { widthMm: 6100 })).toContain("blocking:dimension_out_of_bounds");
     const r = evaluate(catalog, input("helio-riviera"));
-    const text = JSON.stringify(r);
-    expect(text).not.toMatch(/LED|télécommande|câble|230 V/);
+    // rien d'inclus ni de chiffré qui ne soit documenté ; l'absence de LED est dite explicitement
+    expect(JSON.stringify({ recap: r.recap, lines: r.lines })).not.toMatch(/LED|télécommande|câble|230 V/);
+    expect(r.issues.map((i) => i.message)).toContain("Éclairage LED : non proposé sur ce modèle.");
+    expect(r.recap?.find((x) => x.label === "Niveau")?.value).toBe("Essentiel");
   });
   it("divergences conservées en données sourcées (jamais une valeur choisie)", () => {
     const spec = (slug: string, key: string) => catalog.families.find((f) => f.slug === slug)!.technicalSpecs!.filter((t) => t.key === key);
@@ -181,5 +184,33 @@ describe("HELIO Riviera", () => {
   it("commande manuelle documentée ; électrique à confirmer", () => {
     expect(codes("helio-riviera", { controlCode: "crank_1800" })).not.toContain("review:control_to_confirm");
     expect(codes("helio-riviera", { controlCode: "electric" })).toContain("review:control_to_confirm");
+  });
+});
+
+describe("niveaux, options et protection au vent (retour client du 2026-10-21)", () => {
+  const rules = (slug: string) => catalog.families.find((f) => f.slug === slug)!.systemRules!;
+  it("HELIO Riviera : Essentiel (manivelle) et Confort (motorisé) sont deux niveaux du même store ; Premium est un autre modèle", () => {
+    const packs = rules("helio-riviera").packs!;
+    expect(packs.map((p) => [p.code, p.familySlug ?? null])).toEqual([["essentiel", null], ["confort", null], ["premium", "helio-azur"]]);
+    expect(codes("helio-riviera", { packCode: "confort", controlCode: "crank_1500" })).toContain("blocking:pack_control");
+    expect(codes("helio-riviera", { packCode: "confort", controlCode: "electric" })).toEqual(expect.arrayContaining(["review:pack_to_confirm", "review:control_to_confirm"]));
+    expect(codes("helio-riviera", { packCode: "premium" })).toContain("blocking:pack_unavailable");
+  });
+  it("une option motorisée exige la motorisation ; aucune LED sur HELIO Riviera", () => {
+    expect(codes("helio-riviera", { controlCode: "crank_1500", options: [{ code: "weather_automation" }] })).toContain("blocking:option_requires_control");
+    expect(codes("helio-riviera", { packCode: "confort", controlCode: "electric", options: [{ code: "weather_automation" }] })).not.toContain("blocking:option_requires_control");
+    expect(rules("helio-riviera").options.some((o) => o.group === "lighting")).toBe(false);
+    // box de pilotage du screen : moteur radio io seulement
+    expect(codes("helio-ombra", { controlCode: "electric_1", options: [{ code: "connect_box" }] })).toContain("blocking:option_requires_control");
+  });
+  it("protection au vent propre à chaque système, jamais identique", () => {
+    expect(Object.fromEntries(["helio-horizon", "helio-panorama", "helio-ombra", "helio-riviera"].map((s) => [s, rules(s).wind?.action]))).toEqual({ "helio-horizon": "blades", "helio-panorama": "not_documented", "helio-ombra": "raise", "helio-riviera": "retract" });
+    for (const s of ["helio-horizon", "helio-ombra", "helio-riviera"]) expect(rules(s).wind!.sources.length, s).toBeGreaterThan(0);
+  });
+  it("options : prix toujours sur devis ; prérequis sans marque", () => {
+    for (const f of catalog.families.filter((x) => x.systemRules)) for (const o of f.systemRules!.options) {
+      expect(o.pricing ?? "quote", `${f.slug}/${o.code}`).toBe("quote");
+      if (o.prerequisite) expect(o.prerequisite).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
+    }
   });
 });

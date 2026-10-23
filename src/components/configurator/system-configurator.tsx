@@ -215,10 +215,38 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
               </select>
             </div>
           ) : null}
+          {rules.packs?.length ? (
+            <fieldset className="mt-4" data-testid="packs">
+              <legend className="label">Niveau d'équipement</legend>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {rules.packs.map((p) => {
+                  const other = !!p.familySlug;
+                  const checked = input.packCode === p.code;
+                  return (
+                    <label key={p.code} className={`rounded-xl border p-3 text-sm ${other ? "cursor-not-allowed border-dashed border-sand-300 text-stone-700" : "cursor-pointer border-sand-200 has-[:checked]:border-brand-700 has-[:checked]:bg-brand-50"}`}>
+                      <span className="flex items-center gap-2 font-semibold"><input type="radio" name="pack" className="accent-brand-700" disabled={other} checked={checked} onChange={() => {
+                        const c = rules.controls?.find((x) => p.controlKinds.includes(x.kind));
+                        set({ packCode: p.code, ...(c && !p.controlKinds.includes(rules.controls!.find((x) => x.code === input.controlCode)?.kind ?? "manual") ? { controlCode: c.code } : {}) });
+                      }} /> {p.label}{other ? " — en préparation" : p.status === "to_confirm" ? " — à confirmer" : ""}</span>
+                      <span className="mt-1 block text-xs text-stone-700">{p.summary}</span>
+                      {!other && <span className="mt-1 block text-xs text-stone-800">Compris : {p.includes.join(", ")}.</span>}
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="mt-1 text-xs text-stone-700">Essentiel et Confort sont deux équipements du même store ; Premium est un autre modèle, présenté après validation.</p>
+            </fieldset>
+          ) : null}
           {rules.controls?.length ? (
             <div className="mt-4">
               <label className="label" htmlFor="control">Commande</label>
-              <select id="control" className="input" value={input.controlCode ?? ""} onChange={(e) => set({ controlCode: e.target.value })}>
+              <select id="control" className="input" value={input.controlCode ?? ""} onChange={(e) => {
+                // niveau d'équipement cohérent avec la commande choisie (manivelle → Essentiel, motorisation → Confort)
+                const kind = rules.controls!.find((x) => x.code === e.target.value)?.kind;
+                const cur = rules.packs?.find((p) => p.code === input.packCode);
+                const pack = kind && cur && !cur.controlKinds.includes(kind) ? rules.packs!.find((p) => !p.familySlug && p.controlKinds.includes(kind)) : undefined;
+                set({ controlCode: e.target.value, ...(pack ? { packCode: pack.code } : {}) });
+              }}>
                 {rules.controls.map((c) => <option key={c.code} value={c.code}>{c.label}{c.minWidthMm ? ` — largeur min. ${c.minWidthMm / 10} cm` : ""}{c.status === "to_confirm" ? " — à confirmer" : ""}</option>)}
               </select>
               {(() => { const c = rules.controls!.find((x) => x.code === input.controlCode); return c?.cable ? <p className="mt-1 text-xs text-stone-700">Fourni avec {c.cable}.</p> : null; })()}
@@ -230,17 +258,20 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
           <h2 id="equip-title" className={stepTitle}>3. Équipements</h2>
           <h3 className="mt-4 text-sm font-semibold">Inclus</h3>
           <ul className="mt-1 list-disc pl-5 text-sm text-stone-800">{rules.included.map((i) => <li key={i.label}>{i.label}{i.status === "to_confirm" ? " (à confirmer)" : ""}</li>)}</ul>
-          {rules.options.length > 0 && <h3 className="mt-5 text-sm font-semibold">Options <span className="font-normal text-stone-700">(chiffrées au devis)</span></h3>}
+          {rules.options.length > 0 && <h3 className="mt-5 text-sm font-semibold">Options <span className="font-normal text-stone-700">(en supplément, chiffrées au devis)</span></h3>}
           <div className="mt-2 grid gap-2">
             {rules.options.map((o) => {
               const on = optionOn(o.code);
+              const ctl = rules.controls?.find((x) => x.code === input.controlCode);
+              const unmet = (o.requiresControlKind && ctl?.kind !== o.requiresControlKind) || (o.requiresControls?.length && !o.requiresControls.includes(ctl?.code ?? ""));
               return (
                 <div key={o.code} className="rounded-xl border border-sand-200 p-3 text-sm transition-colors duration-150 has-[:checked]:border-brand-700 has-[:checked]:bg-brand-50">
                   <label className="flex cursor-pointer items-start gap-2">
-                    <input type="checkbox" className="mt-1 accent-brand-700" checked={!!on} onChange={(e) => toggleOption(o.code, e.target.checked, { qty: o.maxQty != null ? 1 : undefined, value: o.values?.[0]?.code })} />
+                    <input type="checkbox" className="mt-1 accent-brand-700" checked={!!on} disabled={!!unmet && !on} onChange={(e) => toggleOption(o.code, e.target.checked, { qty: o.maxQty != null ? 1 : undefined, value: o.values?.[0]?.code })} />
                     <span>{o.label}{o.status === "to_confirm" ? " — à confirmer au devis" : ""}{o.spotTable ? (spots != null ? ` (${spots} points pour ces dimensions)` : " (nombre de points hors tableau : devis)") : ""}{o.note && o.status !== "to_confirm" ? ` — ${o.note}` : ""}</span>
                   </label>
                   {o.description && <p className="ml-6 mt-0.5 text-xs text-stone-700">{o.description}</p>}
+                  {o.prerequisite && <p className={`ml-6 mt-0.5 text-xs ${unmet ? "text-danger" : "text-stone-700"}`} data-testid={`prereq-${o.code}`}>Prérequis : {o.prerequisite}.</p>}
                   {on && (o.maxQty != null || o.values?.length) ? (
                     <div className="ml-6 mt-1 flex flex-wrap gap-2">
                       {o.values?.length ? <select aria-label={`${o.label} : valeur`} className="input max-w-56" value={on.value ?? ""} onChange={(e) => toggleOption(o.code, true, { qty: on.qty, value: e.target.value })}>{o.values.map((v) => <option key={v.code} value={v.code}>{v.label}</option>)}</select> : null}
@@ -251,6 +282,9 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
               );
             })}
           </div>
+          {rules.wind && (
+            <p className="mt-4 rounded-lg bg-sand-100 px-3 py-2 text-xs text-stone-800" data-testid="wind-behaviour"><strong>Protection au vent</strong>{rules.wind.status === "to_confirm" ? " (à confirmer)" : ""} : {rules.wind.text}</p>
+          )}
           {rules.type === "pergola" && rules.closureWishes?.length ? (
             <div className="mt-4">
               <h3 className="text-sm font-medium">Fermetures latérales souhaitées (étude au devis)</h3>

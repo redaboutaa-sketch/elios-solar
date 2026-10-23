@@ -21,8 +21,10 @@ describe("nomenclature commerciale HELIOSTORES", () => {
       ["helio-panorama", "HELIO Panorama", "PERGOLAS"],
       ["helio-ombra", "HELIO Ombra", "SCREENS"],
       ["helio-riviera", "HELIO Riviera", "STORES_BANNES"],
+      ["helio-azur", "HELIO Azur", "STORES_BANNES"],
       ["helio-verriere", "HELIO Verrière", null],
     ]);
+    expect(HELIOSTORES_FAMILIES.find((f) => f.slug === "helio-azur")!.status).toBe("DRAFT");
     for (const f of HELIOSTORES_FAMILIES) expect(PRODUCT_NAMES[f.slug as keyof typeof PRODUCT_NAMES]).toBe(f.name);
     expect(HELIOSTORES_FAMILIES.find((f) => f.slug === "helio-verriere")!.status).toBe("DRAFT");
   });
@@ -38,6 +40,7 @@ describe("nomenclature commerciale HELIOSTORES", () => {
       "helio-panorama": "SB500 (SunBreaker 500)",
       "helio-ombra": "REFLEKSOL 120 ZiiiP",
       "helio-riviera": "CASABLANCA",
+      "helio-azur": "CORSICA",
       "helio-verriere": "VERANDA FTS",
     });
     const ombra = HELIOSTORES_FAMILIES.find((f) => f.slug === "helio-ombra")!.rules;
@@ -51,10 +54,15 @@ describe("nomenclature commerciale HELIOSTORES", () => {
     const text = HELIOSTORES_FAMILIES.map((f) => JSON.stringify(f.rules)).join("\n");
     expect(text).toContain(ACCESSORY_NAMES.remote);
     expect(text).toContain(ACCESSORY_NAMES.light);
-    expect(text).not.toContain(ACCESSORY_NAMES.connect);
+    // box documentée (2026-10-23) : toujours « à confirmer », avec un prérequis de commande ; aucun chauffage
+    expect(text).toContain(ACCESSORY_NAMES.connect);
     expect(text).not.toContain(ACCESSORY_NAMES.heating);
-    // une télécommande n'est nommée HELIO Pilot que là où la fiche la documente (pergolas)
-    expect(HELIOSTORES_FAMILIES.filter((f) => JSON.stringify(f.rules).includes(ACCESSORY_NAMES.remote)).map((f) => f.slug)).toEqual(["helio-horizon", "helio-panorama"]);
+    for (const f of HELIOSTORES_FAMILIES) for (const o of f.rules.options.filter((x) => x.label.includes(ACCESSORY_NAMES.connect))) {
+      expect(o.status, f.slug).toBe("to_confirm");
+      expect(!!(o.requiresControlKind || o.requiresControls?.length), f.slug).toBe(true);
+    }
+    // HELIO Pilot : télécommandes documentées (pergolas, version motorisée du store)
+    expect(HELIOSTORES_FAMILIES.filter((f) => JSON.stringify(f.rules).includes(ACCESSORY_NAMES.remote)).map((f) => f.slug)).toEqual(["helio-horizon", "helio-panorama", "helio-riviera"]);
   });
 
   it("anciennes URL : redirections permanentes vers les nouvelles fiches, sans boucle ; brouillon sans page", () => {
@@ -68,6 +76,7 @@ describe("nomenclature commerciale HELIOSTORES", () => {
     expect(r.some((x) => x.destination.includes("helio-verriere"))).toBe(false);
     expect(canonicalFamilySlug("veranda-fts")).toBe("helio-verriere");
     expect(canonicalFamilySlug("helio-ombra")).toBe("helio-ombra");
-    expect(Object.values(LEGACY_FAMILY_SLUGS).sort()).toEqual(Object.keys(PRODUCT_NAMES).sort());
+    // produits renommés le 2026-10-22 (HELIO Azur, proposé ensuite, n'a pas d'ancien nom)
+    expect(Object.values(LEGACY_FAMILY_SLUGS).sort()).toEqual(Object.keys(PRODUCT_NAMES).filter((k) => k !== "helio-azur").sort());
   });
 });

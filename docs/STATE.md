@@ -28,6 +28,11 @@ Le bilan complet est dans `docs/heliostores/README.md`, avec les sources, corres
   sans option, pose ni choix à confirmer), TVA ajoutée au panier, livraison et pose non comprises, paiement simulé ; sinon devis.
 - **Réalisations et Showroom masqués** (404, `PUBLIC_SECTIONS`) ; autres pages provisoires conservées (audit : `docs/heliostores/audit-pages.md`).
   Bilan à transmettre au client : `docs/heliostores/bilan-client.md`.
+- **Retour client du 2026-10-21** (appliqué le 2026-10-23, `docs/heliostores/retour-client-2026-10-21.md`) : accueil par dessins
+  dès le premier écran ; noms HELIO modifiables avec historique ; stores bannes en niveaux (HELIO Riviera Essentiel /
+  Confort, Premium = HELIO Azur en brouillon) ; options avec prérequis et comportement au vent par produit ; guides
+  d'installation en brouillon jusqu'à validation technique (web + PDF) ; réalisations / production (emplacements à
+  fournir) ; page « Modes de paiement » ; explication des prix et fiche de décisions.
 - **Écran Tarifs** (2026-10-23, `docs/heliostores/administration-tarifs.md`) : grilles versionnées par produit × variante, éditeur matriciel,
   paramètres commerciaux, vérification, publication immédiate ou programmée, désactivation, reprise, comparaison, simulateur,
   import depuis l'administration. Seules les grilles de vente publiées alimentent le site ; lecture **exacte** des cotes par défaut

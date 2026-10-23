@@ -37,6 +37,16 @@ export const SOURCES = {
   dopStructSB400: { id: "dop-p-sb400-25", label: "Déclaration des performances P/SB400/25 — structure (ALUPROF)" },
   dopRefleksol: { id: "dop-52-rz-2024", label: "Déclaration des performances 52/RZ/2024 (SELT) et 30/RZ/2023" },
   dopCasablanca: { id: "dop-08-m-2018", label: "Déclaration des performances 08/M/2018 (SELT)" },
+  dteSB400Pro: { id: "dte-sb400pro", label: "Documentation technique et d'utilisation Pergola SB400PRO (ALUPROF, FR)" },
+  suppPergolas: { id: "supp-pergolas", label: "Supplément technique PERGOLAS (ALUPROF, FR)" },
+  dteLedPergola: { id: "dte-led-pergola", label: "Documentation technique LED de la pergola (ALUPROF, FR)" },
+  dteRefleksol: { id: "dte-refleksol", label: "Documentation technique et d'utilisation REFLEKSOL (ALUPROF, FR)" },
+  noticeScreens: { id: "iuik-srs-skyroll", label: "Notice d'installation et d'utilisation des screens (ALUPROF, FR)" },
+  dteCasablanca: { id: "dte-casablanca", label: "Documentation technique et d'utilisation CASABLANCA, DT-E 11.8 (ALUPROF, éd. 5, juin 2019)" },
+  noticeAwnings: { id: "iuik-awnings", label: "Notice d'utilisation des stores de terrasse et de balcon (ALUPROF, FR)" },
+  suppStores: { id: "supp-stores", label: "Supplément technique STORES (ALUPROF, FR)" },
+  brochureAwnings: { id: "brochure-stores-bannes", label: "Brochure ALUPROF « Stores bannes » (FR)" },
+  aluprofCasaAutomation: { id: "aluprof-casablanca-automatisation", label: "Page fabricant ALUPROF « Casablanca » — onglet Automatisation (liste d'accessoires, sans compatibilité par moteur)", url: "https://aluprof.com/fr/produit/casablanca" },
 } as const satisfies Record<string, SourceRef>;
 
 const at = (s: SourceRef, loc: string): SourceRef => ({ ...s, loc });
@@ -186,12 +196,15 @@ const sb400: HelioFamily = {
       },
       { code: "intermediate_post", label: "Poteau intermédiaire", group: "structure", status: "to_confirm", sources: [at(sb400Sheet, "« Poteaux intermédiaires non inclus (en option) »")], note: "option documentée ; nombre et position établis au devis" },
       { code: "overflow_4_gutters", label: "Trop-plein invisible entre gouttières (version 4 gouttières)", group: "structure", status: "to_confirm", sources: [T("p. 11")], note: "option du catalogue, non reprise dans la fiche — à confirmer" },
-      { code: "weather_automation", label: "Automatisme météo (capteurs)", group: "control", status: "to_confirm", sources: [T("p. 11 — « possibility of using weather automation »")], note: "capteurs et compatibilité avec la télécommande HELIO Pilot à confirmer" },
+      { code: "weather_automation", label: "HELIO Vent / HELIO Soleil — capteurs de vent et d'ensoleillement", description: "Par vent fort, le capteur commande la position des lames (ouvertes si les côtés sont ouverts, fermées s'ils sont fermés) ; le capteur d'ensoleillement oriente les lames selon le soleil.", supplierRef: "Eolis io 230V ; Soliris io 230V ; Sunis Wirefree io", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "documenté avec la commande radio io de la pergola ; non documenté avec la télécommande HELIO Pilot fournie", pricing: "quote", sources: [T("p. 11 — « possibility of using weather automation »"), at(SOURCES.dteSB400Pro, "p. 44, 47, 52")], note: "compatibilité avec la commande HELIO Pilot à confirmer" },
+      { code: "rain_sensor", label: "Capteur de pluie", description: "Détecte la pluie pour la commande automatique de la toiture.", supplierRef: "Ondeis 24V", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "documenté avec la commande radio io de la pergola ; non documenté avec la télécommande HELIO Pilot fournie", pricing: "quote", sources: [at(SOURCES.dteSB400Pro, "p. 47 — tableau « Commande et contrôle »")], note: "compatibilité avec la commande HELIO Pilot à confirmer" },
+      { code: "connect_box", label: "HELIO Connect — box de pilotage par smartphone", description: "Box internet qui pilote depuis une application les équipements radio io compatibles. Elle ne rend pas connectée une commande non compatible.", supplierRef: "Somfy TaHoma Switch", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "documenté avec la commande radio io de la pergola ; non documenté avec la télécommande HELIO Pilot fournie", pricing: "quote", sources: [at(SOURCES.dteSB400Pro, "p. 47 — « Commande via Internet »")], note: "compatibilité avec la commande HELIO Pilot à confirmer" },
     ],
     modules: { maxSingleWidthMm: 4000, multiModule: "documented", sources: [at(SOURCES.aluprofSB400, "« Modular system: Yes »")], note: "Système modulaire ; composition (modules, poteaux, gouttières) établie au devis." },
     closureWishes: [{ familySlug: "helio-ombra", label: "Screen HELIO Ombra", status: "to_confirm", note: "la documentation cite des screens en panneaux latéraux sans désigner de modèle — intégration d'un screen HELIO Ombra étudiée au devis selon les ouvertures réelles." }],
     structure3d: { postMm: [150, 85], beamMm: [212, 85], bladeMm: [216, 40] },
     notices: ["Fixations, fondations et raccordement électrique non inclus ; la tenue de l'ouvrage dépend du support et se vérifie au relevé."],
+    wind: { action: "blades", text: "Par vent fort (plus de 45 km/h), le capteur de vent ouvre les lames si les côtés sont ouverts et les ferme si les côtés sont fermés ; la même documentation demande aussi des lames fermées par fortes rafales. Comportement à confirmer avec le fabricant ; documenté pour la version à commande radio io.", status: "to_confirm", sources: [at(SOURCES.dteSB400Pro, "p. 44, 45, 52")] },
   },
   specs: [
     { key: "width_max", label: "Largeur maximale d'un module", valueNum: 4000, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 11 ; catalogue SB400 p. 2" },
@@ -224,7 +237,7 @@ const sb400: HelioFamily = {
     { key: "colours_standard", label: "Teintes standard", valueText: "RAL 9016 mat, FSM 71319, RAL 7016 mat", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 10 ; catalogue SB400 p. 1" },
   ],
   faq: [
-    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, à la dimension de grille immédiatement supérieure à votre cote). Les options, la pose et la livraison sont chiffrées sur votre devis." },
+    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, pour les cotes de la grille ; une autre cote est chiffrée au devis). Les options, la pose et la livraison sont chiffrées sur votre devis." },
     { q: "Peut-on commander en ligne ?", a: "Oui pour la structure seule : aux dimensions couvertes par la grille, sans option ni choix à confirmer, la configuration s'ajoute au panier (TVA ajoutée au total). La livraison et la pose s'organisent ensuite avec un conseiller. Dans les autres cas, demandez un devis depuis le configurateur." },
     { q: "Quelles dimensions sont possibles ?", a: "Un module mesure de 1,4 m à 4 m de largeur et de 1,4 m à 7 m de projection, par pas de 20 cm en projection (l'entraxe des lames). La documentation indique un système modulaire : une installation de plusieurs modules est composée au devis." },
     { q: "Quelle hauteur de passage ?", a: "La documentation technique indique 2,8 m au maximum ; un autre document mentionne 3 020 mm. Au-delà de 2,8 m, la hauteur est confirmée au devis. La hauteur minimale n'est pas documentée." },
@@ -323,6 +336,7 @@ const sb500: HelioFamily = {
     closureWishes: [{ familySlug: "helio-ombra", label: "Screen HELIO Ombra", status: "to_confirm", note: "compatibilité avec HELIO Panorama non documentée par les sources — étude des ouvertures réelles au devis." }],
     structure3d: { postMm: [150, 150], beamMm: [290, 150], bladeMm: [267, 42], gutters: 2 },
     notices: ["Fixations, fondations et raccordement électrique non inclus ; la tenue de l'ouvrage dépend du support et se vérifie au relevé.", "Gouttières fournies sans évacuation : le raccordement des descentes d'eau est prévu au devis."],
+    wind: { action: "not_documented", text: "Aucun comportement en cas de vent n'est documenté pour ce modèle (automatisme météo cité sans détail) : la position des lames et les capteurs sont définis au devis.", status: "to_confirm", sources: [T("p. 7")] },
   },
   specs: [
     { key: "width_max", label: "Largeur maximale d'un module", valueNum: 5000, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 6–7" },
@@ -347,7 +361,7 @@ const sb500: HelioFamily = {
     { key: "colours_standard", label: "Teintes standard", valueText: "RAL 9016 mat, FSM 71319, RAL 7016 mat", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 6" },
   ],
   faq: [
-    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, à la dimension de grille immédiatement supérieure à votre cote). Les options, la pose et la livraison sont chiffrées sur votre devis." },
+    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, pour les cotes de la grille ; une autre cote est chiffrée au devis). Les options, la pose et la livraison sont chiffrées sur votre devis." },
     { q: "Peut-on commander en ligne ?", a: "Oui pour la structure seule : aux dimensions couvertes par la grille, sans option ni choix à confirmer, la configuration s'ajoute au panier (TVA ajoutée au total). La livraison et la pose s'organisent ensuite avec un conseiller. Dans les autres cas, demandez un devis depuis le configurateur." },
     { q: "Peut-on couvrir plus de 5 m de largeur ?", a: "Oui, HELIO Panorama accepte l'assemblage de plusieurs modules. La composition (modules, poteaux, gouttières) est établie au devis." },
     { q: "Quels moteurs sont proposés ?", a: "Une motorisation radio en commande RTS ou io, ou une motorisation 24 V en commande io uniquement. Le moteur retenu est précisé sur votre devis." },
@@ -433,9 +447,11 @@ const refleksol: HelioFamily = {
     ],
     options: [
       { code: "group_installation", label: "Installation groupée (supports modulaires)", group: "structure", status: "to_confirm", sources: [T("p. 67 — « option to create modules using modular brackets »")], note: "nombre de modules et supports établis au devis" },
-      { code: "weather_automation", label: "Automatisme HELIO Vent / HELIO Soleil (capteurs vent et soleil)", description: "Relève le screen par vent fort et le déroule selon l'ensoleillement.", supplierRef: "Automatisme (capteurs vent / soleil)", group: "control", status: "to_confirm", sources: [T("p. 160")], note: "capteurs compatibles avec le moteur choisi à confirmer" },
+      { code: "weather_automation", label: "HELIO Vent / HELIO Soleil — automatisme vent et soleil", description: "Relève le screen dans son coffre par vent fort ; pilote la toile selon l'ensoleillement.", supplierRef: "Automatisme (capteurs vent / soleil), modèle selon le moteur", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "capteur compatible avec le moteur choisi (à confirmer)", pricing: "quote", sources: [T("p. 160 — pilotage automatique selon la météo"), at(SOURCES.noticeScreens, "p. 10 — relevage complet par vent"), at(SOURCES.dteRefleksol, "p. 27 — automatisation du vent recommandée")], note: "capteurs compatibles avec le moteur choisi à confirmer" },
+      { code: "connect_box", label: "HELIO Connect — box de pilotage par smartphone", description: "Box internet qui pilote depuis une application un moteur radio io compatible. Elle ne rend pas connectés les autres moteurs.", supplierRef: "Somfy TaHoma Switch (liste d'accessoires du fabricant)", group: "control", status: "to_confirm", requiresControls: ["radio_io"], prerequisite: "nécessite la motorisation radio — commande io", pricing: "quote", sources: [at(SOURCES.aluprofRefleksol, "onglet Automatisation (liste, sans compatibilité par moteur)")], note: "compatibilité à confirmer" },
     ],
     structure3d: { cassetteMm: [126, 126] },
+    wind: { action: "raise", text: "Par vent fort, le screen doit être entièrement relevé dans son coffre ; l'automatisme de vent recommandé ne dispense pas de le relever au-delà de la vitesse admissible.", status: "established", sources: [at(SOURCES.dteRefleksol, "p. 27"), at(SOURCES.noticeScreens, "p. 10")] },
     notices: ["Commande uniquement électrique : alimentation et raccordement à prévoir.", "Résistance au vent déclarée (EN 13659) : classe 6 jusqu'à 4 × 4 m, classe 4 de 4 à 5 m de largeur (hauteur ≤ 3 m), classe 2 pour 7 × 4 m (déclarations des performances du fabricant)."],
   },
   specs: [
@@ -456,7 +472,7 @@ const refleksol: HelioFamily = {
     { key: "colours", label: "Teintes", valueText: "palette de 26 teintes standard, autre RAL en option", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 66–67, 150" },
   ],
   faq: [
-    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, à la dimension de grille immédiatement supérieure à votre cote). Les options, la pose et la livraison sont chiffrées sur votre devis." },
+    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, pour les cotes de la grille ; une autre cote est chiffrée au devis). Les options, la pose et la livraison sont chiffrées sur votre devis." },
     { q: "Peut-on commander en ligne ?", a: "Oui pour la structure seule : aux dimensions couvertes par la grille, sans option ni choix à confirmer, la configuration s'ajoute au panier (TVA ajoutée au total). La livraison et la pose s'organisent ensuite avec un conseiller. Dans les autres cas, demandez un devis depuis le configurateur." },
     { q: "Quelle largeur maximale ?", a: "Le catalogue indique 7 m, la fiche transmise 4 m. Jusqu'à 4 m, les deux sources concordent ; au-delà, la faisabilité est confirmée au devis." },
     { q: "Peut-on le manœuvrer à la main ?", a: "Non : HELIO Ombra est uniquement à commande électrique. Le choix du moteur fixe la largeur minimale du screen." },
@@ -520,11 +536,22 @@ const casablanca: HelioFamily = {
       { label: "Bras à chaînes Flyer", sources: [T("p. 115")] },
       { label: "Embouts en aluminium", sources: [T("p. 115")] },
       { label: "Support de tube d'enroulement pour les grandes largeurs", sources: [T("p. 115")] },
-      { label: "2 ou 3 supports muraux selon la largeur", sources: [at(casaSheet, "Spécifications")], status: "to_confirm" },
+      { label: "2 supports jusqu'à 4,10 m de largeur, 3 au-delà", sources: [at(casaSheet, "Spécifications"), at(SOURCES.suppStores, "p. 46")] },
     ],
-    options: [{ code: "weather_automation", label: "Automatisme météo", group: "control", status: "to_confirm", sources: [T("p. 115 — « simple handling using full weather automation »")], note: "nécessite la version électrique — à confirmer au devis" }],
+    options: [
+      { code: "remote_control", label: "HELIO Pilot — télécommande radio", description: "Émetteur de commande à distance de la version motorisée.", supplierRef: "émetteur de commande à distance (modèle à définir avec le moteur)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite la motorisation", pricing: "quote", sources: [at(SOURCES.dteCasablanca, "p. 6 — « émetteur de commande à distance »")], note: "modèle défini avec le moteur au devis" },
+      { code: "weather_automation", label: "HELIO Vent / HELIO Soleil — automatisme vent-soleil", description: "Replie le store par vent fort et le déploie selon l'ensoleillement ; seuils réglables.", supplierRef: "automatisation météorologique vent-soleil (capteurs selon le moteur)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite la motorisation", pricing: "quote", sources: [T("p. 115 — « simple handling using full weather automation »"), at(SOURCES.dteCasablanca, "p. 6, p. 19"), at(SOURCES.brochureAwnings, "p. 29")], note: "capteurs définis avec le moteur au devis" },
+      { code: "shock_sensor", label: "Capteur de vibrations", description: "Capteur de choc fixé sur la barre de charge, pour la commande automatique du store motorisé.", supplierRef: "capteurs de choc / vibration listés par le fabricant (Eolis 3D io, capteurs RED / BLUE)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite la motorisation ; capteur compatible avec le moteur", pricing: "quote", sources: [at(SOURCES.aluprofCasaAutomation, "capteurs de choc ou de vibration")], note: "compatibilité avec le moteur à confirmer" },
+      { code: "connect_box", label: "HELIO Connect — box de pilotage par smartphone", description: "Box internet qui pilote depuis une application un moteur radio compatible. Elle ne rend pas connectée une commande non compatible.", supplierRef: "Somfy TaHoma Switch (liste d'accessoires du fabricant)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite une motorisation radio io (moteur à définir)", pricing: "quote", sources: [at(SOURCES.aluprofCasaAutomation, "TaHoma Switch")], note: "compatibilité avec le moteur à confirmer" },
+    ],
+    packs: [
+      { code: "essentiel", label: "Essentiel", tier: 1, summary: "Store à coffre manœuvré à la manivelle : la solution simple.", status: "established", controlKinds: ["manual"], includes: ["Coffre avec joint de protection de la toile", "Bras à chaînes Flyer", "Manivelle 150, 180 ou 220 cm"], sources: [casaSheet, T("p. 114–115")] },
+      { code: "confort", label: "Confort", tier: 2, summary: "Même store, motorisé, avec télécommande radio ; automatisme vent-soleil en option.", status: "to_confirm", controlKinds: ["electric"], includes: ["Coffre avec joint de protection de la toile", "Bras à chaînes Flyer", "Motorisation (moteur à définir)", "HELIO Pilot — télécommande radio"], optionCodes: ["remote_control", "weather_automation", "shock_sensor", "connect_box"], sources: [at(SOURCES.dteCasablanca, "p. 6")], note: "moteur, télécommande et capteurs définis et chiffrés au devis" },
+      { code: "premium", label: "Premium", tier: 3, summary: "Autre modèle à coffre, uniquement motorisé, avec éclairage LED et capteurs météo : en préparation.", status: "to_confirm", controlKinds: ["electric"], includes: ["Éclairage LED dans le profil bas", "Capteurs météo"], familySlug: "helio-azur", sources: [T("p. 118–119"), at(SOURCES.brochureAwnings, "p. 13")], note: "modèle à valider (fiche, tarifs, photos) avant toute présentation" },
+    ],
+    wind: { action: "retract", text: "Par vent fort, le store se replie : au-delà de sa classe de vent déclarée, il doit être enroulé immédiatement ; l'automatisme de vent recommandé ne protège pas contre les rafales qui dépassent ses réglages.", status: "established", sources: [at(SOURCES.dteCasablanca, "p. 18–19"), at(SOURCES.noticeAwnings, "p. 10")] },
     structure3d: { tiltDeg: [5, 40] },
-    notices: ["Fixations adaptées au support (béton, maçonnerie, charpente) à déterminer au relevé ; pas de pose directe sur un support non porteur.", "Résistance au vent déclarée : classe 2 jusqu'à 4,10 × 3,10 m, classe 1 au-delà (déclaration des performances du fabricant) — un store banne se replie par vent fort.", "Manivelles et engrenages disponibles en RAL 9010, 1013, 8017, 9006, 7016."],
+    notices: ["Fixations adaptées au support (béton, maçonnerie, charpente) à déterminer au relevé ; pas de pose directe sur un support non porteur.", "Résistance au vent déclarée : classe 2 jusqu'à 4,10 × 3,10 m, classe 1 au-delà (déclaration des performances du fabricant) — un store banne se replie par vent fort.", "Manivelles et engrenages disponibles en RAL 9010, 1013, 8017, 9006, 7016.", "Éclairage LED : non proposé sur ce modèle."],
   },
   specs: [
     { key: "width_range", label: "Largeur", valueText: "200 à 600 cm", source: "CLIENT_SHEET", sourceRef: "Fiche CASABLANCA — Spécifications" },
@@ -547,7 +574,7 @@ const casablanca: HelioFamily = {
     { key: "colours_standard", label: "Teintes standard", valueText: "RAL 9010, RAL 1015, RAL 8014, RAL 9006, FSM 71319", source: "CLIENT_SHEET", sourceRef: "Fiche CASABLANCA — Couleurs disponibles" },
   ],
   faq: [
-    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, à la dimension de grille immédiatement supérieure à votre cote). Les options, la pose et la livraison sont chiffrées sur votre devis." },
+    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, pour les cotes de la grille ; une autre cote est chiffrée au devis). Les options, la pose et la livraison sont chiffrées sur votre devis." },
     { q: "Peut-on commander en ligne ?", a: "Oui pour la structure seule : aux dimensions couvertes par la grille, sans option ni choix à confirmer, la configuration s'ajoute au panier (TVA ajoutée au total). La livraison et la pose s'organisent ensuite avec un conseiller. Dans les autres cas, demandez un devis depuis le configurateur." },
     { q: "Quelles avancées sont proposées ?", a: "1,6 m, 2,1 m, 2,6 m, 3,1 m et 3,6 m. Les grandes avancées demandent une largeur minimale : 2,91 m pour 2,6 m d'avancée, 3,51 m pour 3,1 m et 3,6 m." },
     { q: "Existe-t-il une version motorisée ?", a: "Le catalogue cite une commande électrique ; la fiche transmise décrit la version à manivelle. La motorisation est donc étudiée au devis." },
@@ -555,8 +582,70 @@ const casablanca: HelioFamily = {
   ],
   openQuestions: [
     { field: "Motorisation", question: "Moteur, commande et conditions de la version électrique citée par le catalogue.", sources: ["catalogue-thysens p. 114"], blocks: "version électrique (devis)" },
-    { field: "Supports", question: "Largeur à partir de laquelle 3 supports muraux sont nécessaires.", sources: ["fiche-casablanca"], blocks: "aucun (devis)" },
+    { field: "Largeur minimale", question: "Largeurs minimales selon l'avancée : la fiche (2,91 m pour 2,6 m ; 3,51 m pour 3,1 et 3,6 m) diffère de la documentation technique (portée + 0,4 m : 2,5 / 3 / 4 m).", sources: ["fiche-casablanca", "dte-casablanca p. 6", "supp-stores p. 46"], blocks: "aucun (la fiche s'applique, à confirmer)" },
+    { field: "Niveau Confort", question: "Moteur (fins de course électroniques recommandées, certains moteurs déconseillés), télécommande et capteurs de la version motorisée.", sources: ["dte-casablanca p. 6", "DT-E CASABLANCA EN 2016 p. 17–18"], blocks: "niveau Confort (devis)" },
     { field: "Tarifs", question: "Nature, devise (DH), HT ou TTC, validité ; transport et pose.", sources: ["fiche-casablanca", "classeur tarifaire (privé)"], blocks: "affichage d'un prix" },
+  ],
+};
+
+/* ------------------------------------------------------------------ */
+/* HELIO Azur — réf. CORSICA — brouillon (niveau Premium des stores bannes) */
+/* ------------------------------------------------------------------ */
+
+const corsica: HelioFamily = {
+  slug: "helio-azur",
+  name: "HELIO Azur",
+  category: "STORES_BANNES",
+  kind: "AWNING_SYSTEM",
+  status: "DRAFT",
+  sortOrder: 45,
+  brand: "SELT by Aluprof",
+  manufacturer: "ALUPROF SA (usine d'Opole, ex-SELT)",
+  supplierRef: "CORSICA",
+  shortDescription: "Store de terrasse à coffre, uniquement motorisé, avec éclairage LED : niveau Premium en préparation.",
+  description: "HELIO Azur est un store de terrasse à coffre et barre carrée, uniquement motorisé. Le profil bas peut recevoir un éclairage LED et des bras éclairés existent pour les avancées de 3,1 et 3,6 m. Il se pose au mur, au plafond ou sur chevrons, avec une inclinaison de 5° à 35°. Modèle en brouillon : fiche, tarif et photographies à obtenir.",
+  seoTitle: "Store banne HELIO Azur — motorisé, éclairage LED",
+  seoDescription: "Store banne à coffre motorisé HELIO Azur, éclairage LED et capteurs météo : sur devis.",
+  rules: {
+    type: "awning",
+    dims: {
+      width: { label: "Largeur", minMm: 2050, maxMm: 7000, sources: [T("p. 118 — largeur maximale 7 m"), at(SOURCES.brochureAwnings, "p. 13 — 2,05 à 7 m")] },
+      depth: { label: "Avancée", minMm: 1600, maxMm: 3600, sources: [T("p. 118 — avancée 1,6 à 3,6 m"), at(SOURCES.brochureAwnings, "p. 13")], note: "Pas d'avancée et largeurs minimales par avancée non documentés : établis au devis." },
+    },
+    mountings: [
+      { code: "wall", label: "Murale", status: "established", sources: [T("p. 118")] },
+      { code: "ceiling", label: "Au plafond", status: "established", sources: [T("p. 118")] },
+      { code: "rafter", label: "Sur chevrons", status: "established", sources: [T("p. 118")] },
+    ],
+    finishes: ["RAL 9010", "RAL 1015", "RAL 8014", "RAL 9006", "FSM 71319"].map((c) => finish(c, [T("p. 118 — couleurs standard")])),
+    fabrics: [{ code: "acrylic_collection", label: "Toile acrylique — coloris à choisir parmi la collection", status: "established", sources: [T("p. 155"), at(SOURCES.brochureAwnings, "p. 26")], note: "coloris choisi au devis sur nuancier" }],
+    controls: [
+      { code: "electric", label: "Motorisation électrique (moteur à définir)", kind: "electric", status: "to_confirm", sources: [T("p. 118 — uniquement motorisé"), at(SOURCES.brochureAwnings, "p. 13")], note: "moteur, télécommande et conditions établis au devis" },
+    ],
+    included: [
+      { label: "Coffre et barre de charge carrée", sources: [T("p. 118–119"), at(SOURCES.brochureAwnings, "p. 13")] },
+    ],
+    options: [
+      { code: "led_bottom_profile", label: "HELIO Lumière — éclairage LED dans le profil bas", description: "Bandeau LED intégré au profil inférieur du store.", supplierRef: "LED dans le profil bas (équipement selon le catalogue, option selon le supplément technique)", group: "lighting", status: "to_confirm", requiresControlKind: "electric", prerequisite: "commande d'éclairage compatible à définir", pricing: "quote", sources: [T("p. 119"), at(SOURCES.brochureAwnings, "p. 13"), at(SOURCES.suppStores, "p. 51")], note: "équipement de série ou option : à confirmer" },
+      { code: "led_arms", label: "HELIO Lumière — bras éclairés", description: "Bras articulés équipés de LED, pour les avancées de 3,1 m et 3,6 m.", supplierRef: "bras LED 3100 et 3600 mm", group: "lighting", status: "to_confirm", prerequisite: "avancée de 3,1 m ou 3,6 m", pricing: "quote", sources: [at(SOURCES.brochureAwnings, "p. 13"), at(SOURCES.suppStores, "p. 83")], note: "commande de l'éclairage à définir" },
+      { code: "weather_automation", label: "HELIO Vent / HELIO Soleil — capteurs météo", description: "Replie le store par vent fort et le déploie selon l'ensoleillement ; seuils réglables.", supplierRef: "capteurs météo (selon le moteur)", group: "control", status: "to_confirm", requiresControlKind: "electric", pricing: "quote", sources: [at(SOURCES.brochureAwnings, "p. 13, p. 29")], note: "capteurs définis avec le moteur" },
+    ],
+    wind: { action: "retract", text: "Par vent fort, les capteurs replient le store ; seuils réglables.", status: "to_confirm", sources: [at(SOURCES.brochureAwnings, "p. 29 (stores bannes en général)")] },
+    structure3d: { tiltDeg: [5, 35] },
+    notices: ["Modèle en préparation : aucune page publique, aucun prix. Sans support télescopique ni lambrequin (supplément technique)."],
+  },
+  specs: [
+    { key: "width_max", label: "Largeur maximale", valueNum: 7000, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 118" },
+    { key: "projection_max", label: "Avancée maximale", valueNum: 3600, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 118" },
+    { key: "tilt", label: "Inclinaison", valueText: "5° à 35°", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 118" },
+    { key: "drive", label: "Commande", valueText: "uniquement motorisée", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 118 ; brochure ALUPROF Stores bannes p. 13" },
+    { key: "cassette", label: "Coffre", valueText: "coffre (« semi-cassette » selon la brochure)", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 118 ; brochure ALUPROF p. 13" },
+  ],
+  faq: [],
+  openQuestions: [
+    { field: "Validation", question: "Disponibilité chez le fournisseur, fiche technique, classe de vent, coffre (intégral ou semi-coffre).", sources: ["catalogue-thysens p. 118–119", "brochure-stores-bannes p. 13"], blocks: "publication" },
+    { field: "Tarifs", question: "Grille de la structure et prix de l'éclairage LED.", sources: [], blocks: "affichage d'un prix" },
+    { field: "Éclairage", question: "LED du profil bas de série ou en option ; commande de l'éclairage (récepteur, télécommande).", sources: ["catalogue-thysens p. 119", "supp-stores p. 51"], blocks: "option LED" },
   ],
 };
 
@@ -612,7 +701,7 @@ const veranda: HelioFamily = {
   ],
 };
 
-export const HELIOSTORES_FAMILIES: HelioFamily[] = [sb400, sb500, refleksol, casablanca, veranda];
+export const HELIOSTORES_FAMILIES: HelioFamily[] = [sb400, sb500, refleksol, casablanca, corsica, veranda];
 export const HELIOSTORES_SLUGS = HELIOSTORES_FAMILIES.map((f) => f.slug);
 
 /** Instantané de catalogue construit sans base (tests, aperçus) — mêmes règles que celles semées en base. */

@@ -18,6 +18,7 @@ et garde-fou `PUBLIC_FORBIDDEN_NAMES`).
 | REFLEKSOL 120 ZiiiP | HELIO Ombra | Screens | `/screens/helio-ombra` | `/screens/screen-refleksol-120-ziiip` |
 | CASABLANCA | HELIO Riviera | Stores bannes | `/stores-bannes/helio-riviera` | `/stores-bannes/store-banne-casablanca` |
 | VERANDA FTS | HELIO Verrière (appellation réservée) | aucune | aucune page (brouillon) | aucune (404, comme avant) |
+| CORSICA | HELIO Azur (proposition, 2026-10-23) | Stores bannes | aucune page (brouillon) | — |
 
 Les configurateurs suivent le même schéma : `/configurateur/<ancien>` est redirigé vers `/configurateur/<nouveau>`.
 La requête est conservée (`?projet=…`, `?ligne=…`). `/devis?produit=<ancien>` est redirigé vers
@@ -80,12 +81,28 @@ enregistrées et les paniers ont été migrés : le choix du client est conserv�
 | HELIO Lumière | HELIO Horizon, HELIO Panorama (option) | bandeau LED périphérique (COB 3200 K) ; spots LED dans les lames | Éclairage LED périphérique ; spots LED |
 | HELIO Vent / HELIO Soleil | HELIO Ombra (option, à confirmer) | automatisme qui relève le screen par vent fort et le déroule selon l'ensoleillement | Automatisme (capteurs vent / soleil) |
 
-Non appliqués, faute d'équipement documenté :
-- **HELIO Connect** : aucune box de connexion dans les sources.
-- **HELIO Confort** : aucun chauffage.
+Complété le 2026-10-23 (retour client du 2026-10-21), toutes options **sur devis** :
 
-L'« automatisme météo » des pergolas et du store banne ne précise pas ses capteurs : il garde son libellé générique.
-Aucun accessoire, pack, compatibilité ni équipement inclus n'a été créé.
+| Nom | Appliqué à | Prérequis | Désignation fournisseur (interne) | Statut |
+|---|---|---|---|---|
+| HELIO Connect — box de pilotage par smartphone | HELIO Horizon, HELIO Ombra, HELIO Riviera | commande radio io compatible (documentée pour la version io de la pergola ; listée seulement pour le screen et le store) | TaHoma Switch | à confirmer |
+| HELIO Vent / HELIO Soleil | HELIO Horizon (capteurs vent et soleil), HELIO Ombra, HELIO Riviera (vent-soleil), HELIO Azur | motorisation ; capteur compatible avec le moteur | Eolis io, Soliris io, Sunis io (pergola io) ; automatisme vent-soleil (store) | à confirmer |
+| Capteur de pluie | HELIO Horizon | commande radio io | Ondeis 24V | à confirmer |
+| Capteur de vibrations | HELIO Riviera | motorisation | capteurs de choc listés par le fabricant | à confirmer |
+| HELIO Pilot — télécommande radio | HELIO Riviera (niveau Confort) | motorisation | émetteur de commande à distance | à confirmer |
+| HELIO Lumière | HELIO Azur (profil bas, bras éclairés) | commande d'éclairage à définir | LED profil bas ; bras LED 3100 / 3600 mm | à confirmer |
+
+Non appliqués : **HELIO Confort** (aucun appareil de chauffage documenté ; seul un récepteur pour radiateurs existe
+pour la version io de la pergola, et la notice interdit les sources de chaleur par convection sous le toit) ; éclairage
+LED sur HELIO Riviera (non proposé par le fabricant).
+
+**Comportement au vent, propre à chaque système** (`rules.wind`) : store banne replié (HELIO Riviera) ; screen relevé
+dans son coffre (HELIO Ombra) ; lames ouvertes ou fermées selon les côtés, à confirmer (HELIO Horizon) ; non documenté
+(HELIO Panorama).
+
+**Stores bannes : niveaux** — HELIO Riviera Essentiel (manivelle) et Confort (motorisé, télécommande ; automatisme en
+option) sont deux équipements du **même** store ; Premium = **HELIO Azur** (réf. CORSICA), autre modèle, en brouillon.
+Comparatif : `retour-client-2026-10-21.md`.
 
 ## Migration des données (`prisma/migrations/20261022090000_heliostores_nomenclature`)
 

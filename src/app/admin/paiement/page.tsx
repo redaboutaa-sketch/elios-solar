@@ -8,6 +8,7 @@ import { centsToEuros } from "@/server/admin/form";
 import { getInstallmentSettings, installmentsRuntimeStatus } from "@/server/payment/installments";
 import { PROVIDER_BOUNDS, installmentEligibility, type InstallmentProviderKey } from "@/server/payment/installments-rules";
 import { updateInstallmentSettingsAction } from "@/server/actions/admin/installments";
+import { METHOD_STATE_FR, paymentMethods } from "@/server/payment/methods";
 
 export const metadata: Metadata = { title: "Paiement fractionné" };
 
@@ -20,10 +21,19 @@ export default async function InstallmentsAdminPage(props: PageProps<"/admin/pai
   const lastAudit = await prisma.auditLog.findFirst({ where: { entity: "InstallmentSettings", action: "installments.settings" }, orderBy: { createdAt: "desc" } });
   const meta = (lastAudit?.after ?? {}) as { merchantNote?: string | null; merchantDate?: string | null };
   const recent = await prisma.payment.findMany({ where: { method: "installments" }, orderBy: { createdAt: "desc" }, take: 10, include: { order: { select: { id: true, number: true } } } });
+  const methods = await paymentMethods();
   const samples = [150_000, 290_000, 450_000, 620_000].map((t) => ({ t, r: installmentEligibility({ totalCents: t, countryCode: "FR", settings: s, env: st.env }) }));
   return (
     <div className="space-y-6">
-      <PageTitle title="Paiement fractionné" />
+      <PageTitle title="Paiements" />
+      <Section title="Moyens de paiement — état réel">
+        <p className="mb-2 text-sm text-stone-700">Présentation publique : <Link className="underline" href="/modes-de-paiement">/modes-de-paiement</Link>. Les paiements réels restent désactivés en préproduction.</p>
+        <Table caption="Moyens de paiement">
+          <thead><tr><th>Moyen</th><th>État</th><th>Note interne</th></tr></thead>
+          <tbody data-testid="payment-methods-admin">{methods.map((m) => <tr key={m.code}><td>{m.label}</td><td><StatusBadge tone={m.state === "active" ? "ok" : m.state === "simulated" ? "neutral" : "warn"}>{METHOD_STATE_FR[m.state]}</StatusBadge></td><td className="text-xs">{m.adminNote}</td></tr>)}</tbody>
+        </Table>
+      </Section>
+      <h2 className="font-display text-2xl">Paiement fractionné</h2>
       <Flash searchParams={props.searchParams} />
 
       <Section title="État">

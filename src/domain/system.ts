@@ -80,6 +80,45 @@ export interface OptionDef extends Choice {
   spotTable?: SpotRow[];
   /** valeurs proposées (ex. longueurs de poteau documentées) */
   values?: Array<{ code: string; label: string }>;
+  /** prérequis de commande : une motorisation (type) ou des commandes précises (codes) */
+  requiresControlKind?: "electric";
+  requiresControls?: string[];
+  /** prérequis rédigé, affiché au client (sans marque ni référence fournisseur) */
+  prerequisite?: string;
+  /** options requises / incompatibles (cumul interdit documenté) */
+  requiresOptions?: string[];
+  excludes?: string[];
+  /** quantité usuelle documentée (ex. « 1 par store ») */
+  qtyNote?: string;
+  /** tarif : « quote » (devis) tant qu'aucun prix d'option n'est validé */
+  pricing?: "quote" | "validated";
+}
+
+/** Niveau commercial d'un même modèle (pack d'équipements), ou renvoi vers un autre modèle physique. */
+export interface PackDef {
+  code: string;
+  label: string;
+  tier: 1 | 2 | 3;
+  summary: string;
+  status: "established" | "to_confirm";
+  /** types de commande compatibles avec le niveau */
+  controlKinds: Array<"manual" | "electric">;
+  /** équipements compris, tels que documentés */
+  includes: string[];
+  /** options proposées à ce niveau (codes) */
+  optionCodes?: string[];
+  /** autre modèle physique (ex. Premium) : le niveau n'est pas un pack de ce modèle */
+  familySlug?: string;
+  sources: SourceRef[];
+  note?: string;
+}
+
+/** Comportement de protection au vent documenté pour un système (jamais supposé identique d'un produit à l'autre). */
+export interface WindBehaviour {
+  action: "retract" | "raise" | "blades" | "not_documented";
+  text: string;
+  status: "established" | "to_confirm";
+  sources: SourceRef[];
 }
 
 export interface SystemRules {
@@ -111,6 +150,9 @@ export interface SystemRules {
   };
   /** messages d'information toujours affichés (pose, alimentation, fixations…) */
   notices?: string[];
+  /** niveaux commerciaux (packs d'un même modèle) */
+  packs?: PackDef[];
+  wind?: WindBehaviour;
 }
 
 export interface SystemOptionChoice {
@@ -133,6 +175,8 @@ export interface SystemInput {
   fabricCode?: string;
   controlCode?: string;
   options: SystemOptionChoice[];
+  /** niveau commercial choisi (pack), s'il en existe */
+  packCode?: string;
   /** pergola : fermeture latérale souhaitée par côté (slug de la famille), étudiée au devis */
   sides?: Partial<Record<SideKey, string | null>>;
   /** pergola : installation en plusieurs modules souhaitée */
@@ -190,6 +234,7 @@ export function defaultSystemInput(familySlug: string, rules: SystemRules): Syst
     finishCode: rules.finishes[0]!.code,
     fabricCode: rules.fabrics?.[0]?.code,
     controlCode: rules.controls?.[0]?.code,
+    packCode: rules.packs?.find((p) => !p.familySlug && p.controlKinds.includes(rules.controls?.[0]?.kind ?? "manual"))?.code,
     options: [],
     sides: {},
     installation: "self",
@@ -295,7 +340,24 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
       if (spots == null) add({ code: "spots_out_of_table", severity: "review", message: `${def.label} : dimensions hors du tableau de la fiche — nombre de points confirmé au devis.`, path, quoteSuggested: true });
     }
     if (def.status === "to_confirm") add({ code: "option_to_confirm", severity: "review", message: `${def.label} : ${def.note ?? "à confirmer au devis"}.`, path, quoteSuggested: true });
+    if ((def.requiresControlKind && control?.kind !== def.requiresControlKind) || (def.requiresControls?.length && (!control || !def.requiresControls.includes(control.code)))) {
+      add({ code: "option_requires_control", severity: "blocking", message: `${def.label} : ${def.prerequisite ?? "nécessite une commande motorisée compatible"}.`, path });
+    }
   });
+  for (const def of rules.options) {
+    if (!chosen.has(def.code)) continue;
+    for (const r of def.requiresOptions ?? []) if (!chosen.has(r)) add({ code: "option_requires_option", severity: "blocking", message: `${def.label} : nécessite ${rules.options.find((x) => x.code === r)?.label ?? r}.`, path: "options" });
+    for (const x of def.excludes ?? []) if (chosen.has(x) && def.code < x) add({ code: "option_excluded", severity: "blocking", message: `${def.label} et ${rules.options.find((o) => o.code === x)?.label ?? x} ne se cumulent pas.`, path: "options" });
+  }
+  let pack: PackDef | undefined;
+  if (input.packCode && rules.packs?.length) {
+    pack = rules.packs.find((p) => p.code === input.packCode && !p.familySlug);
+    if (!pack) add({ code: "pack_unavailable", severity: "blocking", message: "Niveau non proposé pour ce modèle.", path: "packCode" });
+    else {
+      if (control && !pack.controlKinds.includes(control.kind)) add({ code: "pack_control", severity: "blocking", message: `Niveau ${pack.label} : commande ${pack.controlKinds.includes("electric") ? "motorisée" : "manuelle"} attendue.`, path: "controlCode" });
+      if (pack.status === "to_confirm") add({ code: "pack_to_confirm", severity: "review", message: `Niveau ${pack.label} : ${pack.note ?? "composition à confirmer au devis"}.`, path: "packCode", quoteSuggested: true });
+    }
+  }
   for (const def of rules.options) {
     if (!chosen.has(def.code) || !def.cumulToConfirmWith) continue;
     for (const other of def.cumulToConfirmWith) {
@@ -333,6 +395,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
   if (mounting) recap.push({ label: "Pose", value: MOUNTING_FR[mounting.code], status: mounting.status === "to_confirm" ? "to_confirm" : undefined });
   if (finish) recap.push({ label: "Teinte de structure", value: finish.label, status: finish.status === "to_confirm" || finish === rules.customFinish ? "to_confirm" : undefined });
   if (fabric) recap.push({ label: "Toile", value: fabric.label, status: fabric.status === "to_confirm" ? "to_confirm" : undefined });
+  if (pack) recap.push({ label: "Niveau", value: pack.label, status: pack.status === "to_confirm" ? "to_confirm" : undefined });
   if (control) recap.push({ label: "Commande", value: control.label, status: control.status === "to_confirm" ? "to_confirm" : undefined });
   for (const inc of rules.included) recap.push({ label: "Inclus", value: inc.label, status: inc.status === "to_confirm" ? "to_confirm" : "included" });
   for (const o of input.options) {

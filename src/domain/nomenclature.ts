@@ -15,6 +15,8 @@ export const PRODUCT_NAMES = {
   "helio-riviera": "HELIO Riviera",
   /** appellation réservée : produit en brouillon, hors catalogue public */
   "helio-verriere": "HELIO Verrière",
+  /** proposition (2026-10-23) : niveau Premium des stores bannes, en brouillon */
+  "helio-azur": "HELIO Azur",
 } as const;
 
 export type ProductSlug = keyof typeof PRODUCT_NAMES;

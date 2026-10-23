@@ -53,42 +53,47 @@ export default async function HomePage() {
 
   return (
     <>
-      <HeroSlider slides={slides}>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/90">HELIOSTORES · Protection solaire sur mesure</p>
-        <h1 className="mt-4 max-w-3xl font-display text-hero font-semibold text-balance">Donnez une nouvelle dimension à vos extérieurs.</h1>
-        <p className="mt-4 max-w-xl text-lg text-sand-100">Pergolas, screens et stores bannes pour composer votre projet, configurés à vos cotes.</p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <a href="#solutions" className="btn bg-white px-6 text-base text-ink hover:bg-sand-100">Découvrir nos solutions</a>
-          <Link href="/configurateur" className="btn bg-sage-400 px-6 text-base text-night hover:bg-sage-300">Configurer mon projet <ArrowRight className="size-4" aria-hidden="true" /></Link>
+      {/* Entrée principale (retour client du 2026-10-21) : choisir une famille par son dessin, dès le premier écran.
+          Les photographies suivent juste en dessous et restent dans les fiches produit. */}
+      <section id="solutions" className="home-entry scroll-mt-16 pb-6 pt-5 sm:pt-7" aria-labelledby="solutions-titre">
+        <div className="container-x flex flex-wrap items-end justify-between gap-x-8 gap-y-1">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">HELIOSTORES · Protection solaire sur mesure</p>
+            <h1 id="solutions-titre" className="mt-1.5 font-display text-[clamp(1.5rem,1.05rem+1.9vw,2.6rem)] font-semibold leading-tight text-balance">Donnez une nouvelle dimension à vos extérieurs.</h1>
+          </div>
+          <p className="max-w-md text-sm text-stone-700 sm:text-base">Choisissez votre famille : chaque modèle se configure à vos cotes.</p>
         </div>
-      </HeroSlider>
-
-      {/* Nos solutions : panneaux extensibles, le dessin de la famille en grand sur fond clair */}
-      <section id="solutions" className="scroll-mt-16 pt-16 pb-4 sm:pt-20" aria-labelledby="solutions-titre">
-        <div className="container-x flex flex-wrap items-end justify-between gap-4">
-          <h2 id="solutions-titre" className="font-display text-display"><span className="font-normal">HELIOSTORES</span> <span className="font-semibold">Nos solutions</span></h2>
-          <p className="max-w-md text-stone-700">Choisissez votre famille : chaque modèle se configure à vos cotes.</p>
-        </div>
-        <ul className="solution-panels mx-auto mt-8 flex max-w-[110rem] flex-col gap-2 px-4 lg:h-[36rem] lg:flex-row lg:gap-1" data-testid="family-picker">
+        <ul className="solution-panels mx-auto mt-4 flex max-w-[110rem] flex-col gap-2 px-4 sm:mt-6 lg:flex-row lg:gap-1" data-testid="family-picker">
           {panels.map(({ c, items }) => {
             const prices = items.map((f) => f.fromPrice).filter((p): p is NonNullable<typeof p> => !!p);
             const min = prices.length ? prices.reduce((a, b) => (b.amountMinor < a.amountMinor ? b : a)) : null;
             return (
-              <li key={c.key} className="solution-panel card-link sketch-trigger group relative flex min-w-0 flex-col overflow-hidden border border-sand-200 bg-sand-50 text-ink" data-testid={`home-${c.key}`}>
-                <div className="panel-sketch-zone flex aspect-[4/3] min-h-0 items-center justify-center p-6 sm:aspect-[16/9] lg:aspect-auto lg:flex-1 lg:p-8">
+              <li key={c.key} className="solution-panel card-link sketch-trigger group relative flex min-w-0 flex-row overflow-hidden border border-sand-200 bg-sand-50 text-ink lg:flex-col" data-testid={`home-${c.key}`}>
+                <div className="panel-sketch-zone flex w-[46%] shrink-0 items-center justify-center p-2 sm:w-[42%] sm:p-4 lg:w-auto lg:min-h-0 lg:flex-1 lg:p-8">
                   <FamilySketch kind={c.key} showWall={false} className="panel-sketch size-full max-w-[38rem]" />
                 </div>
-                <div className="flex flex-col p-6 pt-0 lg:p-8 lg:pt-0">
-                  <h3 className="font-display text-2xl font-semibold lg:text-3xl"><Link href={c.href} className="stretched">{c.label}</Link></h3>
-                  <p className="mt-1 text-sm text-stone-800">{items.map((f) => f.name).join(" · ") || "Modèles en cours d'intégration"}</p>
-                  {min && <p className="mt-1 text-sm text-stone-800">À partir de <span className="font-semibold tabular-nums text-brand-700">{formatSystemPrice(min.amountMinor, min.currency, min.taxBasis)}</span></p>}
-                  <span className="panel-cta mt-5 inline-flex w-fit items-center gap-2 border border-brand-700 px-4 py-2 text-sm font-semibold uppercase tracking-[0.12em] text-brand-700 group-hover:bg-brand-700 group-hover:text-white group-focus-within:bg-brand-700 group-focus-within:text-white" aria-hidden="true">Découvrir la gamme <ArrowRight className="size-4" /></span>
+                <div className="flex min-w-0 flex-col justify-center p-4 pl-1 sm:p-6 lg:justify-start lg:p-8 lg:pt-0">
+                  <h2 className="font-display text-xl font-semibold sm:text-2xl lg:text-3xl"><Link href={c.href} className="stretched">{c.label}</Link></h2>
+                  <p className="mt-1 text-xs text-stone-800 sm:text-sm">{items.map((f) => f.name).join(" · ") || "Modèles en cours d'intégration"}</p>
+                  {min && <p className="mt-1 text-xs text-stone-800 sm:text-sm">À partir de <span className="font-semibold tabular-nums text-brand-700">{formatSystemPrice(min.amountMinor, min.currency, min.taxBasis)}</span></p>}
+                  <span className="mt-2 text-xs font-semibold text-brand-700 sm:hidden" aria-hidden="true">Voir les modèles →</span>
+                  <span className="panel-cta mt-3 hidden w-fit items-center gap-2 border border-brand-700 px-3 py-1.5 text-xs sm:inline-flex font-semibold uppercase tracking-[0.12em] text-brand-700 group-hover:bg-brand-700 group-hover:text-white group-focus-within:bg-brand-700 group-focus-within:text-white sm:px-4 sm:py-2 sm:text-sm lg:mt-5" aria-hidden="true">Découvrir la gamme <ArrowRight className="size-4" /></span>
                 </div>
               </li>
             );
           })}
         </ul>
       </section>
+
+      {/* Photographies en situation (visuels de la documentation produit, jamais présentés comme des réalisations) */}
+      <HeroSlider slides={slides}>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/90">En situation</p>
+        <h2 className="mt-4 max-w-3xl font-display text-display font-semibold text-balance">Pergolas, screens et stores bannes configurés à vos cotes.</h2>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link href="/configurateur" className="btn bg-sage-400 px-6 text-base text-night hover:bg-sage-300">Configurer mon projet <ArrowRight className="size-4" aria-hidden="true" /></Link>
+          <Link href="/devis" className="btn bg-white px-6 text-base text-ink hover:bg-sand-100">Demander un devis</Link>
+        </div>
+      </HeroSlider>
 
       {/* A. Nos modèles, par famille */}
       <section className="section-y" aria-labelledby="modeles">

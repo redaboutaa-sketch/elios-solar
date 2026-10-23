@@ -1,14 +1,18 @@
 "use client";
 /**
- * Enveloppe de l'en-tête : superposé au grand visuel de l'accueil (transparent, texte blanc), puis fond plein et
- * hauteur réduite dès que la page défile. Ailleurs, l'en-tête est collant sur fond plein et se compacte au défilement.
+ * Enveloppe de l'en-tête : collant sur fond plein, compacté au défilement. Le mode superposé (transparent, texte
+ * blanc) reste disponible pour une page qui commence par un grand visuel sombre ; l'accueil commence désormais par la
+ * navigation par dessins, sur fond clair (retour client du 2026-10-21).
  * Seuls deux attributs `data-*` changent (pas de calcul de mise en page en JavaScript).
  */
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
+/** Pages dont le premier bloc est un grand visuel sombre (en-tête superposé). */
+const OVERLAY_PATHS: ReadonlySet<string> = new Set<string>();
+
 export function HeaderShell({ children }: { children: React.ReactNode }) {
-  const overlay = usePathname() === "/";
+  const overlay = OVERLAY_PATHS.has(usePathname());
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     let raf = 0;

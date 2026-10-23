@@ -263,6 +263,12 @@ model ProductFamily {
   media              ProductMedia[]
   documents          Document[]
   technicalSpecs     TechnicalSpec[]
+  /// anciens slugs publics (redirections permanentes, liens enregistrés)
+  legacySlugs        String[]          @default([])
+  /// historique des noms commerciaux : [{ name, until, by, note }]
+  nameHistory        Json              @default("[]")
+  /// dernière modification des textes commerciaux dans l'administration (le seed ne les écrase plus)
+  commercialEditedAt DateTime?
 }
 
 model FamilyFinish {
@@ -1185,8 +1191,16 @@ model ContentPage {
 
 model Realisation {
   id          String   @id @default(cuid())
+  /// REALISATION = projet réellement réalisé par HELIOSTORES ; PRODUCTION = fabrication, matériaux, assemblage, contrôle
+  kind        String   @default("REALISATION")
   title       String
   description String   @default("")
+  /// légende publique de la photo
+  caption     String   @default("")
+  /// production chez un partenaire : description publique du site (« usine d'un partenaire fabricant »)
+  partnerNote String   @default("")
+  /// emplacement préparé, en attente d'une photo et d'informations réelles
+  placeholder Boolean  @default(false)
   location    String?
   familySlug  String?
   mediaId     String?
@@ -1195,6 +1209,17 @@ model Realisation {
   isDemo      Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
+}
+
+/// Guide d'accompagnement HELIOSTORES (synthèse des notices) : contenu dans le code, statut de validation en base.
+/// Brouillon tant qu'aucune validation technique n'est enregistrée ; seul un guide publié est visible.
+model InstallGuideStatus {
+  slug        String    @id
+  status      String    @default("DRAFT")
+  validatedBy String?
+  validatedAt DateTime?
+  note        String    @default("")
+  updatedAt   DateTime  @updatedAt
 }
 
 model Showroom {

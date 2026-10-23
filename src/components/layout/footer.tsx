@@ -10,7 +10,7 @@ interface FooterCategory { key: string; label: string; href: string; items: Read
 export function Footer({ settings, categories = [] }: { settings?: FooterSettings | null; categories?: ReadonlyArray<FooterCategory> }) {
   const cols = [
     { title: "Nos produits", links: categories.map((c) => [c.href, c.label] as const) },
-    { title: "Accompagnement", links: [["/devis", "Demander un devis"], ["/contact", "Conseil & contact"], ["/rappel", "Être rappelé"], ["/livraison-installation", "Livraison & installation"], ["/aide", "Centre d'aide"]] as const },
+    { title: "Accompagnement", links: [["/devis", "Demander un devis"], ["/contact", "Conseil & contact"], ["/rappel", "Être rappelé"], ["/livraison-installation", "Livraison & installation"], ["/modes-de-paiement", "Modes de paiement"], ["/guides", "Guides et installation"], ["/aide", "Centre d'aide"]] as const },
     { title: "Informations", links: [["/mentions-legales", "Mentions légales"], ["/cgv", "Conditions générales de vente"], ["/confidentialite", "Confidentialité"], ["/cookies", "Cookies"]] as const },
   ];
   const address = [settings?.addressLine1, [settings?.postalCode, settings?.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");

@@ -161,6 +161,10 @@ body:has(nav[aria-label="Navigation mobile"]) [data-chat-launcher] { display: no
 /* « Nos solutions » : panneaux extensibles (desktop, pointeur fin). Le panneau survolé ou focalisé prend ~50 % de la
    largeur ; transition de flex-grow en CSS uniquement. Sur écran tactile et mobile : panneaux empilés, CTA visible. */
 /* Le dessin garde ses proportions (viewBox, « meet ») : il se réduit avec le panneau, sans recadrage. */
+/* Hauteur : les trois cartes tiennent dans le premier écran (en-tête et titre déduits), sur mobile comme sur ordinateur. */
+.home-entry .solution-panel { flex: 0 0 auto; height: clamp(8.5rem, calc((100svh - 19.5rem) / 3), 13rem); }
+@media (min-width: 640px) { .home-entry .solution-panel { height: clamp(10rem, calc((100svh - 18rem) / 3), 13rem); } }
+@media (min-width: 1024px) { .home-entry .solution-panels { height: clamp(24rem, calc(100svh - 15rem), 38rem); } .home-entry .solution-panel { flex: 1 1 0%; height: auto; } }
 .solution-panel { flex: 1 1 0%; transition: background-color 400ms var(--ease-out); }
 .solution-panel .panel-sketch { transition: transform 500ms var(--ease-out); transform-origin: center; }
 .solution-panel .panel-cta { transition: opacity 300ms var(--ease-out), transform 300ms var(--ease-out), background-color 150ms, color 150ms; }

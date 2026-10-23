@@ -10,6 +10,10 @@
  */
 import type { PrismaClient } from "@/generated/prisma/client";
 import { HELIOSTORES_FAMILIES, HELIOSTORES_SLUGS } from "./heliostores-data";
+import { LEGACY_FAMILY_SLUGS } from "./legacy-slugs";
+
+/** Textes commerciaux : modifiables dans l'administration, jamais écrasés ensuite par le seed. */
+const COMMERCIAL_KEYS = ["name", "shortDescription", "description", "seoTitle", "seoDescription", "faq"] as const;
 
 export const HELIOSTORES_SEED_TAG = "seed:heliostores";
 
@@ -37,13 +41,18 @@ export async function seedHeliostores(prisma: PrismaClient): Promise<{ families:
       legacy: false,
       sortOrder: f.sortOrder,
     };
-    const row = await prisma.productFamily.upsert({ where: { slug: f.slug }, update: content, create: { slug: f.slug, status: f.status, ...content } });
+    const legacySlugs = Object.entries(LEGACY_FAMILY_SLUGS).filter(([, to]) => to === f.slug).map(([from]) => from);
+    const existing = await prisma.productFamily.findUnique({ where: { slug: f.slug }, select: { commercialEditedAt: true, legacySlugs: true } });
+    const update: Record<string, unknown> = { ...content, legacySlugs: [...new Set([...(existing?.legacySlugs ?? []), ...legacySlugs])] };
+    if (existing?.commercialEditedAt) for (const k of COMMERCIAL_KEYS) delete update[k];
+    const row = await prisma.productFamily.upsert({ where: { slug: f.slug }, update: update as never, create: { slug: f.slug, status: f.status, ...content, legacySlugs } });
     await prisma.technicalSpec.deleteMany({ where: { familyId: row.id, createdBy: HELIOSTORES_SEED_TAG } });
     for (const s of f.specs) {
       await prisma.technicalSpec.create({ data: { familyId: row.id, key: s.key, label: s.label, valueNum: s.valueNum ?? null, unit: s.unit ?? null, valueText: s.valueText ?? null, source: s.source, sourceRef: s.sourceRef, note: s.note ?? "", createdBy: HELIOSTORES_SEED_TAG } });
       specs += 1;
     }
   }
+  await seedContentPlaceholders(prisma);
   const documents = await withdrawManufacturerDocuments(prisma);
   return { families: HELIOSTORES_FAMILIES.length, specs, documents };
 }
@@ -70,4 +79,22 @@ export async function setLegacyCatalogue(prisma: PrismaClient, legacySlugs: stri
   if (mode === "archived") await prisma.priceGrid.updateMany({ where: { isDemo: true, status: "PUBLISHED" }, data: { status: "ARCHIVED" } });
   else await prisma.priceGrid.updateMany({ where: { isDemo: true, status: "ARCHIVED", source: { startsWith: "Grille fictive" } }, data: { status: "PUBLISHED" } });
   return slugs.length;
+}
+
+/**
+ * Emplacements préparés (brouillons, jamais publiables tels quels) : réalisations HELIOSTORES et production à fournir
+ * par le client — aucune photo, aucun chantier ni témoignage inventé. Créés une seule fois.
+ */
+async function seedContentPlaceholders(prisma: PrismaClient) {
+  if (await prisma.realisation.count({ where: { placeholder: true } })) return;
+  const need = "À fournir : photographies autorisées, produit installé, contexte et localisation publiable.";
+  const rows = [
+    { kind: "REALISATION", title: "Réalisation pergola — à fournir", familySlug: "helio-horizon", description: need },
+    { kind: "REALISATION", title: "Réalisation screen — à fournir", familySlug: "helio-ombra", description: need },
+    { kind: "REALISATION", title: "Réalisation store banne — à fournir", familySlug: "helio-riviera", description: need },
+    { kind: "PRODUCTION", title: "Fabrication — à fournir", familySlug: null, description: "À fournir : photographies documentées de fabrication ; indiquer le site (atelier HELIOSTORES ou usine d'un partenaire)." },
+    { kind: "PRODUCTION", title: "Matériaux — à fournir", familySlug: null, description: "À fournir : profilés, toiles, quincaillerie, avec leur description vérifiée." },
+    { kind: "PRODUCTION", title: "Assemblage et contrôle qualité — à fournir", familySlug: null, description: "À fournir : étapes d'assemblage et de contrôle réellement pratiquées, avec photographies." },
+  ];
+  await prisma.realisation.createMany({ data: rows.map((r, i) => ({ ...r, placeholder: true, published: false, isDemo: false, sortOrder: (i + 1) * 10 })) });
 }

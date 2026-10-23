@@ -14,6 +14,8 @@ Documents liés :
 - `medias.md` : registre des médias ;
 - `revue-tarifaire.md` : revue tarifaire sans montant ;
 - `import-tarifs.md` : procédure d'import privé ;
+- `retour-client-2026-10-21.md` : suivi du retour client (accueil, noms, stores, options, guides, réalisations, paiements) ;
+- `explication-prix.md` et `decisions-tarifaires.md` : origine des prix et décisions à obtenir ;
 - `administration-tarifs.md` : écran Tarifs (grilles versionnées, publication, simulateur, import depuis l'administration) ;
 - `identite.md` : charte et logo ;
 - `validation-fournisseur.md` : questions au fournisseur (annexe chiffrée privée hors dépôt) ;

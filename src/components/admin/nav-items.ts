@@ -30,6 +30,7 @@ export const ADMIN_NAV: NavItem[] = [
       { href: "/admin/contenus/pages", label: "Pages" },
       { href: "/admin/contenus/realisations", label: "Réalisations" },
       { href: "/admin/contenus/showroom", label: "Showroom" },
+      { href: "/admin/guides", label: "Guides d'installation" },
     ],
   },
   {
@@ -40,7 +41,7 @@ export const ADMIN_NAV: NavItem[] = [
       { href: "/admin/documents", label: "Documents" },
     ],
   },
-  { href: "/admin/paiement", label: "Paiement fractionné" },
+  { href: "/admin/paiement", label: "Paiements" },
   { href: "/admin/import", label: "Import catalogue" },
   { href: "/admin/emails", label: "E-mails" },
   { href: "/admin/reglages", label: "Réglages" },
