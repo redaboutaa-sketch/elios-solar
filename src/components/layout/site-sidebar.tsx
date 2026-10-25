@@ -29,7 +29,9 @@ export function SiteSidebar({ categories }: { categories: HeaderCategory[] }) {
   const activeFamily = categories.find((c) => path === c.href || path.startsWith(`${c.href}/`) || c.items.some((p) => path === `/configurateur/${p.slug}`));
   const [openKeys, setOpenKeys] = useState<Record<string, boolean>>({});
   const isOpen = (key: string) => openKeys[key] ?? activeFamily?.key === key;
-  const isActive = (href: string) => path === href || (href !== "/" && path.startsWith(`${href}/`));
+  // rubrique active : la correspondance la plus précise seulement (« Prise de mesures » plutôt que « Guides »)
+  const best = SIDEBAR_LINKS.map((l) => l.href).filter((h) => path === h || path.startsWith(`${h}/`)).sort((a, b) => b.length - a.length)[0];
+  const isActive = (href: string) => href === best;
 
   if (collapsed) {
     return (

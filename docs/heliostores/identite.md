@@ -56,32 +56,38 @@ Câblage : conventions de fichiers Next.js `app/icon.png` et `app/apple-icon.png
   toujours présent.
 - Ne pas recolorer, étirer, redessiner ou « vectoriser » le logo. Une version vectorielle doit venir du client.
 
-## 4. Palette du site (tokens `src/app/globals.css`)
+## 4. Palette du site (tokens `src/app/globals.css`) — itération du 2026-10-25
 
-`brand-700` est la couleur du logo ; les autres nuances sont **dérivées pour l'interface** (même teinte, luminosité
-ajustée), pas des couleurs de marque officielles.
+Demande du client : intégrer le **bleu-vert du logo** et un **orange**. Décision de présentation par défaut :
+bleu-vert dominant (identité, navigation), orange en accent sur les actions prioritaires, fonds neutres pour les produits.
+
+- **Bleu-vert** : `#8AB4A8`, mesuré sur le logo (« STORES », § 2), teinte 163°. Il devient `brand-400` ; les autres
+  nuances `brand-*` en sont **dérivées pour l'interface** (même teinte, luminosité ajustée), pas des couleurs officielles.
+- **Orange** : **aucun orange n'existe dans les fichiers de marque fournis.** `accent-600` `#C2410C` est une
+  **proposition provisoire** choisie pour son contraste (texte blanc 5,18:1), centralisée dans les tokens
+  (`--color-accent-*`, classes `.btn-accent` / `.btn-cta`). Elle n'est **pas** extraite du logo et doit être remplacée
+  si le client fournit sa référence d'orange.
+- Le vert « HELIO » `#44664D` reste celui du logo (`helio-700`) ; il n'est plus la couleur des boutons.
+- Les états (erreur, avertissement, rubrique active) ne reposent jamais sur la seule couleur : libellés « Impossible »
+  / « à confirmer », filet de la rubrique active, icônes.
 
 | Token | HEX | Dérivation | Usage |
 | --- | --- | --- | --- |
-| `brand-50` | `#F1F6F2` | teinte très claire de `#44664D` | survols de menus, fonds discrets |
-| `brand-100` | `#E2ECE5` | teinte claire | badges, surlignages |
-| `brand-200` | `#C5D8CB` | teinte | bordures légères |
-| `brand-500` | `#54795E` | `#44664D` éclairci | anneau de focus, bordure d'input active, bordures/indicateurs |
-| `brand-600` | `#4B6F54` | `#44664D` légèrement éclairci | texte de lien / survol sur fond clair |
-| `brand-700` | `#44664D` | **logo (HELIO + soleil)** | bouton principal `.btn-accent`, titres d'e-mail et PDF, liens |
-| `brand-800` | `#36523E` | assombri | survol de `.btn-accent` |
-| `brand-900` | `#263A2C` | assombri | bouton actif, bandeau préproduction |
-| `sage-200` / `sage-300` | `#C4DBD3` / `#A9C8BE` | teintes de `#8AB4A8` | texte/survol sur fond sombre |
-| `sage-400` | `#8AB4A8` | **logo (STORES)** | accent sur fond sombre (bouton « Devis », pastille panier, focus sur fond sombre) |
-| `sage-700` | `#4B7468` | `#8AB4A8` assombri | texte sauge sur fond clair si nécessaire |
-| `night` | `#0B0F0D` | quasi-noir légèrement vert (proche du fond d'origine) | en-tête, pied de page, plaques, icônes |
-| `sand-50…300` | `#F7F8F5` `#EEF1EC` `#DFE4DD` `#C8D0C7` | neutres légèrement verdis | fonds de page, cartes, bordures |
-| `ink` | `#1A201C` | neutre foncé | texte courant |
-| `anthracite` | `#24302A` | neutre foncé verdi | `.btn-primary` |
-| `stone-700` / `stone-800` | `#5B5F63` / `#3A3D41` | inchangés | textes secondaires |
-| `success` / `warning` / `danger` / `olive-500` | inchangés | — | états |
+| `brand-50` / `100` / `200` / `300` | `#EEF5F3` `#E0ECE9` `#D0E1DC` `#A8C7BE` | teintes claires de `#8AB4A8` | fonds, survols, rubrique active |
+| `brand-400` | `#8AB4A8` | **logo (STORES)** | décor, fonds sombres (jamais en texte sur fond clair : 2,29:1) |
+| `brand-500` | `#4E8878` | assombri | anneau de focus, bordures actives |
+| `brand-600` / `700` / `800` / `900` | `#437567` `#396558` `#30544A` `#233E36` | assombris | liens, navigation, titres, survols |
+| `accent-600` / `700` / `800` | `#C2410C` `#9A3412` `#7C2D12` | **proposition provisoire** | actions prioritaires (Suivant, Commander, Demander le devis, Configurer) |
+| `helio-700` | `#44664D` | **logo (HELIO)** | réservé (logo, illustrations) |
+| `sage-*`, `night`, `sand-*`, `ink`, `anthracite`, `stone-*` | inchangés | — | voir version précédente ci-dessous |
 
-### Contrastes (WCAG 2.x, calculés)
+Contrastes de la nouvelle palette (WCAG 2.x, calculés) : blanc sur `accent-600` 5,18:1 (AA), sur `accent-700` 7,1:1 ;
+`brand-600` sur blanc 5,28:1, `brand-700` 6,61:1, `brand-800` 8,42:1 (AA) ; `brand-500` sur blanc 4,10:1 (anneau de
+focus ≥ 3:1, jamais en texte courant).
+
+### Palette précédente (itération du 2026-10-21, pour mémoire)
+
+#### Contrastes de la palette précédente
 
 | Couple | Ratio | Verdict |
 | --- | --- | --- |

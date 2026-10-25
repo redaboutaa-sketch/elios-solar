@@ -103,7 +103,7 @@ export default async function QuoteAdminPage(props: PageProps<"/admin/devis/[id]
                 <input type="hidden" name="quoteId" value={quote.id} />
                 <div><label className="label" htmlFor="vatRate">Taux de TVA du devis (%)</label><input id="vatRate" name="vatRate" inputMode="decimal" required className="input" placeholder="à indiquer" /></div>
                 <div><label className="label" htmlFor="payLabel">Libellé (facultatif)</label><input id="payLabel" name="label" maxLength={120} className="input" /></div>
-                <button className="btn-secondary w-full" type="submit">Ouvrir le paiement ({centsToEuros(quote.proposedTotalCents)} € TTC)</button>
+                <button className="btn-secondary w-full" type="submit">Ouvrir le paiement ({new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(quote.proposedTotalCents / 100)} TTC)</button>
               </form>
             ) : null}
           </div>

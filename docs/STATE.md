@@ -5,6 +5,19 @@ Le bilan complet est dans `docs/heliostores/README.md`, avec les sources, corres
 
 ## HELIOSTORES (en cours de revue)
 
+- **Itération du 2026-10-25** (`docs/heliostores/iteration-2026-10-25.md`, migrations `20261025090000_quatre_familles` à
+  `…110000_paiements_stripe`) : **quatre familles** — Pergolas (Malaga SB 350 en tailles fixes, Marbella SB 450, Sevilla
+  V ZiiiP à toiture toile), Screens (HelioScreen = ex-HELIO Ombra, HelioRoof Screen = Veranda), Stores bannes (Casablanca
+  = ex-HELIO Riviera, Corsica = ex-HELIO Azur, Jamaica, Madera), Moustiquaires (MoskiFold, MoskiFold 2 ; MoskiUp,
+  MoskiSlide, MoskiFix en brouillon). SB 400 / SB 500 / VERANDA FTS **retirés** (archivés, page explicative, aucune
+  conversion). Données sourcées dans `src/server/catalog/families/*`. Configurateur en étapes avec **dessin paramétrique
+  2D lié aux choix** (3D à la demande, Intérieur et Ambiance nuit retirées), tailles fixes et demande hors gamme,
+  souhaits d'équipement au devis ; navigation latérale ; bleu-vert du logo + orange d'accent **provisoire** ;
+  `/accessoires`, `/guides/prise-de-mesures`, `/guides/choisir-toile-et-motorisation`, `/references` ; Stripe :
+  moyens dynamiques, virement, Alma conforme (B2C, domestique), paiement d'un devis accepté, paiement tardif à examiner,
+  garde-fous du compte — **aucun compte Stripe raccordé** (`docs/heliostores/stripe.md`). Médias du 2026-10-25 :
+  `pnpm media:heliostores --dir private/heliostores/media-staging --apply` (sous-dossier `2026/`).
+
 - **Nomenclature commerciale** (déployé c5c2619, migrations `20261022090000_heliostores_nomenclature` et `…091000_…_labels`) :
   HELIO Horizon, Panorama, Ombra, Riviera (`/pergolas/helio-horizon`…), HELIO Verrière réservé en brouillon ; références
   fournisseur en `supplierRef` (admin : « Correspondance fournisseur »), redirections 308 des anciennes URL, codes moteur

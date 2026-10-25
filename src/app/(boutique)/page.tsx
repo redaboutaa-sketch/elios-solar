@@ -61,7 +61,7 @@ export default async function HomePage() {
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">HELIOSTORES · Protection solaire sur mesure</p>
             <h1 id="solutions-titre" className="mt-1.5 font-display text-[clamp(1.5rem,1.05rem+1.9vw,2.6rem)] font-semibold leading-tight text-balance">Donnez une nouvelle dimension à vos extérieurs.</h1>
           </div>
-          <p className="max-w-md text-sm text-stone-700 sm:text-base">Choisissez votre famille : chaque modèle se configure à vos cotes.</p>
+          <p className="hidden max-w-md text-sm text-stone-700 sm:block sm:text-base">Choisissez votre famille : chaque modèle se configure à vos cotes.</p>
         </div>
         <ul className="solution-panels mx-auto mt-4 flex max-w-[110rem] flex-col gap-2 px-4 sm:mt-6 lg:flex-row lg:gap-1" data-testid="family-picker">
           {panels.map(({ c, items }) => {
@@ -88,9 +88,9 @@ export default async function HomePage() {
       {/* Photographies en situation (visuels de la documentation produit, jamais présentés comme des réalisations) */}
       <HeroSlider slides={slides}>
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/90">En situation</p>
-        <h2 className="mt-4 max-w-3xl font-display text-display font-semibold text-balance">Pergolas, screens et stores bannes configurés à vos cotes.</h2>
+        <h2 className="mt-4 max-w-3xl font-display text-display font-semibold text-balance">Pergolas, screens, stores bannes et moustiquaires configurés à vos cotes.</h2>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link href="/configurateur" className="btn bg-sage-400 px-6 text-base text-night hover:bg-sage-300">Configurer mon projet <ArrowRight className="size-4" aria-hidden="true" /></Link>
+          <Link href="/configurateur" className="btn-cta px-6 text-base">Configurer mon projet <ArrowRight className="size-4" aria-hidden="true" /></Link>
           <Link href="/devis" className="btn bg-white px-6 text-base text-ink hover:bg-sand-100">Demander un devis</Link>
         </div>
       </HeroSlider>
@@ -184,7 +184,7 @@ export default async function HomePage() {
             <p className="mt-2 max-w-xl text-sand-200">Configurez votre produit à vos cotes, ou décrivez votre projet : un conseiller vous répond.</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link href="/configurateur" className="btn bg-sage-400 px-6 text-base text-night hover:bg-sage-300">Configurer mon projet <ArrowRight className="size-4" aria-hidden="true" /></Link>
+            <Link href="/configurateur" className="btn-cta px-6 text-base">Configurer mon projet <ArrowRight className="size-4" aria-hidden="true" /></Link>
             <Link href="/contact" className="btn border border-white/40 px-6 text-base text-sand-50 hover:bg-white/10">Nous contacter</Link>
           </div>
         </div>

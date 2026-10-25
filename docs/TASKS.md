@@ -70,17 +70,21 @@ Légende : ✅ fait (codé + vérifié) · 🔄 en cours · ⏳ à faire · ⛔ 
 ## Itération 2026-10-25 — quatre familles, visualisation liée, navigation, Stripe (branche `feat/heliostores`, PR #2)
 Brief : nouvelle nomenclature (Malaga/SB350, Marbella/SB450, Sevilla/V ZiiiP ; HelioScreen/R120 ZiiiP, HelioRoof Screen/Véranda ;
 Casablanca, Corsica, Jamaica, Madera ; MoskiFold, MoskiFold 2, MoskiUp, MoskiSlide, MoskiFix). Suivi détaillé : `docs/heliostores/iteration-2026-10-25.md`.
-1. ⏳ Audit + modèle de catalogue : recherches fournisseur (privé : `private/heliostores/research/*.md`), correspondances, quatrième
+1. ✅ Audit + modèle de catalogue : recherches fournisseur (privé : `private/heliostores/research/*.md`), correspondances, quatrième
    famille (Moustiquaires), retrait sans conversion des anciens modèles (SB400/SB500), renommages établis (migration), redirections /
    page explicative, nomenclature et filtre public (exceptions Casablanca, Corsica, Jamaica, Madera).
-2. ⏳ Visualisation liée à la configuration : dessin paramétrique 2D par défaut (même `input` que le serveur), 3D à la demande,
+2. ✅ Visualisation liée à la configuration : dessin paramétrique 2D par défaut (même `input` que le serveur), 3D à la demande,
    onglet Photos distinct ; vues Face / Trois quarts / Dessus ; Intérieur et Ambiance nuit retirées ; LED, toile, supports, pose.
-3. ⏳ Navigation latérale (ordinateur) + panneau repliable (mobile) ; configurateur en étapes Précédent/Suivant, brouillon conservé,
+3. ✅ Navigation latérale (ordinateur) + panneau repliable (mobile) ; configurateur en étapes Précédent/Suivant, brouillon conservé,
    confirmation seulement si perte ; mesures curseur + saisie + / − ; récapitulatif compact.
-4. ⏳ Nouvelles gammes et accessoires (options confirmées vs souhaits au devis ; OpenSlide = « Fermetures latérales coulissantes »).
-5. ⏳ Identité (bleu-vert dominant, orange d'accent provisoire centralisé) ; accueil quatre panneaux + sketch moustiquaire.
-6. ⏳ Tarifs : état de l'import, aucune grille SB400/SB500 sur SB350/SB450, nouveaux modèles sur devis.
-7. ⏳ Stripe : Checkout dynamique (moyens éligibles), virement, Alma/PayPal/Bancontact selon le compte, webhooks (succès, refus,
+4. ✅ Nouvelles gammes et accessoires (options confirmées vs souhaits au devis ; OpenSlide = « Fermetures latérales coulissantes »).
+5. ✅ Identité (bleu-vert dominant, orange d'accent provisoire centralisé) ; accueil quatre panneaux + sketch moustiquaire.
+6. ✅ Tarifs : état de l'import, aucune grille SB400/SB500 sur SB350/SB450, nouveaux modèles sur devis.
+7. ✅ Stripe : Checkout dynamique (moyens éligibles), virement, Alma/PayPal/Bancontact selon le compte, webhooks (succès, refus,
    asynchrone, expiration, tardif, remboursements, virement partiel), paiement d'un devis approuvé ; secrets absents → procédure.
-8. ⏳ Guides : documents par modèle et version, guides de mesure (4 familles), report des mesures ; page Références (2 catégories).
-9. ⏳ Contrôles (typecheck, lint, unitaires, intégration, build, e2e 390/768/1440), sauvegarde, déploiement, CI, compte rendu.
+8. ✅ Guides : documents par modèle et version, guides de mesure (4 familles), report des mesures ; page Références (2 catégories).
+9. 🔄 Contrôles (typecheck, lint, unitaires, intégration, build, e2e 390/768/1440), sauvegarde, déploiement, CI, compte rendu.
+
+Restent ⛔ (dépendances externes, détail dans `docs/heliostores/iteration-2026-10-25.md` § 2) : correspondance des
+moustiquaires, données fournisseur manquantes, tarifs des nouveaux modèles et des options, orange de marque, photos de
+références, clés Stripe de test et exemption du webhook en préproduction.

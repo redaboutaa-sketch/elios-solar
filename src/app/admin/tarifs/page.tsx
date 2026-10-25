@@ -32,6 +32,10 @@ export default async function TariffsPage(props: PageProps<"/admin/tarifs">) {
       <Flash searchParams={props.searchParams} />
       <ConfidentialNote />
 
+      <Section title="Base du prix de vente">
+        <p className="text-sm text-stone-800" data-testid="sale-price-basis">Le prix affiché au client est lu tel quel dans une grille de <strong>vente</strong> publiée et en vigueur, pour le modèle exact, la variante et la cote saisie (lecture exacte des cotes, sauf règle de grille contraire). Aucune marge, conversion de devise, coefficient ou supplément n'est ajouté par le site ; un coût d'achat n'est jamais affiché. Un modèle sans grille publiée (Malaga, Marbella, Sevilla, HelioRoof Screen, Corsica, Jamaica, Madera, moustiquaires) reste sur devis. Les grilles d'un modèle retiré (SB 400, SB 500) ne s'appliquent pas aux modèles SB 350 / SB 450. Un devis ou une commande déjà émis conserve son instantané : modifier une grille ne le change pas.</p>
+      </Section>
+
       <Section title="Tableau de bord">
         <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5" data-testid="tariff-counts">
           {[["En vigueur", d.counts.inForce], ["Programmées", d.counts.scheduled], ["Vérifiées", d.counts.verified], ["Brouillons", d.counts.draft], ["Grilles", d.counts.lineages]].map(([k, v]) => (
@@ -48,8 +52,8 @@ export default async function TariffsPage(props: PageProps<"/admin/tarifs">) {
                 <tr key={p.slug}>
                   <td className="font-medium">{p.name}</td>
                   <td>{p.supplierRef ?? "—"}</td>
-                  <td>{p.status === "DRAFT" ? <StatusBadge tone="warn">Brouillon, hors catalogue</StatusBadge> : p.status === "QUOTE_ONLY" || p.status === "PUBLISHED" ? <StatusBadge tone="ok">Publié</StatusBadge> : p.status}</td>
-                  <td>{sale.length ? sale.map((v) => <div key={v.id}><Link className="underline" href={`/admin/tarifs/grilles/${v.id}`}>{variantLabel(v.variantKey)} v{v.version}</Link> <span className="text-xs text-stone-700">depuis {fmtDate(v.validFrom ?? v.publishedAt, false)}{v.validTo ? ` jusqu'au ${fmtDate(v.validTo, false)}` : ""}</span></div>) : <StatusBadge tone="warn">aucun — prix sur devis</StatusBadge>}</td>
+                  <td>{p.status === "DRAFT" ? <StatusBadge tone="warn">Brouillon, hors catalogue</StatusBadge> : p.status === "QUOTE_ONLY" || p.status === "PUBLISHED" ? <StatusBadge tone="ok">Publié</StatusBadge> : p.status === "ARCHIVED" ? <StatusBadge tone="neutral">Retiré (historique)</StatusBadge> : p.status}</td>
+                  <td>{p.status === "ARCHIVED" && sale.length ? <span className="text-xs text-stone-700">modèle retiré : grille conservée pour l'historique, jamais appliquée à un autre modèle. </span> : null}{sale.length ? sale.map((v) => <div key={v.id}><Link className="underline" href={`/admin/tarifs/grilles/${v.id}`}>{variantLabel(v.variantKey)} v{v.version}</Link> <span className="text-xs text-stone-700">depuis {fmtDate(v.validFrom ?? v.publishedAt, false)}{v.validTo ? ` jusqu'au ${fmtDate(v.validTo, false)}` : ""}</span></div>) : <StatusBadge tone="warn">aucun — prix sur devis</StatusBadge>}</td>
                   <td className="text-xs">{p.scheduled.map((v) => <div key={v.id}><Link className="underline" href={`/admin/tarifs/grilles/${v.id}`}>v{v.version}</Link> le {fmtDate(v.validFrom)}</div>)}</td>
                 </tr>
               );

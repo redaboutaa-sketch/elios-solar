@@ -563,6 +563,8 @@ export function representedItems(catalog: CatalogSnapshot, model: SceneModel): s
 /* ------------------------------------------------------------------ */
 
 const NEUTRAL_FABRIC = "#8d8f8c";
+/** spots représentés lorsque le nombre n'est pas documenté pour les dimensions (indicatif, signalé) */
+const INDICATIVE_SPOTS = 4;
 
 function finishOf(rules: SystemRules, code: string) {
   return rules.finishes.find((f) => f.code === code) ?? (rules.customFinish?.code === code ? rules.customFinish : undefined);
@@ -717,6 +719,7 @@ function pergolaSystemScene(family: Family, rules: SystemRules, input: SystemInp
   if (chosen.has("intermediate_post") || chosen.has("extra_post")) toConfirm.push("poteaux supplémentaires en option : position établie au devis (non représentés)");
   if (input.multiModule) toConfirm.push("installation en plusieurs modules : un seul module est représenté");
   if (input.heightMm == null) toConfirm.push(`hauteur non saisie : ${fmtM(heightMm)} m représentés`);
+  if ((chosen.has("led_spots") || visuals.has("led_spots")) && spots == null) toConfirm.push(`spots LED : nombre établi au devis (${INDICATIVE_SPOTS} représentés)`);
   return {
     kind: "pergola",
     roof: fabricRoof ? "fabric" : "louvres",
@@ -737,7 +740,7 @@ function pergolaSystemScene(family: Family, rules: SystemRules, input: SystemInp
     colors: { structureCode: input.finishCode, bladeCode: input.finishCode, structure: color, blades: color },
     openings,
     closures,
-    lighting: { gutter: perimeter, blades: false, ledStrips: perimeter ? { color: "warm_white" } : null, color: "warm_white", spots: (chosen.has("led_spots") || visuals.has("led_spots")) && spots ? spots : undefined },
+    lighting: { gutter: perimeter, blades: false, ledStrips: perimeter ? { color: "warm_white" } : null, color: "warm_white", spots: chosen.has("led_spots") || visuals.has("led_spots") ? spots ?? INDICATIVE_SPOTS : undefined },
     heaters: { count: 0 },
     lanterns: { count: 0 },
     sections: s3.postMm && s3.beamMm && s3.bladeMm ? { postAlongMm: s3.postMm[0], postAcrossMm: s3.postMm[1], beamHeightMm: s3.beamMm[0], beamWidthMm: s3.beamMm[1], bladeWidthMm: s3.bladeMm[0], bladeThicknessMm: s3.bladeMm[1] } : undefined,

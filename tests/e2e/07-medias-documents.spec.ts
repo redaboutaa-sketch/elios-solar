@@ -22,7 +22,7 @@ test("médiathèque et documents : nouvelle version PDF publiée, visible sur la
     await page.locator("#new-title").fill(title);
     await page.locator("#new-kind").selectOption("guide");
     await page.locator("#new-audience").selectOption("PUBLIC");
-    await page.locator("#new-family").selectOption({ label: "HELIO Horizon" });
+    await page.locator("#new-family").selectOption({ label: "Casablanca" });
     await page.locator("#new-ds").selectOption("DEMO");
     await page.locator("#new-source").fill("Test automatisé");
     await page.locator("#new-summary").fill("Document de démonstration créé par le test de bout en bout.");
@@ -55,15 +55,21 @@ test("médiathèque et documents : nouvelle version PDF publiée, visible sur la
     await shot(page, "admin-medias");
 
     // 5. fiche produit : onglet Documents + galerie (nature affichée ; crédit et provenance réservés à la médiathèque)
-    await page.goto("/pergolas/helio-horizon");
+    await page.goto("/stores-bannes/casablanca");
     await acceptNecessaryOnly(page);
-    const imported = Number((await one<{ n: string }>(`SELECT count(*) AS n FROM "ProductMedia" pm JOIN "ProductFamily" f ON f.id = pm."familyId" JOIN "Media" m ON m.id = pm."mediaId" WHERE f.slug = 'helio-horizon' AND m.status = 'PUBLISHED' AND m.provenance IS NOT NULL`))!.n);
+    const imported = Number((await one<{ n: string }>(`SELECT count(*) AS n FROM "ProductMedia" pm JOIN "ProductFamily" f ON f.id = pm."familyId" JOIN "Media" m ON m.id = pm."mediaId" WHERE f.slug = 'casablanca' AND m.status = 'PUBLISHED' AND m.provenance IS NOT NULL`))!.n);
     if (imported > 0) {
-      await expect(page.getByTestId("media-nature").first()).toHaveText("Photographie");
+      const gallery = page.getByTestId("system-gallery");
+      await expect(page.getByTestId("media-nature").first()).toHaveText(/^(Photographie|Rendu|Schéma|Vidéo|Document)$/);
       await expect(page.getByTestId("media-credit")).toHaveCount(0);
-      await page.getByRole("button", { name: /Afficher : Vue de dessous de la toiture/ }).click();
-      await expect(page.getByTestId("media-nature").first()).toHaveText("Rendu");
-      await expect(page.getByTestId("media-options").first()).toContainText("non inclus d'office : éclairage LED périphérique (option)");
+      // vignette suivante : la nature du visuel affiché suit la sélection
+      const thumbs = gallery.getByRole("button", { name: /^Afficher : / });
+      expect(await thumbs.count()).toBeGreaterThan(1);
+      const second = (await thumbs.nth(1).getAttribute("aria-label"))!.replace(/^Afficher : /, "");
+      await thumbs.nth(1).click();
+      await expect(gallery.getByRole("button", { name: `Agrandir : ${second}` })).toBeVisible();
+      await expect(page.getByTestId("media-nature").first()).toHaveText(/^(Photographie|Rendu|Schéma|Vidéo|Document)$/);
+      await expect(gallery).not.toContainText(/aluprof|thysens|selt|crédit/i);
     } else {
       test.info().annotations.push({ type: "médias", description: "aucun visuel fabricant importé dans cet environnement : état vide vérifié" });
       await expect(page.getByText("Visuels en cours d'intégration.")).toBeVisible();

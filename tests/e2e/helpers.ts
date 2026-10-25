@@ -63,3 +63,34 @@ export async function fillCheckout(page: Page, email: string) {
   await page.getByLabel(/Téléphone/).fill("0612345678");
   await page.getByLabel(/J'ai lu et j'accepte/).check();
 }
+
+/** Saisie d'une cote du configurateur (champ en millimètres), validée en quittant le champ. */
+export async function setDim(page: Page, id: string, value: number) {
+  const input = page.locator(`#${id}`);
+  await input.fill(String(value));
+  await input.blur();
+}
+
+/** Étapes du configurateur en étapes (libellés de la navigation `config-steps`). */
+export const STEP = { dims: "step-dims", pose: "step-pose", equip: "step-equip", recap: "step-recap" } as const;
+const STEP_LABEL: Record<keyof typeof STEP, RegExp> = { dims: /Dimensions/, pose: /Pose et finitions/, equip: /Équipements/, recap: /Récapitulatif et devis/ };
+
+/** Affiche une étape par la navigation des étapes et attend qu'elle soit la seule visible. */
+export async function goStep(page: Page, step: keyof typeof STEP) {
+  await page.getByTestId("config-steps").getByRole("button", { name: STEP_LABEL[step] }).click();
+  await page.getByTestId(STEP[step]).waitFor({ state: "visible" });
+}
+
+/** Ouvre un configurateur sur une session neuve : bannière cookies fermée, dessin du projet affiché. */
+export async function openConfigurator(page: Page, slug: string) {
+  await page.goto(`/configurateur/${slug}`);
+  await acceptNecessaryOnly(page);
+  await page.getByTestId("project-drawing").waitFor({ state: "visible" });
+  await page.getByTestId(STEP.dims).waitFor({ state: "visible" });
+}
+
+/** Points signalés (liste aria-live) de l'étape affichée. */
+export const stepIssues = (page: Page, step: keyof typeof STEP) => page.getByTestId(STEP[step]).locator('ul[aria-live="polite"]');
+
+/** Attribut data-* du dessin paramétrique du projet. */
+export const drawingAttr = (page: Page, name: string) => page.getByTestId("project-drawing").getAttribute(`data-${name}`);

@@ -119,7 +119,9 @@ export function SystemVisuals({ catalog, input, result, art, onImage, onCaptureR
     if (m || !rules || input.sizeCode === "custom") return m;
     const d = rules.dims;
     const near = (r: typeof d.width | undefined, v: number | undefined) => (r && v != null && Number.isFinite(v) ? nearestAllowed(r, v) : v);
-    return buildSceneModel(catalog, { ...input, widthMm: near(d.width, input.widthMm) ?? d.width.maxMm, depthMm: near(d.depth, input.depthMm), heightMm: near(d.height, input.heightMm) }, null);
+    const depthMm = near(d.depth, input.depthMm);
+    const minW = rules.depthWidthMin?.find((c) => c.depthMm === depthMm)?.widthMinMm ?? 0;
+    return buildSceneModel(catalog, { ...input, widthMm: Math.max(minW, near(d.width, input.widthMm) ?? d.width.maxMm), depthMm, heightMm: near(d.height, input.heightMm) }, null);
   }, [catalog, input, result, rules]);
   const blocker = rules ? systemSceneBlocker(rules, input) : "Système inconnu.";
   const svgRef = useRef<SVGSVGElement | null>(null);

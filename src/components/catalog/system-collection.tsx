@@ -63,7 +63,7 @@ function Comparison({ items }: { items: Item[] }) {
     ...(items.some((f) => f.rules.type === "pergola") ? [["Toiture", (f: Item) => (f.rules.roof === "fabric" ? "toile tendue" : "lames orientables")] as [string, (f: Item) => string]] : []),
     ...(items.some((f) => f.rules.fixedSizes?.length) ? [["Fabrication", (f: Item) => (f.rules.fixedSizes?.length ? "tailles définies (prêt à poser)" : "sur mesure")] as [string, (f: Item) => string]] : []),
     ...(items.some((f) => f.rules.insect) ? [["Ouverture", (f: Item) => (f.rules.insect ? INSECT_OPENING_FR[f.rules.insect.opening] + (f.rules.insect.leaves === 2 ? ", deux vantaux" : "") : "—")] as [string, (f: Item) => string]] : []),
-    ["Plusieurs modules", (f) => (f.rules.modules ? (f.rules.modules.multiModule === "documented" ? "possible, composé au devis" : "non documenté, étude au devis") : "—")],
+    ...(items.some((f) => f.rules.modules) ? [["Plusieurs modules", (f: Item) => (f.rules.modules ? (f.rules.modules.multiModule === "documented" ? "possible, composé au devis" : "non documenté, étude au devis") : "—")] as [string, (f: Item) => string]] : []),
     ["Prix de la structure", (f) => (priceText(f) ? `à partir de ${priceText(f)}` : "sur devis")],
   ];
   return (

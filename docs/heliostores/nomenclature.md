@@ -1,15 +1,45 @@
 # Nomenclature commerciale HELIOSTORES
 
-Décision client du 2026-10-22 : le site présente les produits et équipements sous des noms commerciaux
-HELIOSTORES. Les références du fournisseur restent des données internes, consultables dans l'administration
-(bloc « Correspondance fournisseur » de la fiche famille) et dans les sources. Elles ne sont jamais envoyées au
-navigateur.
+**Décision client du 2026-10-25** (remplace la nomenclature HELIO du 2026-10-22) : quatre familles — Pergolas,
+Screens, Stores bannes, Moustiquaires. Casablanca, Corsica, Jamaica et Madera gardent le nom du modèle du fabricant
+(exception voulue par le client). Les références du fournisseur restent des données internes (administration,
+sources) et ne sont jamais envoyées au navigateur.
 
 Code : `src/domain/nomenclature.ts` (noms publics), `src/server/catalog/legacy-slugs.ts` (anciens identifiants,
-redirections), `src/server/catalog/heliostores-data.ts` (contenus), `src/domain/public-sanitize.ts` (filtre public
-et garde-fou `PUBLIC_FORBIDDEN_NAMES`).
+redirections), `src/server/catalog/heliostores-data.ts` et `src/server/catalog/families/*` (contenus),
+`src/domain/public-sanitize.ts` (filtre public et garde-fou `PUBLIC_FORBIDDEN_NAMES`).
 
-## Produits
+## Produits (2026-10-25)
+
+| Famille | Réf. fournisseur (interne) | Nom public | URL | Statut | Correspondance avec l'ancien catalogue |
+|---|---|---|---|---|---|
+| Pergolas | SB 350 (prêt à poser) | Malaga | `/pergolas/malaga` | sur devis | **nouveau produit** (≠ SB 400) |
+| Pergolas | SB 450 | Marbella | `/pergolas/marbella` | sur devis | **nouveau produit** (≠ SB 500) |
+| Pergolas | PERGOLA V ZiiiP (« VZIP ») | Sevilla | `/pergolas/sevilla` | sur devis | nouveau produit |
+| Screens | R 120 ZiiiP | HelioScreen | `/screens/helioscreen` | sur devis, grille existante | **même produit** que REFLEKSOL 120 ZiiiP (HELIO Ombra) : renommé, `/screens/helio-ombra` → 308 |
+| Screens | Veranda (un moteur) | HelioRoof Screen | `/screens/helioroof-screen` | sur devis | nouveau ; **≠ VERANDA FTS** (HELIO Verrière, retiré) |
+| Stores bannes | CASABLANCA | Casablanca | `/stores-bannes/casablanca` | sur devis, grille existante | même produit que HELIO Riviera : 308 |
+| Stores bannes | CORSICA | Corsica | `/stores-bannes/corsica` | sur devis | même produit que HELIO Azur (brouillon) : 308 |
+| Stores bannes | JAMAICA | Jamaica | `/stores-bannes/jamaica` | sur devis | nouveau |
+| Stores bannes | MADEIRA | Madera | `/stores-bannes/madera` | sur devis | nouveau (orthographe publique voulue par le client) |
+| Moustiquaires | MPH HARMONY (proposée) | MoskiFold | `/moustiquaires/moskifold` | sur devis | nouveau ; correspondance à confirmer |
+| Moustiquaires | MPH DUAL (proposée) | MoskiFold 2 | `/moustiquaires/moskifold-2` | sur devis | nouveau ; correspondance à confirmer |
+| Moustiquaires | MZN (proposée) | MoskiUp | — | brouillon (dimensions non documentées) | nouveau |
+| Moustiquaires | MRP (proposée) | MoskiSlide | — | brouillon | nouveau |
+| Moustiquaires | MRS (proposée) | MoskiFix | — | brouillon | nouveau |
+
+**Modèles retirés** (fiches conservées, archivées) : SB 400 (HELIO Horizon), SB 500 (HELIO Panorama), VERANDA FTS
+(HELIO Verrière). Leurs anciennes URL et leurs configurateurs affichent une page explicative avec un choix de gamme ;
+aucune configuration n'est convertie, les projets et devis existants restent consultables. Aucune redirection ne mène
+d'un ancien produit vers un produit différent.
+
+Équipements : libellés descriptifs (« Télécommande radio », « Box domotique — commande par smartphone », « Capteur de
+vent », « Éclairage LED … », « Fermetures latérales coulissantes (vitrage) » pour l'accessoire MB-OpenSlide). Les noms
+HELIO Pilot / Vent / Soleil / Connect / Lumière ne sont plus utilisés.
+
+## Historique — nomenclature du 2026-10-22
+
+### Produits (2026-10-22)
 
 | Réf. fournisseur (interne) | Nom commercial | Famille | URL canonique | Ancienne URL (redirection 308) |
 |---|---|---|---|---|

@@ -1,47 +1,55 @@
-import { test, expect, type Page } from "./fixtures";
-import { acceptNecessaryOnly, fillCheckout, shot, uid } from "./helpers";
+import { test, expect } from "./fixtures";
+import { acceptNecessaryOnly, fillCheckout, goStep, openConfigurator, setDim, shot, uid } from "./helpers";
 import { IN_FORCE_GRID_SQL, one, publicPricesActive } from "./db";
 
-async function setDim(page: Page, id: string, value: number) {
-  const input = page.locator(`#${id}`);
-  await input.fill(String(value));
-  await input.blur();
-}
-
 const fmt = (minor: number) => new Intl.NumberFormat("fr-FR", { minimumFractionDigits: minor % 100 ? 2 : 0, maximumFractionDigits: 2 }).format(minor / 100);
-const norm = (s: string | null) => (s ?? "").replace(/[  ]/g, " ");
+const norm = (s: string | null) => (s ?? "").replace(/[\u00a0\u202f]/g, " ");
 
-test("HELIO Horizon structure seule : commande en ligne au prix de la grille, paiement simulé ; avec option, devis seulement", async ({ page }) => {
-  await page.goto("/configurateur/helio-horizon");
-  await acceptNecessaryOnly(page);
+test("Casablanca structure seule : commande en ligne au prix de la grille, paiement simulé ; avec option, choix à confirmer ou pose, devis seulement", async ({ page }) => {
+  await openConfigurator(page, "casablanca");
   const order = page.getByTestId("online-order");
   if (!(await publicPricesActive())) {
     // sans grille active (CI) : aucune commande en ligne, motif affiché
+    await goStep(page, "recap");
     await expect(order).toHaveAttribute("data-orderable", "false");
     await expect(order).toContainText("ne figurent pas dans la grille");
     await expect(page.getByTestId("add-to-cart")).toHaveCount(0);
     return;
   }
-  // cellule murale de la grille active couvrant une cote exacte du configurateur (pas de 20 cm dès 1,4 m, largeur ≤ 4 m)
-  const cell = await one<{ dimAmm: number; widthMaxMm: number; amountMinor: number }>(`SELECT r."dimAmm", r."widthMaxMm", r."amountMinor" FROM "SupplierPriceRow" r JOIN "SupplierPriceList" l ON l.id = r."listId" WHERE ${IN_FORCE_GRID_SQL} AND r.kind = 'GRID' AND r."familySlug" = 'helio-horizon' AND r."variantKey" = 'murale' AND r.status <> 'REJECTED' AND r."widthMinMm" = r."widthMaxMm" AND r."widthMaxMm" <= 4000 AND (r."dimAmm" - 1400) % 200 = 0 AND r."dimAmm" <= 7000 ORDER BY r."dimAmm", r."widthMaxMm" LIMIT 1`);
+  // cellule de la grille active : avancée fabriquée, largeur de la plage compatible avec la largeur minimale du modèle
+  const cell = await one<{ dimAmm: number; widthMinMm: number; widthMaxMm: number; amountMinor: number }>(`SELECT r."dimAmm", r."widthMinMm", r."widthMaxMm", r."amountMinor" FROM "SupplierPriceRow" r JOIN "SupplierPriceList" l ON l.id = r."listId" WHERE ${IN_FORCE_GRID_SQL} AND l."dimRule" = 'EXACT' AND r.kind = 'GRID' AND r."familySlug" = 'casablanca' AND r."variantKey" = '' AND r.status <> 'REJECTED' AND r."amountMinor" IS NOT NULL AND r."dimAmm" IN (1600, 2100) AND r."widthMaxMm" >= 2000 AND r."widthMinMm" <= 6000 ORDER BY r."dimAmm", r."widthMinMm" LIMIT 1`);
   expect(cell).not.toBeNull();
-  await setDim(page, "dim-width", cell!.widthMaxMm);
-  await setDim(page, "dim-depth", cell!.dimAmm);
-  await page.getByRole("radio", { name: /Murale/ }).check();
+  const width = Math.max(2000, cell!.widthMinMm);
+  await setDim(page, "dim-width", width);
+  await page.getByTestId("dim-depth-values").getByText(`${(cell!.dimAmm / 1000).toLocaleString("fr-FR")} m`, { exact: true }).click();
   await expect(page.getByTestId("system-price-amount")).toHaveText(new RegExp(fmt(cell!.amountMinor).replace(/\s/g, "\\s")));
+  await goStep(page, "recap");
   await expect(order).toHaveAttribute("data-orderable", "true");
 
-  // une option rend la commande en ligne indisponible (options chiffrées au devis)
-  const firstOption = page.getByTestId("system-configurator").locator('section[aria-labelledby="equip-title"] input[type="checkbox"]').first();
-  await firstOption.check();
+  // commande électrique à confirmer, puis option : commande en ligne indisponible (chiffrées au devis)
+  await goStep(page, "pose");
+  await page.getByLabel("Manœuvre et commande").selectOption({ label: "Motorisation électrique (moteur à définir) — à confirmer" });
+  await goStep(page, "equip");
+  await page.getByTestId("option-remote_control").getByRole("checkbox").check();
+  await goStep(page, "recap");
   await expect(order).toHaveAttribute("data-orderable", "false");
-  await expect(order).toContainText("options sont chiffrées au devis");
-  await firstOption.uncheck();
+  await expect(order).toContainText("les options sont chiffrées au devis");
+  await expect(order).toContainText("un choix est à confirmer au devis");
+  await goStep(page, "equip");
+  await page.getByTestId("option-remote_control").getByRole("checkbox").uncheck();
+  await page.getByLabel("Pose professionnelle souhaitée").check();
+  await goStep(page, "pose");
+  await page.getByLabel("Manœuvre et commande").selectOption({ label: "Manuelle — manivelle 150 cm" });
+  await goStep(page, "recap");
+  await expect(order).toContainText("la pose professionnelle est chiffrée au devis");
+  await goStep(page, "equip");
+  await page.getByLabel("Pose professionnelle souhaitée").uncheck();
+  await goStep(page, "recap");
   await expect(order).toHaveAttribute("data-orderable", "true");
 
   await page.getByTestId("add-to-cart").click();
   await page.waitForURL(/\/panier/);
-  await expect(page.getByTestId("cart-lines")).toContainText("HELIO Horizon");
+  await expect(page.getByTestId("cart-lines")).toContainText("Casablanca");
   expect(norm(await page.getByTestId("cart-line-ht").textContent())).toContain(`${norm(fmt(cell!.amountMinor))} € HT`);
   await expect(page.getByTestId("cart-delivery-not-included")).toContainText("non comprises");
   await expect(page.getByTestId("cart-system-note")).toContainText("Livraison et pose non comprises");
@@ -50,6 +58,11 @@ test("HELIO Horizon structure seule : commande en ligne au prix de la grille, pa
 
   await page.getByRole("link", { name: "Passer la commande" }).click();
   await page.waitForURL(/\/commande$/);
+  // particulier ou professionnel (le paiement en plusieurs fois est réservé aux particuliers)
+  await expect(page.getByRole("radio", { name: "Particulier" })).toBeChecked();
+  await page.getByRole("radio", { name: "Professionnel" }).check();
+  await expect(page.getByRole("radio", { name: "Professionnel" })).toBeChecked();
+  await page.getByRole("radio", { name: "Particulier" }).check();
   await fillCheckout(page, `systeme-${uid()}@test.invalid`);
   await page.getByRole("button", { name: /paiement simulé/ }).click();
   await page.waitForURL(/paiement-demo/);
@@ -62,8 +75,10 @@ test("HELIO Horizon structure seule : commande en ligne au prix de la grille, pa
   await shot(page, "commande-systeme-confirmation");
 });
 
-test("rubriques sans contenu réel : Réalisations et Showroom masquées (404) ; pages provisoires signalées", async ({ page }) => {
-  for (const path of ["/realisations", "/showroom"]) expect((await page.goto(path))?.status(), path).toBe(404);
+test("rubriques sans contenu réel : Showroom masqué (404), Réalisations regroupées dans Références ; pages provisoires signalées", async ({ page }) => {
+  expect((await page.goto("/showroom"))?.status()).toBe(404);
+  await page.goto("/realisations");
+  await expect(page).toHaveURL(/\/references#realisations$/);
   await page.goto("/cgv");
   await acceptNecessaryOnly(page);
   await expect(page.getByText(/Document provisoire/)).toBeVisible();

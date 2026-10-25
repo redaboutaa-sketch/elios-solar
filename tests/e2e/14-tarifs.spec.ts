@@ -5,8 +5,8 @@ import { createAccount, loginAdmin, shot, uid } from "./helpers";
  * Écran Tarifs (administrateurs) : consultation des grilles importées, modification d'une cellule dans un nouveau
  * brouillon, comparaison, simulation, publication d'une grille de test complète puis désactivation, refus d'une
  * grille incomplète, refus d'accès aux visiteurs et aux clients.
- * Aucun tarif de test ne reste actif : le brouillon modifié est rejeté, la grille de test (produit en brouillon,
- * jamais affiché) est désactivée.
+ * Aucun tarif de test ne reste actif : le brouillon modifié est rejeté, la grille de test (variante propre au test,
+ * qui ne correspond à aucune pose du modèle, donc jamais affichée) est désactivée.
  */
 
 test("consultation des grilles importées", async ({ page }) => {
@@ -14,18 +14,20 @@ test("consultation des grilles importées", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "Tarifs" })).toBeVisible();
   // grilles importées du classeur (préproduction, dev) ; sans import (CI) : produits listés, aucun tarif en vigueur
   const list = page.getByTestId("tariff-list");
-  const imported = (await list.getByRole("row").filter({ hasText: "Prix final" }).filter({ hasText: "HELIO Horizon" }).count()) > 0;
-  if (imported) await expect(list).toContainText("HELIO Ombra");
+  // grilles existantes rattachées à Casablanca et HelioScreen (nouveaux modèles : aucune grille, prix sur devis)
+  const imported = (await list.getByRole("row").filter({ hasText: "Prix final" }).filter({ hasText: "Casablanca" }).count()) > 0;
+  if (imported) await expect(list).toContainText("HelioScreen");
   await expect(page.getByTestId("tariff-counts")).toBeVisible();
-  await expect(page.getByRole("table", { name: "Produits et tarif de vente en vigueur" })).toContainText("HELIO Horizon");
+  const products = page.getByRole("table", { name: "Produits et tarif de vente en vigueur" });
+  for (const n of ["Casablanca", "HelioScreen", "Marbella", "MoskiFold"]) await expect(products).toContainText(n);
   await shot(page, "admin-tarifs");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });
 
 test("modifier une cellule (nouveau brouillon), comparer, simuler, puis rejeter le brouillon", async ({ page }, info) => {
   test.skip(info.project.name !== "desktop", "parcours d'écriture : une seule fois par campagne");
-  await loginAdmin(page, "/admin/tarifs?produit=helio-horizon&nature=SALE&statut=in_force");
-  const row = page.getByTestId("tariff-list").getByRole("row").filter({ hasText: "murale" }).filter({ hasText: "Prix final" });
+  await loginAdmin(page, "/admin/tarifs?produit=helioscreen&nature=SALE&statut=in_force");
+  const row = page.getByTestId("tariff-list").getByRole("row").filter({ hasText: "HelioScreen" }).filter({ hasText: "Prix final" });
   test.skip((await row.count()) === 0, "aucune grille de vente en vigueur (base sans import du classeur)");
   await row.first().getByRole("link").first().click();
   await expect(page.getByTestId("tariff-matrix")).toBeVisible();
@@ -40,16 +42,16 @@ test("modifier une cellule (nouveau brouillon), comparer, simuler, puis rejeter 
   const label = (await cell.getAttribute("aria-label"))!;
   const before = await cell.inputValue();
   const [euros, cents = "00"] = before.split(",");
-  const after = `${Number(euros) + 1},${cents}`;
+  const after = `${Number(euros!.replace(/[\s\u00a0\u202f]/g, "")) + 1},${cents}`;
   await cell.fill(after);
   await page.getByTestId("save-cells").click();
   await expect(page.getByText(/Enregistré : 1 modifiée/)).toBeVisible();
   await expect(page.getByTestId("grid-diff-summary")).toContainText("1 modifiée(s)");
   await shot(page, "admin-tarifs-brouillon");
   // simulateur : la version brouillon est utilisée pour la cote de la cellule modifiée
-  const m = label.match(/(\d+,\d+) m × largeur (\d+,\d+) m/)!;
+  const m = label.match(/(\d+(?:,\d+)?) m × largeur (\d+(?:,\d+)?) m/)!;
   const mm = (s: string) => Math.round(Number(s.replace(",", ".")) * 1000);
-  await page.goto(`/admin/tarifs/simulateur?produit=helio-horizon&pose=wall&largeur=${mm(m[2]!)}&cote=${mm(m[1]!)}&clientele=PARTICULIER&version=${draftId}`);
+  await page.goto(`/admin/tarifs/simulateur?produit=helioscreen&pose=facade&largeur=${mm(m[2]!)}&cote=${mm(m[1]!)}&clientele=PARTICULIER&version=${draftId}`);
   await expect(page.getByTestId("sim-versions")).toContainText("simulation seulement");
   const amount = (await page.getByTestId("sim-amount").textContent())!.replace(/[\s  ]/g, "");
   expect(amount).toContain(after.replace(/\s/g, ""));
@@ -64,12 +66,12 @@ test("grille de test : incomplète refusée, complète publiée puis désactivé
   test.skip(info.project.name !== "desktop", "parcours d'écriture : une seule fois par campagne");
   await loginAdmin(page, "/admin/tarifs");
   const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Créer le brouillon" }) });
-  // produit en brouillon (HELIO Verrière) : jamais affiché sur le site, même avec une grille publiée
-  await form.getByLabel("Produit").selectOption("helio-verriere");
+  // Marbella (sans grille) : variante propre au test, qui ne correspond à aucune pose (murale / autoportante) → jamais affichée
+  await form.getByLabel("Produit").selectOption("marbella");
   await form.getByLabel(/Variante/).fill(`e2e-${uid()}`);
   await form.getByLabel("Libellé").fill("Grille de test e2e");
   await form.getByLabel("Nature").selectOption("SALE");
-  await form.getByLabel("Axe principal").selectOption("hauteur");
+  await form.getByLabel("Axe principal").selectOption("projection");
   await form.getByRole("button", { name: "Créer le brouillon" }).click();
   await expect(page.getByText(/Grille créée/)).toBeVisible();
   await page.getByLabel("Devise (ISO)").fill("EUR");
@@ -107,7 +109,7 @@ test("visiteur et compte client : accès aux tarifs refusé", async ({ browser }
   const v = await visitor.newPage();
   await v.goto("/admin/tarifs");
   await expect(v).toHaveURL(/\/compte\/connexion/);
-  await v.goto("/admin/tarifs/simulateur?produit=helio-horizon&largeur=1500&cote=3400");
+  await v.goto("/admin/tarifs/simulateur?produit=casablanca&largeur=4000&cote=2600");
   await expect(v).toHaveURL(/\/compte\/connexion/);
   await createAccount(v, `client-tarifs-${uid()}@test.invalid`, `Mdp-${uid()}-${uid()}`);
   await v.goto("/admin/tarifs");

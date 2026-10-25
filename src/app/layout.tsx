@@ -12,7 +12,7 @@ const indexable = process.env.SITE_INDEXABLE === "true";
 export const metadata: Metadata = {
   metadataBase: new URL(BRAND.siteUrl),
   title: { default: `${BRAND.name} — ${BRAND.tagline}`, template: `%s — ${BRAND.name}` },
-  description: "Pergolas bioclimatiques, screens et stores bannes : choisissez votre modèle, configurez vos dimensions et demandez votre devis.",
+  description: "Pergolas, screens, stores bannes et moustiquaires : choisissez votre modèle, configurez vos dimensions et demandez votre devis.",
   applicationName: BRAND.name,
   openGraph: { siteName: BRAND.name, locale: "fr_FR", type: "website" },
   robots: indexable ? { index: true, follow: true } : { index: false, follow: false, nocache: true },

@@ -363,7 +363,7 @@ export const ProjectDrawing = forwardRef<SVGSVGElement, ProjectDrawingProps>(fun
       data-testid="project-drawing"
       data-kind={model.kind}
       data-view={view}
-      data-width-mm={model.widthMm}
+      data-width-mm={model.kind === "pergola" ? model.lengthMm : model.widthMm}
       data-depth-mm={model.kind === "pergola" ? model.widthMm : model.kind === "awning" || model.kind === "roof_screen" ? model.projectionMm : undefined}
       data-height-mm={"heightMm" in model ? model.heightMm : undefined}
       data-structure-color={structureColor}

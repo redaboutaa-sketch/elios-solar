@@ -431,10 +431,14 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
       if (pack.status === "to_confirm") add({ code: "pack_to_confirm", severity: "review", message: `Niveau ${pack.label} : ${pack.note ?? "composition à confirmer au devis"}.`, path: "packCode", quoteSuggested: true });
     }
   }
+  const cumulSeen = new Set<string>();
   for (const def of rules.options) {
     if (!chosen.has(def.code) || !def.cumulToConfirmWith) continue;
     for (const other of def.cumulToConfirmWith) {
-      if (chosen.has(other) && def.code < other) {
+      // cumul déclaré d'un seul côté ou des deux : une seule alerte par paire
+      const pair = [def.code, other].sort().join("+");
+      if (chosen.has(other) && !cumulSeen.has(pair)) {
+        cumulSeen.add(pair);
         const o = rules.options.find((x) => x.code === other);
         add({ code: "option_cumul_to_confirm", severity: "review", message: `${def.label} + ${o?.label ?? other} : cumul non documenté par la fiche — confirmé au devis.`, path: "options", quoteSuggested: true });
       }

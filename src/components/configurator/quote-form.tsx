@@ -7,7 +7,7 @@ import { readAttribution } from "@/components/analytics/attribution";
 const VISUAL_TIMEOUT_MS = 10_000;
 
 const VISUAL_DONE: Record<string, string> = {
-  SCENE_3D: "La visualisation 3D de votre configuration est jointe au devis (non contractuelle).",
+  SCENE_3D: "La visualisation de votre projet est jointe au devis (non contractuelle).",
   PLAN_2D: "La vue 3D n'a pas pu être jointe : un plan 2D de votre configuration est joint au devis.",
   NONE: "Aucune visualisation n'a pu être jointe : le devis reste établi sur la base de votre configuration.",
 };

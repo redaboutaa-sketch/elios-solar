@@ -26,7 +26,7 @@ test("refuser les cookies optionnels : aucun script optionnel chargé", async ({
 });
 
 test("captures des pages principales", async ({ page }) => {
-  for (const [path, name] of [["/", "accueil"], ["/pergolas", "collection"], ["/pergolas/helio-panorama", "fiche"], ["/stores-bannes/helio-riviera", "fiche-store"], ["/configurateur", "configurateurs"], ["/compte/connexion", "connexion"]]) {
+  for (const [path, name] of [["/", "accueil"], ["/pergolas", "collection"], ["/pergolas/marbella", "fiche"], ["/stores-bannes/casablanca", "fiche-store"], ["/moustiquaires", "collection-moustiquaires"], ["/configurateur", "configurateurs"], ["/compte/connexion", "connexion"]]) {
     await page.goto(path!);
     const btn = page.getByRole("button", { name: "Tout refuser" });
     if (await btn.isVisible().catch(() => false)) await btn.click();

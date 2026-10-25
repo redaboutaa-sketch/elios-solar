@@ -1,12 +1,19 @@
 # HELIOSTORES — migration du catalogue et de l'identité
 
-État au 2026-10-21, branche `feat/heliostores` (draft PR #2, base `feat/storefront-configurator`).
+État au 2026-10-25, branche `feat/heliostores` (draft PR #2, base `feat/storefront-configurator`).
+
+**Itération du 2026-10-25** (`iteration-2026-10-25.md`) : quatre familles (Pergolas, Screens, Stores bannes, Moustiquaires)
+et nouvelle nomenclature (Malaga, Marbella, Sevilla ; HelioScreen, HelioRoof Screen ; Casablanca, Corsica, Jamaica,
+Madera ; MoskiFold, MoskiFold 2…), visualisation liée à la configuration, navigation latérale, paiements Stripe
+(`stripe.md`). Les paragraphes ci-dessous décrivent l'historique des itérations précédentes.
 
 Préproduction : https://demo-elios.beaverdata.eu. Elle est protégée par identifiant, non indexable, avec le paiement en mode test. Les prix de la structure sont affichés selon la grille « Prix final HELIOSTORES » du classeur, en € HT (décision client du 2026-10-21, voir `prix-publics.md`) ; une configuration entièrement tarifée (structure seule, sans option ni point à confirmer) se commande en ligne avec paiement simulé ; le reste passe par un devis. Réalisations et Showroom sont masqués.
 
 Nomenclature commerciale (décision client du 2026-10-22, détail dans `nomenclature.md`) : le site présente HELIO Horizon, HELIO Panorama, HELIO Ombra et HELIO Riviera (HELIO Verrière réservé, en brouillon). Les références fournisseur citées ci-dessous restent internes ; les anciennes URL sont redirigées.
 
 Documents liés :
+- `iteration-2026-10-25.md` : demandes de l'itération, statuts, éléments à fournir ;
+- `stripe.md` : paiements Stripe (état, raccordement en mode test, bascule réelle) ;
 - `nomenclature.md` : noms commerciaux, URL, motorisations, équipements, migration et mentions conservées ;
 - `prix-publics.md` : prix affichés (grille, lecture des cotes, publication) et retrait des références fabricant/fournisseur du site ;
 - `sources.md` : registre et matrice des sources ;
