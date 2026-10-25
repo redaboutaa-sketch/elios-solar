@@ -100,7 +100,8 @@ const productShot = (items: PublishedMedia[]) => items.find((m) => m.role === "g
 export async function SystemCollection({ category, items, drafts = [] }: { category: CategoryKey; items: Item[]; drafts?: Array<{ slug: string; name: string; shortDescription: string }> }) {
   const cat = categoryByKey(category)!;
   const shots = new Map(await Promise.all(items.map(async (f) => [f.slug, productShot(await publishedMediaFor(f.slug))] as const)));
-  const banner = items[0]?.hero ?? null;
+  // bandeau pleine largeur : seulement une image assez grande (jamais une miniature agrandie) ; sinon fond uni + dessin
+  const banner = items.map((f) => f.hero).find((h) => h && (h.width ?? 0) >= 1400) ?? null;
   return (
     <>
       <section className="relative isolate overflow-hidden bg-night text-white" aria-labelledby="famille-titre">
