@@ -83,7 +83,7 @@ Casablanca, Corsica, Jamaica, Madera ; MoskiFold, MoskiFold 2, MoskiUp, MoskiSli
 7. ✅ Stripe : Checkout dynamique (moyens éligibles), virement, Alma/PayPal/Bancontact selon le compte, webhooks (succès, refus,
    asynchrone, expiration, tardif, remboursements, virement partiel), paiement d'un devis approuvé ; secrets absents → procédure.
 8. ✅ Guides : documents par modèle et version, guides de mesure (4 familles), report des mesures ; page Références (2 catégories).
-9. 🔄 Contrôles (typecheck, lint, unitaires, intégration, build, e2e 390/768/1440), sauvegarde, déploiement, CI, compte rendu.
+9. ✅ Contrôles (typecheck, lint, unitaires, intégration, build, e2e 390/768/1440), sauvegarde, déploiement, CI, compte rendu.
 
 Restent ⛔ (dépendances externes, détail dans `docs/heliostores/iteration-2026-10-25.md` § 2) : correspondance des
 moustiquaires, données fournisseur manquantes, tarifs des nouveaux modèles et des options, orange de marque, photos de

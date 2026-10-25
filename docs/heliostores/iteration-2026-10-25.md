@@ -54,7 +54,15 @@ Statuts : **livré** (codé, testé, déployé) · **partiel** (livré avec une 
     webhook au niveau du proxy de préproduction (décision d'exploitation) ; entité vendeuse et documents commerciaux
     avant toute bascule réelle.
 
-## 3. Contrôles
+## 3. Contrôles (2026-10-25)
 
-Voir le compte rendu de livraison (PR #2) : typage, lint, unitaires, intégration, build Docker, recette navigateur
-(390 / 768 / 1440 px) en dev et contre la préproduction, CI.
+| Contrôle | Résultat |
+|---|---|
+| Typage, lint | OK (0 erreur, 2 avertissements existants) |
+| Tests unitaires | 245 / 245 |
+| Tests d'intégration | 97 / 97 (dont parcours Stripe différés et tardifs, paiement de devis) |
+| Build Docker | OK |
+| Recette navigateur en dev (1440 + 390, une campagne, sans relance) | 67 réussis, 2 échecs, 4 ignorés (écritures Tarifs sur mobile, voulu) ; les 2 échecs (libellé monétaire du paiement de devis) corrigés, spec rejouée : 7 / 7 |
+| Recette HTTPS contre la préproduction | 63 réussis, 6 échecs, 4 ignorés : les 6 échecs sont `13-anti-force-brute` (le proxy remplace l'adresse IP que le test fait varier ⇒ 429 plus tôt ; la protection fonctionne ; spec verte dans le job CI e2e-docker) |
+| Captures 390 / 768 / 1440 px en préproduction | accueil, Pergolas, Stores bannes, Moustiquaires, configurateur Sevilla, fiche Madera |
+| Préproduction | authentifiée (401 sans identifiants), `robots.txt` Disallow, administrateur de recette supprimé, aucune grille de test active, aucun guide publié |
