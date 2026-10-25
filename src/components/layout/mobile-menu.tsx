@@ -44,7 +44,7 @@ export function MobileMenu({ categories = [], services = [] }: { categories?: Re
         <div id={id} ref={panel} className="absolute inset-x-0 top-full z-50 h-[calc(100dvh-var(--header-h))] overflow-y-auto overscroll-contain border-t border-sand-200 bg-sand-50 text-ink animate-sheet-in">
           <nav aria-label="Navigation mobile" className="container-x flex flex-col py-5 pb-24">
             <p className="eyebrow">Choisir une famille</p>
-            <ul className="mt-3 grid grid-cols-3 gap-2">
+            <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {categories.map((c) => (
                 <li key={c.key}>
                   <Link replace href={c.href} onClick={close} className="sketch-trigger flex h-full flex-col items-center rounded-xl border border-sand-200 bg-white p-2 text-center text-sm font-semibold hover:border-brand-700 focus-visible:border-brand-700">

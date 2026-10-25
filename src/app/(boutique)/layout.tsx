@@ -1,6 +1,7 @@
 import { AttributionCapture } from "@/components/analytics/attribution";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { SiteSidebar } from "@/components/layout/site-sidebar";
 import { CookieBanner, ConsentGatedScript } from "@/components/consent/cookie-banner";
 import { getSession } from "@/lib/session";
 import { getGuestKey } from "@/server/guest";
@@ -18,7 +19,10 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
   return (
     <>
       <Header cartCount={cart?.lines.reduce((s, l) => s + l.qty, 0) ?? 0} signedIn={!!session} isAdmin={role === "ADMIN" || role === "MANAGER"} categories={categories} phone={settings?.phone ?? null} />
-      <main id="contenu" tabIndex={-1} className="flex-1 focus:outline-none">{children}</main>
+      <div className="site-frame flex-1 lg:grid lg:grid-cols-[auto_minmax(0,1fr)]">
+        <SiteSidebar categories={categories} />
+        <main id="contenu" tabIndex={-1} className="min-w-0 focus:outline-none">{children}</main>
+      </div>
       <Footer settings={settings} categories={categories} />
       <CookieBanner analyticsAvailable={!!analyticsSrc} />
       <ConsentGatedScript src={analyticsSrc} />

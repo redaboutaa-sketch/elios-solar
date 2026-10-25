@@ -37,6 +37,19 @@ export async function publicDocumentsForFamily(familyId: string): Promise<Public
   return latestPerGroup(rows).map(flatten);
 }
 
+/**
+ * Bibliothèque publique (rubrique Guides) : documents PUBLIÉS d'audience PUBLIC, dernière version de chaque groupe,
+ * rattachés à un modèle du catalogue actuel. Aucun document n'est affiché s'il n'a pas été publié dans l'administration.
+ */
+export async function publicDocumentsLibrary(): Promise<PublicDocument[]> {
+  const rows = await prisma.document.findMany({
+    where: { status: "PUBLISHED", audience: "PUBLIC", family: { legacy: false, category: { not: null }, status: { in: ["PUBLISHED", "QUOTE_ONLY"] } } },
+    include: { media: { select: { path: true, externalUrl: true } }, family: { select: { name: true, slug: true } } },
+    orderBy: [{ kind: "asc" }, { title: "asc" }, { version: "desc" }],
+  });
+  return latestPerGroup(rows).map(flatten);
+}
+
 /** Familles (identifiants) présentes dans les commandes d'un client : par SKU de ligne, puis par instantané de configuration. */
 export async function familyIdsOrderedBy(userId: string): Promise<string[]> {
   const lines = await prisma.orderLine.findMany({ where: { order: { userId } }, select: { sku: true, configurationSnapshot: true } });

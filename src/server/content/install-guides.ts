@@ -40,10 +40,10 @@ export interface InstallGuide {
 }
 
 const RIVIERA: InstallGuide = {
-  slug: "helio-riviera-installation",
-  familySlug: "helio-riviera",
-  title: "HELIO Riviera — guide d'installation",
-  summary: "Préparer, poser et contrôler un store banne HELIO Riviera : étapes de la notice officielle, points de contrôle et consignes de sécurité.",
+  slug: "casablanca-installation",
+  familySlug: "casablanca",
+  title: "Casablanca — guide d'installation",
+  summary: "Préparer, poser et contrôler un store banne Casablanca : étapes de la notice officielle, points de contrôle et consignes de sécurité.",
   officialDocs: [
     { title: "Documentation technique et d'utilisation du store (instructions de montage, d'utilisation et de sécurité), éd. 5, juin 2019", pages: "29 p.", note: "notice officielle de référence pour la pose" },
     { title: "Notice d'utilisation et d'entretien des stores de terrasse et de balcon", pages: "20 p.", note: "générique ; ne contient pas d'étapes de montage" },
@@ -169,10 +169,10 @@ const RIVIERA: InstallGuide = {
 };
 
 const OMBRA: InstallGuide = {
-  slug: "helio-ombra-installation",
-  familySlug: "helio-ombra",
-  title: "HELIO Ombra — guide d'installation",
-  summary: "Préparer, poser et contrôler un screen HELIO Ombra : étapes de la notice officielle, raccordement à confier à un électricien, consignes de sécurité.",
+  slug: "helioscreen-installation",
+  familySlug: "helioscreen",
+  title: "HelioScreen — guide d'installation",
+  summary: "Préparer, poser et contrôler un screen HelioScreen : étapes de la notice officielle, raccordement à confier à un électricien, consignes de sécurité.",
   officialDocs: [
     { title: "Documentation technique et d'utilisation des screens à coulisses (instructions de montage, d'utilisation et de sécurité), éd. 7, janvier 2022", pages: "33 p.", note: "notice officielle de référence ; seules les sections du modèle 120 standard sont reprises" },
     { title: "Manuel d'utilisation et d'entretien des screens", pages: "20 p.", note: "générique ; ne contient pas d'étapes de montage" },
@@ -273,8 +273,11 @@ const pending = (slug: string, familySlug: string, name: string, have: string[],
 export const INSTALL_GUIDES: InstallGuide[] = [
   RIVIERA,
   OMBRA,
-  pending("helio-horizon-installation", "helio-horizon", "HELIO Horizon", ["Documentation du kit d'éclairage LED (valable pour ce modèle)"], ["Notice de montage du modèle standard (la notice disponible concerne un modèle voisin : applicabilité à confirmer par écrit par le fournisseur)."]),
-  pending("helio-panorama-installation", "helio-panorama", "HELIO Panorama", ["Documentation du kit d'éclairage LED (valable pour ce modèle)"], ["Notice de montage du modèle : aucune n'est disponible chez le fabricant à ce jour."]),
+  pending("malaga-installation", "malaga", "Malaga", ["Documentation technique et d'utilisation du modèle (édition 2025, français)"], ["Notice graphique de montage : document séparé, non publié par le fabricant."]),
+  pending("marbella-installation", "marbella", "Marbella", ["Notice de montage du modèle (français, état au 2026-01-01)", "Notice d'utilisation et d'entretien (français)"], ["Synthèse à rédiger à partir de la notice de montage, puis validation technique."]),
+  pending("sevilla-installation", "sevilla", "Sevilla", ["Documentation technique du modèle (français, 2021)"], ["Notice de montage graphique et notice d'utilisation propres au modèle."]),
+  pending("helioroof-screen-installation", "helioroof-screen", "HelioRoof Screen", ["Documentation technique du store de toiture (français, 2020)"], ["Synthèse à rédiger et validation technique ; confirmation du modèle (un ou deux moteurs)."]),
+  pending("madera-installation", "madera", "Madera", ["Notice de montage du modèle (français, 2026)"], ["Synthèse à rédiger et validation technique."]),
 ];
 
 export const installGuide = (slug: string) => INSTALL_GUIDES.find((g) => g.slug === slug);

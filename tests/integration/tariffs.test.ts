@@ -42,8 +42,8 @@ async function xlsx(amounts: number[]): Promise<Uint8Array> {
 }
 
 const unknown = { enabled: true, nature: "UNKNOWN" as const, currency: null, taxBasis: "UNKNOWN" as const };
-// le bloc détecté (« VERANDA FTS », produit en brouillon) est rattaché à une variante de test d'HELIO Horizon
-const mapping = { [groupId("helio-verriere", "")]: { familySlug: "helio-horizon", variantKey: VARIANT, dimAKey: "projection" as const } };
+// le bloc détecté (« VERANDA FTS », produit en brouillon) est rattaché à une variante de test de Marbella
+const mapping = { [groupId("helio-verriere", "")]: { familySlug: "marbella", variantKey: VARIANT, dimAKey: "projection" as const } };
 const saleParams = (over: Partial<GridParamsInput> = {}): GridParamsInput => ({ nature: "SALE", natureNote: "test", currency: "EUR", taxBasis: "HT", vatRateBps: 2000, clientele: "ALL", dimRule: "EXACT", dimRuleNote: "", validFrom: null, validTo: null, scopeNote: "", included: "", excluded: "", notes: "", zeroConfirmed: false, ...over });
 const rev = async (id: string) => (await getGrid(id)).revision;
 
@@ -73,7 +73,7 @@ describe("grilles depuis un import", () => {
     const sale = r1.created.find((c) => c.sourceKey.endsWith(":PRIX_FINAL"))!;
     saleId = sale.id;
     const g = await getGrid(saleId);
-    expect(g).toMatchObject({ scope: "GRID", status: "DRAFT", familySlug: "helio-horizon", variantKey: VARIANT, nature: "UNKNOWN", currency: null, taxBasis: "UNKNOWN", dimRule: "EXACT", originListId: importId });
+    expect(g).toMatchObject({ scope: "GRID", status: "DRAFT", familySlug: "marbella", variantKey: VARIANT, nature: "UNKNOWN", currency: null, taxBasis: "UNKNOWN", dimRule: "EXACT", originListId: importId });
     const rows = await prisma.supplierPriceRow.findMany({ where: { listId: saleId }, orderBy: { widthMinMm: "asc" } });
     expect(rows.map((r) => [r.dimAmm, r.widthMaxMm, r.dimAKey])).toEqual([[1500, 1000, "projection"], [1500, 1250, "projection"], [1500, 1500, "projection"]]);
     expect(rows[0]!.sourceRef).toMatch(/synthetique\.xlsx › VERANDA FTS!F5/);
@@ -116,7 +116,7 @@ describe("grilles depuis un import", () => {
     const p = await publishGrid(saleId, await rev(saleId), {}, ACTOR);
     expect(p.scheduled).toBe(false);
     const { tables } = await loadPublicSystemPrices();
-    const t = tables.get("helio-horizon")!;
+    const t = tables.get("marbella")!;
     expect(t.variants?.[VARIANT]).toMatchObject({ currency: "EUR", taxBasis: "HT", dimRule: "exact", vatRateBps: 2000, versionId: saleId });
     expect(t.cells.filter((c) => c.variantKey === VARIANT)).toHaveLength(4);
     // la colonne source (coût) du même import n'est jamais chargée
@@ -138,7 +138,7 @@ describe("grilles depuis un import", () => {
     // b a été créé avant la publication de a : obsolète
     await expect(publishGrid(b.id, await rev(b.id), {}, ACTOR)).rejects.toThrow(/obsolète/);
     // avant la date : la version précédente reste en vigueur ; à la date : la nouvelle (la précédente a reçu une fin de validité)
-    const priceAt = async (d: Date) => (await loadPublicSystemPrices(d)).tables.get("helio-horizon")?.cells.find((c) => c.variantKey === VARIANT && c.dimAmm === 1500 && c.widthMaxMm === 1000)?.amountMinor;
+    const priceAt = async (d: Date) => (await loadPublicSystemPrices(d)).tables.get("marbella")?.cells.find((c) => c.variantKey === VARIANT && c.dimAmm === 1500 && c.widthMaxMm === 1000)?.amountMinor;
     expect(await priceAt(new Date())).toBe(3_371_245);
     expect(await priceAt(new Date(future.getTime() + 60_000))).toBe(3_380_000);
     expect((await getGrid(saleId)).validTo?.getTime()).toBe(future.getTime());
@@ -154,11 +154,11 @@ describe("grilles depuis un import", () => {
 
 describe("devis déjà émis", () => {
   it("une nouvelle version publiée ne modifie pas un devis émis ; une nouvelle évaluation prend le nouveau prix", async () => {
-    const grid = await publishTestGrids([{ familySlug: "helio-horizon", variantKey: "murale", dimAmm: 5000, widthMinMm: 4000, widthMaxMm: 4000, amountMinor: 1_111_111 }]);
+    const grid = await publishTestGrids([{ familySlug: "marbella", variantKey: "murale", dimAmm: 5000, widthMinMm: 4000, widthMaxMm: 4000, amountMinor: 1_111_111 }]);
     try {
       invalidateCatalogCache();
-      const fam = (await loadCatalog({ fresh: true })).families.find((f) => f.slug === "helio-horizon")!;
-      const input: SystemInput = { ...defaultSystemInput("helio-horizon", fam.systemRules as SystemRules), widthMm: 4000, depthMm: 5000, mounting: "wall" };
+      const fam = (await loadCatalog({ fresh: true })).families.find((f) => f.slug === "marbella")!;
+      const input: SystemInput = { ...defaultSystemInput("marbella", fam.systemRules as SystemRules), widthMm: 4000, depthMm: 5000, mounting: "wall" };
       const r1 = await evaluateInput(input);
       expect(r1.systemPrice?.amountMinor).toBe(1_111_111);
       const q = await createQuote({ kind: "system", firstName: "Test", lastName: "Tarifs", email: `tarifs-${TAG}@test.invalid`, input, result: r1 }, { userId: null, guestKey: TAG });
@@ -186,7 +186,7 @@ describe("téléversement depuis l'administration", () => {
     const bytes = await xlsx([12_345.67, 23_456.78, 34_567.89]);
     const up = await createUpload([{ name: "nouveau.xlsx", bytes }], ACTOR);
     uploads.push(up.id);
-    await prisma.priceImportUpload.update({ where: { id: up.id }, data: { mapping: { groups: { [groupId("helio-verriere", "")]: { familySlug: "helio-horizon", variantKey: `${VARIANT}-b`, dimAKey: "projection" } }, columns: { PRIX_FINAL: unknown, PRIX_SOURCE: { ...unknown, enabled: false } } } } });
+    await prisma.priceImportUpload.update({ where: { id: up.id }, data: { mapping: { groups: { [groupId("helio-verriere", "")]: { familySlug: "marbella", variantKey: `${VARIANT}-b`, dimAKey: "projection" } }, columns: { PRIX_FINAL: unknown, PRIX_SOURCE: { ...unknown, enabled: false } } } } });
     const p = await previewUpload(up.id);
     expect(p.groups).toHaveLength(1);
     expect(p.changes.find((c) => c.role === "PRIX_FINAL")).toMatchObject({ previous: null, added: 3 });

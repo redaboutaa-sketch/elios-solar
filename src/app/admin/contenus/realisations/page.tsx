@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { PUBLIC_SECTIONS } from "@/config/brand";
 import { requireRole } from "@/lib/session";
 import type { Realisation } from "@/generated/prisma/client";
 import { Flash, PageTitle, Section, StatusBadge } from "@/components/admin/ui";
@@ -19,7 +18,9 @@ function RealisationForm({ r, kind, families, medias }: { r: (Realisation & { me
       {r && <input type="hidden" name="id" value={r.id} />}
       <input type="hidden" name="kind" value={r?.kind ?? kind} />
       <div><label className="label" htmlFor={`${p}-t`}>Titre</label><input id={`${p}-t`} name="title" required maxLength={160} className="input" defaultValue={r?.title ?? ""} /></div>
-      <div><label className="label" htmlFor={`${p}-l`}>Lieu</label><input id={`${p}-l`} name="location" maxLength={160} className="input" defaultValue={r?.location ?? ""} /></div>
+      <div><label className="label" htmlFor={`${p}-l`}>Localisation</label><input id={`${p}-l`} name="location" maxLength={160} className="input" defaultValue={r?.location ?? ""} /><label className="mt-1 flex items-center gap-2 text-xs"><input type="checkbox" name="locationPublic" className="h-4 w-4" defaultChecked={r?.locationPublic ?? false} /> Localisation publiable (accord obtenu)</label></div>
+      <div><label className="label" htmlFor={`${p}-cr`}>Crédit photo</label><input id={`${p}-cr`} name="credit" maxLength={200} className="input" defaultValue={r?.credit ?? ""} /></div>
+      <div><label className="label" htmlFor={`${p}-au`}>Autorisation de publication (requise pour publier)</label><input id={`${p}-au`} name="authorization" maxLength={500} className="input" placeholder="ex. accord écrit du client du …" defaultValue={r?.authorization ?? ""} />{r?.authorizedAt ? <p className="mt-1 text-xs text-stone-700">Renseignée le {r.authorizedAt.toLocaleDateString("fr-FR")}</p> : null}</div>
       <div className="md:col-span-2"><label className="label" htmlFor={`${p}-c`}>Légende publique de la photo</label><input id={`${p}-c`} name="caption" maxLength={300} className="input" defaultValue={r?.caption ?? ""} /></div>
       {(r?.kind ?? kind) === "PRODUCTION" && <div className="md:col-span-2"><label className="label" htmlFor={`${p}-pn`}>Site de production (ex. « usine d'un partenaire fabricant ») — obligatoire pour une photo de partenaire</label><input id={`${p}-pn`} name="partnerNote" maxLength={300} className="input" defaultValue={r?.partnerNote ?? ""} /></div>}
       <div className="md:col-span-2"><label className="label" htmlFor={`${p}-d`}>Description</label><textarea id={`${p}-d`} name="description" rows={3} className="input" defaultValue={r?.description ?? ""} /></div>
@@ -47,7 +48,7 @@ export default async function RealisationsPage(props: PageProps<"/admin/contenus
     <div className="space-y-6">
       <PageTitle title="Réalisations et production" />
       <p className="text-sm text-stone-700">Deux ensembles distincts : les <strong>réalisations</strong> sont des projets réellement installés par HELIOSTORES (produit, contexte, localisation publiable) ; la <strong>production</strong> montre fabrication, matériaux, assemblage et contrôle qualité, en nommant le site comme tel s'il appartient à un partenaire. Un visuel du fournisseur ne peut pas être publié comme réalisation ; un emplacement à compléter ou une démonstration ne peut pas être publié.</p>
-      {!PUBLIC_SECTIONS.realisations && <p className="mb-4 rounded-lg border border-warning/40 bg-warning/5 px-4 py-3 text-sm text-warning" data-testid="section-hidden">Rubrique masquée sur le site public (page en 404) tant qu'aucun contenu réel et autorisé n'est fourni. Les fiches restent modifiables ici.</p>}
+      <p className="mb-4 rounded-lg border border-sand-300 bg-white px-4 py-3 text-sm" data-testid="section-hidden">Page publique « Références » : chaque catégorie affiche seulement les fiches publiées ; tant qu'aucune n'est publiée, la page l'indique honnêtement (aucun faux projet). Publication refusée sans photo, sans autorisation, sans produit (réalisation), ou pour un visuel du fournisseur présenté comme réalisation.</p>
       <Flash searchParams={props.searchParams} />
       {(["REALISATION", "PRODUCTION"] as const).map((kind) => (
         <div key={kind} className="space-y-4" data-testid={`set-${kind}`}>

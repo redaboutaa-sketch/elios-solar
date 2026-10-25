@@ -40,3 +40,23 @@ export async function updateQuoteAction(formData: FormData) {
   });
   back(`/admin/devis/${quote.id}`, mailed ? "Devis mis à jour, e-mail envoyé au client (file d'attente)." : "Devis mis à jour.");
 }
+
+/** Ouvre le paiement en ligne d'un devis accepté (commande au montant TTC du devis). */
+export async function openQuotePaymentAction(formData: FormData) {
+  const { session } = await assertRole(["ADMIN", "MANAGER"]);
+  const quoteId = String(formData.get("quoteId") ?? "");
+  const vat = Number(String(formData.get("vatRate") ?? "").replace(",", "."));
+  const path = `/admin/devis/${encodeURIComponent(quoteId)}`;
+  if (!Number.isFinite(vat)) back(path, "Indiquez le taux de TVA du devis.", "err");
+  const { createOrderFromQuote } = await import("@/server/order/quote-order");
+  const { OrderError } = await import("@/server/order/service");
+  let r: Awaited<ReturnType<typeof createOrderFromQuote>>;
+  try {
+    r = await createOrderFromQuote(quoteId, { vatRateBps: Math.round(vat * 100), label: String(formData.get("label") ?? "").slice(0, 120) || undefined });
+  } catch (e) {
+    if (e instanceof OrderError) back(path, e.message, "err");
+    throw e;
+  }
+  await audit({ ...actorOf(session), action: "quote.payment_opened", entity: "Quote", entityId: quoteId, after: { orderId: r.order.id, totalCents: r.order.totalCents, created: r.created } });
+  back(path, r.created ? `Paiement ouvert : commande ${r.order.number}. Lien à transmettre au client : /commande/${r.order.id}/payer` : `Paiement déjà ouvert : commande ${r.order.number} (/commande/${r.order.id}/payer).`);
+}

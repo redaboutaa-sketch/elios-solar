@@ -9,8 +9,8 @@
  */
 import type { DeliveryInput, Issue, RecapItem, SideKey } from "./types";
 
-export type SystemType = "pergola" | "screen" | "awning" | "roof_blind";
-export type SystemMounting = "wall" | "freestanding" | "niche" | "facade" | "ceiling" | "rafter";
+export type SystemType = "pergola" | "screen" | "awning" | "roof_blind" | "insect_screen";
+export type SystemMounting = "wall" | "freestanding" | "niche" | "facade" | "ceiling" | "rafter" | "roof" | "frame" | "reveal";
 
 /** Référence publiable d'une source : document ou page, et localisation (page, tableau, URL). */
 export interface SourceRef {
@@ -92,6 +92,23 @@ export interface OptionDef extends Choice {
   qtyNote?: string;
   /** tarif : « quote » (devis) tant qu'aucun prix d'option n'est validé */
   pricing?: "quote" | "validated";
+  /**
+   * Souhait exprimé pour le devis : l'équipement existe chez le fabricant, mais sa compatibilité avec ce modèle n'est pas
+   * confirmée par une source. Jamais présenté comme compatible ni inclus ; toujours étudié au devis.
+   */
+  wish?: boolean;
+  /** élément représenté par la visualisation du projet lorsqu'il est choisi */
+  visual?: "led_perimeter" | "led_spots" | "led_cassette" | "led_arms" | "wind_sensor" | "remote" | "box";
+}
+
+/** Taille fabriquée d'un produit prêt à poser (le modèle n'existe que dans ces dimensions). */
+export interface FixedSize {
+  code: string;
+  label: string;
+  widthMm: number;
+  depthMm?: number;
+  heightMm?: number;
+  sources: SourceRef[];
 }
 
 /** Niveau commercial d'un même modèle (pack d'équipements), ou renvoi vers un autre modèle physique. */
@@ -153,6 +170,19 @@ export interface SystemRules {
   /** niveaux commerciaux (packs d'un même modèle) */
   packs?: PackDef[];
   wind?: WindBehaviour;
+  /**
+   * Produit prêt à poser : seules ces tailles sont fabriquées. Le configurateur propose la liste (pas de curseur libre) ;
+   * une autre dimension est une demande hors gamme, étudiée au devis et signalée comme telle.
+   */
+  fixedSizes?: FixedSize[];
+  /** protection de la toile repliée (stores bannes) : texte public sourcé, pour le comparatif */
+  protection?: { label: string; level: "none" | "semi" | "full"; status: "established" | "to_confirm"; sources: SourceRef[] };
+  /** pergola : toiture à lames orientables ou toile (V ZiiiP) ; absent = lames */
+  roof?: "louvres" | "fabric";
+  /** moustiquaire : principe d'ouverture documenté et nombre de vantaux */
+  insect?: { opening: "roller_vertical" | "roller_lateral" | "pleated" | "sliding" | "fixed" | "hinged"; leaves?: 1 | 2; sources: SourceRef[] };
+  /** nombre de bras ou de supports selon la largeur (documenté) : `upToMm` croissants */
+  supports?: { label: string; rows: Array<{ upToMm: number; count: number }>; sources: SourceRef[] };
 }
 
 export interface SystemOptionChoice {
@@ -175,8 +205,10 @@ export interface SystemInput {
   fabricCode?: string;
   controlCode?: string;
   options: SystemOptionChoice[];
-  /** niveau commercial choisi (pack), s'il en existe */
+  /** niveau commercial choisi (pack), s'il en existe — conservé pour les anciennes configurations */
   packCode?: string;
+  /** produit prêt à poser : taille fabriquée choisie, ou « custom » (demande hors gamme, devis) */
+  sizeCode?: string;
   /** pergola : fermeture latérale souhaitée par côté (slug de la famille), étudiée au devis */
   sides?: Partial<Record<SideKey, string | null>>;
   /** pergola : installation en plusieurs modules souhaitée */
@@ -193,7 +225,25 @@ export const MOUNTING_FR: Record<SystemMounting, string> = {
   facade: "en façade",
   ceiling: "au plafond",
   rafter: "sur chevrons",
+  roof: "sur toiture (véranda ou pergola)",
+  frame: "en applique sur le dormant",
+  reveal: "dans l'embrasure",
 };
+
+/** Code d'une demande hors gamme sur un produit prêt à poser. */
+export const CUSTOM_SIZE = "custom";
+
+/** Taille fabriquée retenue (null = hors gamme ou modèle à la cote). */
+export function fixedSizeOf(rules: SystemRules, input: Pick<SystemInput, "sizeCode">): FixedSize | null {
+  if (!rules.fixedSizes?.length || !input.sizeCode || input.sizeCode === CUSTOM_SIZE) return null;
+  return rules.fixedSizes.find((s) => s.code === input.sizeCode) ?? null;
+}
+
+/** Nombre de bras / supports documenté pour une largeur (null = non documenté). */
+export function supportsFor(rules: SystemRules, widthMm: number): number | null {
+  const row = rules.supports?.rows.find((r) => widthMm <= r.upToMm);
+  return row?.count ?? null;
+}
 
 const fmtM = (mm: number) => `${(mm / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 3 })} m`;
 
@@ -229,12 +279,13 @@ export function defaultSystemInput(familySlug: string, rules: SystemRules): Syst
     familySlug,
     widthMm: mid(d.width),
     depthMm: d.depth ? mid(d.depth) : undefined,
-    heightMm: d.height ? Math.min(d.height.maxMm, rules.type === "pergola" ? 2500 : 2200) : undefined,
+    heightMm: d.height ? Math.max(d.height.minMm ?? 0, Math.min(d.height.maxMm, rules.type === "pergola" ? 2500 : rules.type === "insect_screen" ? 2200 : 2200)) : undefined,
     mounting: rules.mountings[0]!.code,
     finishCode: rules.finishes[0]!.code,
     fabricCode: rules.fabrics?.[0]?.code,
     controlCode: rules.controls?.[0]?.code,
     packCode: rules.packs?.find((p) => !p.familySlug && p.controlKinds.includes(rules.controls?.[0]?.kind ?? "manual"))?.code,
+    ...(rules.fixedSizes?.length ? { sizeCode: rules.fixedSizes[0]!.code, widthMm: rules.fixedSizes[0]!.widthMm, depthMm: rules.fixedSizes[0]!.depthMm ?? (d.depth ? mid(d.depth) : undefined), heightMm: rules.fixedSizes[0]!.heightMm ?? (d.height ? Math.min(d.height.maxMm, 2500) : undefined) } : {}),
     options: [],
     sides: {},
     installation: "self",
@@ -289,9 +340,30 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
     }
   };
 
-  checkDim(rules.dims.width, input.widthMm, "widthMm", true);
-  if (rules.dims.depth) checkDim(rules.dims.depth, input.depthMm, "depthMm", true);
-  if (rules.dims.height) checkDim(rules.dims.height, input.heightMm, "heightMm", rules.type === "screen");
+  const custom = input.sizeCode === CUSTOM_SIZE;
+  const fixed = fixedSizeOf(rules, input);
+  if (custom) {
+    // demande hors gamme : cotes libres (entiers positifs, plafond de saisie), jamais fabricables en ligne
+    const cap = (r: DimRule) => Math.max(r.maxMm * 3, 20000);
+    const sane = (r: DimRule, v: number | undefined, path: string, required: boolean) => {
+      if (v == null) { if (required) add({ code: "dimension_missing", severity: "blocking", message: `${r.label} : valeur requise.`, path }); return; }
+      if (!Number.isInteger(v) || v <= 0 || v > cap(r)) add({ code: "dimension_invalid", severity: "blocking", message: `${r.label} : saisissez une valeur en millimètres.`, path });
+    };
+    sane(rules.dims.width, input.widthMm, "widthMm", true);
+    if (rules.dims.depth) sane(rules.dims.depth, input.depthMm, "depthMm", true);
+    if (rules.dims.height) sane(rules.dims.height, input.heightMm, "heightMm", rules.type === "screen" || rules.type === "insect_screen");
+    add({ code: "out_of_range_request", severity: "review", message: rules.fixedSizes?.length ? "Demande hors gamme : ce modèle est fabriqué dans des tailles définies ; votre dimension est étudiée au devis, sans garantie de fabrication." : "Demande hors gamme : vos cotes sont étudiées au devis, sans garantie de fabrication.", path: "sizeCode", quoteSuggested: true });
+  } else if (rules.fixedSizes?.length) {
+    if (!input.sizeCode) add({ code: "size_missing", severity: "blocking", message: "Choisissez une taille fabriquée, ou demandez une étude hors gamme.", path: "sizeCode" });
+    else if (!fixed) add({ code: "size_unavailable", severity: "blocking", message: "Taille non proposée pour ce modèle.", path: "sizeCode" });
+    else if (input.widthMm !== fixed.widthMm || (fixed.depthMm != null && input.depthMm !== fixed.depthMm) || (fixed.heightMm != null && input.heightMm !== fixed.heightMm)) {
+      add({ code: "size_mismatch", severity: "blocking", message: `Taille ${fixed.label} : les dimensions saisies ne correspondent pas à la taille fabriquée.`, path: "widthMm" });
+    }
+  } else {
+    checkDim(rules.dims.width, input.widthMm, "widthMm", true);
+    if (rules.dims.depth) checkDim(rules.dims.depth, input.depthMm, "depthMm", true);
+    if (rules.dims.height) checkDim(rules.dims.height, input.heightMm, "heightMm", rules.type === "screen" || rules.type === "insect_screen");
+  }
 
   if (rules.depthWidthMin && input.depthMm != null) {
     const c = rules.depthWidthMin.find((x) => x.depthMm === input.depthMm);
@@ -339,7 +411,8 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
       spots = spotsFor(def.spotTable, input.depthMm, input.widthMm);
       if (spots == null) add({ code: "spots_out_of_table", severity: "review", message: `${def.label} : dimensions hors du tableau de la fiche — nombre de points confirmé au devis.`, path, quoteSuggested: true });
     }
-    if (def.status === "to_confirm") add({ code: "option_to_confirm", severity: "review", message: `${def.label} : ${def.note ?? "à confirmer au devis"}.`, path, quoteSuggested: true });
+    if (def.wish) add({ code: "option_wish", severity: "review", message: `${def.label} : souhait noté pour le devis — compatibilité avec ce modèle non confirmée${def.note ? ` (${def.note})` : ""}.`, path, quoteSuggested: true });
+    else if (def.status === "to_confirm") add({ code: "option_to_confirm", severity: "review", message: `${def.label} : ${def.note ?? "à confirmer au devis"}.`, path, quoteSuggested: true });
     if ((def.requiresControlKind && control?.kind !== def.requiresControlKind) || (def.requiresControls?.length && (!control || !def.requiresControls.includes(control.code)))) {
       add({ code: "option_requires_control", severity: "blocking", message: `${def.label} : ${def.prerequisite ?? "nécessite une commande motorisée compatible"}.`, path });
     }
@@ -389,6 +462,8 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
   /* Récapitulatif */
   const d = rules.dims;
   recap.push({ label: "Produit", value: familyName });
+  if (fixed) recap.push({ label: "Taille", value: fixed.label });
+  if (custom) recap.push({ label: "Taille", value: "demande hors gamme (étude au devis)", status: "to_confirm" });
   recap.push({ label: d.width.label, value: Number.isInteger(input.widthMm) ? fmtM(input.widthMm) : "—" });
   if (d.depth) recap.push({ label: d.depth.label, value: input.depthMm != null ? fmtM(input.depthMm) : "—" });
   if (d.height) recap.push({ label: d.height.label, value: input.heightMm != null ? fmtM(input.heightMm) : "à préciser au relevé", status: input.heightMm == null ? "to_confirm" : undefined });
@@ -397,13 +472,15 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
   if (fabric) recap.push({ label: "Toile", value: fabric.label, status: fabric.status === "to_confirm" ? "to_confirm" : undefined });
   if (pack) recap.push({ label: "Niveau", value: pack.label, status: pack.status === "to_confirm" ? "to_confirm" : undefined });
   if (control) recap.push({ label: "Commande", value: control.label, status: control.status === "to_confirm" ? "to_confirm" : undefined });
+  const supports = rules.supports && Number.isInteger(input.widthMm) ? supportsFor(rules, input.widthMm) : null;
+  if (rules.supports) recap.push({ label: rules.supports.label, value: supports != null ? String(supports) : "établi au devis", status: supports == null ? "to_confirm" : undefined });
   for (const inc of rules.included) recap.push({ label: "Inclus", value: inc.label, status: inc.status === "to_confirm" ? "to_confirm" : "included" });
   for (const o of input.options) {
     const def = rules.options.find((x) => x.code === o.code);
     if (!def) continue;
     const val = def.values?.find((v) => v.code === o.value)?.label;
     const extra = def.spotTable ? (spots != null ? ` — ${spots} points selon dimensions` : " — nombre de points à confirmer") : "";
-    recap.push({ label: "Option", value: `${def.label}${def.maxQty != null ? ` × ${o.qty ?? 1}` : ""}${val ? ` (${val})` : ""}${extra}`, status: def.status === "to_confirm" ? "to_confirm" : "option" });
+    recap.push({ label: def.wish ? "Souhait" : "Option", value: `${def.label}${def.maxQty != null ? ` × ${o.qty ?? 1}` : ""}${val ? ` (${val})` : ""}${extra}${def.wish ? " (étude au devis)" : ""}`, status: def.wish || def.status === "to_confirm" ? "to_confirm" : "option" });
   }
   if (rules.type === "pergola") {
     for (const [side, slug] of Object.entries(input.sides ?? {})) {

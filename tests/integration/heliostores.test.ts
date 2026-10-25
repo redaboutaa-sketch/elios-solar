@@ -39,10 +39,10 @@ async function systemInput(slug: string, over: Partial<SystemInput> = {}): Promi
 }
 
 describe("catalogue HELIOSTORES en base", () => {
-  it("navigation : exactement Pergolas, Screens, Stores bannes, sans ancien produit ni brouillon", async () => {
+  it("navigation : les quatre familles et leurs modèles actuels, sans modèle retiré ni brouillon", async () => {
     const nav = await publicNavigation();
-    expect(nav.map((c) => c.label)).toEqual(["Pergolas", "Screens", "Stores bannes"]);
-    expect(nav.flatMap((c) => c.items.map((i) => i.slug))).toEqual(["helio-horizon", "helio-panorama", "helio-ombra", "helio-riviera"]);
+    expect(nav.map((c) => c.label)).toEqual(["Pergolas", "Screens", "Stores bannes", "Moustiquaires"]);
+    expect(nav.flatMap((c) => c.items.map((i) => i.slug))).toEqual(["malaga", "marbella", "sevilla", "helioscreen", "helioroof-screen", "casablanca", "corsica", "jamaica", "madera", "moskifold", "moskifold-2"]);
   });
 
   it("l'ancien catalogue est conservé (historique) mais marqué legacy, hors famille publique", async () => {
@@ -53,7 +53,7 @@ describe("catalogue HELIOSTORES en base", () => {
   });
 
   it("seed idempotent : statut décidé en administration et confirmation fournisseur jamais écrasés", async () => {
-    const fam = await prisma.productFamily.findUniqueOrThrow({ where: { slug: "helio-riviera" } });
+    const fam = await prisma.productFamily.findUniqueOrThrow({ where: { slug: "casablanca" } });
     const before = await prisma.technicalSpec.count({ where: { familyId: fam.id, createdBy: HELIOSTORES_SEED_TAG } });
     await prisma.productFamily.update({ where: { id: fam.id }, data: { status: "PUBLISHED" } });
     const confirmed = await prisma.technicalSpec.create({ data: { familyId: fam.id, key: "test_confirmed", label: "Test", valueText: "x", source: "SUPPLIER_CONFIRMED", sourceRef: "écrit fournisseur (test)" } });
@@ -72,30 +72,30 @@ describe("catalogue HELIOSTORES en base", () => {
 
   it("sans grille active : l'instantané ne transporte aucun tarif", async () => {
     const c = await loadCatalog({ fresh: true });
-    const sb400 = c.families.find((f) => f.slug === "helio-horizon")!;
-    expect(sb400.systemRules?.dims.depth?.stepMm).toBe(200);
-    expect(sb400.category).toBe("PERGOLAS");
+    const marbella = c.families.find((f) => f.slug === "marbella")!;
+    expect(marbella.systemRules?.dims.depth?.maxMm).toBe(6010);
+    expect(marbella.category).toBe("PERGOLAS");
     expect(JSON.stringify(c)).not.toMatch(/SupplierPrice|amountMinor|Prix final/);
   });
 });
 
 describe("devis d'un système : sans prix, récapitulatif, visualisation et attribution", () => {
   it("pergola : priceMode quote, récapitulatif, plan 2D joint sans image 3D, attribution nettoyée", async () => {
-    const input = await systemInput("helio-horizon", { widthMm: 3500, depthMm: 5000, mounting: "wall", options: [{ code: "led_spots" }] });
+    const input = await systemInput("marbella", { widthMm: 3500, depthMm: 5000, mounting: "wall", options: [{ code: "led_spots" }] });
     const result = await evaluateInput(input);
     expect(result.priceMode).toBe("quote");
     expect(result.lines).toEqual([]);
-    const q = await createQuote({ kind: "system", firstName: "Test", lastName: "Helio", email: `helio-${randomBytes(4).toString("hex")}@test.invalid`, input, result, attribution: sanitizeAttribution({ params: { utm_source: "salon", utm_campaign: "automne" }, landingPath: "/pergolas/helio-horizon", evil: "x" }) }, { userId: null, guestKey: randomBytes(8).toString("hex") });
+    const q = await createQuote({ kind: "system", firstName: "Test", lastName: "Helio", email: `helio-${randomBytes(4).toString("hex")}@test.invalid`, input, result, attribution: sanitizeAttribution({ params: { utm_source: "salon", utm_campaign: "automne" }, landingPath: "/pergolas/marbella", evil: "x" }) }, { userId: null, guestKey: randomBytes(8).toString("hex") });
     quotes.push(q.id);
     expect(q.visualKind).toBe("PLAN_2D");
     const row = await prisma.quote.findUniqueOrThrow({ where: { id: q.id } });
-    expect(row.attribution).toEqual({ params: { utm_source: "salon", utm_campaign: "automne" }, landingPath: "/pergolas/helio-horizon" });
+    expect(row.attribution).toEqual({ params: { utm_source: "salon", utm_campaign: "automne" }, landingPath: "/pergolas/marbella" });
     expect(row.qualification).toBe("TO_QUALIFY");
     const snap = row.snapshot as { result: { recap: Array<{ label: string; value: string }> } };
-    expect(snap.result.recap.find((r) => r.label === "Projection")?.value).toBe("5 m");
-    expect(snap.result.recap.some((r) => /9 points/.test(r.value))).toBe(true);
+    expect(snap.result.recap.find((r) => r.label === "Avancée")?.value).toBe("5 m");
+    expect(snap.result.recap.some((r) => /Spots LED/.test(r.value))).toBe(true);
     const visual = await prisma.quoteVisual.findFirstOrThrow({ where: { quoteId: q.id } });
-    expect(visual.represented as string[]).toEqual(expect.arrayContaining([expect.stringMatching(/Sections représentées \(catalogue\)/)]));
+    expect(visual.represented as string[]).toEqual(expect.arrayContaining([expect.stringMatching(/Dimensions : largeur 3,5 m × projection 5 m/)]));
     // PDF : aucun total ni TVA, récapitulatif et mention du devis
     const pdf = await buildQuotePdf(await prisma.quote.findUniqueOrThrow({ where: { id: q.id }, include: { visuals: true } }));
     expect(pdf).toBeTruthy();
@@ -104,7 +104,7 @@ describe("devis d'un système : sans prix, récapitulatif, visualisation et attr
   });
 
   it("screen : pas de plan 2D possible → absence de visualisation indiquée, devis enregistré", async () => {
-    const input = await systemInput("helio-ombra", { widthMm: 2500, heightMm: 2200 });
+    const input = await systemInput("helioscreen", { widthMm: 2500, heightMm: 2200 });
     const q = await createQuote({ kind: "system", firstName: "Test", lastName: "Screen", email: `screen-${randomBytes(4).toString("hex")}@test.invalid`, input, result: await evaluateInput(input) }, { userId: null, guestKey: randomBytes(8).toString("hex") });
     quotes.push(q.id);
     expect(q.visualKind).toBe("NONE");
@@ -112,7 +112,7 @@ describe("devis d'un système : sans prix, récapitulatif, visualisation et attr
   });
 
   it("une configuration hors règles est enregistrée avec ses blocages (jamais de prix inventé)", async () => {
-    const input = await systemInput("helio-riviera", { widthMm: 2500, depthMm: 3600 });
+    const input = await systemInput("casablanca", { widthMm: 2500, depthMm: 3600 });
     const result = await evaluateInput(input);
     expect(result.issues.some((i) => i.code === "depth_width_combination" && i.severity === "blocking")).toBe(true);
     expect(result.totals.totalGrossCents).toBe(0);
@@ -141,26 +141,26 @@ describe("prix publics : grilles de vente publiées (écran Tarifs)", () => {
   it("seule une grille de VENTE publiée est chargée ; coût d'achat et produit en brouillon (Verrière) jamais tarifés ; instantané sans source", async () => {
     // grilles SYNTHÉTIQUES (montants fictifs), dans la base de test uniquement
     const cell = (familySlug: string, variantKey: string, amountMinor: number, dimAKey = "projection") => ({ familySlug, variantKey, dimAKey, dimAmm: 5000, widthMinMm: 4000, widthMaxMm: 4000, amountMinor });
-    const purchase = await publishTestGrids([cell("helio-horizon", "murale", 7_654_321)], { nature: "PURCHASE" });
+    const purchase = await publishTestGrids([cell("marbella", "murale", 7_654_321)], { nature: "PURCHASE" });
     let sale: Awaited<ReturnType<typeof publishTestGrids>> | null = null;
     try {
       invalidateCatalogCache();
       let c = await loadCatalog({ fresh: true });
-      expect(JSON.stringify(c.families.find((f) => f.slug === "helio-horizon")!.systemPrices ?? null)).not.toContain("7654321"); // coût d'achat : jamais public
-      sale = await publishTestGrids([cell("helio-horizon", "murale", 1_234_567), cell("helio-verriere", "", 999_999, "hauteur")]);
+      expect(JSON.stringify(c.families.find((f) => f.slug === "marbella")!.systemPrices ?? null)).not.toContain("7654321"); // coût d'achat : jamais public
+      sale = await publishTestGrids([cell("marbella", "murale", 1_234_567), cell("helio-verriere", "", 999_999, "hauteur")]);
       invalidateCatalogCache();
       c = await loadCatalog({ fresh: true });
-      const sb400 = c.families.find((f) => f.slug === "helio-horizon")!;
+      const sb400 = c.families.find((f) => f.slug === "marbella")!;
       expect(sb400.systemPrices).toMatchObject({ currency: "EUR", taxBasis: "HT", cells: [{ variantKey: "murale", dimAmm: 5000, widthMaxMm: 4000, amountMinor: 1_234_567 }] });
       expect(c.families.find((f) => f.slug === "helio-verriere")?.systemPrices ?? null).toBeNull();
       const json = JSON.stringify(c);
       expect(json).not.toContain("7654321");
       expect(json).not.toContain("999999");
-      const r = await evaluateInput(await systemInput("helio-horizon", { widthMm: 4000, depthMm: 5000, mounting: "wall" }));
+      const r = await evaluateInput(await systemInput("marbella", { widthMm: 4000, depthMm: 5000, mounting: "wall" }));
       expect(r.issues.filter((i) => i.severity === "blocking")).toEqual([]);
       expect(r.systemPrice).toMatchObject({ amountMinor: 1_234_567, currency: "EUR", taxBasis: "HT", roundedUp: false });
       const pub = await ensureCatalogSnapshot();
-      const pubSb = pub.families.find((f) => f.slug === "helio-horizon")!;
+      const pubSb = pub.families.find((f) => f.slug === "marbella")!;
       expect(pubSb.brand ?? null).toBeNull();
       expect(pubSb.manufacturer ?? null).toBeNull();
       expect(JSON.stringify(pub.families.filter((f) => f.systemRules))).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
@@ -175,13 +175,13 @@ describe("prix publics : grilles de vente publiées (écran Tarifs)", () => {
 describe("commande en ligne d'une configuration entièrement tarifée (paiement de démonstration)", () => {
   it("structure seule : panier, commande TTC sans livraison ni pose, paiement simulé, e-mails sans nom du fabricant ; option → refus", async () => {
     // grille SYNTHÉTIQUE (montant fictif), dans la base de test uniquement
-    const grid = await publishTestGrids([{ familySlug: "helio-horizon", variantKey: "murale", dimAmm: 5000, widthMinMm: 4000, widthMaxMm: 4000, amountMinor: 1_000_000 }]);
+    const grid = await publishTestGrids([{ familySlug: "marbella", variantKey: "murale", dimAmm: 5000, widthMinMm: 4000, widthMaxMm: 4000, amountMinor: 1_000_000 }]);
     const g = randomBytes(12).toString("hex");
     try {
       invalidateCatalogCache();
       const catalog = await loadCatalog({ fresh: true });
-      const input = await systemInput("helio-horizon", { widthMm: 4000, depthMm: 5000, mounting: "wall", options: [], installation: "self", sides: {} });
-      const withOption = { ...input, options: [{ code: (catalog.families.find((f) => f.slug === "helio-horizon")!.systemRules as SystemRules).options[0]!.code, qty: 1 }] };
+      const input = await systemInput("marbella", { widthMm: 4000, depthMm: 5000, mounting: "wall", options: [], installation: "self", sides: {} });
+      const withOption = { ...input, options: [{ code: (catalog.families.find((f) => f.slug === "marbella")!.systemRules as SystemRules).options[0]!.code, qty: 1 }] };
       await expect(addLine({ guestKey: g }, withOption)).rejects.toBeInstanceOf(CartError);
       await addLine({ guestKey: g }, input);
       const ev = await evaluateCart((await findActiveCart({ guestKey: g }))!);

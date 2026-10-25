@@ -11,7 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const path = (f: { slug: string; category: string | null }) => { const c = categoryByKey(f.category); return c ? `${c.href}/${f.slug}` : null; };
   return [
     { url: base, changeFrequency: "weekly", priority: 1 },
-    ...["/pergolas", "/screens", "/stores-bannes", "/configurateur", "/devis", "/contact", "/aide", "/livraison-installation", "/cgv", "/mentions-legales", "/confidentialite", "/cookies"].map((p) => ({ url: `${base}${p}`, changeFrequency: "monthly" as const, priority: 0.6 })),
+    ...["/pergolas", "/screens", "/stores-bannes", "/moustiquaires", "/accessoires", "/references", "/guides/prise-de-mesures", "/guides/choisir-toile-et-motorisation", "/configurateur", "/devis", "/contact", "/aide", "/livraison-installation", "/cgv", "/mentions-legales", "/confidentialite", "/cookies"].map((p) => ({ url: `${base}${p}`, changeFrequency: "monthly" as const, priority: 0.6 })),
     { url: `${base}/guides`, changeFrequency: "monthly" as const, priority: 0.4 },
     ...Object.keys(GUIDES).map((g) => ({ url: `${base}/guides/${g}`, changeFrequency: "monthly" as const, priority: 0.5 })),
     { url: `${base}/guides/preparation-projet`, changeFrequency: "monthly" as const, priority: 0.5 },

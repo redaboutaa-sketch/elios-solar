@@ -45,6 +45,8 @@ export async function seedHeliostores(prisma: PrismaClient): Promise<{ families:
     const existing = await prisma.productFamily.findUnique({ where: { slug: f.slug }, select: { commercialEditedAt: true, legacySlugs: true } });
     const update: Record<string, unknown> = { ...content, legacySlugs: [...new Set([...(existing?.legacySlugs ?? []), ...legacySlugs])] };
     if (existing?.commercialEditedAt) for (const k of COMMERCIAL_KEYS) delete update[k];
+    // modèle retiré : toujours archivé et hors navigation (la fiche reste pour l'historique, sans conversion)
+    if (f.retired) { update.status = "ARCHIVED"; }
     const row = await prisma.productFamily.upsert({ where: { slug: f.slug }, update: update as never, create: { slug: f.slug, status: f.status, ...content, legacySlugs } });
     await prisma.technicalSpec.deleteMany({ where: { familyId: row.id, createdBy: HELIOSTORES_SEED_TAG } });
     for (const s of f.specs) {
@@ -89,9 +91,9 @@ async function seedContentPlaceholders(prisma: PrismaClient) {
   if (await prisma.realisation.count({ where: { placeholder: true } })) return;
   const need = "À fournir : photographies autorisées, produit installé, contexte et localisation publiable.";
   const rows = [
-    { kind: "REALISATION", title: "Réalisation pergola — à fournir", familySlug: "helio-horizon", description: need },
-    { kind: "REALISATION", title: "Réalisation screen — à fournir", familySlug: "helio-ombra", description: need },
-    { kind: "REALISATION", title: "Réalisation store banne — à fournir", familySlug: "helio-riviera", description: need },
+    { kind: "REALISATION", title: "Réalisation pergola — à fournir", familySlug: null, description: need },
+    { kind: "REALISATION", title: "Réalisation screen — à fournir", familySlug: null, description: need },
+    { kind: "REALISATION", title: "Réalisation store banne — à fournir", familySlug: "casablanca", description: need },
     { kind: "PRODUCTION", title: "Fabrication — à fournir", familySlug: null, description: "À fournir : photographies documentées de fabrication ; indiquer le site (atelier HELIOSTORES ou usine d'un partenaire)." },
     { kind: "PRODUCTION", title: "Matériaux — à fournir", familySlug: null, description: "À fournir : profilés, toiles, quincaillerie, avec leur description vérifiée." },
     { kind: "PRODUCTION", title: "Assemblage et contrôle qualité — à fournir", familySlug: null, description: "À fournir : étapes d'assemblage et de contrôle réellement pratiquées, avec photographies." },

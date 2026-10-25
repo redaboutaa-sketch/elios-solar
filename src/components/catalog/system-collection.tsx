@@ -5,6 +5,7 @@ import { FamilySketch } from "@/components/illustrations/sketches";
 import { MediaImage } from "@/components/ui/media-image";
 import { categoryByKey, configuratorHref, productHref, type CategoryKey } from "@/domain/categories";
 import { dimRangeText } from "@/domain/system";
+import { INSECT_OPENING_FR } from "@/domain/scene-model";
 import { formatSystemPrice } from "@/domain/system-pricing";
 import type { listSystemFamilies } from "@/server/catalog/systems";
 import { publishedMediaFor } from "@/server/media/queries";
@@ -14,39 +15,37 @@ type Item = Awaited<ReturnType<typeof listSystemFamilies>>[number];
 
 const priceText = (f: Item) => (f.fromPrice ? formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis) : null);
 
+const manualPossible = (f: Item) => !!f.rules.controls?.some((c) => c.kind === "manual");
+const lighting = (f: Item) => f.rules.options.filter((o) => o.group === "lighting" && !o.wish);
+
 /**
- * Niveaux d'équipement d'un modèle (packs du même store) : Essentiel, Confort ; Premium renvoie à un autre modèle,
- * présenté seulement après validation. Les montants ne concernent que la structure de la grille ; le reste est au devis.
+ * Lecture « basique / intermédiaire / équipé » des stores bannes, calculée depuis les règles documentées : elle porte
+ * sur l'équipement électrique (manœuvre, éclairage) et n'est PAS un classement du fabricant ; sur la protection de la
+ * toile, l'ordre peut s'inverser (indiqué). Un modèle n'est jamais dédoublé en plusieurs produits.
  */
-function Levels({ items }: { items: Item[] }) {
-  const withPacks = items.filter((f) => f.rules.packs?.length);
-  if (!withPacks.length) return null;
+function EquipmentReading({ items }: { items: Item[] }) {
+  const awnings = items.filter((f) => f.rules.type === "awning");
+  if (awnings.length < 2) return null;
+  const manual = awnings.filter(manualPossible);
+  const equipped = awnings.filter((f) => !manualPossible(f) && lighting(f).length > 0);
+  const cols = [
+    { label: "Basique", text: "Manœuvre à la manivelle, sans éclairage.", models: manual },
+    { label: "Intermédiaire", text: "Les mêmes stores, motorisés ; commandes et capteurs étudiés au devis.", models: manual },
+    { label: "Équipé", text: "Motorisation imposée, éclairage LED possible (de série ou en option selon les documents).", models: equipped },
+  ];
   return (
-    <section className="section-y border-t border-sand-200" aria-labelledby="niveaux" data-testid="levels">
-      <h2 id="niveaux" className="font-display text-display font-semibold">Choisir son niveau d'équipement</h2>
-      {withPacks.map((f) => (
-        <div key={f.slug} className="mt-6">
-          <p className="max-w-2xl text-stone-700">{f.name} : {f.rules.packs!.filter((p) => !p.familySlug).length} niveaux d'un même store ; un niveau Premium, sur un autre modèle, est en préparation.</p>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse text-sm">
-              <caption className="sr-only">Niveaux d'équipement {f.name}</caption>
-              <thead><tr className="border-b border-sand-300 text-left"><th className="py-2 pr-4 font-medium text-stone-700">Niveau</th><th className="py-2 pr-4 font-medium text-stone-700">Pour qui</th><th className="py-2 pr-4 font-medium text-stone-700">Compris</th><th className="py-2 pr-4 font-medium text-stone-700">Options</th><th className="py-2 pr-4 font-medium text-stone-700">Prix</th></tr></thead>
-              <tbody>
-                {f.rules.packs!.map((p) => (
-                  <tr key={p.code} className="border-b border-sand-200 align-top">
-                    <th scope="row" className="py-3 pr-4 font-display text-lg font-semibold">{p.label}{p.familySlug ? <span className="block text-xs font-normal text-stone-700">en préparation</span> : p.status === "to_confirm" ? <span className="block text-xs font-normal text-stone-700">composition à confirmer</span> : null}</th>
-                    <td className="py-3 pr-4">{p.summary}</td>
-                    <td className="py-3 pr-4">{p.familySlug ? "—" : p.includes.join(", ")}</td>
-                    <td className="py-3 pr-4">{p.familySlug ? "—" : (p.optionCodes ?? []).map((c) => f.rules.options.find((o) => o.code === c)?.label).filter(Boolean).join(", ") || "—"}</td>
-                    <td className="py-3 pr-4">{p.familySlug ? "—" : p.tier === 1 && priceText(f) ? `structure à partir de ${priceText(f)}` : "sur devis"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-2 text-xs text-stone-700">Dimensions identiques pour Essentiel et Confort : {f.rules.dims.width.label.toLowerCase()} {dimRangeText(f.rules.dims.width)}{f.rules.dims.depth ? `, ${f.rules.dims.depth.label.toLowerCase()} ${dimRangeText(f.rules.dims.depth)}` : ""}. Éclairage LED non proposé sur ce modèle.</p>
-        </div>
-      ))}
+    <section className="section-y border-t border-sand-200" aria-labelledby="lecture" data-testid="levels">
+      <h2 id="lecture" className="font-display text-display font-semibold">Lire la gamme</h2>
+      <p className="mt-2 max-w-3xl text-stone-700 text-pretty">Une lecture par l'équipement électrique, établie d'après la documentation de chaque modèle : ce n'est pas un classement du fabricant. Pour la protection de la toile repliée, l'ordre change (voir le comparatif) : Casablanca a le coffre le plus fermé.</p>
+      <ol className="mt-6 grid gap-4 md:grid-cols-3">
+        {cols.map((c) => (
+          <li key={c.label} className="rounded-2xl border border-sand-200 bg-white p-5">
+            <p className="font-display text-xl font-semibold">{c.label}</p>
+            <p className="mt-1 text-sm text-stone-700">{c.text}</p>
+            <p className="mt-3 text-sm">{c.models.length ? c.models.map((f, i) => <span key={f.slug}>{i ? ", " : ""}<Link href={productHref(f.category as CategoryKey, f.slug)} className="link-brand">{f.name}</Link></span>) : "—"}</p>
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }
@@ -58,6 +57,12 @@ function Comparison({ items }: { items: Item[] }) {
     ...(items.some((f) => f.rules.dims.depth) ? [[items.find((f) => f.rules.dims.depth)!.rules.dims.depth!.label, (f: Item) => (f.rules.dims.depth ? dimRangeText(f.rules.dims.depth) : "—")] as [string, (f: Item) => string]] : []),
     ...(items.some((f) => f.rules.dims.height) ? [[items.find((f) => f.rules.dims.height)!.rules.dims.height!.label, (f: Item) => (f.rules.dims.height ? dimRangeText(f.rules.dims.height) : "—")] as [string, (f: Item) => string]] : []),
     ["Pose", (f) => f.rules.mountings.map((m) => m.label + (m.status === "to_confirm" ? " (à confirmer)" : "")).join(", ")],
+    ...(items.some((f) => f.rules.protection) ? [["Protection de la toile", (f: Item) => (f.rules.protection ? `${f.rules.protection.label}${f.rules.protection.status === "to_confirm" ? " — à confirmer" : ""}` : "—")] as [string, (f: Item) => string]] : []),
+    ...(items.some((f) => f.rules.controls?.length) ? [["Manœuvre", (f: Item) => (f.rules.controls?.length ? (manualPossible(f) ? (f.rules.controls.some((c) => c.kind === "electric") ? "manivelle ou moteur" : "manivelle") : "motorisée uniquement") : "—")] as [string, (f: Item) => string]] : []),
+    ...(items.some((f) => f.rules.type === "awning" || f.rules.type === "pergola") ? [["Éclairage LED", (f: Item) => (lighting(f).length ? lighting(f).map((o) => o.label + (o.status === "to_confirm" ? " (à confirmer)" : "")).join(" ; ") : "non proposé")] as [string, (f: Item) => string]] : []),
+    ...(items.some((f) => f.rules.type === "pergola") ? [["Toiture", (f: Item) => (f.rules.roof === "fabric" ? "toile tendue" : "lames orientables")] as [string, (f: Item) => string]] : []),
+    ...(items.some((f) => f.rules.fixedSizes?.length) ? [["Fabrication", (f: Item) => (f.rules.fixedSizes?.length ? "tailles définies (prêt à poser)" : "sur mesure")] as [string, (f: Item) => string]] : []),
+    ...(items.some((f) => f.rules.insect) ? [["Ouverture", (f: Item) => (f.rules.insect ? INSECT_OPENING_FR[f.rules.insect.opening] + (f.rules.insect.leaves === 2 ? ", deux vantaux" : "") : "—")] as [string, (f: Item) => string]] : []),
     ["Plusieurs modules", (f) => (f.rules.modules ? (f.rules.modules.multiModule === "documented" ? "possible, composé au devis" : "non documenté, étude au devis") : "—")],
     ["Prix de la structure", (f) => (priceText(f) ? `à partir de ${priceText(f)}` : "sur devis")],
   ];
@@ -65,8 +70,8 @@ function Comparison({ items }: { items: Item[] }) {
     <section className="section-y border-t border-sand-200" aria-labelledby="comparatif">
       <h2 id="comparatif" className="font-display text-display font-semibold">Comparer les modèles</h2>
       <p className="mt-2 max-w-2xl text-stone-700">Cotes et poses documentées pour un module ; les points « à confirmer » sont vérifiés au devis.</p>
-      <div className="mt-8 overflow-hidden border border-sand-200 bg-white">
-        <table className="w-full table-fixed text-left text-sm" data-testid="collection-compare">
+      <div className="mt-8 overflow-x-auto border border-sand-200 bg-white">
+        <table className={`w-full text-left text-sm ${items.length > 3 ? "min-w-[720px]" : "table-fixed"}`} data-testid="collection-compare">
           <caption className="sr-only">Comparatif des modèles</caption>
           <thead className="bg-sand-100">
             <tr>
@@ -92,7 +97,7 @@ function Comparison({ items }: { items: Item[] }) {
 const productShot = (items: PublishedMedia[]) => items.find((m) => m.role === "gallery" && m.nature === "RENDER" && (m.width ?? 0) >= 600) ?? items.find((m) => m.role === "gallery") ?? items[0] ?? null;
 
 /** Page d'une famille publique : bandeau photographique, modèles en grandes présentations, comparatif. */
-export async function SystemCollection({ category, items }: { category: CategoryKey; items: Item[] }) {
+export async function SystemCollection({ category, items, drafts = [] }: { category: CategoryKey; items: Item[]; drafts?: Array<{ slug: string; name: string; shortDescription: string }> }) {
   const cat = categoryByKey(category)!;
   const shots = new Map(await Promise.all(items.map(async (f) => [f.slug, productShot(await publishedMediaFor(f.slug))] as const)));
   const banner = items[0]?.hero ?? null;
@@ -105,7 +110,7 @@ export async function SystemCollection({ category, items }: { category: Category
           <div>
             <Breadcrumbs items={[{ label: cat.label }]} tone="light" />
             <h1 id="famille-titre" className="mt-5 font-display text-hero font-semibold">{cat.label}</h1>
-            <p className="mt-3 max-w-xl text-lg text-sand-100 text-pretty">{cat.intro} Chaque modèle affiche son prix selon vos dimensions.</p>
+            <p className="mt-3 max-w-xl text-lg text-sand-100 text-pretty">{cat.intro} Le prix s'affiche lorsque vos dimensions figurent dans la grille tarifaire ; sinon, sur devis.</p>
             {items.length > 1 && <p className="mt-4 text-sm text-sand-200">{items.length} modèles · <a href="#comparatif" className="text-white underline underline-offset-4">comparer</a></p>}
           </div>
           <FamilySketch kind={category} tone="light" sun={false} decorative={false} className="sketch-trigger hidden w-56 md:block" />
@@ -141,7 +146,14 @@ export async function SystemCollection({ category, items }: { category: Category
           </ul>
         )}
         {items.length > 1 && <Comparison items={items} />}
-        <Levels items={items} />
+        <EquipmentReading items={items} />
+        {drafts.length > 0 && (
+          <section className="section-y border-t border-sand-200" aria-labelledby="en-preparation" data-testid="drafts">
+            <h2 id="en-preparation" className="font-display text-display font-semibold">En préparation</h2>
+            <p className="mt-2 max-w-2xl text-stone-700">Ces modèles seront configurables dès que leurs caractéristiques seront confirmées. Vous pouvez déjà demander un devis avec vos mesures.</p>
+            <ul className="mt-6 grid gap-4 md:grid-cols-3">{drafts.map((d) => <li key={d.slug} className="rounded-2xl border border-dashed border-sand-300 bg-white p-5"><p className="font-display text-xl font-semibold">{d.name}</p><p className="mt-1 text-sm text-stone-700">{d.shortDescription}</p><Link href={`/devis?produit=${d.slug}`} className="btn-secondary mt-4 text-sm">Demander un devis</Link></li>)}</ul>
+          </section>
+        )}
       </div>
       <div className="h-6" aria-hidden="true" />
     </>

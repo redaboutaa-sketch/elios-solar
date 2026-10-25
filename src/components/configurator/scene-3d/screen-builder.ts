@@ -87,7 +87,6 @@ export function buildScreenScene(model: ScreenSceneModel): BuiltScene {
       front: { position: [W / 2, H / 2 + 0.2, d * 1.5 + 2], target: [W / 2, H / 2, 0] },
       three_quarter: { position: [W + d * 0.7 + 1, H * 0.7 + 0.6, d * 1.2 + 1.5], target: [W / 2, H / 2, 0] },
       top: { position: [W / 2, d * 2 + 3, 1.5], target: [W / 2, 0, 0] },
-      interior: { position: [W / 2, 1.5, -2.5], target: [W / 2, H / 2, 0] },
     },
     pickables: [],
     setNight,

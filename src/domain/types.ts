@@ -23,7 +23,8 @@ export type FamilyKind =
   | "pergola_system"
   | "screen_system"
   | "awning_system"
-  | "roof_blind_system";
+  | "roof_blind_system"
+  | "insect_screen_system";
 
 export type LightingIncluded = "none" | "gutter_led" | "blade_led";
 /** Disponibilité commerciale d'une référence (saisie admin / import fournisseur). */

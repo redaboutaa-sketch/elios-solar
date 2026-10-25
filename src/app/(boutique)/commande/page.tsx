@@ -23,7 +23,8 @@ export default async function CheckoutPage(props: PageProps<"/commande">) {
   const address = session ? await prisma.address.findFirst({ where: { userId: session.user.id }, orderBy: { isDefault: "desc" } }) : null;
   const provider = activeProviderName();
   // Offre de paiement fractionné calculée côté serveur sur le total du panier ; revalidée à la commande.
-  const offer = await installmentsOfferFor(ev.totalCents, ev.delivery.countryCode ?? "FR");
+  // affichage pour un particulier (le choix « professionnel » masque l'offre) ; revalidé avec le type déclaré à la commande
+  const offer = await installmentsOfferFor(ev.totalCents, ev.delivery.countryCode ?? "FR", undefined, "B2C");
   const installmentOffer = offer.eligible ? { providerLabel: offer.providerLabel, simulated: offer.provider.key === "simulator", termsUrl: offer.termsUrl, plans: offer.plans.map((p) => ({ count: p.count, firstCents: p.firstCents, otherCents: p.otherCents, feesCents: p.feesCents, totalWithFeesCents: p.totalWithFeesCents, feesKind: p.feesKind, feesText: p.label.split(" — ").slice(1).join(" — ") })) } : null;
   return (
     <div className="container-x py-8">

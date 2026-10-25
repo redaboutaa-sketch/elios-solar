@@ -1,8 +1,9 @@
 /**
- * Les trois familles publiques du catalogue HELIOSTORES (instruction client) — pur, partagé client/serveur.
- * Aucune quatrième famille : un système qui n'en relève pas reste en brouillon (`category: null`).
+ * Les quatre familles publiques du catalogue HELIOSTORES (nomenclature du 2026-10-25) — pur, partagé client/serveur.
+ * Un système qui n'en relève pas reste en brouillon (`category: null`). Les accessoires (ex. fermetures latérales
+ * coulissantes) ne sont jamais une famille.
  */
-export type CategoryKey = "PERGOLAS" | "SCREENS" | "STORES_BANNES";
+export type CategoryKey = "PERGOLAS" | "SCREENS" | "STORES_BANNES" | "MOUSTIQUAIRES";
 
 export interface CategoryDef {
   key: CategoryKey;
@@ -14,9 +15,10 @@ export interface CategoryDef {
 }
 
 export const CATEGORIES: readonly CategoryDef[] = [
-  { key: "PERGOLAS", label: "Pergolas", singular: "Pergola", href: "/pergolas", intro: "Pergolas à lames orientables motorisées, adossées ou autoportantes, configurées à vos cotes." },
-  { key: "SCREENS", label: "Screens", singular: "Screen", href: "/screens", intro: "Screens à toile tendue pour la protection solaire verticale des baies et façades." },
-  { key: "STORES_BANNES", label: "Stores bannes", singular: "Store banne", href: "/stores-bannes", intro: "Stores bannes à coffre pour ombrager votre terrasse." },
+  { key: "PERGOLAS", label: "Pergolas", singular: "Pergola", href: "/pergolas", intro: "Pergolas à lames orientables ou à toiture en toile, adossées ou autoportantes." },
+  { key: "SCREENS", label: "Screens", singular: "Screen", href: "/screens", intro: "Screens à toile tendue : protection solaire des baies et façades, et screen de toiture." },
+  { key: "STORES_BANNES", label: "Stores bannes", singular: "Store banne", href: "/stores-bannes", intro: "Stores bannes à coffre, semi-coffre ou sans coffre pour ombrager votre terrasse." },
+  { key: "MOUSTIQUAIRES", label: "Moustiquaires", singular: "Moustiquaire", href: "/moustiquaires", intro: "Moustiquaires plissées, enroulables, coulissantes ou fixes pour portes et fenêtres." },
 ] as const;
 
 export function categoryByKey(key: string | null | undefined): CategoryDef | undefined {

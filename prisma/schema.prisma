@@ -171,6 +171,8 @@ enum FamilyKind {
   SCREEN_SYSTEM
   AWNING_SYSTEM
   ROOF_BLIND_SYSTEM
+  /// moustiquaires (quatrième famille, 2026-10-25)
+  INSECT_SCREEN_SYSTEM
 }
 
 /// Les trois familles publiques du catalogue HELIOSTORES (navigation principale).
@@ -178,6 +180,7 @@ enum ProductCategory {
   PERGOLAS
   SCREENS
   STORES_BANNES
+  MOUSTIQUAIRES
 }
 
 enum FamilyStatus {
@@ -875,12 +878,17 @@ model Order {
   reservations      StockReservation[]
   expiresAt         DateTime?
   paidAt            DateTime?
+  /// devis approuvé à l'origine de la commande (paiement d'un devis) ; null = panier
+  quoteId           String?
+  /// paiement à examiner (ex. fonds reçus après expiration ou annulation de la commande) : jamais résolu automatiquement
+  paymentReview     String?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
   @@index([userId])
   @@index([email])
   @@index([status])
+  @@index([quoteId])
 }
 
 model OrderLine {
@@ -934,6 +942,14 @@ model Payment {
   installments  Int?
   planProvider  String?
   feesCents     Int             @default(0)
+  /// virement bancaire : session validée, fonds attendus (statut PENDING) ; instructions hébergées par le prestataire
+  awaitingFundsSince DateTime?
+  instructionsUrl    String?
+  /// montant déjà reçu (virement partiel), en centimes
+  amountReceivedCents Int?
+  /// identifiant du compte prestataire et environnement (test / live) qui ont traité le paiement
+  providerAccount    String?
+  livemode           Boolean?
   events        PaymentEvent[]
   refunds       Refund[]
   createdAt     DateTime        @default(now())
@@ -1202,6 +1218,13 @@ model Realisation {
   /// emplacement préparé, en attente d'une photo et d'informations réelles
   placeholder Boolean  @default(false)
   location    String?
+  /// la localisation peut-elle être affichée (accord du client) ?
+  locationPublic Boolean @default(false)
+  /// crédit de la photographie (photographe, client, HELIOSTORES)
+  credit      String   @default("")
+  /// autorisation de publication : qui l'a donnée, comment (requise pour publier)
+  authorization String @default("")
+  authorizedAt DateTime?
   familySlug  String?
   mediaId     String?
   media       Media?   @relation(fields: [mediaId], references: [id], onDelete: SetNull)

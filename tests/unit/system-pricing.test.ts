@@ -16,7 +16,9 @@ const pergolaTable: SystemPriceTable = {
 const awningTable: SystemPriceTable = { currency: "EUR", taxBasis: "HT", dimAKey: "projection", listVersion: 1, cells: [{ variantKey: "", dimAmm: 1600, widthMinMm: 2000, widthMaxMm: 2900, amountMinor: 700_000 }, { variantKey: "", dimAmm: 1600, widthMinMm: 2910, widthMaxMm: 3500, amountMinor: 800_000 }] };
 const screenTable: SystemPriceTable = { currency: "EUR", taxBasis: null, dimAKey: "hauteur", listVersion: 1, cells: [{ variantKey: "", dimAmm: 1000, widthMinMm: 1000, widthMaxMm: 1000, amountMinor: 300_000 }, { variantKey: "", dimAmm: 1250, widthMinMm: 1000, widthMaxMm: 1000, amountMinor: 320_000 }] };
 
-const base = buildHeliostoresCatalog();
+// fiche retirée SB 400 réactivée pour tester le moteur de grille (le catalogue réel la bloque)
+const real = buildHeliostoresCatalog();
+const base = { ...real, families: real.families.map((f) => (f.status === "archived" ? { ...f, status: "quote_only" as const } : f)) };
 const withPrices = (slug: string, table: SystemPriceTable) => ({ ...base, families: base.families.map((f) => (f.slug === slug ? { ...f, systemPrices: table } : f)) });
 const rules = (slug: string) => base.families.find((f) => f.slug === slug)!.systemRules!;
 const input = (slug: string, over: Partial<SystemInput>): SystemInput => ({ ...defaultSystemInput(slug, rules(slug)), ...over });
@@ -56,14 +58,14 @@ describe("prix publics des systèmes (grille « Prix final HELIOSTORES »)", () 
   });
 
   it("largeurs par plages (store banne) et axe hauteur (screen)", () => {
-    const a = lookupSystemPrice(awningTable, rules("helio-riviera"), input("helio-riviera", { widthMm: 3200, depthMm: 1600 }));
+    const a = lookupSystemPrice(awningTable, rules("casablanca"), input("casablanca", { widthMm: 3200, depthMm: 1600 }));
     expect(a).toMatchObject({ ok: true, price: { amountMinor: 800_000, roundedUp: false } });
     // entre deux plages (2,90 m < l < 2,91 m) : ambiguë, devis
-    expect(lookupSystemPrice(awningTable, rules("helio-riviera"), input("helio-riviera", { widthMm: 2905, depthMm: 1600 }))).toEqual({ ok: false, reason: "out_of_grid" });
-    expect(lookupSystemPrice(awningTable, rules("helio-riviera"), input("helio-riviera", { widthMm: 3600, depthMm: 1600 }))).toEqual({ ok: false, reason: "out_of_grid" });
-    const s = lookupSystemPrice(screenTable, rules("helio-ombra"), input("helio-ombra", { widthMm: 1000, heightMm: 1250 }));
+    expect(lookupSystemPrice(awningTable, rules("casablanca"), input("casablanca", { widthMm: 2905, depthMm: 1600 }))).toEqual({ ok: false, reason: "out_of_grid" });
+    expect(lookupSystemPrice(awningTable, rules("casablanca"), input("casablanca", { widthMm: 3600, depthMm: 1600 }))).toEqual({ ok: false, reason: "out_of_grid" });
+    const s = lookupSystemPrice(screenTable, rules("helioscreen"), input("helioscreen", { widthMm: 1000, heightMm: 1250 }));
     expect(s).toMatchObject({ ok: true, price: { amountMinor: 320_000, grid: { dimMm: 1250 } } });
-    expect(lookupSystemPrice(screenTable, rules("helio-ombra"), input("helio-ombra", { widthMm: 1000, heightMm: 1100 }))).toEqual({ ok: false, reason: "out_of_grid" });
+    expect(lookupSystemPrice(screenTable, rules("helioscreen"), input("helioscreen", { widthMm: 1000, heightMm: 1100 }))).toEqual({ ok: false, reason: "out_of_grid" });
   });
 
   it("le moteur joint le prix au résultat (parcours devis conservé) et l'omet en cas de blocage", () => {
@@ -105,7 +107,7 @@ describe("prix publics des systèmes (grille « Prix final HELIOSTORES »)", () 
       expect(r.lines, reason).toEqual([]);
       expect(r.onlineOrder?.reasons.join(" "), reason).toContain(reason);
     }
-    const screen = evaluate(withPrices("helio-ombra", screenTable), input("helio-ombra", { widthMm: 1000, heightMm: 1000, options: [] }));
+    const screen = evaluate(withPrices("helioscreen", screenTable), input("helioscreen", { widthMm: 1000, heightMm: 1000, options: [] }));
     expect(screen.purchasable).toBe(false);
     expect(screen.onlineOrder?.reasons.join(" ")).toContain("base fiscale");
   });

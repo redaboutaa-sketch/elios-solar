@@ -5,16 +5,27 @@
   --font-display: var(--font-montserrat), "Avenir Next", "Segoe UI", system-ui, sans-serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;
 
-  /* HELIOSTORES — valeurs, dérivation et contrastes : docs/heliostores/identite.md.
-     brand-700 = vert du logo (HELIO + soleil) ; 500/600 : nuances d'interface ≥ 4,5:1 avec le blanc. */
-  --color-brand-50: #f1f6f2;
-  --color-brand-100: #e2ece5;
-  --color-brand-200: #c5d8cb;
-  --color-brand-500: #54795e;
-  --color-brand-600: #4b6f54;
-  --color-brand-700: #44664d;
-  --color-brand-800: #36523e;
-  --color-brand-900: #263a2c;
+  /* HELIOSTORES — valeurs, dérivation et contrastes : docs/heliostores/identite.md (§ 4, itération 2026-10-25).
+     brand = bleu-vert du logo (« STORES », #8AB4A8 = brand-400, teinte 163°) décliné en nuances d'interface :
+     600/700/800 ≥ 4,5:1 avec le blanc (texte, navigation) ; 400 : décor et fonds sombres seulement. */
+  --color-brand-50: #eef5f3;
+  --color-brand-100: #e0ece9;
+  --color-brand-200: #d0e1dc;
+  --color-brand-300: #a8c7be;
+  --color-brand-400: #8ab4a8;
+  --color-brand-500: #4e8878;
+  --color-brand-600: #437567;
+  --color-brand-700: #396558;
+  --color-brand-800: #30544a;
+  --color-brand-900: #233e36;
+  /* vert « HELIO » du logo, conservé pour le logo et les illustrations */
+  --color-helio-700: #44664d;
+  /* accent orange (demande du client) : PROPOSITION provisoire, non extraite du logo — actions prioritaires.
+     accent-600 sur blanc 5,18:1 (texte blanc sur fond orange). Valeur à remplacer si le client fournit sa référence. */
+  --color-accent-50: #fff4ec;
+  --color-accent-600: #c2410c;
+  --color-accent-700: #9a3412;
+  --color-accent-800: #7c2d12;
   /* sauge du logo (STORES) : accent décoratif / sur fond sombre uniquement — jamais en texte sur fond clair (2,29:1). */
   --color-sage-200: #c4dbd3;
   --color-sage-300: #a9c8be;
@@ -80,7 +91,12 @@
 
 @layer components {
   .btn-primary { @apply btn bg-anthracite text-sand-50 hover:bg-brand-900; }
-  .btn-accent { @apply btn bg-brand-700 text-white hover:bg-brand-800 active:bg-brand-900; }
+  /* action prioritaire : accent orange (commander, demander le devis, étape suivante) */
+  .btn-accent { @apply btn bg-accent-600 text-white hover:bg-accent-700 active:bg-accent-800; }
+  .btn-cta { @apply btn bg-accent-600 text-white hover:bg-accent-700 active:bg-accent-800; }
+  /* navigation latérale : rubrique active signalée par la couleur ET un filet (pas seulement la couleur) */
+  .side-link { @apply block rounded-[2px] border-l-2 border-transparent px-2 py-1.5 text-stone-800 hover:bg-brand-50 hover:text-brand-800; }
+  .side-link[data-active] { @apply border-brand-700 bg-brand-50 font-semibold text-brand-800; }
   .btn-secondary { @apply btn border border-brand-700/40 bg-white text-ink hover:border-brand-700 hover:text-brand-800; }
   .btn-ghost { @apply btn text-ink hover:bg-brand-50; }
   .surface-night { @apply bg-night text-sand-50; }
@@ -100,7 +116,7 @@
 
   /* Boutons : retour au clic (sélection, envoi) */
   .btn-primary, .btn-accent, .btn-secondary, .btn-ghost { transition: background-color 150ms, border-color 150ms, color 150ms, transform 150ms var(--ease-out); }
-  .btn-primary:active:not(:disabled), .btn-accent:active:not(:disabled), .btn-secondary:active:not(:disabled) { transform: scale(0.98); }
+  .btn-primary:active:not(:disabled), .btn-accent:active:not(:disabled), .btn-cta:active:not(:disabled), .btn-secondary:active:not(:disabled) { transform: scale(0.98); }
 
   /* Lien de carte : toute la carte est cliquable, focus visible sur la carte */
   .card-link { @apply relative; }
@@ -183,3 +199,8 @@ body:has(nav[aria-label="Navigation mobile"]) [data-chat-launcher] { display: no
   .solution-panel, .solution-panel .panel-sketch, .solution-panel .panel-cta { transition: none; }
   .solution-panel:is(:hover, :focus-within) .panel-sketch { transform: none; }
 }
+
+/* Navigation latérale (ordinateur) : colonne fixe, repliable ; le contenu garde sa largeur maximale */
+.site-sidebar { width: 15rem; border-right: 1px solid var(--color-sand-200); background: var(--color-sand-50); }
+.site-sidebar[data-collapsed] { width: 3.5rem; }
+@media (min-width: 1024px) { .site-frame .container-x { max-width: min(80rem, 100%); } }

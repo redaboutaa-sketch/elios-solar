@@ -680,7 +680,7 @@ function evaluateAccessory(catalog: CatalogSnapshot, input: AccessoryStandaloneI
 /* Systèmes à la cote (catalogue HELIOSTORES)                           */
 /* ------------------------------------------------------------------ */
 
-const SYSTEM_KINDS = new Set(["pergola_system", "screen_system", "awning_system", "roof_blind_system"]);
+const SYSTEM_KINDS = new Set(["pergola_system", "screen_system", "awning_system", "roof_blind_system", "insect_screen_system"]);
 
 /**
  * Système configurable à la cote : règles sourcées de la famille ; prix lu dans la grille publique (system-pricing.ts).
@@ -714,7 +714,7 @@ function evaluateSystem(catalog: CatalogSnapshot, input: SystemInput): Evaluatio
   }
   const blocked = b.issues.some((i) => i.severity === "blocking");
   // prix de la grille publique : seulement pour une cote sans blocage, couverte par la grille
-  const lookup = blocked ? null : lookupSystemPrice(family.systemPrices, rules, input);
+  const lookup = blocked || input.sizeCode === "custom" ? null : lookupSystemPrice(family.systemPrices, rules, input);
   const systemPrice = lookup?.ok ? lookup.price : null;
   const reasons = onlineOrderBlockers(input, b.issues, systemPrice, blocked);
   const orderable = reasons.length === 0 && systemPrice != null;

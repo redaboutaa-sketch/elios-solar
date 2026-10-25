@@ -12,7 +12,7 @@ import { PlanPreview } from "@/components/configurator/plan-preview";
 import { QuoteVisualCard } from "@/components/quote/quote-visual-card";
 import { Flash, Options, PageTitle, QUOTE_STATUS_FR, Section, Table, fmtDate } from "@/components/admin/ui";
 import { centsToEuros, toDateInput } from "@/server/admin/form";
-import { updateQuoteAction } from "@/server/actions/admin/quotes";
+import { openQuotePaymentAction, updateQuoteAction } from "@/server/actions/admin/quotes";
 import type { ConfigurationInput, EvaluationResult } from "@/domain/types";
 import type { Attribution } from "@/domain/attribution";
 
@@ -24,6 +24,9 @@ export default async function QuoteAdminPage(props: PageProps<"/admin/devis/[id]
   await requireRole(["ADMIN", "MANAGER"]);
   const { id } = await props.params;
   const quote = await prisma.quote.findUnique({ where: { id }, include: { configuration: { select: { id: true, shareToken: true, shareRevoked: true, version: true } }, visuals: { orderBy: { createdAt: "asc" } } } });
+  const quoteOrders = quote ? await prisma.order.findMany({ where: { quoteId: quote.id }, orderBy: { createdAt: "desc" }, include: { payments: { orderBy: { createdAt: "desc" }, include: { refunds: true } } } }) : [];
+  const cashed = quoteOrders.flatMap((o) => o.payments).filter((p) => ["SUCCEEDED", "REFUNDED", "PARTIALLY_REFUNDED"].includes(p.status)).reduce((t, p) => t + p.amountCents, 0);
+  const refunded = quoteOrders.flatMap((o) => o.payments.flatMap((p) => p.refunds)).filter((r) => r.status === "SUCCEEDED").reduce((t, r) => t + r.amountCents, 0);
   if (!quote) notFound();
   const snap = quote.snapshot as { input?: ConfigurationInput | null; result?: EvaluationResult | null } | null;
   const result = snap?.result ?? null;
@@ -89,6 +92,21 @@ export default async function QuoteAdminPage(props: PageProps<"/admin/devis/[id]
             <div><label className="label" htmlFor="adminNotes">Notes internes</label><textarea id="adminNotes" name="adminNotes" rows={5} className="input" defaultValue={quote.adminNotes ?? ""} /></div>
             <button className="btn-primary w-full" type="submit">Enregistrer</button>
           </form>
+          <div className="mt-6 border-t border-sand-200 pt-4" data-testid="quote-payment">
+            <h3 className="font-semibold">Paiement en ligne du devis</h3>
+            {quoteOrders.length ? (
+              <ul className="mt-2 space-y-1 text-sm">{quoteOrders.map((o) => <li key={o.id}><a className="link-brand" href={`/admin/commandes/${o.id}`}>{o.number}</a> — {o.status}{o.payments[0] ? ` · paiement ${o.payments[0].status}${o.payments[0].method ? ` (${o.payments[0].method})` : ""}` : ""} · lien client : <code>/commande/{o.id}/payer</code></li>)}</ul>
+            ) : null}
+            {quoteOrders.length ? <p className="mt-2 text-sm" data-testid="quote-cashed">Encaissé : {centsToEuros(cashed)} € · remboursé : {centsToEuros(refunded)} € (suivi du prospect : origine ci-dessus → devis → commande → encaissement)</p> : <p className="mt-1 text-xs text-stone-700">Possible lorsque le devis est « Accepté » et que son montant TTC est renseigné. Le client règle exactement ce montant ; un retour de navigateur ne vaut pas paiement (confirmation par le prestataire).</p>}
+            {quote.status === "ACCEPTED" && quote.proposedTotalCents ? (
+              <form action={openQuotePaymentAction} className="mt-3 space-y-2">
+                <input type="hidden" name="quoteId" value={quote.id} />
+                <div><label className="label" htmlFor="vatRate">Taux de TVA du devis (%)</label><input id="vatRate" name="vatRate" inputMode="decimal" required className="input" placeholder="à indiquer" /></div>
+                <div><label className="label" htmlFor="payLabel">Libellé (facultatif)</label><input id="payLabel" name="label" maxLength={120} className="input" /></div>
+                <button className="btn-secondary w-full" type="submit">Ouvrir le paiement ({centsToEuros(quote.proposedTotalCents)} € TTC)</button>
+              </form>
+            ) : null}
+          </div>
         </Section>
       </div>
     </div>

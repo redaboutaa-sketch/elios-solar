@@ -15,6 +15,10 @@
  */
 import type { SourceRef, SystemRules } from "@/domain/system";
 import type { CategoryKey } from "@/domain/categories";
+import { PERGOLAS_2026 } from "./families/pergolas-2026";
+import { AWNINGS_2026 } from "./families/awnings-2026";
+import { INSECT_SCREENS_2026 } from "./families/insect-screens-2026";
+import { SCREENS_2026 } from "./families/screens-2026";
 
 /* ------------------------------------------------------------------ */
 /* Registre des sources                                                */
@@ -45,6 +49,7 @@ export const SOURCES = {
   dteCasablanca: { id: "dte-casablanca", label: "Documentation technique et d'utilisation CASABLANCA, DT-E 11.8 (ALUPROF, éd. 5, juin 2019)" },
   noticeAwnings: { id: "iuik-awnings", label: "Notice d'utilisation des stores de terrasse et de balcon (ALUPROF, FR)" },
   suppStores: { id: "supp-stores", label: "Supplément technique STORES (ALUPROF, FR)" },
+  suppScreens: { id: "supp-screens", label: "Supplément technique SCREENS (ALUPROF, FR, état 2026-08-03)" },
   brochureAwnings: { id: "brochure-stores-bannes", label: "Brochure ALUPROF « Stores bannes » (FR)" },
   aluprofCasaAutomation: { id: "aluprof-casablanca-automatisation", label: "Page fabricant ALUPROF « Casablanca » — onglet Automatisation (liste d'accessoires, sans compatibilité par moteur)", url: "https://aluprof.com/fr/produit/casablanca" },
 } as const satisfies Record<string, SourceRef>;
@@ -75,8 +80,14 @@ export interface HelioFamily {
   slug: string;
   name: string;
   category: CategoryKey | null;
-  kind: "PERGOLA_SYSTEM" | "SCREEN_SYSTEM" | "AWNING_SYSTEM" | "ROOF_BLIND_SYSTEM";
-  status: "PUBLISHED" | "QUOTE_ONLY" | "DRAFT";
+  kind: "PERGOLA_SYSTEM" | "SCREEN_SYSTEM" | "AWNING_SYSTEM" | "ROOF_BLIND_SYSTEM" | "INSECT_SCREEN_SYSTEM";
+  status: "PUBLISHED" | "QUOTE_ONLY" | "DRAFT" | "ARCHIVED";
+  /**
+   * Modèle retiré du catalogue (nomenclature du 2026-10-25) : fiche conservée pour l'historique (devis, projets,
+   * commandes), hors navigation ; ses anciennes URL mènent à une page explicative avec un choix de gamme, sans
+   * conversion de la configuration.
+   */
+  retired?: { since: string; reason: string; suggest: string[] };
   sortOrder: number;
   brand: string | null;
   manufacturer: string | null;
@@ -142,7 +153,8 @@ const sb400: HelioFamily = {
   name: "HELIO Horizon",
   category: "PERGOLAS",
   kind: "PERGOLA_SYSTEM",
-  status: "QUOTE_ONLY",
+  status: "ARCHIVED",
+  retired: { since: "2026-10-25", reason: "Nomenclature du 2026-10-25 : les pergolas proposées sont Malaga (SB 350), Marbella (SB 450) et Sevilla (PERGOLA V ZiiiP), des produits différents ; fiche conservée pour l'historique (devis, projets, commandes), sans conversion des configurations.", suggest: ["malaga", "marbella", "sevilla"] },
   sortOrder: 10,
   brand: "SELT by Aluprof",
   manufacturer: "ALUPROF SA (usine d'Opole, ex-SELT)",
@@ -201,7 +213,7 @@ const sb400: HelioFamily = {
       { code: "connect_box", label: "HELIO Connect — box de pilotage par smartphone", description: "Box internet qui pilote depuis une application les équipements radio io compatibles. Elle ne rend pas connectée une commande non compatible.", supplierRef: "Somfy TaHoma Switch", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "documenté avec la commande radio io de la pergola ; non documenté avec la télécommande HELIO Pilot fournie", pricing: "quote", sources: [at(SOURCES.dteSB400Pro, "p. 47 — « Commande via Internet »")], note: "compatibilité avec la commande HELIO Pilot à confirmer" },
     ],
     modules: { maxSingleWidthMm: 4000, multiModule: "documented", sources: [at(SOURCES.aluprofSB400, "« Modular system: Yes »")], note: "Système modulaire ; composition (modules, poteaux, gouttières) établie au devis." },
-    closureWishes: [{ familySlug: "helio-ombra", label: "Screen HELIO Ombra", status: "to_confirm", note: "la documentation cite des screens en panneaux latéraux sans désigner de modèle — intégration d'un screen HELIO Ombra étudiée au devis selon les ouvertures réelles." }],
+    closureWishes: [{ familySlug: "helioscreen", label: "Screen HelioScreen", status: "to_confirm", note: "la documentation cite des screens en panneaux latéraux sans désigner de modèle — intégration d'un screen HELIO Ombra étudiée au devis selon les ouvertures réelles." }],
     structure3d: { postMm: [150, 85], beamMm: [212, 85], bladeMm: [216, 40] },
     notices: ["Fixations, fondations et raccordement électrique non inclus ; la tenue de l'ouvrage dépend du support et se vérifie au relevé."],
     wind: { action: "blades", text: "Par vent fort (plus de 45 km/h), le capteur de vent ouvre les lames si les côtés sont ouverts et les ferme si les côtés sont fermés ; la même documentation demande aussi des lames fermées par fortes rafales. Comportement à confirmer avec le fabricant ; documenté pour la version à commande radio io.", status: "to_confirm", sources: [at(SOURCES.dteSB400Pro, "p. 44, 45, 52")] },
@@ -262,7 +274,8 @@ const sb500: HelioFamily = {
   name: "HELIO Panorama",
   category: "PERGOLAS",
   kind: "PERGOLA_SYSTEM",
-  status: "QUOTE_ONLY",
+  status: "ARCHIVED",
+  retired: { since: "2026-10-25", reason: "Nomenclature du 2026-10-25 : les pergolas proposées sont Malaga (SB 350), Marbella (SB 450) et Sevilla (PERGOLA V ZiiiP), des produits différents ; fiche conservée pour l'historique (devis, projets, commandes), sans conversion des configurations.", suggest: ["malaga", "marbella", "sevilla"] },
   sortOrder: 20,
   brand: "SELT",
   manufacturer: "SELT (fusionnée avec ALUPROF SA)",
@@ -333,7 +346,7 @@ const sb500: HelioFamily = {
       { code: "weather_automation", label: "Automatisme météo (capteurs)", group: "control", status: "to_confirm", sources: [T("p. 7")], note: "capteurs et compatibilité avec la commande à confirmer" },
     ],
     modules: { maxSingleWidthMm: 5000, multiModule: "documented", sources: [T("p. 7 — « possibility of modular connection »"), at(sb500Sheet, "tableau « Module suivant (extension) »")] },
-    closureWishes: [{ familySlug: "helio-ombra", label: "Screen HELIO Ombra", status: "to_confirm", note: "compatibilité avec HELIO Panorama non documentée par les sources — étude des ouvertures réelles au devis." }],
+    closureWishes: [{ familySlug: "helioscreen", label: "Screen HelioScreen", status: "to_confirm", note: "compatibilité avec HELIO Panorama non documentée par les sources — étude des ouvertures réelles au devis." }],
     structure3d: { postMm: [150, 150], beamMm: [290, 150], bladeMm: [267, 42], gutters: 2 },
     notices: ["Fixations, fondations et raccordement électrique non inclus ; la tenue de l'ouvrage dépend du support et se vérifie au relevé.", "Gouttières fournies sans évacuation : le raccordement des descentes d'eau est prévu au devis."],
     wind: { action: "not_documented", text: "Aucun comportement en cas de vent n'est documenté pour ce modèle (automatisme météo cité sans détail) : la position des lames et les capteurs sont définis au devis.", status: "to_confirm", sources: [T("p. 7")] },
@@ -398,31 +411,31 @@ const REF_MOTORS: Array<[string, string, string, number, string]> = [
   ["radio_io", "Motorisation radio — commande io", "SUNILUS SCR IO 10/17", 680, "5 m blanc VVF"],
 ];
 const refleksol: HelioFamily = {
-  slug: "helio-ombra",
-  name: "HELIO Ombra",
+  slug: "helioscreen",
+  name: "HelioScreen",
   category: "SCREENS",
   kind: "SCREEN_SYSTEM",
   status: "QUOTE_ONLY",
   sortOrder: 30,
-  brand: "SELT by Aluprof",
+  brand: "Aluprof",
   manufacturer: "ALUPROF SA (usine d'Opole, ex-SELT)",
-  supplierRef: "REFLEKSOL 120 ZiiiP",
+  supplierRef: "R 120 ZiiiP (ex-REFLEKSOL 120 ZiiiP, DT-E 2.6)",
   shortDescription: "Screen à toile tendue guidée par fermeture zip, motorisé, pose en niche ou en façade.",
   description:
-    "HELIO Ombra est un screen extérieur à coffre en aluminium extrudé de 126 mm, pour une pose en niche ou en façade. Son guidage zip tient la toile dans des coulisses en deux parties avec joints de compensation. La commande est uniquement électrique. La documentation indique une résistance au vent de classe 6 (classe 4 au-delà de 4 001 mm de largeur) et un renfort de la toile pour les largeurs supérieures à 5 m.",
-  seoTitle: "Screen HELIO Ombra motorisé — prix selon vos dimensions",
-  seoDescription: "Screen extérieur HELIO Ombra : toile tendue par coulisses zip, commande électrique, pose en niche ou façade. Configurez et demandez un devis.",
+    "HelioScreen est un screen extérieur à coffre en aluminium extrudé de 126 mm, pour une pose en niche ou en façade. Son guidage zip tient la toile dans des coulisses en deux parties avec joints de compensation, même par vent fort. La commande est uniquement électrique. Résistance au vent déclarée : classe 6 jusqu'à 4 × 4 m, plus faible au-delà.",
+  seoTitle: "Screen zip HelioScreen motorisé — prix selon vos dimensions",
+  seoDescription: "Screen extérieur HelioScreen : toile tendue par coulisses zip, commande électrique, pose en niche ou façade. Configurez et demandez un devis.",
   rules: {
     type: "screen",
     dims: {
       width: {
         label: "Largeur",
-        minMm: 580,
+        minMm: null,
         maxMm: 7000,
         confirmAboveMm: 4000,
-        confirmNote: "la fiche transmise indique 4 m au maximum (3,5 m avec guidage câble) quand le catalogue indique 7 m",
-        sources: [T("p. 66 — largeur maximale 7 m"), at(SOURCES.aluprofRefleksol, "Maximum width 7.0 m"), at(refSheet, "Spécifications — 400 cm (barre anti-vent) / 350 cm (guidage câble) ; largeur minimale selon moteur")],
-        note: "La largeur minimale dépend du moteur choisi (58 à 80 cm selon la fiche).",
+        confirmNote: "les sources du fabricant divergent au-delà de 4 m (7 m sur la page web et le catalogue, 5 m dans le supplément technique 2026, 4 m dans la documentation technique) ; au-delà de 4 m, hauteur limitée à 3 m",
+        sources: [T("p. 66 — largeur maximale 7 m"), at(SOURCES.aluprofRefleksol, "Maximum width 7.0 m"), at(SOURCES.suppScreens, "p. 39 — 5 000 mm ; au-dessus de 4 000 mm, hauteur ≤ 3 000 mm"), at(refSheet, "Spécifications — 400 cm (barre anti-vent) / 350 cm (guidage câble) ; largeur minimale selon moteur")],
+        note: "Largeur minimale non documentée par le fabricant (la fiche transmise donne 58 à 73 cm selon le moteur, à confirmer).",
       },
       height: { label: "Hauteur", minMm: null, maxMm: 4000, confirmAboveMm: 3000, confirmNote: "la page fabricant indique 4 m dans ses caractéristiques mais « up to 3 m » dans son texte", sources: [T("p. 66 — hauteur maximale 4 m"), at(SOURCES.aluprofRefleksol, "Maximum height 4.0 m ; texte « height of up to 3 m »"), at(refSheet, "Spécifications — 400 cm")] },
     },
@@ -433,26 +446,28 @@ const refleksol: HelioFamily = {
     finishes: SELT_PALETTE.map((c) => finish(`${c}`, [T("p. 66 et 150 — couleurs de la palette SELT")], c.startsWith("VSR") ? "aperçu non disponible" : undefined)),
     customFinish: { code: "RAL_CUSTOM", label: "Autre teinte RAL (option)", status: "to_confirm", sources: [T("p. 67 — « any colour from RAL palette (optional) »")], note: "teinte hors palette : conditions et délai confirmés au devis" },
     fabrics: [
-      { code: "soltis", label: "Soltis (92 / 99)", status: "established", sources: [at(refSheet, "Tissus disponibles"), T("p. 157")] },
-      { code: "sunworker", label: "Sunworker", status: "established", sources: [at(refSheet, "Tissus disponibles"), T("p. 157")] },
-      { code: "serge", label: "Serge", status: "established", sources: [at(refSheet, "Tissus disponibles"), T("p. 157")] },
-      { code: "polyscreen", label: "Polyscreen", status: "established", sources: [at(refSheet, "Tissus disponibles"), T("p. 157")] },
-      { code: "acrylique", label: "Acrylique", status: "to_confirm", sources: [at(refSheet, "Tissus disponibles")], note: "citée par la fiche, absente des toiles du catalogue pour ce screen — à confirmer" },
+      { code: "serge_1", label: "Serge 1 % (8 coloris)", status: "established", description: "Toile microperforée très occultante (facteur d'ouverture 1 %).", swatch: "#6f706b", sources: [at(SOURCES.aluprofRefleksol, "onglet Tissus — Serge 1 %")] },
+      { code: "serge_600", label: "Serge 600 (14 coloris)", status: "established", description: "Toile microperforée, vue vers l'extérieur conservée.", swatch: "#8d8f8c", sources: [at(SOURCES.aluprofRefleksol, "onglet Tissus — Serge 600")] },
+      { code: "soltis_veozip", label: "Soltis VEOZIP (10 coloris)", status: "established", description: "Toile technique conçue pour le guidage zip.", swatch: "#a39d90", sources: [at(SOURCES.aluprofRefleksol, "onglet Tissus — Soltis VEOZIP")] },
+      { code: "sunworker", label: "Sunworker", status: "to_confirm", sources: [at(refSheet, "Tissus disponibles"), T("p. 157")], note: "citée par la fiche transmise, absente des toiles de la page du fabricant pour ce screen" },
+      { code: "polyscreen", label: "Polyscreen", status: "to_confirm", sources: [at(refSheet, "Tissus disponibles"), T("p. 157")], note: "citée par la fiche transmise, absente des toiles de la page du fabricant pour ce screen" },
     ],
-    controls: REF_MOTORS.map(([c, label, model, minW, cable]) => ({ code: c, label, supplierRef: `Moteur ${model}`, kind: "electric" as const, minWidthMm: minW, cable: `câble ${cable}`, status: "established" as const, sources: [at(refSheet, "Options moteurs — largeur minimale du système et câble")] })),
+    // moteurs de la fiche transmise : présents dans la liste du fabricant, mais largeurs minimales non confirmées par
+    // ses documents (la fiche décrit en partie le screen classique sans zip) → choix à confirmer, sans blocage
+    controls: REF_MOTORS.map(([c, label, model, minW, cable]) => ({ code: c, label, supplierRef: `Moteur ${model}`, kind: "electric" as const, cable: `câble ${cable}`, status: "to_confirm" as const, note: `largeur minimale indiquée par la fiche transmise : ${minW / 10} cm (à confirmer)`, sources: [at(refSheet, "Options moteurs — largeur minimale du système et câble"), at(SOURCES.aluprofRefleksol, "onglet Automatisation")] })),
     included: [
       { label: "Coffre en aluminium extrudé (126 mm)", sources: [T("p. 66–67")] },
       { label: "Guidage zip : coulisses en deux parties avec joints de compensation", supplierRef: "Mécanisme ZiiiP", sources: [T("p. 67")] },
-      { label: "Coulisses et barres anti-vent selon la configuration", sources: [at(refSheet, "Spécifications")], status: "to_confirm" },
     ],
     options: [
+      { code: "remote_control", label: "Télécommande radio", description: "Émetteur pour un moteur radio ; modèle défini avec le moteur.", group: "control", status: "to_confirm", wish: true, requiresControls: ["radio_rts", "radio_io"], prerequisite: "nécessite une motorisation radio", pricing: "quote", visual: "remote", sources: [at(SOURCES.aluprofRefleksol, "onglet Automatisation — télécommandes (liste sans compatibilité)")] },
       { code: "group_installation", label: "Installation groupée (supports modulaires)", group: "structure", status: "to_confirm", sources: [T("p. 67 — « option to create modules using modular brackets »")], note: "nombre de modules et supports établis au devis" },
-      { code: "weather_automation", label: "HELIO Vent / HELIO Soleil — automatisme vent et soleil", description: "Relève le screen dans son coffre par vent fort ; pilote la toile selon l'ensoleillement.", supplierRef: "Automatisme (capteurs vent / soleil), modèle selon le moteur", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "capteur compatible avec le moteur choisi (à confirmer)", pricing: "quote", sources: [T("p. 160 — pilotage automatique selon la météo"), at(SOURCES.noticeScreens, "p. 10 — relevage complet par vent"), at(SOURCES.dteRefleksol, "p. 27 — automatisation du vent recommandée")], note: "capteurs compatibles avec le moteur choisi à confirmer" },
-      { code: "connect_box", label: "HELIO Connect — box de pilotage par smartphone", description: "Box internet qui pilote depuis une application un moteur radio io compatible. Elle ne rend pas connectés les autres moteurs.", supplierRef: "Somfy TaHoma Switch (liste d'accessoires du fabricant)", group: "control", status: "to_confirm", requiresControls: ["radio_io"], prerequisite: "nécessite la motorisation radio — commande io", pricing: "quote", sources: [at(SOURCES.aluprofRefleksol, "onglet Automatisation (liste, sans compatibilité par moteur)")], note: "compatibilité à confirmer" },
+      { code: "weather_automation", label: "Automatisme vent et soleil (capteurs)", visual: "wind_sensor", wish: true, description: "Relève le screen dans son coffre par vent fort ; pilote la toile selon l'ensoleillement.", supplierRef: "Automatisme (capteurs vent / soleil), modèle selon le moteur", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "capteur compatible avec le moteur choisi (à confirmer)", pricing: "quote", sources: [T("p. 160 — pilotage automatique selon la météo"), at(SOURCES.noticeScreens, "p. 10 — relevage complet par vent"), at(SOURCES.dteRefleksol, "p. 27 — automatisation du vent recommandée")], note: "capteurs compatibles avec le moteur choisi à confirmer" },
+      { code: "connect_box", label: "Box domotique — commande par smartphone", visual: "box", wish: true, description: "Box internet qui pilote depuis une application un moteur radio io compatible. Elle ne rend pas connectés les autres moteurs.", supplierRef: "Somfy TaHoma Switch (liste d'accessoires du fabricant)", group: "control", status: "to_confirm", requiresControls: ["radio_io"], prerequisite: "nécessite la motorisation radio — commande io", pricing: "quote", sources: [at(SOURCES.aluprofRefleksol, "onglet Automatisation (liste, sans compatibilité par moteur)")], note: "compatibilité à confirmer" },
     ],
     structure3d: { cassetteMm: [126, 126] },
     wind: { action: "raise", text: "Par vent fort, le screen doit être entièrement relevé dans son coffre ; l'automatisme de vent recommandé ne dispense pas de le relever au-delà de la vitesse admissible.", status: "established", sources: [at(SOURCES.dteRefleksol, "p. 27"), at(SOURCES.noticeScreens, "p. 10")] },
-    notices: ["Commande uniquement électrique : alimentation et raccordement à prévoir.", "Résistance au vent déclarée (EN 13659) : classe 6 jusqu'à 4 × 4 m, classe 4 de 4 à 5 m de largeur (hauteur ≤ 3 m), classe 2 pour 7 × 4 m (déclarations des performances du fabricant)."],
+    notices: ["Commande uniquement électrique : alimentation et raccordement à prévoir.", "Résistance au vent déclarée : classe 6 jusqu'à 4 × 4 m, classe 4 de 4 à 5 m de largeur (hauteur ≤ 3 m), classe 2 pour 7 × 4 m (déclarations des performances du fabricant)."],
   },
   specs: [
     { key: "width_max", label: "Largeur maximale", valueNum: 7000, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 66" },
@@ -468,18 +483,17 @@ const refleksol: HelioFamily = {
     { key: "drive", label: "Commande", valueText: "électrique uniquement", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 66" },
     { key: "drive", label: "Commande", valueText: "électrique uniquement", source: "CLIENT_SHEET", sourceRef: "Fiche REFLEKSOL — Spécifications" },
     { key: "use", label: "Usage", valueText: "extérieur", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 66" },
-    { key: "wide_width_reinforcement", label: "Grandes largeurs", valueText: "renfort de la toile au-delà de 5 m", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 67 (« ZOOMTECH® »)" },
     { key: "colours", label: "Teintes", valueText: "palette de 26 teintes standard, autre RAL en option", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 66–67, 150" },
   ],
   faq: [
     { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, pour les cotes de la grille ; une autre cote est chiffrée au devis). Les options, la pose et la livraison sont chiffrées sur votre devis." },
     { q: "Peut-on commander en ligne ?", a: "Oui pour la structure seule : aux dimensions couvertes par la grille, sans option ni choix à confirmer, la configuration s'ajoute au panier (TVA ajoutée au total). La livraison et la pose s'organisent ensuite avec un conseiller. Dans les autres cas, demandez un devis depuis le configurateur." },
-    { q: "Quelle largeur maximale ?", a: "Le catalogue indique 7 m, la fiche transmise 4 m. Jusqu'à 4 m, les deux sources concordent ; au-delà, la faisabilité est confirmée au devis." },
-    { q: "Peut-on le manœuvrer à la main ?", a: "Non : HELIO Ombra est uniquement à commande électrique. Le choix du moteur fixe la largeur minimale du screen." },
+    { q: "Quelle largeur maximale ?", a: "Jusqu'à 4 m, toutes les sources concordent. Au-delà, les documents du fabricant divergent (5 m ou 7 m) et la hauteur est limitée à 3 m : la faisabilité est confirmée au devis." },
+    { q: "Peut-on le manœuvrer à la main ?", a: "Non : HelioScreen est uniquement à commande électrique. Le moteur est défini avec vous au devis." },
     { q: "Peut-il fermer le côté d'une pergola ?", a: "Un screen vendu seul n'est pas automatiquement compatible avec une pergola : l'intégration se vérifie au devis selon les ouvertures et les fixations." },
   ],
   openQuestions: [
-    { field: "Largeur maximale", question: "Fiche : 4 m (barre anti-vent) / 3,5 m (guidage câble) ; catalogue : 7 m. La fiche décrit-elle un autre guidage que ZiiiP ?", sources: ["fiche-refleksol-120-ziiip", "catalogue-thysens p. 66"], blocks: "largeurs supérieures à 4 m (devis)" },
+    { field: "Largeur maximale", question: "Largeur maximale : 7 m (page web, catalogue), 5 m (supplément technique 2026) ou 4 m (documentation technique) ? La fiche transmise (barre anti-vent, guidage câble) décrit en partie le screen classique sans zip.", sources: ["fiche-refleksol-120-ziiip", "catalogue-thysens p. 66"], blocks: "largeurs supérieures à 4 m (devis)" },
     { field: "Tarifs", question: "La grille de la fiche ne correspond à aucune cellule du classeur et couvre moins de dimensions : quelle grille fait foi ? Nature, devise et fiscalité.", sources: ["fiche-refleksol-120-ziiip", "classeur tarifaire (privé)"], blocks: "affichage d'un prix" },
     { field: "Toiles", question: "Toile acrylique citée par la fiche mais absente des toiles REFLEKSOL du catalogue.", sources: ["fiche-refleksol-120-ziiip", "catalogue-thysens p. 157"], blocks: "toile acrylique (devis)" },
     { field: "Hauteur maximale", question: "Page fabricant : 4 m (caractéristiques) et « up to 3 m » (texte) ; catalogue et fiche : 4 m.", sources: ["aluprof-r120-ziiip"], blocks: "hauteurs de 3 à 4 m (devis)" },
@@ -493,20 +507,20 @@ const refleksol: HelioFamily = {
 const casaSheet = SOURCES.ficheCasablanca;
 const casaGrid = at(casaSheet, "tableau des dimensions (projection × largeur)");
 const casablanca: HelioFamily = {
-  slug: "helio-riviera",
-  name: "HELIO Riviera",
+  slug: "casablanca",
+  name: "Casablanca",
   category: "STORES_BANNES",
   kind: "AWNING_SYSTEM",
   status: "QUOTE_ONLY",
   sortOrder: 40,
-  brand: "SELT by Aluprof",
+  brand: "Aluprof",
   manufacturer: "ALUPROF SA (usine d'Opole, ex-SELT)",
   supplierRef: "CASABLANCA",
-  shortDescription: "Store de terrasse à coffre, jusqu'à 6 m de largeur et 3,6 m d'avancée.",
+  shortDescription: "Store banne à coffre intégral avec joint, manivelle ou moteur, jusqu'à 6 m de largeur et 3,6 m d'avancée.",
   description:
-    "HELIO Riviera est un store de terrasse à coffre en aluminium extrudé. Le joint du coffre protège la toile, les bras sont à chaînes Flyer et un support de tube d'enroulement équipe les grandes largeurs. Il se pose au mur, au plafond ou sur chevrons, avec une inclinaison de 5° à 40°. La fiche transmise décrit la commande manuelle par manivelle.",
-  seoTitle: "Store banne HELIO Riviera à coffre — prix selon vos dimensions",
-  seoDescription: "Store banne coffre HELIO Riviera : jusqu'à 6 m de largeur et 3,6 m d'avancée, pose murale, plafond ou chevrons. Configurez et demandez un devis.",
+    "Casablanca est un store de terrasse à coffre en aluminium extrudé. Le joint du coffre protège la toile, les bras sont à chaînes Flyer et un support de tube d'enroulement équipe les grandes largeurs. Il se pose au mur, au plafond ou sur chevrons, avec une inclinaison de 5° à 40°. Il se manœuvre à la manivelle ou, sur devis, par un moteur.",
+  seoTitle: "Store banne Casablanca à coffre — prix selon vos dimensions",
+  seoDescription: "Store banne coffre Casablanca : jusqu'à 6 m de largeur et 3,6 m d'avancée, pose murale, plafond ou chevrons. Configurez et demandez un devis.",
   rules: {
     type: "awning",
     dims: {
@@ -536,21 +550,17 @@ const casablanca: HelioFamily = {
       { label: "Bras à chaînes Flyer", sources: [T("p. 115")] },
       { label: "Embouts en aluminium", sources: [T("p. 115")] },
       { label: "Support de tube d'enroulement pour les grandes largeurs", sources: [T("p. 115")] },
-      { label: "2 supports jusqu'à 4,10 m de largeur, 3 au-delà", sources: [at(casaSheet, "Spécifications"), at(SOURCES.suppStores, "p. 46")] },
     ],
+    supports: { label: "Supports muraux", rows: [{ upToMm: 4100, count: 2 }, { upToMm: 6000, count: 3 }], sources: [at(casaSheet, "Spécifications"), at(SOURCES.suppStores, "p. 46")] },
     options: [
-      { code: "remote_control", label: "HELIO Pilot — télécommande radio", description: "Émetteur de commande à distance de la version motorisée.", supplierRef: "émetteur de commande à distance (modèle à définir avec le moteur)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite la motorisation", pricing: "quote", sources: [at(SOURCES.dteCasablanca, "p. 6 — « émetteur de commande à distance »")], note: "modèle défini avec le moteur au devis" },
-      { code: "weather_automation", label: "HELIO Vent / HELIO Soleil — automatisme vent-soleil", description: "Replie le store par vent fort et le déploie selon l'ensoleillement ; seuils réglables.", supplierRef: "automatisation météorologique vent-soleil (capteurs selon le moteur)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite la motorisation", pricing: "quote", sources: [T("p. 115 — « simple handling using full weather automation »"), at(SOURCES.dteCasablanca, "p. 6, p. 19"), at(SOURCES.brochureAwnings, "p. 29")], note: "capteurs définis avec le moteur au devis" },
-      { code: "shock_sensor", label: "Capteur de vibrations", description: "Capteur de choc fixé sur la barre de charge, pour la commande automatique du store motorisé.", supplierRef: "capteurs de choc / vibration listés par le fabricant (Eolis 3D io, capteurs RED / BLUE)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite la motorisation ; capteur compatible avec le moteur", pricing: "quote", sources: [at(SOURCES.aluprofCasaAutomation, "capteurs de choc ou de vibration")], note: "compatibilité avec le moteur à confirmer" },
-      { code: "connect_box", label: "HELIO Connect — box de pilotage par smartphone", description: "Box internet qui pilote depuis une application un moteur radio compatible. Elle ne rend pas connectée une commande non compatible.", supplierRef: "Somfy TaHoma Switch (liste d'accessoires du fabricant)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite une motorisation radio io (moteur à définir)", pricing: "quote", sources: [at(SOURCES.aluprofCasaAutomation, "TaHoma Switch")], note: "compatibilité avec le moteur à confirmer" },
-    ],
-    packs: [
-      { code: "essentiel", label: "Essentiel", tier: 1, summary: "Store à coffre manœuvré à la manivelle : la solution simple.", status: "established", controlKinds: ["manual"], includes: ["Coffre avec joint de protection de la toile", "Bras à chaînes Flyer", "Manivelle 150, 180 ou 220 cm"], sources: [casaSheet, T("p. 114–115")] },
-      { code: "confort", label: "Confort", tier: 2, summary: "Même store, motorisé, avec télécommande radio ; automatisme vent-soleil en option.", status: "to_confirm", controlKinds: ["electric"], includes: ["Coffre avec joint de protection de la toile", "Bras à chaînes Flyer", "Motorisation (moteur à définir)", "HELIO Pilot — télécommande radio"], optionCodes: ["remote_control", "weather_automation", "shock_sensor", "connect_box"], sources: [at(SOURCES.dteCasablanca, "p. 6")], note: "moteur, télécommande et capteurs définis et chiffrés au devis" },
-      { code: "premium", label: "Premium", tier: 3, summary: "Autre modèle à coffre, uniquement motorisé, avec éclairage LED et capteurs météo : en préparation.", status: "to_confirm", controlKinds: ["electric"], includes: ["Éclairage LED dans le profil bas", "Capteurs météo"], familySlug: "helio-azur", sources: [T("p. 118–119"), at(SOURCES.brochureAwnings, "p. 13")], note: "modèle à valider (fiche, tarifs, photos) avant toute présentation" },
+      { code: "remote_control", label: "Télécommande radio", visual: "remote", description: "Émetteur de commande à distance de la version motorisée.", supplierRef: "émetteur de commande à distance (modèle à définir avec le moteur)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite la motorisation", pricing: "quote", sources: [at(SOURCES.dteCasablanca, "p. 6 — « émetteur de commande à distance »")], note: "modèle défini avec le moteur au devis" },
+      { code: "weather_automation", label: "Automatisme vent-soleil (capteur)", visual: "wind_sensor", wish: true, description: "Replie le store par vent fort et le déploie selon l'ensoleillement ; seuils réglables.", supplierRef: "automatisation météorologique vent-soleil (capteurs selon le moteur)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite la motorisation", pricing: "quote", sources: [T("p. 115 — « simple handling using full weather automation »"), at(SOURCES.dteCasablanca, "p. 6, p. 19"), at(SOURCES.brochureAwnings, "p. 29")], note: "capteurs définis avec le moteur au devis" },
+      { code: "shock_sensor", label: "Capteur de vibrations", wish: true, description: "Capteur de choc fixé sur la barre de charge, pour la commande automatique du store motorisé.", supplierRef: "capteurs de choc / vibration listés par le fabricant (Eolis 3D io, capteurs RED / BLUE)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite la motorisation ; capteur compatible avec le moteur", pricing: "quote", sources: [at(SOURCES.aluprofCasaAutomation, "capteurs de choc ou de vibration")], note: "compatibilité avec le moteur à confirmer" },
+      { code: "connect_box", label: "Box domotique — commande par smartphone", visual: "box", wish: true, description: "Box internet qui pilote depuis une application un moteur radio compatible. Elle ne rend pas connectée une commande non compatible.", supplierRef: "Somfy TaHoma Switch (liste d'accessoires du fabricant)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite une motorisation radio io (moteur à définir)", pricing: "quote", sources: [at(SOURCES.aluprofCasaAutomation, "TaHoma Switch")], note: "compatibilité avec le moteur à confirmer" },
     ],
     wind: { action: "retract", text: "Par vent fort, le store se replie : au-delà de sa classe de vent déclarée, il doit être enroulé immédiatement ; l'automatisme de vent recommandé ne protège pas contre les rafales qui dépassent ses réglages.", status: "established", sources: [at(SOURCES.dteCasablanca, "p. 18–19"), at(SOURCES.noticeAwnings, "p. 10")] },
-    structure3d: { tiltDeg: [5, 40] },
+    protection: { label: "coffre intégral avec joint", level: "full", status: "established", sources: [T("p. 115"), at(SOURCES.brochureAwnings, "p. 9")] },
+    structure3d: { tiltDeg: [5, 40], cassetteMm: [300, 245] },
     notices: ["Fixations adaptées au support (béton, maçonnerie, charpente) à déterminer au relevé ; pas de pose directe sur un support non porteur.", "Résistance au vent déclarée : classe 2 jusqu'à 4,10 × 3,10 m, classe 1 au-delà (déclaration des performances du fabricant) — un store banne se replie par vent fort.", "Manivelles et engrenages disponibles en RAL 9010, 1013, 8017, 9006, 7016.", "Éclairage LED : non proposé sur ce modèle."],
   },
   specs: [
@@ -583,74 +593,11 @@ const casablanca: HelioFamily = {
   openQuestions: [
     { field: "Motorisation", question: "Moteur, commande et conditions de la version électrique citée par le catalogue.", sources: ["catalogue-thysens p. 114"], blocks: "version électrique (devis)" },
     { field: "Largeur minimale", question: "Largeurs minimales selon l'avancée : la fiche (2,91 m pour 2,6 m ; 3,51 m pour 3,1 et 3,6 m) diffère de la documentation technique (portée + 0,4 m : 2,5 / 3 / 4 m).", sources: ["fiche-casablanca", "dte-casablanca p. 6", "supp-stores p. 46"], blocks: "aucun (la fiche s'applique, à confirmer)" },
-    { field: "Niveau Confort", question: "Moteur (fins de course électroniques recommandées, certains moteurs déconseillés), télécommande et capteurs de la version motorisée.", sources: ["dte-casablanca p. 6", "DT-E CASABLANCA EN 2016 p. 17–18"], blocks: "niveau Confort (devis)" },
+    { field: "Motorisation", question: "Moteur (fins de course électroniques recommandées, certains moteurs déconseillés), télécommande et capteurs de la version motorisée.", sources: ["dte-casablanca p. 6", "DT-E CASABLANCA EN 2016 p. 17–18"], blocks: "version motorisée (devis)" },
     { field: "Tarifs", question: "Nature, devise (DH), HT ou TTC, validité ; transport et pose.", sources: ["fiche-casablanca", "classeur tarifaire (privé)"], blocks: "affichage d'un prix" },
   ],
 };
 
-/* ------------------------------------------------------------------ */
-/* HELIO Azur — réf. CORSICA — brouillon (niveau Premium des stores bannes) */
-/* ------------------------------------------------------------------ */
-
-const corsica: HelioFamily = {
-  slug: "helio-azur",
-  name: "HELIO Azur",
-  category: "STORES_BANNES",
-  kind: "AWNING_SYSTEM",
-  status: "DRAFT",
-  sortOrder: 45,
-  brand: "SELT by Aluprof",
-  manufacturer: "ALUPROF SA (usine d'Opole, ex-SELT)",
-  supplierRef: "CORSICA",
-  shortDescription: "Store de terrasse à coffre, uniquement motorisé, avec éclairage LED : niveau Premium en préparation.",
-  description: "HELIO Azur est un store de terrasse à coffre et barre carrée, uniquement motorisé. Le profil bas peut recevoir un éclairage LED et des bras éclairés existent pour les avancées de 3,1 et 3,6 m. Il se pose au mur, au plafond ou sur chevrons, avec une inclinaison de 5° à 35°. Modèle en brouillon : fiche, tarif et photographies à obtenir.",
-  seoTitle: "Store banne HELIO Azur — motorisé, éclairage LED",
-  seoDescription: "Store banne à coffre motorisé HELIO Azur, éclairage LED et capteurs météo : sur devis.",
-  rules: {
-    type: "awning",
-    dims: {
-      width: { label: "Largeur", minMm: 2050, maxMm: 7000, sources: [T("p. 118 — largeur maximale 7 m"), at(SOURCES.brochureAwnings, "p. 13 — 2,05 à 7 m")] },
-      depth: { label: "Avancée", minMm: 1600, maxMm: 3600, sources: [T("p. 118 — avancée 1,6 à 3,6 m"), at(SOURCES.brochureAwnings, "p. 13")], note: "Pas d'avancée et largeurs minimales par avancée non documentés : établis au devis." },
-    },
-    mountings: [
-      { code: "wall", label: "Murale", status: "established", sources: [T("p. 118")] },
-      { code: "ceiling", label: "Au plafond", status: "established", sources: [T("p. 118")] },
-      { code: "rafter", label: "Sur chevrons", status: "established", sources: [T("p. 118")] },
-    ],
-    finishes: ["RAL 9010", "RAL 1015", "RAL 8014", "RAL 9006", "FSM 71319"].map((c) => finish(c, [T("p. 118 — couleurs standard")])),
-    fabrics: [{ code: "acrylic_collection", label: "Toile acrylique — coloris à choisir parmi la collection", status: "established", sources: [T("p. 155"), at(SOURCES.brochureAwnings, "p. 26")], note: "coloris choisi au devis sur nuancier" }],
-    controls: [
-      { code: "electric", label: "Motorisation électrique (moteur à définir)", kind: "electric", status: "to_confirm", sources: [T("p. 118 — uniquement motorisé"), at(SOURCES.brochureAwnings, "p. 13")], note: "moteur, télécommande et conditions établis au devis" },
-    ],
-    included: [
-      { label: "Coffre et barre de charge carrée", sources: [T("p. 118–119"), at(SOURCES.brochureAwnings, "p. 13")] },
-    ],
-    options: [
-      { code: "led_bottom_profile", label: "HELIO Lumière — éclairage LED dans le profil bas", description: "Bandeau LED intégré au profil inférieur du store.", supplierRef: "LED dans le profil bas (équipement selon le catalogue, option selon le supplément technique)", group: "lighting", status: "to_confirm", requiresControlKind: "electric", prerequisite: "commande d'éclairage compatible à définir", pricing: "quote", sources: [T("p. 119"), at(SOURCES.brochureAwnings, "p. 13"), at(SOURCES.suppStores, "p. 51")], note: "équipement de série ou option : à confirmer" },
-      { code: "led_arms", label: "HELIO Lumière — bras éclairés", description: "Bras articulés équipés de LED, pour les avancées de 3,1 m et 3,6 m.", supplierRef: "bras LED 3100 et 3600 mm", group: "lighting", status: "to_confirm", prerequisite: "avancée de 3,1 m ou 3,6 m", pricing: "quote", sources: [at(SOURCES.brochureAwnings, "p. 13"), at(SOURCES.suppStores, "p. 83")], note: "commande de l'éclairage à définir" },
-      { code: "weather_automation", label: "HELIO Vent / HELIO Soleil — capteurs météo", description: "Replie le store par vent fort et le déploie selon l'ensoleillement ; seuils réglables.", supplierRef: "capteurs météo (selon le moteur)", group: "control", status: "to_confirm", requiresControlKind: "electric", pricing: "quote", sources: [at(SOURCES.brochureAwnings, "p. 13, p. 29")], note: "capteurs définis avec le moteur" },
-    ],
-    wind: { action: "retract", text: "Par vent fort, les capteurs replient le store ; seuils réglables.", status: "to_confirm", sources: [at(SOURCES.brochureAwnings, "p. 29 (stores bannes en général)")] },
-    structure3d: { tiltDeg: [5, 35] },
-    notices: ["Modèle en préparation : aucune page publique, aucun prix. Sans support télescopique ni lambrequin (supplément technique)."],
-  },
-  specs: [
-    { key: "width_max", label: "Largeur maximale", valueNum: 7000, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 118" },
-    { key: "projection_max", label: "Avancée maximale", valueNum: 3600, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 118" },
-    { key: "tilt", label: "Inclinaison", valueText: "5° à 35°", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 118" },
-    { key: "drive", label: "Commande", valueText: "uniquement motorisée", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 118 ; brochure ALUPROF Stores bannes p. 13" },
-    { key: "cassette", label: "Coffre", valueText: "coffre (« semi-cassette » selon la brochure)", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 118 ; brochure ALUPROF p. 13" },
-  ],
-  faq: [],
-  openQuestions: [
-    { field: "Validation", question: "Disponibilité chez le fournisseur, fiche technique, classe de vent, coffre (intégral ou semi-coffre).", sources: ["catalogue-thysens p. 118–119", "brochure-stores-bannes p. 13"], blocks: "publication" },
-    { field: "Tarifs", question: "Grille de la structure et prix de l'éclairage LED.", sources: [], blocks: "affichage d'un prix" },
-    { field: "Éclairage", question: "LED du profil bas de série ou en option ; commande de l'éclairage (récepteur, télécommande).", sources: ["catalogue-thysens p. 119", "supp-stores p. 51"], blocks: "option LED" },
-  ],
-};
-
-/* ------------------------------------------------------------------ */
-/* HELIO Verrière — réf. VERANDA FTS — brouillon, hors catalogue public */
 /* ------------------------------------------------------------------ */
 
 const ftsSheet = SOURCES.ficheFts;
@@ -659,7 +606,8 @@ const veranda: HelioFamily = {
   name: "HELIO Verrière",
   category: null,
   kind: "ROOF_BLIND_SYSTEM",
-  status: "DRAFT",
+  status: "ARCHIVED",
+  retired: { since: "2026-10-25", reason: "Fiche VERANDA FTS (deux moteurs) : l'offre de screen de toiture retenue est HelioRoof Screen (store « Veranda » standard, un moteur), un produit différent — aucune caractéristique FTS n'est reprise.", suggest: ["helioroof-screen"] },
   sortOrder: 90,
   brand: null,
   manufacturer: null,
@@ -701,13 +649,17 @@ const veranda: HelioFamily = {
   ],
 };
 
-export const HELIOSTORES_FAMILIES: HelioFamily[] = [sb400, sb500, refleksol, casablanca, corsica, veranda];
+/**
+ * Catalogue complet (ordre d'affichage par `sortOrder`) : modèles actuels de la nomenclature du 2026-10-25 et fiches
+ * retirées conservées pour l'historique (`retired`).
+ */
+export const HELIOSTORES_FAMILIES: HelioFamily[] = [...PERGOLAS_2026, sb400, sb500, refleksol, ...SCREENS_2026, veranda, casablanca, ...AWNINGS_2026, ...INSECT_SCREENS_2026];
 export const HELIOSTORES_SLUGS = HELIOSTORES_FAMILIES.map((f) => f.slug);
 
 /** Instantané de catalogue construit sans base (tests, aperçus) — mêmes règles que celles semées en base. */
 export function buildHeliostoresCatalog(): import("@/domain/types").CatalogSnapshot {
-  const kind = (k: HelioFamily["kind"]) => k.toLowerCase() as "pergola_system" | "screen_system" | "awning_system" | "roof_blind_system";
-  const status = (s: HelioFamily["status"]) => s.toLowerCase() as "published" | "quote_only" | "draft";
+  const kind = (k: HelioFamily["kind"]) => k.toLowerCase() as "pergola_system" | "screen_system" | "awning_system" | "roof_blind_system" | "insect_screen_system";
+  const status = (s: HelioFamily["status"]) => s.toLowerCase() as "published" | "quote_only" | "draft" | "archived";
   const source = (s: SpecSeed["source"]) => s.toLowerCase() as "client_sheet" | "supplier_document" | "manufacturer_website";
   return {
     version: "heliostores-fixture",

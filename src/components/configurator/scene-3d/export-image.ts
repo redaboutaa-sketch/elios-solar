@@ -82,5 +82,5 @@ export async function toUploadJpeg(dataUrl: string, maxWidth = 1600, quality = 0
 }
 
 export function captionOf(model: SceneModel): ImageCaption {
-  return { title: model.familyName, dimension: model.dimensionLabel, finish: model.finishLabel, extra: model.kind === "pergola" ? (model.mounting === "wall" ? "adossée" : "autoportée") : undefined };
+  return { title: model.familyName, dimension: model.dimensionLabel, finish: model.finishLabel, extra: model.kind === "pergola" ? (model.mounting === "wall" ? "adossée" : "autoportante") : undefined };
 }

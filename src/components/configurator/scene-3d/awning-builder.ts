@@ -144,7 +144,7 @@ export function buildAwningScene(model: AwningSceneModel): BuiltScene {
 
   const setNight = (night: boolean) => {
     groundMat.color.set(night ? NIGHT.ground : DAY.ground);
-    ledMat.color.set(night ? WARM : 0x9a948a);
+    ledMat.color.set(WARM); // éclairage choisi représenté allumé
     nightLight.intensity = night && model.led ? 3 + Wd : 0;
   };
 
@@ -156,7 +156,6 @@ export function buildAwningScene(model: AwningSceneModel): BuiltScene {
       front: { position: [Wd / 2, 1.7, P + d * 0.95 + 2], target: [Wd / 2, H * 0.6, P / 3] },
       three_quarter: { position: [Wd + d * 0.4 + 1, H + 0.9, P + d * 0.65 + 1.8], target: [Wd / 2, H * 0.55, P / 3] },
       top: { position: [Wd / 2, d * 2 + 4, P / 2 + 0.01], target: [Wd / 2, 0, P / 2] },
-      interior: { position: [Wd / 2, 1.6, P * 0.7], target: [Wd / 2, H, 0.3] },
     },
     pickables: [],
     setNight,

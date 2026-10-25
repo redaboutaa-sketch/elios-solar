@@ -1,6 +1,6 @@
 /**
  * Données publiques des systèmes : le site ne cite ni le fabricant, ni le fournisseur, ni ses références
- * (décisions client des 2026-10-21 et 2026-10-22 : nomenclature commerciale HELIOSTORES). Les sources et les
+ * (décisions client des 2026-10-21, 2026-10-22 et 2026-10-25 : nomenclature commerciale HELIOSTORES). Les sources et les
  * désignations du fournisseur restent en base et dans l'administration ; elles sont retirées de tout ce qui part
  * vers le navigateur.
  */
@@ -12,7 +12,13 @@ import type { TechnicalSpecValue } from "./technical-spec";
  * des tests et du contrôle des médias) : fabricant, fournisseur, références des produits et des moteurs.
  */
 export const PUBLIC_FORBIDDEN_NAMES =
-  /aluprof|thysens|\bselt\b|euro[\s-]?confort|\bsb\s?[45][05]0\b|refleksol|zi{2,}p|\bzip\s?120\b|casablanca|veranda\s?fts|\bfts\b|sunbreaker|zoomtech|blebox|elero|somfy|picolo|\baltus\b|sunilus|suntop|varieco|\bdm45|corsica|palladio|tahoma|eolis|soliris|ondeis/i;
+  /aluprof|thysens|\bselt\b|euro[\s-]?confort|\bsb\s?[3-5][05]0\b|refleksol|zi{2,}p|\bzip\s?120\b|\br\s?120\b|veranda\s?fts|\bfts\b|sunbreaker|zoomtech|blebox|elero|somfy|linak|picolo|\baltus\b|sunilus|suntop|varieco|\bdm45|palladio|tahoma|eolis|soliris|ondeis|madeira|openslide|\bmph\s?(harmony|dual|verti)\b|\bm(zn|zh|zp|rp|rs|rsz|ro)\b/i;
+
+/**
+ * Noms de modèles du fabricant autorisés en public par décision du client (2026-10-25) : Casablanca, Corsica, Jamaica,
+ * Madera. Ils ne sont pas dans la liste ci-dessus ; « Madeira » (orthographe du fabricant) l'est.
+ */
+export const PUBLIC_ALLOWED_SUPPLIER_MODEL_NAMES = ["Casablanca", "Corsica", "Jamaica", "Madera"] as const;
 
 /** Clés internes retirées des règles publiques. */
 const INTERNAL_RULE_KEYS = new Set(["sources", "supplierRef"]);

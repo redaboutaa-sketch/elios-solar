@@ -37,10 +37,10 @@ export function installmentsRuntimeStatus(settings: InstallmentSettings) {
  * Éligibilité d'un montant recalculé côté serveur. Le simulateur n'est jamais proposé
  * lorsque Stripe est le prestataire actif ; Klarna/Alma ne le sont jamais sans Stripe actif.
  */
-export async function installmentsOfferFor(totalCents: number, countryCode: string, settings?: InstallmentSettings): Promise<EligibilityResult> {
+export async function installmentsOfferFor(totalCents: number, countryCode: string, settings?: InstallmentSettings, customerType: "B2C" | "B2B" | null = null): Promise<EligibilityResult> {
   const s = settings ?? (await getInstallmentSettings());
   const status = installmentsRuntimeStatus(s);
-  const result = installmentEligibility({ totalCents, countryCode, settings: s, env: status.env });
+  const result = installmentEligibility({ totalCents, countryCode, settings: s, env: status.env, customerType, merchantCountry: process.env.MERCHANT_COUNTRY ?? "FR" });
   if (!result.eligible) return result;
   const runtimeBlockers = status.blockers.filter((b) => b.startsWith("Stripe") || b.startsWith("le simulateur"));
   if (runtimeBlockers.length) return { ...result, eligible: false, plans: [], reasons: runtimeBlockers };

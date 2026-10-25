@@ -10,6 +10,7 @@ import dynamic from "next/dynamic";
 import { Box, ChevronLeft, ChevronRight, Expand, Images, PencilRuler, X } from "lucide-react";
 import type { PublishedMedia } from "@/server/media/types";
 import type { SceneModel } from "@/domain/scene-model";
+import { has3D } from "@/domain/scene-model";
 
 const NATURE: Record<string, string> = { PHOTO: "Photographie", RENDER: "Rendu", ILLUSTRATION: "Schéma", VIDEO: "Vidéo", DOCUMENT: "Document" };
 const SystemScene3D = dynamic(() => import("@/components/configurator/scene-3d/viewer-3d").then((m) => m.SystemScene3D), { ssr: false, loading: () => <p className="grid aspect-[4/3] place-items-center bg-sand-100 text-sm text-stone-700">Chargement de la vue 3D…</p> });
@@ -41,7 +42,7 @@ export function SystemGallery({ name, media, scene = null }: { name: string; med
           ))}
         </div>
       )}
-      {mode === "3d" && scene ? (
+      {mode === "3d" && scene && has3D(scene) ? (
         <div className="border border-sand-200 bg-white p-3" data-testid="gallery-3d">
           <SystemScene3D model={scene} fallback={<p className="p-6 text-sm text-stone-700">Vue 3D indisponible sur cet appareil.</p>} />
           <p className="mt-2 text-xs text-stone-700">Configuration par défaut, à titre indicatif : modifiez les cotes et les choix dans le configurateur.</p>

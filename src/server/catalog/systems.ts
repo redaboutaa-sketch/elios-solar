@@ -6,8 +6,35 @@ import type { SpecSource, TechnicalSpecValue } from "@/domain/technical-spec";
 import { publicSpecs, publicSystemRules } from "@/domain/public-sanitize";
 import { minSystemPrice } from "@/domain/system-pricing";
 import { loadPublicSystemPrices } from "@/server/pricing/system-prices";
+import { configuratorHref, productHref } from "@/domain/categories";
+import { HELIOSTORES_FAMILIES } from "./heliostores-data";
+import { canonicalFamilySlug } from "./legacy-slugs";
 
-/** Familles publiées d'une famille publique (Pergolas, Screens, Stores bannes), dans l'ordre d'affichage. */
+/** Modèles en préparation d'une famille (brouillons) : nom et description seulement, sans règle ni configurateur. */
+export async function listDraftFamilies(category: CategoryKey) {
+  const rows = await prisma.productFamily.findMany({ where: { category, legacy: false, status: "DRAFT" }, select: { slug: true, name: true, shortDescription: true }, orderBy: { sortOrder: "asc" } });
+  return rows;
+}
+
+/**
+ * Modèle retiré (nomenclature du 2026-10-25) : la fiche n'est plus publique, mais son ancienne URL mène à une page
+ * explicative proposant les gammes actuelles — la configuration enregistrée n'est jamais convertie.
+ */
+export async function getRetiredFamily(slug: string) {
+  const canonical = canonicalFamilySlug(slug);
+  const seed = HELIOSTORES_FAMILIES.find((f) => f.slug === canonical && f.retired);
+  if (!seed?.retired) return null;
+  const rows = await prisma.productFamily.findMany({ where: { slug: { in: seed.retired.suggest }, status: { in: ["PUBLISHED", "QUOTE_ONLY"] }, category: { not: null } }, select: { slug: true, name: true, shortDescription: true, category: true, sortOrder: true }, orderBy: { sortOrder: "asc" } });
+  return {
+    slug: canonical,
+    category: seed.category,
+    since: seed.retired.since,
+    suggestions: rows.map((r) => ({ slug: r.slug, name: r.name, shortDescription: r.shortDescription, href: productHref(r.category!, r.slug), configHref: configuratorHref(r.slug) })),
+  };
+}
+export type RetiredFamily = NonNullable<Awaited<ReturnType<typeof getRetiredFamily>>>;
+
+/** Familles publiées d'une famille publique, dans l'ordre d'affichage. */
 export async function listSystemFamilies(category: CategoryKey) {
   const rows = await prisma.productFamily.findMany({
     where: { category, legacy: false, status: { in: ["PUBLISHED", "QUOTE_ONLY"] } },

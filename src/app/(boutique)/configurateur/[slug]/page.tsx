@@ -11,8 +11,11 @@ import { prisma } from "@/lib/prisma";
 import { isOwner } from "@/server/configuration/service";
 import { getLineForOwner } from "@/server/cart/service";
 import type { SystemInput } from "@/domain/system";
+import { RetiredProduct } from "@/components/catalog/retired-product";
+import { getRetiredFamily } from "@/server/catalog/systems";
+import { configuratorHref } from "@/domain/categories";
 
-const SYSTEM_KINDS = new Set(["pergola_system", "screen_system", "awning_system"]);
+const SYSTEM_KINDS = new Set(["pergola_system", "screen_system", "awning_system", "roof_blind_system", "insect_screen_system"]);
 
 async function systemFamily(slug: string) {
   const catalog = await ensureCatalogSnapshot();
@@ -31,7 +34,12 @@ export default async function SystemConfiguratorPage(props: PageProps<"/configur
   const { slug } = await props.params;
   const sp = await props.searchParams;
   const s = await systemFamily(slug);
-  if (!s) notFound();
+  if (!s) {
+    // ancien modèle retiré : explication et choix d'une gamme, sans conversion de la configuration
+    const retired = await getRetiredFamily(slug);
+    if (retired) return <RetiredProduct retired={retired} from="configurateur" />;
+    notFound();
+  }
   const { catalog, family } = s;
   const cat = categoryByKey(family.category)!;
   const media = await publishedMediaFor(family.slug);
@@ -54,14 +62,20 @@ export default async function SystemConfiguratorPage(props: PageProps<"/configur
       if (isOwner(c, owner)) existing = { id: c.id, token: c.shareToken, title: c.title };
     }
   }
+  const nav = {
+    productHref: productHref(cat.key, family.slug),
+    familyHref: cat.href,
+    familyLabel: cat.label,
+    siblings: catalog.families.filter((f) => f.category === family.category && f.slug !== family.slug && !f.legacy && (f.status === "published" || f.status === "quote_only") && f.systemRules).map((f) => ({ slug: f.slug, name: f.name, href: configuratorHref(f.slug) })),
+  };
   // eslint-disable-next-line @next/next/no-img-element -- média de la médiathèque
   const art = hero ? <img src={hero.path} alt={hero.alt} className="aspect-[4/3] w-full bg-white object-contain" /> : <div className="grid aspect-[4/3] place-items-center text-sm text-stone-700">Visuel à venir</div>;
   return (
     <div className="container-x py-8">
       <Breadcrumbs items={[{ href: cat.href, label: cat.label }, { href: productHref(cat.key, family.slug), label: family.name }, { label: "Configurer" }]} />
       <h1 className="mt-4 font-display text-display font-semibold">Configurer {family.name}</h1>
-      <p className="mt-2 max-w-3xl text-stone-700 text-pretty">Saisissez vos cotes et vos choix : le prix de la structure s'affiche selon vos dimensions. La structure seule se commande en ligne ; les options, la pose, la livraison et les points à confirmer sont étudiés au devis.</p>
-      <div className="mt-6"><SystemConfigurator catalog={catalog} familySlug={family.slug} art={art} initial={initial} existing={existing} cartLineId={cartLineId} /></div>
+      <p className="mt-2 max-w-3xl text-stone-700 text-pretty">Suivez les étapes : la visualisation de votre projet évolue avec vos choix. Le prix s'affiche lorsque vos dimensions figurent dans la grille tarifaire publiée ; sinon, et pour les options, la pose et la livraison, un conseiller établit votre devis.</p>
+      <div className="mt-6"><SystemConfigurator catalog={catalog} familySlug={family.slug} art={art} initial={initial} existing={existing} cartLineId={cartLineId} nav={nav} /></div>
     </div>
   );
 }

@@ -129,6 +129,18 @@ export function buildPergolaScene(model: PergolaSceneModel): BuiltScene {
   blades.castShadow = true;
   blades.receiveShadow = false; // évite l'acné d'ombre sur les lames fines
   group.add(blades);
+  // toiture toile (Sevilla) : pas de lames, une toile tendue inclinée du mur vers la poutre avant (pente indicative)
+  if (model.roof === "fabric") {
+    blades.visible = false;
+    const fabricMat = new THREE.MeshStandardMaterial({ color: model.roofFabricColor ?? "#8d8f8c", roughness: 0.95, side: THREE.DoubleSide });
+    const rise = W * Math.tan(THREE.MathUtils.degToRad(10));
+    const len = Math.hypot(W - POST * 2, rise);
+    const roofMesh = new THREE.Mesh(new THREE.PlaneGeometry(L - POST * 2, len), fabricMat);
+    roofMesh.rotation.x = -Math.PI / 2 + Math.atan2(rise, W - POST * 2);
+    roofMesh.position.set(L / 2, H + rise / 2 + 0.02, W / 2);
+    roofMesh.castShadow = true;
+    group.add(roofMesh);
+  }
   let bladeLeds: THREE.InstancedMesh | null = null;
   if (model.lighting.blades) {
     const g = new THREE.BoxGeometry(0.018, 0.006, span * 0.94);
@@ -249,9 +261,9 @@ export function buildPergolaScene(model: PergolaSceneModel): BuiltScene {
   const setNight = (night: boolean) => {
     groundMat.color.set(night ? NIGHT.ground : DAY.ground);
     const rgb = model.lighting.color === "rgb";
-    ledMat.color.set(night ? (rgb ? 0xffffff : WARM) : rgb ? 0x777777 : 0x9a948a);
-    bladeLedMat.color.set(night ? WARM : 0x9a948a);
-    spotMat.color.set(night ? WARM : 0x9a948a);
+    ledMat.color.set(rgb ? 0xffffff : WARM); // éclairages choisis représentés allumés (pas d'ambiance nuit)
+    bladeLedMat.color.set(WARM);
+    spotMat.color.set(WARM);
     heaterGlowMat.emissiveIntensity = night ? 1.6 : 0.15;
     lanternGlowMat.emissiveIntensity = night ? 1.8 : 0.1;
     for (const { light, night: intensity } of nightLights) light.intensity = night ? intensity : 0;
@@ -270,7 +282,6 @@ export function buildPergolaScene(model: PergolaSceneModel): BuiltScene {
       front: { position: [L / 2, 1.7, W + d * 0.95 + 1.5], target: [L / 2, H * 0.55, W / 2] },
       three_quarter: { position: [L + d * 0.45 + 1, H + 1.3, W + d * 0.65 + 1.5], target: [L / 2, H * 0.45, W / 2] },
       top: { position: [L / 2, d * 1.6 + 3, W / 2 + 0.01], target: [L / 2, 0, W / 2] },
-      interior: { position: [L / 2, 1.6, W * 0.82], target: [L / 2, H * 0.92, W * 0.18] },
     },
     pickables,
     setNight,

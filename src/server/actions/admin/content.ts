@@ -47,6 +47,9 @@ const realSchema = z.object({
   placeholder: zBool,
   description: zText(5000),
   location: zOpt(160),
+  locationPublic: zBool,
+  credit: zText(200),
+  authorization: zText(500),
   familySlug: zOpt(80),
   mediaId: zOpt(64),
   published: zBool,
@@ -59,13 +62,16 @@ export async function saveRealisationAction(formData: FormData) {
   const path = "/admin/contenus/realisations";
   const parsed = realSchema.safeParse(fields(formData));
   if (!parsed.success) back(path, firstError(parsed.error), "err");
-  const { id, ...data } = parsed.data;
+  const { id, ...rest } = parsed.data;
+  const data = { ...rest, authorizedAt: rest.authorization.trim() ? new Date() : null };
   const media = data.mediaId ? await prisma.media.findUnique({ where: { id: data.mediaId }, select: { id: true, provenance: true, credit: true } }) : null;
   if (data.mediaId && !media) back(path, "Média introuvable", "err");
   if (data.published) {
     // une réalisation publiée est un projet réel : ni emplacement vide, ni démonstration, ni visuel du fournisseur
     if (data.placeholder || data.isDemo) back(path, "Un emplacement à compléter ou un exemple de démonstration ne peut pas être publié.", "err");
     if (!media) back(path, "Ajoutez la photographie avant de publier.", "err");
+    if (!data.authorization.trim()) back(path, "Indiquez l'autorisation de publication (qui l'a donnée et comment) avant de publier.", "err");
+    if (data.kind === "REALISATION" && !data.familySlug) back(path, "Indiquez le produit installé avant de publier une réalisation.", "err");
     if (data.kind === "REALISATION" && isSupplierMedia(media)) back(path, "Visuel du fournisseur : il ne peut pas être présenté comme une réalisation HELIOSTORES.", "err");
     if (data.kind === "PRODUCTION" && isSupplierMedia(media) && !data.partnerNote.trim()) back(path, "Photo de production d'un partenaire : décrivez-la comme telle (mention « partenaire »).", "err");
   }

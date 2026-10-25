@@ -1,5 +1,5 @@
 /**
- * Dessins d'orientation HELIOSTORES (SVG originaux) : pergola, screen et store banne, dans une projection isométrique
+ * Dessins d'orientation HELIOSTORES (SVG originaux) : pergola, screen, store banne et moustiquaire, dans une projection isométrique
  * commune calculée en mètres (même trait, même échelle de détail). Ils servent à choisir une famille : ce ne sont ni
  * des plans de fabrication ni des représentations contractuelles.
  *
@@ -207,10 +207,64 @@ function AwningSketch(morph: Morph, c: Palette, wall: boolean) {
   );
 }
 
+/**
+ * Moustiquaire plissée : cadre (dormant, seuil bas) et toile en accordéon tirée depuis le profil latéral.
+ * Au survol, la toile se déploie jusqu'au profil opposé. Produit seul par défaut ; avec `wall`, posée dans une baie.
+ */
+function InsectSketch(morph: Morph, c: Palette, wall: boolean) {
+  const stroke = strokeOf(c), thin = thinOf(c);
+  const W = 2.0, H = 2.3, d = 0.07, x0 = 1.0, x1 = x0 + W;
+  const P = wall ? projector(178, 128, 46) : fitProjector([...corners(x0 - 0.3, x1 + 0.3, 0, H + 0.1, -0.2, 0.6)], PRODUCT_BOX);
+  const OFF = 0.55, ON = 0.97;
+  const folds = 9;
+  /** toile plissée : zigzag de `folds` plis entre le profil fixe (gauche) et le profil mobile à la fraction `t` */
+  const mesh = (t: number) => {
+    const xm = x0 + 0.06 + (W - 0.12) * t;
+    const pts: V3[] = [];
+    for (let i = 0; i <= folds; i += 1) pts.push([x0 + 0.06 + ((xm - x0 - 0.06) * i) / folds, H - 0.06, i % 2 ? 0.05 : 0.0]);
+    const bottom = [...pts].reverse().map(([x, , z]) => [x, 0.06, z] as V3);
+    return poly(P, [...pts, ...bottom]);
+  };
+  const pleats = (t: number) => {
+    const xm = x0 + 0.06 + (W - 0.12) * t;
+    return Array.from({ length: folds - 1 }, (_, i) => {
+      const x = x0 + 0.06 + ((xm - x0 - 0.06) * (i + 1)) / folds;
+      return line(P, [[x, 0.06, (i + 1) % 2 ? 0.05 : 0], [x, H - 0.06, (i + 1) % 2 ? 0.05 : 0]]);
+    }).join(" ");
+  };
+  const bar = (t: number) => { const xm = x0 + 0.06 + (W - 0.12) * t; return `${faceZ(P, 0.06, xm, xm + 0.06, 0.06, H - 0.06)} ${faceX(P, xm + 0.06, 0.06, H - 0.06, 0, 0.06)}`; };
+  return (
+    <>
+      <path d={faceY(P, 0, x0 - 0.4, x1 + 0.4, -0.1, 0.7)} fill={c.ground} />
+      {wall && (
+        <g fill={c.face} {...stroke}>
+          <path fillRule="evenodd" d={`${faceZ(P, -0.02, x0 - 0.9, x1 + 0.9, 0, H + 0.6)} ${faceZ(P, -0.02, x0, x1, 0, H)}`} />
+        </g>
+      )}
+      <path d={faceZ(P, -0.01, x0, x1, 0, H)} fill={c.glass} {...thin} />
+      {/* toile plissée et profil mobile */}
+      <path className="sk-move" fill={c.sage} fillOpacity="0.45" {...thin} {...morph(mesh(OFF), mesh(ON))} />
+      <path className="sk-move" fill="none" {...thin} strokeOpacity={0.7} {...morph(pleats(OFF), pleats(ON))} />
+      <path className="sk-move" fill={c.face} {...stroke} {...morph(bar(OFF), bar(ON))} />
+      {/* cadre : profil fixe, traverse haute, seuil bas, coulisse opposée */}
+      <g fill={c.face} {...stroke}>
+        <path d={faceZ(P, d, x0 - 0.06, x0 + 0.06, 0, H)} />
+        <path d={faceX(P, x0 + 0.06, 0, H, 0, d)} />
+        <path d={faceZ(P, d, x1 - 0.05, x1 + 0.03, 0, H)} />
+        <path d={faceX(P, x1 + 0.03, 0, H, 0, d)} />
+        <path d={faceZ(P, d, x0 - 0.06, x1 + 0.03, H - 0.07, H + 0.02)} />
+        <path d={faceY(P, H + 0.02, x0 - 0.06, x1 + 0.03, 0, d)} />
+        <path d={faceZ(P, d, x0 - 0.06, x1 + 0.03, 0, 0.02)} />
+      </g>
+    </>
+  );
+}
+
 const SKETCHES: Record<CategoryKey, { draw: (morph: Morph, c: Palette, wall: boolean) => React.ReactNode; label: string }> = {
   PERGOLAS: { draw: PergolaSketch, label: "Dessin d'une pergola à lames orientables" },
   SCREENS: { draw: ScreenSketch, label: "Dessin d'un screen à toile verticale devant une baie" },
   STORES_BANNES: { draw: AwningSketch, label: "Dessin d'un store banne à bras articulés" },
+  MOUSTIQUAIRES: { draw: InsectSketch, label: "Dessin d'une moustiquaire plissée dans son cadre" },
 };
 
 /**

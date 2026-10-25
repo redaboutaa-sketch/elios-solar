@@ -10,25 +10,26 @@ afterAll(async () => { await prisma.installGuideStatus.deleteMany({}); });
 
 describe("guides d'installation", () => {
   it("brouillon par défaut ; publication refusée sans validation technique ; guide sans étape jamais publiable", async () => {
-    expect((await guideStatuses()).get("helio-riviera-installation")?.status).toBe("DRAFT");
-    await expect(setGuideStatus("helio-riviera-installation", "PUBLISHED", BY)).rejects.toThrow(/validé techniquement/);
-    await expect(setGuideStatus("helio-riviera-installation", "VALIDATED", BY)).rejects.toThrow(/Indiquez qui/);
-    await setGuideStatus("helio-riviera-installation", "VALIDATED", { ...BY, validator: "Responsable technique (test)" });
-    await setGuideStatus("helio-riviera-installation", "PUBLISHED", BY);
-    expect(await isPublished("helio-riviera-installation")).toBe(true);
-    await setGuideStatus("helio-riviera-installation", "DRAFT", BY);
-    expect(await isPublished("helio-riviera-installation")).toBe(false);
-    await setGuideStatus("helio-horizon-installation", "VALIDATED", { ...BY, validator: "Responsable technique (test)" });
-    await expect(setGuideStatus("helio-horizon-installation", "PUBLISHED", BY)).rejects.toThrow(/sans étape/);
+    expect((await guideStatuses()).get("casablanca-installation")?.status).toBe("DRAFT");
+    await expect(setGuideStatus("casablanca-installation", "PUBLISHED", BY)).rejects.toThrow(/validé techniquement/);
+    await expect(setGuideStatus("casablanca-installation", "VALIDATED", BY)).rejects.toThrow(/Indiquez qui/);
+    await setGuideStatus("casablanca-installation", "VALIDATED", { ...BY, validator: "Responsable technique (test)" });
+    await setGuideStatus("casablanca-installation", "PUBLISHED", BY);
+    expect(await isPublished("casablanca-installation")).toBe(true);
+    await setGuideStatus("casablanca-installation", "DRAFT", BY);
+    expect(await isPublished("casablanca-installation")).toBe(false);
+    await setGuideStatus("malaga-installation", "VALIDATED", { ...BY, validator: "Responsable technique (test)" });
+    await expect(setGuideStatus("malaga-installation", "PUBLISHED", BY)).rejects.toThrow(/sans étape/);
   });
 });
 
 describe("moyens de paiement", () => {
-  it("préproduction : aucun moyen présenté comme actif sans prestataire réel ; acompte et virement envisagés", async () => {
+  it("préproduction : aucun moyen présenté comme actif sans prestataire réel ; virement et moyens du compte envisagés", async () => {
     const m = await paymentMethods();
     if (process.env.PAYMENT_PROVIDER !== "stripe") expect(m.find((x) => x.code === "card")?.state).toBe("simulated");
-    expect(m.find((x) => x.code === "quote_deposit")?.state).toBe("planned");
+    expect(m.find((x) => x.code === "quote_payment")?.state).toBe("simulated");
     expect(m.find((x) => x.code === "transfer")?.state).toBe("planned");
+    expect(m.find((x) => x.code === "paypal_bancontact")?.state).toBe("planned");
     expect(JSON.stringify(m.map((x) => x.text))).not.toMatch(/\d+\s?%|mensualit|gratuit/i);
   });
 });
@@ -42,13 +43,13 @@ describe("réalisations et production", () => {
     expect(rows.every((r) => !r.published && !r.mediaId)).toBe(true);
   });
   it("historique des noms : le seed n'écrase pas un nom modifié dans l'administration", async () => {
-    const f = await prisma.productFamily.findUniqueOrThrow({ where: { slug: "helio-ombra" } });
+    const f = await prisma.productFamily.findUniqueOrThrow({ where: { slug: "helioscreen" } });
     await prisma.productFamily.update({ where: { id: f.id }, data: { name: "Nom provisoire de test", commercialEditedAt: new Date() } });
     try {
       await seedHeliostores(prisma);
       const after = await prisma.productFamily.findUniqueOrThrow({ where: { id: f.id } });
       expect(after.name).toBe("Nom provisoire de test");
-      expect(after.supplierRef).toBe("REFLEKSOL 120 ZiiiP");
+      expect(after.supplierRef).toMatch(/R 120 ZiiiP/);
       expect(after.legacySlugs).toContain("screen-refleksol-120-ziiip");
     } finally {
       await prisma.productFamily.update({ where: { id: f.id }, data: { name: f.name, commercialEditedAt: null } });

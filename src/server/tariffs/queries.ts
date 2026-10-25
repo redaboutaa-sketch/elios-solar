@@ -17,7 +17,7 @@ export interface FamilyInfo { slug: string; name: string; status: string; catego
 
 /** Produits avec leur correspondance fournisseur (donnée interne, administrateurs). */
 export async function familiesInfo(): Promise<FamilyInfo[]> {
-  const fams = await prisma.productFamily.findMany({ where: { kind: { in: ["PERGOLA_SYSTEM", "SCREEN_SYSTEM", "AWNING_SYSTEM", "ROOF_BLIND_SYSTEM"] } }, orderBy: { sortOrder: "asc" }, select: { slug: true, name: true, status: true, category: true, supplierRef: true } });
+  const fams = await prisma.productFamily.findMany({ where: { kind: { in: ["PERGOLA_SYSTEM", "SCREEN_SYSTEM", "AWNING_SYSTEM", "ROOF_BLIND_SYSTEM", "INSECT_SCREEN_SYSTEM"] } }, orderBy: { sortOrder: "asc" }, select: { slug: true, name: true, status: true, category: true, supplierRef: true } });
   return fams.map((f) => ({ slug: f.slug, name: f.name, status: f.status, category: (f.category as CategoryKey | null) ?? null, supplierRef: f.supplierRef ?? null }));
 }
 
