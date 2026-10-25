@@ -11,12 +11,12 @@ const SEED_NOTE = "Dossier initial du jeu de démonstration";
 const DOSSIERS: Array<{ type: TargetType; id: string; note: string }> = [
   {
     type: "FAMILY_SPEC",
-    id: specTargetId("helio-ombra", "width_max"),
-    note: "Contradiction de sources HELIOSTORES : fiche transmise par le client = 4 m (barre anti-vent) / 3,5 m (guidage câble) ; catalogue THYSENS p. 66 et page fabricant R 120 ZiiiP = 7 m. Le configurateur accepte jusqu'à 7 m mais signale toute largeur > 4 m « à valider au devis ». Joindre un écrit fournisseur pour trancher.",
+    id: specTargetId("helioscreen", "width_max"),
+    note: "Contradiction de sources HELIOSTORES : fiche transmise par le client = 4 m (barre anti-vent) / 3,5 m (guidage câble) ; catalogue THYSENS p. 66 et page fabricant R 120 ZiiiP = 7 m ; supplément technique SCREENS 2026 = 5 m (au-delà de 4 m, hauteur ≤ 3 m). Le configurateur accepte jusqu'à 7 m mais signale toute largeur > 4 m « à valider au devis ». Joindre un écrit fournisseur pour trancher.",
   },
   {
     type: "FAMILY_SPEC",
-    id: specTargetId("helio-ombra", "height_max"),
+    id: specTargetId("helioscreen", "height_max"),
     note: "Contradiction : page fabricant R 120 ZiiiP = 4 m (caractéristiques) et « height of up to 3 m » (texte) ; catalogue et fiche = 4 m. Le configurateur accepte jusqu'à 4 m et signale toute hauteur > 3 m « à confirmer ». Écrit fournisseur attendu.",
   },
   {
@@ -31,7 +31,7 @@ const DOSSIERS: Array<{ type: TargetType; id: string; note: string }> = [
   },
   {
     type: "FAMILY_SPEC",
-    id: specTargetId("helio-riviera", "drive"),
+    id: specTargetId("casablanca", "drive"),
     note: "Motorisation à confirmer : la fiche transmise décrit la manivelle (150 / 180 / 220 cm) ; le catalogue et la page fabricant citent une commande électrique sans préciser le moteur. Version électrique maintenue « à confirmer » au devis.",
   },
   {

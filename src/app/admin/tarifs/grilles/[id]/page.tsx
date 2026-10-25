@@ -34,7 +34,7 @@ export default async function GridPage(props: PageProps<"/admin/tarifs/grilles/[
   const gridRows = rows.filter((r) => r.kind === "GRID" && r.dimAmm != null && r.widthMaxMm != null);
   const fixed = rows.filter((r) => r.kind === "FIXED");
   const dimAKey = gridRows[0]?.dimAKey ?? (/hauteur/.test(g.notes) ? "hauteur" : "projection");
-  const dimLabel = dimAKey === "hauteur" ? "Hauteur" : g.familySlug === "helio-riviera" ? "Avancée" : "Projection";
+  const dimLabel = dimAKey === "hauteur" ? "Hauteur" : ["casablanca", "corsica", "jamaica", "madera"].includes(g.familySlug ?? "") ? "Avancée" : "Projection";
   const cells: EditorCell[] = gridRows.map((r) => ({ dimAmm: r.dimAmm!, widthMinMm: r.widthMinMm ?? r.widthMaxMm!, widthMaxMm: r.widthMaxMm!, amountMinor: r.amountMinor, sourceRef: r.sourceRef, origin: r.origin, editedBy: r.editedBy, editedAt: r.editedAt?.toISOString() ?? null, status: r.status, issues: r.issues, formula: r.formula }));
 
   // comparaison : version choisie (?compare=) ou version publiée précédente
