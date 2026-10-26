@@ -41,6 +41,7 @@ export async function publishedMediaFor(familySlug: string, ctx: MediaContext = 
     finishCode: r.finishCode,
     mounting: r.mounting,
     smallPath: (r.media.provenance as { variants?: { small?: { path?: string } } } | null)?.variants?.small?.path ?? null,
+    mediumPath: (r.media.provenance as { variants?: { medium?: { path?: string } } } | null)?.variants?.medium?.path ?? null,
     sourceLabel: null,
     match: (r.media.provenance as { match?: string } | null)?.match ?? null,
   }));

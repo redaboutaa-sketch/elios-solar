@@ -17,6 +17,7 @@ export interface PublishedMedia {
   mounting: string | null;
   /** variante réduite (vignettes), si l'import en a produit une */
   smallPath?: string | null;
+  mediumPath?: string | null;
   /** provenance lisible (fichier + page ou URL) et rattachement au modèle */
   sourceLabel?: string | null;
   match?: string | null;

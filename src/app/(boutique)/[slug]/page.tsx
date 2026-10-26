@@ -12,9 +12,9 @@ const SLUGS = ["mentions-legales", "cgv", "confidentialite", "cookies", "livrais
 const DESCRIPTIONS: Record<string, string> = {
   aide: "Questions fréquentes avant une demande de devis HELIOSTORES : mesures, pose adossée ou autoportée, autorisation d'urbanisme, étapes après la demande.",
   "livraison-installation": "Livraison et pose HELIOSTORES : délai de livraison entre 4 et 7 semaines selon le lieu de livraison, modalités et pose professionnelle précisées dans le devis.",
-  "mentions-legales": "Mentions légales du site heliostores.com : éditeur, directeur de la publication, hébergeur et propriété intellectuelle.",
+  "mentions-legales": "Mentions légales du site heliostores.com : éditeur, directeur de la publication, hébergement, contenus et visuels.",
   confidentialite: "Politique de confidentialité HELIOSTORES : données collectées par les demandes de devis et de contact, finalités, durées de conservation et exercice de vos droits.",
-  cookies: "Cookies et traceurs utilisés sur heliostores.com, consentement et paramétrage de vos choix.",
+  cookies: "Cookies et stockage strictement nécessaires utilisés sur heliostores.com, sans mesure d'audience ni publicité : rôle et durée de chacun.",
   cgv: "Conditions générales de vente HELIOSTORES.",
 };
 

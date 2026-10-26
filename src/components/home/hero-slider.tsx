@@ -9,7 +9,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MediaImage } from "@/components/ui/media-image";
 
-export interface HeroSlide { id: string; media: { path: string; alt: string; width?: number | null; height?: number | null; smallPath?: string | null }; label: string; href: string; nature: string }
+export interface HeroSlide { id: string; media: { path: string; alt: string; width?: number | null; height?: number | null; smallPath?: string | null; mediumPath?: string | null }; label: string; href: string; nature: string }
 
 export function HeroSlider({ slides, children }: { slides: HeroSlide[]; children: ReactNode }) {
   const [i, setI] = useState(0);

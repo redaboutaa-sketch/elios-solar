@@ -7,7 +7,7 @@ import { listSystemFamilies } from "@/server/catalog/systems";
 import { defaultSceneModel } from "@/server/catalog/scene-preview";
 import { publishedMediaFor } from "@/server/media/queries";
 import { FamilySketch } from "@/components/illustrations/sketches";
-import { MediaImage, smallPathOf } from "@/components/ui/media-image";
+import { MediaImage, mediumPathOf, smallPathOf } from "@/components/ui/media-image";
 import { HeroSlider, type HeroSlide } from "@/components/home/hero-slider";
 import { ModelTabs } from "@/components/home/model-tabs";
 import { ScenePreview } from "@/components/home/scene-preview";
@@ -50,7 +50,7 @@ export default async function HomePage() {
   const slides: HeroSlide[] = families.flatMap(({ c, items }) => {
     const f = items[0]; const h = heroOf(f);
     // composant client : seuls chemin, texte alternatif et dimensions partent au navigateur (jamais la provenance)
-    return f && h ? [{ id: f.slug, media: { path: h.path, alt: h.alt, width: h.width, height: h.height, smallPath: smallPathOf(h) }, label: f.name, href: productHref(c.key, f.slug), nature: NATURE[h.nature] ?? h.nature }] : [];
+    return f && h ? [{ id: f.slug, media: { path: h.path, alt: h.alt, width: h.width, height: h.height, smallPath: smallPathOf(h), mediumPath: mediumPathOf(h) }, label: f.name, href: productHref(c.key, f.slug), nature: NATURE[h.nature] ?? h.nature }] : [];
   });
   // panneaux : une famille par panneau, illustrée par son dessin
   const panels = families.map(({ c, items }) => ({ c, items }));

@@ -24,6 +24,7 @@
     "db:reset": "prisma migrate reset --force",
     "admin:bootstrap": "tsx scripts/bootstrap-admin.ts",
     "media:heliostores": "tsx scripts/import-heliostores-media.ts",
+    "media:variants": "tsx scripts/media-variants.ts",
     "catalogue:import": "tsx scripts/import-catalogue.ts",
     "supplier-prices:import": "tsx scripts/import-supplier-prices.ts",
     "tariffs:init": "tsx scripts/init-tariffs.ts",
