@@ -81,8 +81,13 @@ docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod
 Traefik obtient les certificats Let's Encrypt (défi TLS-ALPN) pour `heliostores.com` et `www.heliostores.com`
 (un certificat par nom, routeurs distincts).
 
-**État au 2026-10-26** : routeur activé à 10:47 UTC (commit `7a70796`), certificats délivrés du premier coup pour les
-deux noms. La zone GoDaddy contient **encore deux A `@` « WebsiteBuilder Site »** (`76.223.105.230`, `13.248.243.5`,
+**Mise à jour 2026-10-26, 11:13 UTC** : les deux A « WebsiteBuilder Site » ont été supprimés par le propriétaire ; ns55,
+ns56, 1.1.1.1, 8.8.8.8 et 9.9.9.9 ne renvoient plus que `76.13.44.177` / `2a02:4780:7:f4ca::1` ; 11 sondes HTTP
+externes sur 12 reçoivent 200 de ce serveur (la 12e en erreur côté sonde) ; IPv6 joignable de l'extérieur sur 443.
+Le paragraphe suivant décrit la situation antérieure.
+
+**État au 2026-10-26 (avant correction)** : routeur activé à 10:47 UTC (commit `7a70796`), certificats délivrés du premier coup pour les
+deux noms. La zone GoDaddy contenait **encore deux A `@` « WebsiteBuilder Site »** (`76.223.105.230`, `13.248.243.5`,
 site GoDaddy hébergé chez Amazon) à côté de `76.13.44.177` : un visiteur IPv4 arrive au hasard sur l'un des trois
 (contrôle externe check-host.net : 7 sondes sur 8 sur GoDaddy). Correction chez GoDaddy (DNS de heliostores.com) :
 supprimer ces deux enregistrements A **et** déconnecter le domaine du site Website Builder (Mes produits → Sites web →
@@ -90,9 +95,22 @@ paramètres du site → domaine), sinon GoDaddy peut les recréer. Ne pas touche
 Contrôle : `for r in 1.1.1.1 8.8.8.8 9.9.9.9; do dig +short @$r heliostores.com A; done` ne doit plus renvoyer que
 `76.13.44.177`, puis contrôle HTTP multi-sondes (`https://check-host.net/check-http?host=https://heliostores.com/api/health`).
 
-IPv6 : publié par `docker-proxy` (le réseau `traefik-public` n'a pas l'IPv6) ; Traefik voit tous les visiteurs IPv6
-avec l'adresse de passerelle `172.23.0.1` : les limites anti-abus par IP sont alors partagées entre visiteurs IPv6.
-Le corriger demande l'IPv6 sur le réseau Traefik commun (impact sur les autres sites) : décision à prendre à part.
+IPv6 — limite partagée (analyse du 2026-10-26) : le port 443 en IPv6 est servi par `docker-proxy -host-ip ::` (le
+réseau commun `traefik-public` n'a pas l'IPv6) ; ce relais ouvre la connexion vers Traefik depuis la passerelle
+`172.23.0.1`. Traefik, donc `X-Forwarded-For`, puis better-auth et `src/server/rate-limit.ts` voient **la même adresse
+pour tous les visiteurs IPv6**. Conséquence : les limites (devis 10 / 10 min, contact 8 / 10 min, connexion 3 / 10 s par
+chemin, 30 / min) sont communes à l'ensemble des visiteurs IPv6 — refus possibles en cas d'affluence, jamais de
+contournement (le verrou par compte reste par e-mail).
+- Aucune correction limitée au projet : l'adresse réelle n'existe pas au-delà de `docker-proxy`, et relâcher la limite
+  pour `172.23.0.1` affaiblirait la protection (non retenu).
+- Correction de fond (hors projet, à planifier avec les autres sites) : activer l'IPv6 sur `traefik-public` (réseau à
+  recréer, interruption de tous les sites routés) ou publier Traefik en `network_mode: host`.
+- **Repli recommandé** tant que ce n'est pas fait : retirer l'enregistrement `AAAA @` chez GoDaddy (l'IPv4 est validé
+  de bout en bout depuis le 2026-10-26). Les visiteurs IPv6 passent alors par l'IPv4 (double pile) et chacun retrouve
+  sa propre limite. Rétablir l'AAAA quand le réseau commun gère l'IPv6.
+
+Redéploiement : Traefik ne route que les conteneurs « healthy » ; pendant le redémarrage de `heliostores-prod-app`
+(environ une minute) le site répond 404. Redéployer hors des heures d'affluence.
 
 ## 5. Contrôles après déploiement (non destructifs)
 
@@ -115,6 +133,12 @@ Avant l'ouverture DNS, les contrôles HTTPS se font depuis le serveur en forçan
 
 ## 5 bis. Suivi des demandes sans SMTP
 
+Préalable : un compte administrateur de production (aucun au 2026-10-26). La personne habilitée le crée elle-même,
+dans un terminal sur le serveur, mot de passe saisi masqué (12 caractères au minimum) :
+```
+cd /opt/pergola && docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod run --rm -it migrate pnpm admin:bootstrap
+```
+
 `MAIL_PROVIDER=hold` : aucun e-mail ne part ; accusés de réception et notifications restent en file
 (Administration → E-mails, état « en attente »). Le visiteur voit la référence de sa demande, le téléphone et l'e-mail
 publics ; aucun e-mail ne lui est promis. Surveillance manuelle **au moins une fois par jour ouvré** :
@@ -127,14 +151,14 @@ puis décider dans Administration → E-mails quels messages anciens renvoyer (l
 
 - Sauvegarde : `PG_CONTAINER=heliostores-prod-postgres POSTGRES_USER=heliostores POSTGRES_DB=heliostores MEDIA_VOLUME=heliostores_prod_uploads bash scripts/backup.sh backups/production && chmod 600 backups/production/*`.
   À planifier (cron quotidien) et à copier hors du VPS : **non planifié à ce jour** (aucune destination externe fournie).
-- Tâches planifiées à installer par l'exploitant (l'installation automatique n'a pas été autorisée), fichier
-  `/etc/cron.d/heliostores-prod` :
+- Tâches planifiées **installées le 2026-10-26** (autorisation du propriétaire), `/etc/cron.d/heliostores-prod`
+  (heure de Paris), testées à l'installation (purge : 0 conversation ; sauvegarde `db_20261026_121430` /
+  `media_20261026_121430`, sommes de contrôle OK, 57 tables) :
   ```
-  SHELL=/bin/bash
-  PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-  15 4 * * * root docker exec heliostores-prod-worker pnpm exec tsx scripts/purge-conversations.ts >> /var/log/heliostores-prod-purge.log 2>&1
-  45 4 * * * root cd /opt/pergola && PG_CONTAINER=heliostores-prod-postgres POSTGRES_USER=heliostores POSTGRES_DB=heliostores MEDIA_VOLUME=heliostores_prod_uploads bash scripts/backup.sh backups/production >> /var/log/heliostores-prod-backup.log 2>&1 && chmod 600 backups/production/* && find backups/production -maxdepth 1 -type f \( -name 'db_*.dump' -o -name 'media_*.tar.gz' \) -mtime +14 -delete
+  15 4 * * * root flock -n /run/heliostores-prod-purge.lock docker exec heliostores-prod-worker pnpm exec tsx scripts/purge-conversations.ts >> /var/log/heliostores-prod-purge.log 2>&1
+  45 4 * * * root flock -n /run/heliostores-prod-backup.lock bash -c 'cd /opt/pergola && umask 077 && PG_CONTAINER=heliostores-prod-postgres POSTGRES_USER=heliostores POSTGRES_DB=heliostores MEDIA_VOLUME=heliostores_prod_uploads bash scripts/backup.sh backups/production && chmod 600 backups/production/* && find backups/production -maxdepth 1 -type f \( -name "db_*.dump" -o -name "media_*.tar.gz" -o -name "checksums_*.txt" \) -mtime +14 -delete' >> /var/log/heliostores-prod-backup.log 2>&1
   ```
+  Journaux : `/var/log/heliostores-prod-{purge,backup}.log`. Les sauvegardes restent sur le VPS (aucune copie externe).
   La purge du chat (180 j après clôture, 365 j sans activité) est annoncée dans la politique de confidentialité.
 - Conservation annoncée des demandes de devis, contact et rappel sans suite : 3 ans au plus après le dernier contact.
   Aucune purge automatique ni suppression dans l'administration : revue manuelle (au moins annuelle) en base.

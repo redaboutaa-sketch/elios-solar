@@ -5,12 +5,10 @@
 
 ## Verdict
 
-- **Niveau A (site public sur devis)** : **bascule préparée, bloquée par le DNS**. Routeur public, HTTPS (Let's
-  Encrypt, deux noms), identité THYSENS et pages légales (mentions, confidentialité, cookies) sont en place sur le
-  commit `7a70796`. La zone GoDaddy publie encore deux A « WebsiteBuilder Site » (`76.223.105.230`, `13.248.243.5`) à
-  côté de `76.13.44.177` : la plupart des visiteurs IPv4 voient l'ancien site GoDaddy (7 sondes externes sur 8). À
-  corriger chez GoDaddy (runbook § 4). Les notifications par e-mail ne sont pas opérationnelles (aucun SMTP) : suivi
-  manuel des demandes dans l'administration (runbook § 5 bis), qui suppose la création d'un compte administrateur.
+- **Niveau A (site public sur devis)** : **production publique** sur `https://heliostores.com` (commit `a8172e5`) :
+  DNS corrigé le 2026-10-26, HTTPS IPv4 et IPv6, identité et pages légales, demandes de devis enregistrées. **Suivi
+  commercial non opérationnel** tant qu'aucun administrateur de production n'existe (runbook § 5 bis) ; aucun e-mail
+  envoyé (aucun SMTP).
 - **Niveau B (encaissement en ligne)** : **non activé**. Aucun prix public validé (Casablanca et HelioScreen passés sur
   devis le 2026-10-26), aucun compte Stripe identifié, aucune recette sandbox possible. Le site n'est **pas prêt à
   vendre** en ligne ; il est prêt à recevoir des demandes de devis dès son ouverture.

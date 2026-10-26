@@ -169,3 +169,20 @@ externes :
   production (création d'un compte temporaire non autorisée pendant la bascule).
 - Captures 1440 et 390 px (hors dépôt). Préproduction : 401 ; autres sites du serveur : réponses inchangées.
 - Externe IPv4 (check-host.net, 8 sondes) : **7 sur GoDaddy**, 1 sur notre serveur → DNS à corriger.
+
+## 2026-10-26 — clôture après correction du DNS (commit applicatif `a8172e5`)
+
+- DNS : ns55 et ns56 (série 2026102602), 1.1.1.1, 8.8.8.8 et 9.9.9.9 renvoient uniquement `76.13.44.177`,
+  `2a02:4780:7:f4ca::1` et `www` → `heliostores.com` (OpenDNS ne répond pas depuis ce serveur).
+- Externe : 11 sondes HTTPS sur 12 → 200 depuis ce serveur (12e : erreur interne de la sonde) ; `http://www` → 301 sur
+  10 sondes ; IPv6 joignable sur 443 (ready.chair6.net). Un premier passage pendant le redéploiement a reçu des 404
+  (Traefik ne route que les conteneurs « healthy ») : redéployer hors affluence.
+- Par le DNS réel, en IPv4 et en IPv6 : 200 sur l'accueil, HTTP → HTTPS et `www` → apex en 301 avec chemin et
+  paramètres, certificats Let's Encrypt vérifiés (code 0), HSTS, aucune authentification de revue, `/api/health` =
+  `a8172e5`.
+- Demande de devis de bout en bout (Marbella) par le DNS public : `DEV-202610-HGSLP3` enregistrée (NEW) avant la
+  confirmation ; accusé de réception et notification administrateur en file (PENDING, non envoyés) ; aucun panier ni
+  paiement. Demande conservée pour le contrôle de la consultation administrative, puis à supprimer.
+- robots.txt, sitemap (33 URL, aucune page privée), mentions légales, confidentialité, cookies : 200.
+- Tâches planifiées installées et exécutées une fois (purge : 0 ; sauvegarde valide).
+- Consultation depuis l'administration : **non vérifiée** (aucun administrateur de production).

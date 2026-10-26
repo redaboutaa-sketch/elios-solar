@@ -9,7 +9,8 @@
 
 | # | Élément attendu | Responsable | Conséquence tant qu'il manque |
 |---|---|---|---|
-| A1 | **DNS** chez GoDaddy : supprimer les deux `A @` « WebsiteBuilder Site » (`76.223.105.230`, `13.248.243.5`) et déconnecter le domaine du site Website Builder ; garder `A @ 76.13.44.177`, `AAAA @ 2a02:4780:7:f4ca::1`, `CNAME www heliostores.com.` | client (accès registraire) | **seul blocage restant** : la plupart des visiteurs IPv4 arrivent sur l'ancien site GoDaddy |
+| A1 | DNS : **corrigé le 2026-10-26** (A, AAAA, CNAME www). Option recommandée : retirer l'`AAAA @` tant que le réseau Traefik commun n'a pas l'IPv6 (limite anti-abus partagée entre visiteurs IPv6, runbook § 4) | client (accès registraire) | — |
+| A4 | **Compte administrateur de production** : bootstrap à lancer par la personne habilitée (runbook § 5 bis) | client | aucune consultation des demandes possible : suivi commercial non opérationnel |
 | A2 | Identité légale : **fournie et publiée le 2026-10-26** (THYSENS, registres officiels). Reste : n° de TVA intracommunautaire à vérifier dans VIES ; relecture du gérant | client | mentions publiées sans n° de TVA |
 | A3 | Pages légales : mentions, confidentialité et cookies **publiées le 2026-10-26** ; relecture par le gérant ou un juriste recommandée. CGV seulement si vente en ligne | client (juriste) | — |
 

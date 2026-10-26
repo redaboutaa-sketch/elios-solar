@@ -2,13 +2,14 @@
 
 ## Lancement (2026-10-26)
 
-- **Production heliostores.com** (bascule du 2026-10-26) : pile `heliostores-prod`, commit **`7a70796`**, routeur
-  Traefik **activé** (`TRAEFIK_ENABLE=true`), certificats Let's Encrypt pour `heliostores.com` et `www`, sans
-  authentification de revue, indexable. Identité THYSENS et pages mentions légales / confidentialité / cookies publiées.
-  **Bascule bloquée par le DNS** : la zone GoDaddy garde deux A « WebsiteBuilder Site » qui envoient la plupart des
-  visiteurs IPv4 sur l'ancien site GoDaddy (runbook § 4). Site sur devis : `PAYMENT_PROVIDER=disabled`,
-  `MAIL_PROVIDER=hold` (suivi manuel, runbook § 5 bis). Aucun administrateur de production créé.
-- Préproduction : commit `e2afbed`, identifiant de revue, noindex.
+- **Production heliostores.com publique** (2026-10-26) : pile `heliostores-prod`, commit applicatif **`a8172e5`**,
+  DNS GoDaddy corrigé (A, AAAA, CNAME www seuls), routeur Traefik activé, certificats Let's Encrypt (`heliostores.com`,
+  `www`), sans authentification de revue, indexable. Identité THYSENS et pages légales publiées. Site sur devis :
+  `PAYMENT_PROVIDER=disabled`, prix non validés masqués, `MAIL_PROVIDER=hold` (suivi manuel, runbook § 5 bis).
+  Purge du chat et sauvegarde quotidienne planifiées (`/etc/cron.d/heliostores-prod`). **Aucun administrateur de
+  production** : suivi commercial non opérationnel tant que le bootstrap n'est pas fait. Limite anti-abus partagée
+  entre visiteurs IPv6 (runbook § 4 : repli = retrait de l'AAAA).
+- Préproduction : commit `a8172e5`, identifiant de revue, noindex.
 - État et critères : `docs/launch-readiness.md` ; éléments à fournir : `docs/client-inputs.md` (et Administration →
   Registre de lancement) ; procédures : `docs/production-runbook.md` ; recette : `docs/test-report.md` ;
   SEO/GEO : `docs/seo-geo-plan-90-days.md`.
