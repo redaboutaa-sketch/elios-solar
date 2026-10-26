@@ -64,9 +64,9 @@ const moskifold: HelioFamily = {
     finishes: profileFinishes([at(S.pageHarmony, "onglet Couleurs")], "to_confirm"),
     customFinish: WOOD([at(S.pageHarmony, "onglet Couleurs — avec supplément")]),
     included: [
-      { label: "Toile plissée repliée dans le profil latéral, arrêt dans toutes les positions", sources: [at(S.pageHarmony, "description"), at(S.brochure, "p. 4")] },
-      { label: "Seuil bas", sources: [at(S.pageHarmony, "seuil fin")] },
-      { label: "Réglage indépendant de la tension des fils guides", sources: [at(S.brochure, "p. 4")] },
+      { label: "Toile plissée repliée dans le profil latéral, arrêt dans toutes les positions", status: "to_confirm", sources: [at(S.pageHarmony, "description"), at(S.brochure, "p. 4")] },
+      { label: "Seuil bas", status: "to_confirm", sources: [at(S.pageHarmony, "seuil fin")] },
+      { label: "Réglage indépendant de la tension des fils guides", status: "to_confirm", sources: [at(S.brochure, "p. 4")] },
     ],
     options: [],
     notices: ["Couleur de toile et dimensions minimales non documentées : précisées au devis."],
@@ -112,8 +112,8 @@ const moskifold2: HelioFamily = {
       { code: "mesh_black", label: "Toile noire", status: "to_confirm", swatch: "#26282a", sources: [at(S.pageDual, "toile"), at(S.brochure, "p. 5")] },
     ],
     included: [
-      { label: "Deux vantaux plissés, arrêt dans toutes les positions", sources: [at(S.pageDual, "description")] },
-      { label: "Seuil bas", sources: [at(S.offre, "filtre « Seuil bas »")] },
+      { label: "Deux vantaux plissés, arrêt dans toutes les positions", status: "to_confirm", sources: [at(S.pageDual, "description")] },
+      { label: "Seuil bas", status: "to_confirm", sources: [at(S.offre, "filtre « Seuil bas »")] },
     ],
     options: [
       { code: "corner", label: "Version d'angle sans poteau", group: "structure", status: "to_confirm", pricing: "quote", sources: [at(S.pageDual, "« moustiquaire en angle sans poteau »")], note: "configuration d'angle étudiée au devis" },

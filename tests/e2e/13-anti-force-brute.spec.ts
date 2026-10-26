@@ -16,9 +16,10 @@ import { uid } from "./helpers";
  *   la contourne pas. Aucune limite n'est relevée et aucun en-tête n'est rendu de confiance pour le test.
  */
 const behindProxy = process.env.E2E_BEHIND_PROXY === "1" || /^https:/.test(process.env.E2E_BASE_URL ?? "");
-// règle intégrée de la limite par IP : 3 connexions / 10 s par IP et par chemin
+// règle intégrée de la limite par IP : 3 connexions par IP et par chemin ; le compteur ne repart à zéro qu'après
+// 10 s sans requête (better-auth : écart depuis la dernière requête, pas fenêtre glissante)
 const IP_WINDOW_MS = 10_000;
-const PACE_MS = behindProxy ? Math.ceil(IP_WINDOW_MS / 3) + 400 : 0;
+const PACE_MS = behindProxy ? IP_WINDOW_MS + 600 : 0;
 const created: string[] = [];
 
 const signIn = (request: APIRequestContext, baseURL: string, email: string, password: string, ip: string) =>
@@ -37,14 +38,14 @@ test.afterAll(async () => {
 });
 
 test("verrou par compte : 5 mots de passe faux, même en changeant d'IP, puis blocage même avec le bon mot de passe", async ({ page, request, baseURL }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(behindProxy ? 180_000 : 60_000);
   const email = `bruteforce-${uid()}@test.invalid`;
   const password = `Correct-${uid()}-horse`;
   expect((await signUp(request, baseURL!, email, password, "Compte test anti-force brute")).status()).toBe(200);
   await pause(PACE_MS);
   const net = randomInt(1, 200);
   for (let i = 0; i < 5; i++) {
-    // IP différente à chaque essai (ignorée derrière le proxy) et essais espacés : seule la règle par compte peut bloquer
+    // IP différente à chaque essai (ignorée derrière le proxy) et essais espacés de plus de 10 s : seule la règle par compte peut bloquer
     const r = await signIn(request, baseURL!, email, `faux-${i}-mot-de-passe`, `203.0.113.${net + i}`);
     expect(r.status(), `essai ${i + 1}`).toBe(401);
     await pause(PACE_MS);
@@ -65,8 +66,8 @@ test("verrou par compte : 5 mots de passe faux, même en changeant d'IP, puis bl
 });
 
 test("limite par IP : au-delà de 3 connexions en 10 s depuis la même IP, réponse 429", async ({ request, baseURL }) => {
-  test.setTimeout(60_000);
-  if (behindProxy) await pause(IP_WINDOW_MS); // fenêtre de la limite vidée des essais du parcours précédent
+  test.setTimeout(90_000);
+  if (behindProxy) await pause(PACE_MS); // fenêtre de la limite vidée des essais du parcours précédent
   const ip = `198.51.100.${randomInt(1, 254)}`;
   const codes: number[] = [];
   for (let i = 0; i < 4; i++) codes.push((await signIn(request, baseURL!, `inconnu-${uid()}@test.invalid`, "mot-de-passe-faux", ip)).status());
@@ -75,7 +76,7 @@ test("limite par IP : au-delà de 3 connexions en 10 s depuis la même IP, répo
   const other = (await signIn(request, baseURL!, `inconnu-${uid()}@test.invalid`, "mot-de-passe-faux", `198.51.100.${(Number(ip.split(".")[3]) % 254) + 1}`)).status();
   // accès direct : une autre IP n'est pas affectée ; derrière le proxy : changer X-Forwarded-For ne contourne pas la limite
   expect(other).toBe(behindProxy ? 429 : 401);
-  if (behindProxy) await pause(IP_WINDOW_MS); // ne pas laisser l'IP du poste de recette bloquée pour les parcours suivants
+  if (behindProxy) await pause(PACE_MS); // ne pas laisser l'IP du poste de recette bloquée pour les parcours suivants
 });
 
 test("un compte sain n'est pas bloqué par les échecs d'un autre compte", async ({ request, baseURL }) => {

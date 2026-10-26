@@ -23,7 +23,11 @@ export function SystemGallery({ name, media, scene = null }: { name: string; med
   const [mode, setMode] = useState<Mode>(photos.length ? "photos" : drawings.length ? "technique" : "photos");
   const [i, setI] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
-  if (!media.length) return <div className="grid aspect-[4/3] place-items-center border border-sand-200 bg-white text-sm text-stone-700">Visuels en cours d&apos;intégration.</div>;
+  if (!media.length) {
+    // aucun visuel publiable (ex. modèle en demande d'étude) : vue 3D indicative chargée seulement à la demande
+    if (scene && has3D(scene) && mode === "3d") return <div className="border border-sand-200 bg-white p-3" data-testid="gallery-3d"><SystemScene3D model={scene} fallback={<p className="p-6 text-sm text-stone-700">Vue 3D indisponible sur cet appareil.</p>} /><p className="mt-2 text-xs text-stone-700">Représentation schématique indicative, sans valeur de fiche technique.</p></div>;
+    return <div className="grid aspect-[4/3] place-items-center gap-3 border border-sand-200 bg-white p-6 text-center text-sm text-stone-700" data-testid="system-gallery-empty"><p>Visuels en cours d&apos;intégration.</p>{scene && has3D(scene) && <button type="button" className="btn-secondary" onClick={() => setMode("3d")}><Box className="size-4" aria-hidden="true" /> Afficher une vue 3D indicative</button>}</div>;
+  }
   const list = mode === "technique" ? drawings : photos;
   const m = list[Math.min(i, list.length - 1)];
   const modes: Array<{ id: Mode; label: string; icon: React.ReactNode; show: boolean }> = [

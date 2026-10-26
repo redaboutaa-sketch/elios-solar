@@ -33,7 +33,9 @@ const USAGE: Record<string, string> = {
   roof_blind: "Ombrager une toiture vitrée.",
 };
 
-export async function SystemProductPage({ family: f, category, media, docs }: { family: SystemFamily; category: CategoryKey; media: PublishedMedia[]; docs: PublicDocument[] }) {
+export async function SystemProductPage({ family: f, category, media: allMedia, docs }: { family: SystemFamily; category: CategoryKey; media: PublishedMedia[]; docs: PublicDocument[] }) {
+  // demande d'étude : correspondance avec le système du fabricant non confirmée → aucun visuel du système candidat
+  const media = f.rules.studyOnly ? [] : allMedia;
   const cat = categoryByKey(category)!;
   const scene = await defaultSceneModel(f.slug);
   const details = media.filter((m) => m.role === "detail" && (m.width ?? 0) >= 500).slice(0, 4);
