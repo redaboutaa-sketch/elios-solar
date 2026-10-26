@@ -235,7 +235,9 @@ test("Sevilla : pergola à toiture toile, sans lames ; moustiquaire et screen de
   await expect(drawing).toHaveAttribute("data-width-mm", "4200");
   await goStep(page, "pose");
   const mesh = await drawingAttr(page, "fabric-color");
-  await page.getByLabel("Toile moustiquaire").selectOption({ label: "Toile noire" });
+  // toile « à confirmer » tant que la correspondance fabricant n'est pas confirmée : option choisie par son texte
+  const meshSelect = page.getByLabel("Toile moustiquaire");
+  await meshSelect.selectOption((await meshSelect.locator("option", { hasText: "Toile noire" }).getAttribute("value"))!);
   await expect(drawing).not.toHaveAttribute("data-fabric-color", mesh!);
   await shot(page, "configurateur-moustiquaire");
 
@@ -339,15 +341,29 @@ test("prise de mesures : contrôle des cotes du modèle, report dans son configu
 
   // mesure hors de la gamme documentée : signalée, reportée en demande hors gamme
   await page.goto("/guides/prise-de-mesures");
-  await tool.getByText("Moustiquaire", { exact: true }).click();
-  await tool.getByLabel("2. Modèle").selectOption({ label: "MoskiFold" });
-  await tool.getByLabel("Largeur (mm)").fill("5200");
-  await tool.getByLabel("Hauteur (mm)").fill("2100");
+  await tool.getByText("Store banne", { exact: true }).click();
+  await tool.getByLabel("2. Modèle").selectOption({ label: "Corsica" });
+  await tool.getByLabel("Largeur (mm)").fill("9000");
+  await tool.getByLabel("Avancée (mm)").fill("3100");
   await expect(page.getByTestId("measure-check")).toContainText("hors de la gamme documentée");
   await page.getByTestId("measure-report").click();
-  await expect(page).toHaveURL(/\/configurateur\/moskifold$/);
+  await expect(page).toHaveURL(/\/configurateur\/corsica$/);
   await expect(page.getByTestId("out-of-range").getByRole("checkbox")).toBeChecked();
+  await expect(page.locator("#dim-width")).toHaveValue("9000");
+
+  // modèle en demande d'étude (correspondance fabricant non confirmée) : aucune borne publiée, cotes transmises comme souhait
+  await page.goto("/guides/prise-de-mesures");
+  await tool.getByText("Moustiquaire", { exact: true }).click();
+  await tool.getByLabel("2. Modèle").selectOption({ label: "MoskiFold" });
+  await expect(tool).toContainText("bornes non documentées");
+  await tool.getByLabel("Largeur (mm)").fill("5200");
+  await tool.getByLabel("Hauteur (mm)").fill("2100");
+  await expect(page.getByTestId("measure-check")).toHaveCount(0);
+  await page.getByTestId("measure-report").click();
+  await expect(page).toHaveURL(/\/configurateur\/moskifold$/);
   await expect(page.locator("#dim-width")).toHaveValue("5200");
+  await goStep(page, "recap");
+  await expect(page.getByTestId("step-recap")).toContainText("Demande d'étude");
 });
 
 test("pages accessoires, références, guides et modes de paiement : contenu, aucun nom interdit, aucun débordement", async ({ page }) => {
