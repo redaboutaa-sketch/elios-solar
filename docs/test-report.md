@@ -146,3 +146,26 @@ image de production), quotas par IP partagés entre parcours, éclairage non chi
 
 Non exécuté : paiements réels (Stripe, Alma, Klarna), SMTP réel, assistant IA réel, flux de stock fournisseur réel — intégrations
 simulées ou désactivées.
+
+## 2026-10-26 — contrôles de la bascule publique (commit `7a70796`)
+
+Contrôles ciblés (changements : identité, pages légales, confirmation de devis, routeur public), sans relance de la
+recette complète. Depuis le serveur avec résolution forcée vers `76.13.44.177` / `2a02:4780:7:f4ca::1`, puis sondes
+externes :
+
+- Unitaires 265/265, intégration 99/99, typage et lint sans erreur ; CI verte sur `7a70796`.
+- HTTPS : certificats Let's Encrypt valides pour `heliostores.com` et `www.heliostores.com` ; HTTP → HTTPS (301) ;
+  `www` → `https://heliostores.com` en 301 avec chemin et paramètres ; HSTS ; aucune authentification de revue ;
+  IPv6 : 200 (certificats validés par Let's Encrypt, qui privilégie l'IPv6).
+- SEO : 17 pages publiques en `index, follow`, sans `X-Robots-Tag`, canoniques sur `https://heliostores.com` ;
+  configurateur et CGV en `noindex` ; `/compte` en `X-Robots-Tag: noindex, nofollow` ; sitemap de 33 URL
+  (pages légales publiées incluses, aucune page privée) ; robots.txt ; 404 réelle ; JSON-LD Organization (marque
+  HELIOSTORES, `legalName` THYSENS) sans offre ni prix 0.
+- Parcours fiche Marbella → configurateur → demande : référence affichée **après** l'enregistrement en base, recours
+  téléphone (`tel:`) et e-mail (`mailto:`), visualisation 3D jointe, aucun ajout au panier ni paiement simulé ;
+  accusé de réception en file (`PENDING`, non envoyé). Demande, e-mail, visuel et consentements de test supprimés.
+- Accès privés : `/admin*` → connexion ; visuels et PDF de devis, `/api/media/quotes/…`, `/paiement-demo`,
+  webhooks : 404 sans session. Consultation administrative non testée avec un compte : aucun administrateur de
+  production (création d'un compte temporaire non autorisée pendant la bascule).
+- Captures 1440 et 390 px (hors dépôt). Préproduction : 401 ; autres sites du serveur : réponses inchangées.
+- Externe IPv4 (check-host.net, 8 sondes) : **7 sur GoDaddy**, 1 sur notre serveur → DNS à corriger.

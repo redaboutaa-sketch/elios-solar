@@ -9,9 +9,9 @@
 
 | # | Élément attendu | Responsable | Conséquence tant qu'il manque |
 |---|---|---|---|
-| A1 | **DNS** chez GoDaddy : `A @ 76.13.44.177`, `AAAA @ 2a02:4780:7:f4ca::1`, `CNAME www heliostores.com.` (remplacent le site GoDaddy actuel) | client (accès registraire) | production prête sur le serveur mais non publique ; pas de certificat HTTPS |
-| A2 | **Identité légale du vendeur** : raison sociale, forme, capital, SIRET, RCS, n° TVA, siège, téléphone et e-mail de contact public, directeur de la publication | client | mentions légales impossibles : ouverture interdite (LCEN) |
-| A3 | **Pages légales validées** : mentions légales, politique de confidentialité ; CGV seulement si vente en ligne | client (juriste) | pages en brouillon : ouverture interdite |
+| A1 | **DNS** chez GoDaddy : supprimer les deux `A @` « WebsiteBuilder Site » (`76.223.105.230`, `13.248.243.5`) et déconnecter le domaine du site Website Builder ; garder `A @ 76.13.44.177`, `AAAA @ 2a02:4780:7:f4ca::1`, `CNAME www heliostores.com.` | client (accès registraire) | **seul blocage restant** : la plupart des visiteurs IPv4 arrivent sur l'ancien site GoDaddy |
+| A2 | Identité légale : **fournie et publiée le 2026-10-26** (THYSENS, registres officiels). Reste : n° de TVA intracommunautaire à vérifier dans VIES ; relecture du gérant | client | mentions publiées sans n° de TVA |
+| A3 | Pages légales : mentions, confidentialité et cookies **publiées le 2026-10-26** ; relecture par le gérant ou un juriste recommandée. CGV seulement si vente en ligne | client (juriste) | — |
 
 ## B. Nécessaires au niveau A (site sur devis) mais non bloquants
 

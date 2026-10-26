@@ -1,23 +1,25 @@
-# Préparation au lancement — état au 2026-10-26
+# Préparation au lancement — état au 2026-10-26 (mis à jour après la bascule)
 
 > Document publiable : aucun secret, aucun montant. Détail des éléments attendus : `docs/client-inputs.md` et
 > Administration → Registre de lancement. Procédures : `docs/production-runbook.md`.
 
 ## Verdict
 
-- **Niveau A (site public sur devis)** : **prêt techniquement, non ouvert**. La production `heliostores.com` est
-  déployée sur le serveur (pile distincte, données de test purgées) et contrôlée en local. Trois blocages externes
-  restent : **DNS** du domaine (chez GoDaddy, hors de nos accès), **identité légale** du vendeur, **pages légales**
-  validées. Les notifications par e-mail ne sont pas opérationnelles (aucun SMTP fourni) : les demandes sont suivies dans
-  l'administration.
+- **Niveau A (site public sur devis)** : **bascule préparée, bloquée par le DNS**. Routeur public, HTTPS (Let's
+  Encrypt, deux noms), identité THYSENS et pages légales (mentions, confidentialité, cookies) sont en place sur le
+  commit `7a70796`. La zone GoDaddy publie encore deux A « WebsiteBuilder Site » (`76.223.105.230`, `13.248.243.5`) à
+  côté de `76.13.44.177` : la plupart des visiteurs IPv4 voient l'ancien site GoDaddy (7 sondes externes sur 8). À
+  corriger chez GoDaddy (runbook § 4). Les notifications par e-mail ne sont pas opérationnelles (aucun SMTP) : suivi
+  manuel des demandes dans l'administration (runbook § 5 bis), qui suppose la création d'un compte administrateur.
 - **Niveau B (encaissement en ligne)** : **non activé**. Aucun prix public validé (Casablanca et HelioScreen passés sur
   devis le 2026-10-26), aucun compte Stripe identifié, aucune recette sandbox possible. Le site n'est **pas prêt à
   vendre** en ligne ; il est prêt à recevoir des demandes de devis dès son ouverture.
 
 ## Version
 
-Commit **`e2afbed`** exécuté en préproduction et en production (`/api/health`), CI verte. Recette HTTPS derrière
-Traefik : 69 réussis, 0 échec, 4 ignorés justifiés (`docs/test-report.md`).
+Production : commit **`7a70796`** (`/api/health`), CI verte. Préproduction : `e2afbed`. Recette HTTPS complète derrière
+Traefik sur `e2afbed` : 69 réussis, 0 échec, 4 ignorés justifiés ; contrôles ciblés de la bascule sur `7a70796`
+(`docs/test-report.md`).
 
 ## Niveau A — critères
 

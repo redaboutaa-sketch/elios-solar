@@ -2,9 +2,12 @@
 
 ## Lancement (2026-10-26)
 
-- **Production heliostores.com** : pile distincte `heliostores-prod` (docker/compose.production.yml, `.env.heliostores-prod`,
-  127.0.0.1:3402), commit `e2afbed`, **déployée mais non publique** : DNS chez GoDaddy non modifié, routage Traefik
-  désactivé (`TRAEFIK_ENABLE=false`). Site sur devis : `PAYMENT_PROVIDER=disabled`, `MAIL_PROVIDER=hold`.
+- **Production heliostores.com** (bascule du 2026-10-26) : pile `heliostores-prod`, commit **`7a70796`**, routeur
+  Traefik **activé** (`TRAEFIK_ENABLE=true`), certificats Let's Encrypt pour `heliostores.com` et `www`, sans
+  authentification de revue, indexable. Identité THYSENS et pages mentions légales / confidentialité / cookies publiées.
+  **Bascule bloquée par le DNS** : la zone GoDaddy garde deux A « WebsiteBuilder Site » qui envoient la plupart des
+  visiteurs IPv4 sur l'ancien site GoDaddy (runbook § 4). Site sur devis : `PAYMENT_PROVIDER=disabled`,
+  `MAIL_PROVIDER=hold` (suivi manuel, runbook § 5 bis). Aucun administrateur de production créé.
 - Préproduction : commit `e2afbed`, identifiant de revue, noindex.
 - État et critères : `docs/launch-readiness.md` ; éléments à fournir : `docs/client-inputs.md` (et Administration →
   Registre de lancement) ; procédures : `docs/production-runbook.md` ; recette : `docs/test-report.md` ;
