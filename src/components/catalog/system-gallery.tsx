@@ -57,7 +57,7 @@ export function SystemGallery({ name, media, scene = null }: { name: string; med
           <figure className="overflow-hidden border border-sand-200 bg-white">
             <div className="group relative aspect-[4/3] bg-white">
               {/* eslint-disable-next-line @next/next/no-img-element -- médias servis par /api/media, dimensions connues */}
-              <img key={m.id} src={m.path} srcSet={mediaSrcSet(m)} sizes="(min-width: 1024px) 55vw, 100vw" alt={m.alt} width={m.width ?? undefined} height={m.height ?? undefined} className="absolute inset-0 size-full object-contain animate-fade-in" loading={i === 0 ? "eager" : "lazy"} fetchPriority={i === 0 ? "high" : undefined} />
+              <img key={m.id} src={m.path} srcSet={mediaSrcSet(m)} sizes="(min-width: 1024px) 55vw, (min-width: 640px) calc(100vw - 3rem), calc(100vw - 2rem)" alt={m.alt} width={m.width ?? undefined} height={m.height ?? undefined} className="absolute inset-0 size-full object-contain animate-fade-in" loading={i === 0 ? "eager" : "lazy"} fetchPriority={i === 0 ? "high" : undefined} />
               <button type="button" onClick={() => dialog.current?.showModal()} aria-label={`Agrandir : ${m.alt}`} className="absolute right-3 top-3 grid size-10 place-items-center border border-sand-300 bg-white/90 text-ink hover:bg-white"><Expand className="size-4" aria-hidden="true" /></button>
               {list.length > 1 && <>
                 <button type="button" onClick={() => step(-1)} aria-label="Visuel précédent" className="absolute left-3 top-1/2 grid size-10 -translate-y-1/2 place-items-center border border-sand-300 bg-white/90 hover:bg-white"><ChevronLeft className="size-5" aria-hidden="true" /></button>
