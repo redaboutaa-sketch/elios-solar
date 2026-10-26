@@ -11,7 +11,7 @@ type QuoteWithVisuals = NonNullable<Awaited<ReturnType<typeof prisma.quote.findU
 
 /** PDF d'un devis à partir de son instantané figé et de la visualisation jointe à l'émission. */
 export async function buildQuotePdf(quote: QuoteWithVisuals): Promise<Uint8Array | null> {
-  const snap = quote.snapshot as { result?: EvaluationResult | null } | null;
+  const snap = quote.snapshot as { result?: EvaluationResult | null; deliveryNote?: string } | null;
   const result = snap?.result;
   if (!result) return null;
   const v = quote.visuals[0];
@@ -23,5 +23,7 @@ export async function buildQuotePdf(quote: QuoteWithVisuals): Promise<Uint8Array
   const seller = await prisma.siteSettings.findUnique({ where: { id: 1 } });
   const info = [`Statut : ${STATUS_FR[quote.status] ?? quote.status}`];
   if (quote.proposedTotalCents != null) info.push(`Montant propose TTC : ${formatEur(quote.proposedTotalCents)}`);
+  // délai tel qu'il figurait à l'émission du devis (absent des devis antérieurs au 2026-10-26)
+  if (snap?.deliveryNote) info.push(snap.deliveryNote);
   return buildConfigurationPdf({ title: result.lines[0]?.label ?? "Demande de devis", result, reference: quote.number, validUntil: quote.validUntil, kind: "devis", seller, visual, info });
 }

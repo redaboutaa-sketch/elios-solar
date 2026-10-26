@@ -55,10 +55,12 @@ export function SignUpForm() {
   );
 }
 
-export function ForgotForm() {
+export function ForgotForm({ mailReal = true, contactEmail = null }: { mailReal?: boolean; contactEmail?: string | null }) {
   const [done, setDone] = useState(false);
   const [busy, start] = useTransition();
-  if (done) return <Notice tone="success">Si un compte existe pour cette adresse, un e-mail de réinitialisation a été envoyé.</Notice>;
+  if (done) return mailReal
+    ? <Notice tone="success">Si un compte existe pour cette adresse, un e-mail de réinitialisation a été envoyé.</Notice>
+    : <Notice tone="warn">Demande enregistrée, mais aucun e-mail n'est envoyé pour le moment.{contactEmail ? <> Écrivez-nous à <a className="underline" href={`mailto:${contactEmail}`}>{contactEmail}</a> pour retrouver l'accès à votre compte.</> : null}</Notice>;
   return (
     <form className="card p-6 space-y-4" onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); start(async () => { await authClient.requestPasswordReset({ email: String(fd.get("email")), redirectTo: "/compte/reinitialisation" }); setDone(true); }); }}>
       <div><label className="label" htmlFor="email">E-mail</label><input id="email" name="email" type="email" required className="input" /></div>
@@ -79,6 +81,34 @@ export function ResetForm() {
       <div><label className="label" htmlFor="password">Nouveau mot de passe</label><input id="password" name="password" type="password" minLength={10} required className="input" autoComplete="new-password" /></div>
       {error && <Notice tone="error">{error}</Notice>}
       <button className="btn-primary w-full" type="submit" disabled={busy}>Enregistrer</button>
+    </form>
+  );
+}
+
+/** Changement du mot de passe une fois connecté (better-auth `changePassword`) ; les autres sessions sont fermées. */
+export function ChangePasswordForm() {
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const [busy, start] = useTransition();
+  if (done) return <Notice tone="success">Mot de passe modifié. Vos autres sessions ont été déconnectées.</Notice>;
+  return (
+    <form className="card p-6 space-y-4" aria-label="Changer mon mot de passe" onSubmit={(e) => {
+      e.preventDefault();
+      const form = e.currentTarget;
+      const fd = new FormData(form);
+      const next = String(fd.get("newPassword"));
+      if (next !== String(fd.get("confirmPassword"))) { setError("Les deux saisies du nouveau mot de passe diffèrent."); return; }
+      start(async () => {
+        const r = await authClient.changePassword({ currentPassword: String(fd.get("currentPassword")), newPassword: next, revokeOtherSessions: true });
+        if (r.error) setError(r.error.code === "INVALID_PASSWORD" ? "Mot de passe actuel incorrect." : authErrorFr(r.error, "Modification impossible."));
+        else { form.reset(); setError(null); setDone(true); }
+      });
+    }}>
+      <div><label className="label" htmlFor="currentPassword">Mot de passe actuel</label><input id="currentPassword" name="currentPassword" type="password" required className="input" autoComplete="current-password" /></div>
+      <div><label className="label" htmlFor="newPassword">Nouveau mot de passe (12 caractères minimum)</label><input id="newPassword" name="newPassword" type="password" minLength={12} required className="input" autoComplete="new-password" /></div>
+      <div><label className="label" htmlFor="confirmPassword">Confirmer le nouveau mot de passe</label><input id="confirmPassword" name="confirmPassword" type="password" minLength={12} required className="input" autoComplete="new-password" /></div>
+      {error && <Notice tone="error">{error}</Notice>}
+      <button className="btn-primary" type="submit" disabled={busy}>Changer le mot de passe</button>
     </form>
   );
 }

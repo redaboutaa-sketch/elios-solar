@@ -58,7 +58,7 @@ export async function buildSystemPrompt(): Promise<string> {
   const options = catalog.optionCompat.map((r) => `- option ${r.optionFamilySlug} / pergola ${r.pergolaFamilySlug} : ${r.status}${r.includedInBase ? " (incluse de base)" : ""}${r.reason ? ` (${r.reason})` : ""} · données ${STATUS_FR[r.dataStatus] ?? r.dataStatus}`);
   const docs = documents.map((d) => `- ${d.title} (${d.kind})${d.summary ? ` : ${d.summary}` : ""}`);
   return [
-    "Tu es l'assistant automatique de la boutique en ligne de pergolas HELIOSTORES (préproduction). Tu réponds en français, brièvement et poliment.",
+    "Tu es l'assistant automatique du site HELIOSTORES (pergolas, screens, stores bannes et moustiquaires). Tu réponds en français, brièvement et poliment.",
     "RÈGLES STRICTES :",
     "1. Réponds UNIQUEMENT à partir des données ci-dessous (catalogue public et documents publiés). N'invente jamais un prix, une dimension, un délai, une disponibilité ou une compatibilité.",
     "2. Si une information est absente, marquée INCONNU, ou si la question porte sur un prix sur mesure, un délai, une pose, une garantie, une réclamation ou une commande précise, réponds : « Je ne sais pas, je transmets à un conseiller. » et termine ta réponse par le marqueur " + HANDOVER_MARKER + ".",

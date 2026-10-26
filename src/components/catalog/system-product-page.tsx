@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Check, Info, MessageCircle, Plus, Ruler, FileText } from "lucide-react";
+import { Check, Info, MessageCircle, Plus, Ruler, FileText, Truck } from "lucide-react";
+import { DELIVERY_LEAD_TIME, DELIVERY_TERMS_IN_QUOTE } from "@/domain/delivery";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { ProductTabs } from "@/components/catalog/product-tabs";
 import { DocumentList } from "@/components/catalog/document-list";
@@ -129,6 +130,7 @@ export async function SystemProductPage({ family: f, category, media: allMedia, 
             {d.depth && <><dt className="text-stone-700">{d.depth.label}</dt><dd>{dimRangeText(d.depth)}</dd></>}
             {d.height && <><dt className="text-stone-700">{d.height.label}</dt><dd>{dimRangeText(d.height)}</dd></>}
           </dl>
+          <p data-testid="delivery-lead-time" className="mt-3 flex gap-2 text-sm text-stone-800"><Truck className="mt-0.5 size-4 shrink-0 text-brand-700" aria-hidden="true" /><span>{DELIVERY_LEAD_TIME} {DELIVERY_TERMS_IN_QUOTE}</span></p>
           {f.fromPrice ? (
             <p data-testid="from-price" className="mt-5 bg-brand-50 p-4 text-sm"><span className="block text-xs text-stone-700">À partir de</span><strong className="font-display text-3xl font-semibold tabular-nums">{formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis)}</strong><span className="mt-1 block text-xs text-stone-700">Prix selon vos dimensions, calculé dans le configurateur ; options, pose et livraison chiffrées au devis.</span></p>
           ) : (

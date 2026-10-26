@@ -41,11 +41,24 @@ export function createTransport(): MailTransport {
 
 const BACKOFF_MINUTES = [1, 5, 15, 60, 240];
 
+/**
+ * Seuil d'envoi (`MAIL_SEND_AFTER`, date ISO) : les messages mis en file avant ce seuil (période sans SMTP, tests)
+ * ne partent jamais automatiquement au raccordement d'un SMTP. « Réessayer » dans l'administration repousse leur
+ * prochain essai après le seuil et les libère un par un ; « Abandonner » les écarte.
+ */
+export function mailSendAfter(): Date | null {
+  const raw = process.env.MAIL_SEND_AFTER;
+  if (!raw) return null;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 /** Traite les e-mails en attente. Retourne le nombre envoyés / échoués. Idempotent (statuts). */
 export async function processOutbox(transport: MailTransport = createTransport(), limit = 20) {
   if (mailProvider() === "hold") return { sent: 0, failed: 0, pending: 0, held: true };
   const now = new Date();
-  const pending = await prisma.emailOutbox.findMany({ where: { status: { in: ["PENDING", "FAILED"] }, nextAttemptAt: { lte: now } }, orderBy: { createdAt: "asc" }, take: limit });
+  const cut = mailSendAfter();
+  const pending = await prisma.emailOutbox.findMany({ where: { status: { in: ["PENDING", "FAILED"] }, nextAttemptAt: { lte: now, ...(cut ? { gte: cut } : {}) } }, orderBy: { createdAt: "asc" }, take: limit });
   let sent = 0, failed = 0;
   for (const item of pending) {
     const claimed = await prisma.emailOutbox.updateMany({ where: { id: item.id, status: item.status, attempts: item.attempts }, data: { attempts: { increment: 1 } } });

@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } f
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, Save, Share2, ShoppingCart } from "lucide-react";
+import { DELIVERY_LEAD_TIME, DELIVERY_TERMS_IN_QUOTE } from "@/domain/delivery";
 import { addToCartAction, saveConfigurationAction } from "@/server/actions/configurator";
 import { evaluate } from "@/domain/engine";
 import { CUSTOM_SIZE, defaultSystemInput, dimRangeText, nearestAllowed, spotsFor, type DimRule, type SystemInput, type SystemRules } from "@/domain/system";
@@ -272,6 +273,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
             ))}
           </dl>
           <div className="mt-4"><SystemPriceBox result={result} /></div>
+          <p className="mt-3 text-xs text-stone-700" data-testid="recap-delivery-lead-time">{DELIVERY_LEAD_TIME} {DELIVERY_TERMS_IN_QUOTE}</p>
         </section>
       </div>
 

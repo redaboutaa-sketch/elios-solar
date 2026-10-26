@@ -27,8 +27,14 @@ describe("données structurées", () => {
   it("organisation : coordonnées seulement si renseignées", () => {
     const empty = organizationJsonLd({ name: "HELIOSTORES", siteUrl: SITE, logoPath: "/brand/logo.png" });
     expect(Object.keys(empty).sort()).toEqual(["@context", "@id", "@type", "logo", "name", "url"]);
-    const partial = organizationJsonLd({ name: "HELIOSTORES", siteUrl: SITE, logoPath: "/l.png", address: { line1: "1 rue", postalCode: null, city: "Lille" } });
+    const partial = organizationJsonLd({ name: "HELIOSTORES", siteUrl: SITE, logoPath: "/l.png", address: { postalCode: null, city: "Lille" } });
     expect(partial).not.toHaveProperty("address");
+  });
+  it("organisation : marque distincte de l'entité juridique, coordonnées commerciales sans téléphone ni rue", () => {
+    const o = organizationJsonLd({ name: "HELIOSTORES", siteUrl: SITE, logoPath: "/l.png", legalName: "THYSENS", email: "contact@heliostores.com", address: { postalCode: "59650", city: "Villeneuve-d'Ascq", countryCode: "FR" } });
+    expect(o).toMatchObject({ name: "HELIOSTORES", legalName: "THYSENS", email: "contact@heliostores.com", address: { "@type": "PostalAddress", postalCode: "59650", addressLocality: "Villeneuve-d'Ascq", addressCountry: "FR" } });
+    expect(o).not.toHaveProperty("telephone");
+    expect(o.address).not.toHaveProperty("streetAddress");
   });
   it("fil d'Ariane absolu, accueil en premier", () => {
     const b = breadcrumbJsonLd(SITE, [{ name: "Pergolas", path: "/pergolas" }]);

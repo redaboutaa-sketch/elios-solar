@@ -7,6 +7,7 @@ import { enqueueEmail } from "@/server/mail/outbox";
 import type { Owner } from "@/server/cart/service";
 import { loadCatalog } from "@/server/catalog/load";
 import { attachQuoteVisual, type AttachedVisual } from "@/server/quote/visual";
+import { DELIVERY_LEAD_TIME } from "@/domain/delivery";
 
 export interface QuoteRequest {
   kind: "configuration" | "custom" | "accessory" | "general" | "system";
@@ -39,7 +40,8 @@ export async function createQuote(req: QuoteRequest, owner: Owner): Promise<Awai
       message: req.message?.trim().slice(0, 4000) || null,
       kind: req.kind,
       configurationId: req.configurationId ?? null,
-      snapshot: { input: req.input ?? null, result: req.result ?? null } as never,
+      // mention de délai figée à l'émission (jamais réécrite sur un devis existant)
+      snapshot: { input: req.input ?? null, result: req.result ?? null, deliveryNote: DELIVERY_LEAD_TIME } as never,
       containsDemoData: req.result?.containsDemoData ?? true,
       attribution: (req.attribution ?? undefined) as never,
       status: "NEW",
@@ -52,7 +54,7 @@ export async function createQuote(req: QuoteRequest, owner: Owner): Promise<Awai
   const lines = system ? undefined : (req.result?.lines.map((l) => ({ label: l.label, qty: l.qty, totalGrossCents: l.totalGrossCents, included: l.included })) ?? undefined);
   const sp = system ? req.result?.systemPrice : null;
   const structurePrice = sp ? formatSystemPrice(sp.amountMinor, sp.currency, sp.taxBasis) : undefined;
-  await enqueueEmail({ to: quote.email, subject: `Votre demande de devis ${number}`, template: "quote-received", payload: { number, firstName: quote.firstName, lines, structurePrice, demo: quote.containsDemoData }, dedupeKey: `quote-ack:${quote.id}` });
+  await enqueueEmail({ to: quote.email, subject: `Votre demande de devis ${number}`, template: "quote-received", payload: { number, firstName: quote.firstName, lines, structurePrice, deliveryNote: DELIVERY_LEAD_TIME, demo: quote.containsDemoData }, dedupeKey: `quote-ack:${quote.id}` });
   const admin = process.env.ADMIN_NOTIFICATION_EMAIL;
   if (admin) await enqueueEmail({ to: admin, subject: `Nouvelle demande de devis ${number}`, template: "quote-admin-notification", payload: { number, quoteId: quote.id, email: quote.email, kind: quote.kind, message: quote.message, demo: quote.containsDemoData }, dedupeKey: `quote-admin:${quote.id}` });
   return { ...quote, visualKind: visual.kind };

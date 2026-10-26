@@ -64,7 +64,7 @@ export async function addToCartAndGo(raw: unknown, configurationId: string | nul
   return r;
 }
 
-export async function requestQuoteAction(raw: unknown, form: unknown, kind: "configuration" | "custom" | "accessory" | "general" | "system", configurationId: string | null, visual: unknown = null, attribution: unknown = null): Promise<ActionResult<{ id: string; number: string; visual: "SCENE_3D" | "PLAN_2D" | "NONE"; mailed: boolean; contact: { phone: string | null; email: string | null } }>> {
+export async function requestQuoteAction(raw: unknown, form: unknown, kind: "configuration" | "custom" | "accessory" | "general" | "system", configurationId: string | null, visual: unknown = null, attribution: unknown = null): Promise<ActionResult<{ id: string; number: string; visual: "SCENE_3D" | "PLAN_2D" | "NONE"; mailed: boolean; contact: { email: string | null } }>> {
   const f = quoteFormSchema.safeParse(form);
   if (!f.success) return { ok: false, error: f.error.issues[0]?.message ?? "Formulaire incomplet." };
   if (!(await rateLimit("quote", 10, 600))) return { ok: false, error: "Trop de demandes, réessayez plus tard." };
@@ -79,9 +79,9 @@ export async function requestQuoteAction(raw: unknown, form: unknown, kind: "con
   const session = await getSession();
   const guestKey = await ensureGuestKey();
   const q = await createQuote({ kind, ...f.data, input, result, configurationId, visual, attribution: sanitizeAttribution(attribution) }, { userId: session?.user.id ?? null, guestKey });
-  // confirmation affichée APRÈS l'enregistrement ; coordonnées publiques des Réglages comme recours (aucun e-mail promis sans SMTP)
+  // confirmation affichée APRÈS l'enregistrement ; e-mail de contact public comme recours (aucun e-mail promis sans SMTP)
   const s = await getSiteSettings();
-  return { ok: true, data: { id: q.id, number: q.number, visual: q.visualKind, mailed: mailDeliveryReal(), contact: { phone: s?.phone ?? null, email: s?.contactEmail ?? null } } };
+  return { ok: true, data: { id: q.id, number: q.number, visual: q.visualKind, mailed: mailDeliveryReal(), contact: { email: s?.contactEmail ?? null } } };
 }
 
 export async function getCatalogForClient() {

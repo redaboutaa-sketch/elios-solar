@@ -1,18 +1,19 @@
 /**
  * Données structurées schema.org (JSON-LD) des pages publiques. Fonctions pures (testées) : rien n'est inventé.
- * - Organization : nom, URL et logo ; adresse, téléphone et e-mail SEULEMENT s'ils sont renseignés dans les Réglages.
+ * - Organization : marque (name), entité juridique (legalName), URL et logo ; coordonnées commerciales publiques
+ *   seulement (localité et e-mail renseignés dans les Réglages) : ni téléphone ni rue (décision du 2026-10-26).
  *   Aucun LocalBusiness tant qu'aucune adresse d'établissement recevant du public n'est validée.
  * - Product : jamais d'offre pour un produit sur devis (aucun prix 0), ni note, avis, stock, GTIN, marque ou fabricant.
  *   Une offre n'est émise que pour un prix public strictement positif, avec sa devise et sa base fiscale.
  * Le balisage valide ne rend pas une page éligible aux résultats enrichis de Google (Product sans offre : non éligible).
  */
-export interface OrgInput { name: string; siteUrl: string; logoPath: string; legalName?: string | null; phone?: string | null; email?: string | null; address?: { line1?: string | null; postalCode?: string | null; city?: string | null; countryCode?: string | null } | null }
+export interface OrgInput { name: string; siteUrl: string; logoPath: string; legalName?: string | null; email?: string | null; address?: { postalCode?: string | null; city?: string | null; countryCode?: string | null } | null }
 
 const abs = (siteUrl: string, path: string) => (/^https?:\/\//.test(path) ? path : `${siteUrl.replace(/\/$/, "")}${path.startsWith("/") ? "" : "/"}${path}`);
 
 export function organizationJsonLd(o: OrgInput) {
   const a = o.address;
-  const hasAddress = !!(a?.line1 && a.postalCode && a.city);
+  const hasAddress = !!(a?.postalCode && a.city);
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -21,9 +22,8 @@ export function organizationJsonLd(o: OrgInput) {
     url: abs(o.siteUrl, "/"),
     logo: abs(o.siteUrl, o.logoPath),
     ...(o.legalName ? { legalName: o.legalName } : {}),
-    ...(o.phone ? { telephone: o.phone } : {}),
     ...(o.email ? { email: o.email } : {}),
-    ...(hasAddress ? { address: { "@type": "PostalAddress", streetAddress: a!.line1, postalCode: a!.postalCode, addressLocality: a!.city, addressCountry: a!.countryCode ?? "FR" } } : {}),
+    ...(hasAddress ? { address: { "@type": "PostalAddress", postalCode: a!.postalCode, addressLocality: a!.city, addressCountry: a!.countryCode ?? "FR" } } : {}),
   };
 }
 

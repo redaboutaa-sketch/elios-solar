@@ -1,6 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { DELIVERY_LEAD_TIME } from "@/domain/delivery";
 import { requestQuoteAction } from "@/server/actions/configurator";
 import { Notice } from "@/components/ui/alert";
 import { readAttribution } from "@/components/analytics/attribution";
@@ -23,21 +24,19 @@ async function visualOrNull(getVisual?: () => Promise<string | null>): Promise<s
   }
 }
 
-/** Recours direct après l'enregistrement : téléphone et e-mail publics (Réglages), en citant la référence de la demande. */
-function ContactAlternatives({ contact, number }: { contact: { phone: string | null; email: string | null }; number: string }) {
-  if (!contact.phone && !contact.email) return null;
+/** Recours direct après l'enregistrement : e-mail de contact public (Réglages), en citant la référence de la demande. */
+function ContactAlternatives({ contact, number }: { contact: { email: string | null }; number: string }) {
+  if (!contact.email) return null;
   return (
     <span data-testid="quote-contact" className="block mt-1">
-      Pour compléter votre demande, contactez-nous en rappelant la référence {number}
-      {contact.phone && <> : <a href={`tel:${contact.phone.replace(/\s+/g, "")}`} className="underline">{contact.phone}</a></>}
-      {contact.email && <>{contact.phone ? " ou " : " : "}<a href={`mailto:${contact.email}?subject=${encodeURIComponent(`Demande ${number}`)}`} className="underline">{contact.email}</a></>}.
+      Pour compléter votre demande, écrivez-nous en rappelant la référence {number} : <a href={`mailto:${contact.email}?subject=${encodeURIComponent(`Demande ${number}`)}`} className="underline">{contact.email}</a>.
     </span>
   );
 }
 
 export function QuoteForm({ input, kind, configurationId, onDone, compact = false, getVisual }: { input: unknown; kind: "configuration" | "custom" | "accessory" | "general" | "system"; configurationId: string | null; onDone?: (number: string, visualNote?: string) => void; compact?: boolean; /** visualisation à joindre (dataURL), voir useQuoteVisual */ getVisual?: () => Promise<string | null> }) {
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ number: string; visual: string; mailed: boolean; contact: { phone: string | null; email: string | null } } | null>(null);
+  const [done, setDone] = useState<{ number: string; visual: string; mailed: boolean; contact: { email: string | null } } | null>(null);
   const [preparing, setPreparing] = useState(false);
   const [busy, start] = useTransition();
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -52,7 +51,7 @@ export function QuoteForm({ input, kind, configurationId, onDone, compact = fals
       if (r.ok) { setDone({ number: r.data.number, visual: r.data.visual, mailed: r.data.mailed, contact: r.data.contact }); onDone?.(r.data.number, getVisual ? VISUAL_DONE[r.data.visual] ?? VISUAL_DONE.NONE : undefined); } else setError(r.error);
     });
   };
-  if (done) return <Notice tone="success"><span data-testid="quote-done">Demande {done.number} enregistrée : un conseiller l'étudie et vous recontacte.{done.mailed ? " Un e-mail récapitulatif vous est envoyé." : " Notez ce numéro : il identifie votre demande."}</span>{getVisual && <span data-testid="quote-visual-status" className="block mt-1">{VISUAL_DONE[done.visual] ?? VISUAL_DONE.NONE}</span>}<ContactAlternatives contact={done.contact} number={done.number} /></Notice>;
+  if (done) return <Notice tone="success"><span data-testid="quote-done">Demande {done.number} enregistrée : un conseiller l'étudie et vous recontacte.{done.mailed ? " Un e-mail récapitulatif vous est envoyé." : " Notez ce numéro : il identifie votre demande."}</span>{getVisual && <span data-testid="quote-visual-status" className="block mt-1">{VISUAL_DONE[done.visual] ?? VISUAL_DONE.NONE}</span>}{kind === "system" && <span data-testid="quote-delivery-lead-time" className="block mt-1">{DELIVERY_LEAD_TIME} Les modalités précises figureront dans votre devis.</span>}<ContactAlternatives contact={done.contact} number={done.number} /></Notice>;
   return (
     <form onSubmit={submit} className={`grid gap-3 ${compact ? "" : "sm:grid-cols-2"}`} aria-label="Demande de devis">
       <div><label className="label" htmlFor="q-firstName">Prénom</label><input id="q-firstName" name="firstName" required className="input" autoComplete="given-name" /></div>

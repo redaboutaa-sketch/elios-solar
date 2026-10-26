@@ -57,10 +57,18 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
       migrate: { condition: service_completed_successfully }
+    # sonde de l'image (30 s) complétée d'une sonde rapide au démarrage : Traefik route l'instance dès qu'elle répond
+    healthcheck: &app_health
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3400/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+      start_interval: 2s
     restart: unless-stopped
     logging: *log
     networks: [internal, traefik-public]
-    labels:
+    labels: &app_labels
       - "traefik.enable=${TRAEFIK_ENABLE:-false}"
       - "traefik.docker.network=traefik-public"
       - "traefik.http.services.heliostores-prod.loadbalancer.server.port=3400"
@@ -80,6 +88,27 @@ services:
       - "traefik.http.middlewares.heliostores-prod-www.redirectregex.regex=^https?://www\\.(.+)"
       - "traefik.http.middlewares.heliostores-prod-www.redirectregex.replacement=https://$${1}"
       - "traefik.http.middlewares.heliostores-prod-www.redirectregex.permanent=true"
+
+  # Relais de déploiement (profil « relay », jamais démarré par `up` seul) : même image, mêmes labels Traefik que `app`.
+  # scripts/deploy-production.sh le démarre avec la nouvelle version, attend qu'il soit sain (Traefik ne route que les
+  # conteneurs sains et répartit entre les deux), recrée `app`, puis le retire : pas de fenêtre sans instance saine.
+  app-relay:
+    profiles: [relay]
+    image: elios-solar/app:${IMAGE_TAG:?IMAGE_TAG requis (commit déployé)}
+    container_name: heliostores-prod-app-relay
+    env_file: [../.env.heliostores-prod]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-heliostores}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-heliostores}?schema=public
+      MEDIA_STORAGE_DIR: /app/uploads
+    volumes:
+      - heliostores_prod_uploads:/app/uploads
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck: *app_health
+    restart: "no"
+    logging: *log
+    networks: [internal, traefik-public]
+    labels: *app_labels
 
   worker:
     image: elios-solar/tools:${IMAGE_TAG:?IMAGE_TAG requis (commit déployé)}

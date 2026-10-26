@@ -4,6 +4,7 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import type { EvaluationResult } from "@/domain/types";
 import { formatEur } from "@/domain/money";
 import { formatSystemPrice } from "@/domain/system-pricing";
+import { commercialContact } from "@/domain/commercial-contact";
 import { BRAND } from "@/config/brand";
 
 function clean(s: string): string {
@@ -52,7 +53,8 @@ export async function buildConfigurationPdf(opts: {
   reference: string;
   validUntil?: Date | null;
   kind: "configuration" | "devis";
-  seller?: { legalName?: string | null; addressLine1?: string | null; postalCode?: string | null; city?: string | null } | null;
+  /** coordonnées commerciales (marque, localité, e-mail) : ni téléphone ni rue */
+  seller?: { postalCode?: string | null; city?: string | null; countryCode?: string | null; contactEmail?: string | null } | null;
   /** visualisation jointe (devis) ; `null` = indisponible (mention explicite) ; `undefined` = section absente */
   visual?: PdfVisual | null;
   /** lignes d'information supplémentaires sous l'en-tête (statut, montant proposé…) */
@@ -79,7 +81,7 @@ export async function buildConfigurationPdf(opts: {
   const line = (h = 14) => { y -= h; if (y < 60) { page = pdf.addPage([595.28, 841.89]); y = 800; } };
   const demo = result.containsDemoData;
   if (demo) { page.drawRectangle({ x: 40, y: y - 6, width: 515, height: 22, color: rgb(1, 0.95, 0.8) }); text("DEMONSTRATION - preproduction : ce document n'a aucune valeur contractuelle.", 48, 10, bold, rgb(0.6, 0.42, 0)); line(30); }
-  text(opts.seller?.legalName ? `${opts.seller.legalName} - ${opts.seller.addressLine1 ?? ""} ${opts.seller.postalCode ?? ""} ${opts.seller.city ?? ""}` : "Identite du vendeur a renseigner (administration > reglages).", 40, 8, font, rgb(0.4, 0.4, 0.4)); line(14);
+  { const c = commercialContact(opts.seller, BRAND.name); text([c.name, c.locality, c.email].filter(Boolean).join(" - "), 40, 8, font, rgb(0.4, 0.4, 0.4)); line(14); }
   text(`Reference : ${opts.reference}`, 40, 10); text(`Date : ${new Date().toLocaleDateString("fr-FR")}`, 400, 10); line();
   if (opts.validUntil) { text(`Validite : jusqu'au ${opts.validUntil.toLocaleDateString("fr-FR")}`, 40, 10); line(); }
   for (const i of opts.info ?? []) { text(i, 40, 10); line(); }

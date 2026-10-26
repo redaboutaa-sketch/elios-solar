@@ -14,6 +14,7 @@ import { Flash, Options, PageTitle, QUOTE_STATUS_FR, Section, Table, fmtDate } f
 import { centsToEuros, toDateInput } from "@/server/admin/form";
 import { openQuotePaymentAction, updateQuoteAction } from "@/server/actions/admin/quotes";
 import { onlineSalesEnabled } from "@/server/payment/mode";
+import { mailDeliveryReal } from "@/server/mail/transport";
 import type { ConfigurationInput, EvaluationResult } from "@/domain/types";
 import type { Attribution } from "@/domain/attribution";
 
@@ -86,7 +87,7 @@ export default async function QuoteAdminPage(props: PageProps<"/admin/devis/[id]
         <Section title="Traitement" className="self-start">
           <form action={updateQuoteAction} className="space-y-3">
             <input type="hidden" name="quoteId" value={quote.id} />
-            <div><label className="label" htmlFor="status">Statut</label><select id="status" name="status" className="input" defaultValue={quote.status}><Options values={Object.values(QuoteStatus)} labels={QUOTE_STATUS_FR} /></select><p className="mt-1 text-xs text-stone-700">Le passage à « Envoyé » adresse un e-mail au client.</p></div>
+            <div><label className="label" htmlFor="status">Statut</label><select id="status" name="status" className="input" defaultValue={quote.status}><Options values={Object.values(QuoteStatus)} labels={QUOTE_STATUS_FR} /></select><p className="mt-1 text-xs text-stone-700" data-testid="quote-sent-hint">{mailDeliveryReal() ? "Le passage à « Envoyé » adresse un e-mail au client." : "Le passage à « Envoyé » met un e-mail en file, sans l'envoyer (aucun SMTP raccordé) : transmettez le devis au client vous-même."}</p></div>
             <div><label className="label" htmlFor="qualification">Qualification du prospect</label><select id="qualification" name="qualification" className="input" defaultValue={quote.qualification}>{Object.entries(QUALIFICATION_FR).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
             <div><label className="label" htmlFor="proposedTotal">Montant proposé TTC (€)</label><input id="proposedTotal" name="proposedTotal" inputMode="decimal" className="input" defaultValue={centsToEuros(quote.proposedTotalCents)} /></div>
             <div><label className="label" htmlFor="validUntil">Valable jusqu'au</label><input id="validUntil" name="validUntil" type="date" className="input" defaultValue={toDateInput(quote.validUntil)} /></div>

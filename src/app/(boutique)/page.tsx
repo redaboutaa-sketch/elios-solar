@@ -66,7 +66,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <JsonLd data={[organizationJsonLd({ name: BRAND.name, siteUrl: BRAND.siteUrl, logoPath: BRAND.logo.src, legalName: settings?.legalName, phone: settings?.phone, email: settings?.contactEmail, address: settings ? { line1: settings.addressLine1, postalCode: settings.postalCode, city: settings.city, countryCode: settings.countryCode } : null }), { "@context": "https://schema.org", "@type": "WebSite", name: BRAND.name, url: BRAND.siteUrl, inLanguage: "fr-FR", publisher: { "@id": `${BRAND.siteUrl.replace(/\/$/, "")}/#organisation` } }]} />
+      <JsonLd data={[organizationJsonLd({ name: BRAND.name, siteUrl: BRAND.siteUrl, logoPath: BRAND.logo.src, legalName: settings?.legalName, email: settings?.contactEmail, address: settings ? { postalCode: settings.postalCode, city: settings.city, countryCode: settings.countryCode } : null }), { "@context": "https://schema.org", "@type": "WebSite", name: BRAND.name, url: BRAND.siteUrl, inLanguage: "fr-FR", publisher: { "@id": `${BRAND.siteUrl.replace(/\/$/, "")}/#organisation` } }]} />
       {/* Entrée principale (retour client du 2026-10-21) : choisir une famille par son dessin, dès le premier écran.
           Les photographies suivent juste en dessous et restent dans les fiches produit. */}
       <section id="solutions" className="home-entry scroll-mt-16 pb-6 pt-5 sm:pt-7" aria-labelledby="solutions-titre">
