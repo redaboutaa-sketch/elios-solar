@@ -139,13 +139,13 @@
 /* Dessins HELIOSTORES : l'élément mobile du produit joue son mouvement au survol ou au focus de la carte.
    Morphing de l'attribut d (navigateurs compatibles) ; sinon dessin statique. */
 .sketch .sk-move { transition: d 600ms var(--ease-out), opacity 600ms var(--ease-out); }
-.sketch .sk-sun { transition: transform 600ms var(--ease-out); transform-box: fill-box; transform-origin: center; }
+.sketch .sk-badge { transition: transform 600ms var(--ease-out); transform-box: fill-box; transform-origin: center; }
 @media (hover: hover) {
   .sketch-trigger:hover .sk-move { d: var(--on); }
-  .sketch-trigger:hover .sk-sun { transform: scale(1.12); }
+  .sketch-trigger:hover .sk-badge { transform: scale(1.12); }
 }
 .sketch-trigger:focus-within .sk-move { d: var(--on); }
-.sketch-trigger:focus-within .sk-sun { transform: scale(1.12); }
+.sketch-trigger:focus-within .sk-badge { transform: scale(1.12); }
 @media (prefers-reduced-motion: reduce) {
   .sketch .sk-move { transition: none; }
   .sketch-trigger:hover .sk-move, .sketch-trigger:focus-within .sk-move { d: var(--off); }

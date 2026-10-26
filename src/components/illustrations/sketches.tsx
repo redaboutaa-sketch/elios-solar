@@ -38,7 +38,7 @@ function fitProjector(pts: readonly V3[], [bx0, by0, bx1, by1]: readonly [number
 }
 /** Coins d'une boîte, pour le recadrage. */
 const corners = (x0: number, x1: number, y0: number, y1: number, z0: number, z1: number): V3[] => [x0, x1].flatMap((x) => [y0, y1].flatMap((y) => [z0, z1].map((z) => [x, y, z] as V3)));
-/** Cadre du produit seul dans le viewBox 400 × 300 (le soleil reste en haut à droite). */
+/** Cadre du produit seul dans le viewBox 400 × 300 (le soleil, ou le moustique des moustiquaires, reste en haut à droite). */
 const PRODUCT_BOX = [40, 22, 330, 288] as const;
 const poly = (P: Proj, pts: readonly V3[]) => `M${pts.map(P).join(" L")} Z`;
 const line = (P: Proj, pts: readonly V3[]) => `M${pts.map(P).join(" L")}`;
@@ -57,10 +57,42 @@ const thinOf = (c: Palette) => ({ ...strokeOf(c), strokeWidth: c.width * 0.56 })
 function Sun({ c, cx = 352, cy = 34 }: { c: Palette; cx?: number; cy?: number }) {
   const thin = thinOf(c);
   return (
-    <g className="sk-sun">
+    <g className="sk-badge">
       <circle cx={cx} cy={cy} r="13" fill={c.sage} fillOpacity="0.55" />
       <circle cx={cx} cy={cy} r="13" fill="none" {...thin} />
       {Array.from({ length: 8 }, (_, i) => { const a = (i * Math.PI) / 4; return <line key={i} x1={cx + Math.cos(a) * 18} y1={cy + Math.sin(a) * 18} x2={cx + Math.cos(a) * 23} y2={cy + Math.sin(a) * 23} {...thin} />; })}
+    </g>
+  );
+}
+
+/**
+ * Moustique au trait (famille Moustiquaires), à la place du soleil : même centre, même encombrement (± 23 unités).
+ * Vu de profil, tête à gauche : trompe, antennes, tête, thorax et abdomen fin teintés de sauge, deux ailes
+ * translucides, six pattes longues articulées.
+ */
+function Mosquito({ c, cx = 352, cy = 34 }: { c: Palette; cx?: number; cy?: number }) {
+  const thin = thinOf(c);
+  const fine = { ...thin, strokeWidth: c.width * 0.48 };
+  const t = (dx: number, dy: number) => `${cx + dx} ${cy + dy}`;
+  const legs: Array<[number, number, number, number, number, number]> = [
+    [-3, 2, -10, 9, -17, 19], [-1, 3, -4, 12, -8, 22], [1, 3, 2, 12, 0, 22],
+    [2, 3, 9, 10, 12, 21], [3, 2.5, 14, 8, 20, 18], [4, 2, 17, 4, 23, 13],
+  ];
+  return (
+    <g className="sk-badge" data-testid="sketch-mosquito">
+      {/* ailes (derrière le corps) */}
+      <path d={`M${t(1, -2)} C${t(4, -16)} ${t(16, -22)} ${t(20, -19)} C${t(21, -14)} ${t(10, -6)} ${t(1, -2)} Z`} fill={c.sage} fillOpacity="0.3" {...fine} />
+      <path d={`M${t(-1, -2)} C${t(-2, -15)} ${t(6, -24)} ${t(10, -22)} C${t(12, -17)} ${t(5, -7)} ${t(-1, -2)} Z`} fill={c.sage} fillOpacity="0.22" {...fine} />
+      {/* pattes */}
+      {legs.map(([x0, y0, x1, y1, x2, y2], i) => <path key={i} d={`M${t(x0, y0)} L${t(x1, y1)} L${t(x2, y2)}`} fill="none" {...fine} />)}
+      {/* abdomen fin et segmenté */}
+      <path d={`M${t(3, -1)} C${t(10, -1)} ${t(19, 3)} ${t(24, 8)} C${t(19, 7)} ${t(9, 4)} ${t(3, 2)} Z`} fill={c.sage} fillOpacity="0.55" {...thin} />
+      <path d={`M${t(9, 0.4)} L${t(8.6, 3.6)} M${t(14, 2.2)} L${t(13.4, 5.2)} M${t(19, 4.6)} L${t(18.4, 6.6)}`} fill="none" {...fine} />
+      {/* thorax, tête, antennes, trompe */}
+      <ellipse cx={cx} cy={cy} rx="4.4" ry="3.4" fill={c.sage} fillOpacity="0.55" {...thin} />
+      <circle cx={cx - 6.6} cy={cy - 1.2} r="2.3" fill={c.face} {...thin} />
+      <path d={`M${t(-7.5, -3.2)} L${t(-11, -9)} M${t(-6.2, -3.4)} L${t(-7.6, -9.6)}`} fill="none" {...fine} />
+      <path d={`M${t(-8.8, -0.4)} L${t(-22, 5)}`} fill="none" {...thin} />
     </g>
   );
 }
@@ -277,7 +309,7 @@ export function FamilySketch({ kind, className = "", decorative = true, sun = tr
   const body = s.draw(morpher(animated), c, showWall);
   return (
     <svg viewBox="0 0 400 300" className={`sketch ${className}`} {...(decorative ? { "aria-hidden": true } : { role: "img", "aria-label": s.label })} focusable="false">
-      {sun && <Sun c={c} />}
+      {sun && (kind === "MOUSTIQUAIRES" ? <Mosquito c={c} /> : <Sun c={c} />)}
       {body}
     </svg>
   );
