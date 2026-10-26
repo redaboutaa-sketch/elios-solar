@@ -13,6 +13,7 @@ import { QuoteVisualCard } from "@/components/quote/quote-visual-card";
 import { Flash, Options, PageTitle, QUOTE_STATUS_FR, Section, Table, fmtDate } from "@/components/admin/ui";
 import { centsToEuros, toDateInput } from "@/server/admin/form";
 import { openQuotePaymentAction, updateQuoteAction } from "@/server/actions/admin/quotes";
+import { onlineSalesEnabled } from "@/server/payment/mode";
 import type { ConfigurationInput, EvaluationResult } from "@/domain/types";
 import type { Attribution } from "@/domain/attribution";
 
@@ -98,7 +99,7 @@ export default async function QuoteAdminPage(props: PageProps<"/admin/devis/[id]
               <ul className="mt-2 space-y-1 text-sm">{quoteOrders.map((o) => <li key={o.id}><a className="link-brand" href={`/admin/commandes/${o.id}`}>{o.number}</a> — {o.status}{o.payments[0] ? ` · paiement ${o.payments[0].status}${o.payments[0].method ? ` (${o.payments[0].method})` : ""}` : ""} · lien client : <code>/commande/{o.id}/payer</code></li>)}</ul>
             ) : null}
             {quoteOrders.length ? <p className="mt-2 text-sm" data-testid="quote-cashed">Encaissé : {centsToEuros(cashed)} € · remboursé : {centsToEuros(refunded)} € (suivi du prospect : origine ci-dessus → devis → commande → encaissement)</p> : <p className="mt-1 text-xs text-stone-700">Possible lorsque le devis est « Accepté » et que son montant TTC est renseigné. Le client règle exactement ce montant ; un retour de navigateur ne vaut pas paiement (confirmation par le prestataire).</p>}
-            {quote.status === "ACCEPTED" && quote.proposedTotalCents ? (
+            {!onlineSalesEnabled() ? <p className="mt-2 text-sm" data-testid="quote-payment-closed">Paiement en ligne non ouvert sur cet environnement (aucun compte de paiement raccordé) : le devis se règle hors ligne.</p> : quote.status === "ACCEPTED" && quote.proposedTotalCents ? (
               <form action={openQuotePaymentAction} className="mt-3 space-y-2">
                 <input type="hidden" name="quoteId" value={quote.id} />
                 <div><label className="label" htmlFor="vatRate">Taux de TVA du devis (%)</label><input id="vatRate" name="vatRate" inputMode="decimal" required className="input" placeholder="à indiquer" /></div>

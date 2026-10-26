@@ -14,6 +14,17 @@ import type { SystemFamily } from "@/server/catalog/systems";
 import { BRAND } from "@/config/brand";
 import { defaultSceneModel } from "@/server/catalog/scene-preview";
 import { MediaImage } from "@/components/ui/media-image";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd, productJsonLd } from "@/server/seo/structured-data";
+import { productNature } from "@/server/seo/product-nature";
+
+const GUIDES_BY_TYPE: Record<string, Array<[string, string]>> = {
+  pergola: [["/guides/choisir-sa-pergola", "Choisir sa pergola"], ["/guides/prise-de-mesures", "Prise de mesures"], ["/guides/preparation-projet", "Préparer son projet"]],
+  screen: [["/guides/choisir-son-screen-exterieur", "Choisir son screen extérieur"], ["/guides/choisir-toile-et-motorisation", "Toile et motorisation"], ["/guides/prise-de-mesures", "Prise de mesures"]],
+  roof_blind: [["/guides/choisir-son-screen-exterieur", "Choisir son screen extérieur"], ["/guides/prise-de-mesures", "Prise de mesures"]],
+  awning: [["/guides/comparer-protections-solaires", "Comparer les protections solaires"], ["/guides/choisir-toile-et-motorisation", "Toile et motorisation"], ["/guides/prise-de-mesures", "Prise de mesures"]],
+  insect_screen: [["/guides/choisir-sa-moustiquaire", "Choisir sa moustiquaire"], ["/guides/prise-de-mesures", "Prise de mesures"]],
+};
 
 const USAGE: Record<string, string> = {
   pergola: "Couvrir une terrasse, contre la maison ou en espace libre, et régler l'ensoleillement par l'orientation des lames.",
@@ -28,7 +39,14 @@ export async function SystemProductPage({ family: f, category, media, docs }: { 
   const details = media.filter((m) => m.role === "detail" && (m.width ?? 0) >= 500).slice(0, 4);
   const r = f.rules;
   const d = r.dims;
-  const jsonLd = { "@context": "https://schema.org", "@type": "Product", name: f.name, description: f.shortDescription, ...(f.fromPrice ? { offers: { "@type": "AggregateOffer", priceCurrency: f.fromPrice.currency, lowPrice: (f.fromPrice.amountMinor / 100).toFixed(2) } } : {}), image: media.slice(0, 3).map((m) => `${BRAND.siteUrl}${m.path}`) };
+  const path = `${cat.href}/${f.slug}`;
+  const nature = productNature(r);
+  // aucune offre pour un produit sur devis (jamais de prix 0) ; images : photos et rendus publiés, pas les documents
+  const jsonLd = [
+    productJsonLd(BRAND.siteUrl, { name: f.name, description: f.shortDescription, path, category: nature ?? cat.singular, images: media.filter((m) => m.nature !== "DOCUMENT" && m.nature !== "VIDEO").slice(0, 3).map((m) => m.path), price: f.fromPrice ? { amountMinor: f.fromPrice.amountMinor, currency: f.fromPrice.currency, taxBasis: f.fromPrice.taxBasis === "TTC" ? "TTC" : f.fromPrice.taxBasis === "HT" ? "HT" : null } : null }),
+    breadcrumbJsonLd(BRAND.siteUrl, [{ name: cat.label, path: cat.href }, { name: f.name, path }]),
+  ];
+  const guides = GUIDES_BY_TYPE[r.type] ?? [];
   const tabs = [
     {
       id: "description", label: "Présentation", content: (
@@ -36,7 +54,7 @@ export async function SystemProductPage({ family: f, category, media, docs }: { 
           <p>{f.description}</p>
           <h3>Usage</h3>
           <p>{USAGE[r.type]}</p>
-          <p className="text-sm">Le prix affiché correspond à la structure aux dimensions choisies ; les options et équipements sont chiffrés sur devis. Une option visible sur une photo n'est jamais incluse d'office.</p>
+          <p className="text-sm">{f.fromPrice ? "Le prix affiché correspond à la structure aux dimensions choisies ; les options et équipements sont chiffrés sur devis." : "Prix sur devis : la structure, les options, la pose et la livraison sont chiffrées après étude de votre configuration."} Une option visible sur une photo n'est jamais incluse d'office.</p>
         </div>
       ),
     },
@@ -119,6 +137,28 @@ export async function SystemProductPage({ family: f, category, media, docs }: { 
           <Link href="/contact" className="btn-ghost w-full mt-2">Parler à un conseiller</Link>
         </aside>
       </div>
+      <section className="mt-16 border-t border-sand-200 pt-10" aria-labelledby="essentiel" data-testid="product-key-facts">
+        <h2 id="essentiel" className="font-display text-display font-semibold">{f.name} : l&apos;essentiel</h2>
+        <p className="mt-2 max-w-3xl text-stone-800">{f.name} fait partie de la gamme {cat.label} HELIOSTORES{nature ? ` : ${nature.toLowerCase()}` : ""}. Les caractéristiques ci-dessous sont celles de la documentation du modèle.</p>
+        <div className="mt-6 max-w-4xl overflow-x-auto border border-sand-200 bg-white">
+          <table className="w-full text-left text-sm">
+            <caption className="sr-only">Caractéristiques principales de {f.name}</caption>
+            <tbody className="divide-y divide-sand-200">
+              {nature && <tr><th scope="row" className="w-1/3 p-3 font-medium text-stone-700">Type de produit</th><td className="p-3">{nature}</td></tr>}
+              <tr><th scope="row" className="p-3 font-medium text-stone-700">Fabrication</th><td className="p-3">{r.fixedSizes?.length ? `tailles définies : ${r.fixedSizes.map((z) => z.label).join(" ; ")}` : "sur mesure, dans les limites ci-dessous"}</td></tr>
+              <tr><th scope="row" className="p-3 font-medium text-stone-700">{d.width.label}</th><td className="p-3 tabular-nums">{dimRangeText(d.width)}</td></tr>
+              {d.depth && <tr><th scope="row" className="p-3 font-medium text-stone-700">{d.depth.label}</th><td className="p-3 tabular-nums">{dimRangeText(d.depth)}{d.depth.note ? ` — ${d.depth.note}` : ""}</td></tr>}
+              {d.height && <tr><th scope="row" className="p-3 font-medium text-stone-700">{d.height.label}</th><td className="p-3 tabular-nums">{dimRangeText(d.height)}</td></tr>}
+              <tr><th scope="row" className="p-3 font-medium text-stone-700">Pose</th><td className="p-3">{r.mountings.map((m) => `${m.label}${m.status === "to_confirm" ? " (à confirmer)" : ""}`).join(" ; ")}</td></tr>
+              {r.controls?.length ? <tr><th scope="row" className="p-3 font-medium text-stone-700">Commande</th><td className="p-3">{r.controls.map((c) => `${c.label}${c.status === "to_confirm" ? " (à confirmer)" : ""}`).join(" ; ")}</td></tr> : null}
+              {r.wind?.text && <tr><th scope="row" className="p-3 font-medium text-stone-700">Vent</th><td className="p-3">{r.wind.text}{r.wind.status === "to_confirm" ? " (à confirmer)" : ""}</td></tr>}
+              <tr><th scope="row" className="p-3 font-medium text-stone-700">Prix</th><td className="p-3">{f.fromPrice ? `à partir de ${formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis)} pour la structure` : "sur devis"}</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-2 text-xs text-stone-700">Dimensions en mètres, pour un module. Les valeurs « à confirmer » sont vérifiées au devis.</p>
+        {guides.length > 0 && <p className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm"><span className="font-medium">Guides :</span>{guides.map(([href, label]) => <Link key={href} href={href} className="link-brand">{label}</Link>)}</p>}
+      </section>
       {details.length > 0 && (
         <section className="mt-16 border-t border-sand-200 pt-10" aria-labelledby="en-detail">
           <h2 id="en-detail" className="font-display text-display"><span className="font-normal">{f.name}</span> <span className="font-semibold">en détail</span></h2>
@@ -135,7 +175,7 @@ export async function SystemProductPage({ family: f, category, media, docs }: { 
       <section className="mt-16 grid gap-6 border-t border-sand-200 pt-10 sm:grid-cols-3" aria-labelledby="accompagnement">
         <h2 id="accompagnement" className="sr-only">Accompagnement</h2>
         {[
-          [Ruler, "Configurer à vos cotes", "Dimensions, pose, teinte et équipements, avec vue 3D indicative et prix de la structure.", configuratorHref(f.slug), "Ouvrir le configurateur"],
+          [Ruler, "Configurer à vos cotes", f.fromPrice ? "Dimensions, pose, teinte et équipements, avec visualisation indicative et prix de la structure." : "Dimensions, pose, teinte et équipements, avec visualisation indicative ; la configuration est jointe à votre demande de devis.", configuratorHref(f.slug), "Ouvrir le configurateur"],
           [FileText, "Devis pour le reste", "Options, pose, livraison et points à confirmer sont chiffrés par devis.", `/devis?produit=${f.slug}`, "Décrire mon projet"],
           [MessageCircle, "Un conseiller vous accompagne", "Il vérifie la faisabilité, les fixations et les points à confirmer.", "/contact", "Nous contacter"],
         ].map(([Icon, t, d, href, cta]) => { const I = Icon as typeof Ruler; return (
@@ -147,7 +187,7 @@ export async function SystemProductPage({ family: f, category, media, docs }: { 
         <Link href={configuratorHref(f.slug)} className="btn-accent">Configurer</Link>
       </div>
       <div className="lg:hidden h-20" aria-hidden="true" />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLd data={jsonLd} />
     </div>
   );
 }

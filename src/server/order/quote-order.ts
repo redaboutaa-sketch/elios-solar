@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { businessNumber } from "@/server/ids";
 import { OrderError } from "./service";
+import { onlineSalesEnabled } from "@/server/payment/mode";
 
 /** Durée de validité d'une demande de paiement de devis sans date de validité (jours). */
 const QUOTE_PAYMENT_DAYS = 30;
@@ -12,6 +13,7 @@ const QUOTE_PAYMENT_DAYS = 30;
  * TVA est celui que le conseiller indique. Le devis et sa configuration restent inchangés (instantané conservé).
  */
 export async function createOrderFromQuote(quoteId: string, opts: { vatRateBps: number; label?: string }) {
+  if (!onlineSalesEnabled()) throw new OrderError("Le paiement en ligne n'est pas ouvert sur cet environnement : le devis se règle hors ligne.", "sales_disabled");
   const quote = await prisma.quote.findUnique({ where: { id: quoteId } });
   if (!quote) throw new OrderError("Devis introuvable.", "not_found");
   if (quote.status !== "ACCEPTED") throw new OrderError("Seul un devis accepté par le client peut être payé en ligne.", "quote_not_accepted");

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { ingestPaymentEvent } from "@/server/payment";
 import { logger } from "@/lib/logger";
+import { salesMode } from "@/server/payment/mode";
 
 export async function POST(req: Request) {
-  if (process.env.PAYMENT_PROVIDER !== "stripe") return NextResponse.json({ error: "stripe désactivé" }, { status: 404 });
+  if (salesMode() !== "stripe") return NextResponse.json({ error: "stripe désactivé" }, { status: 404 });
   const raw = await req.text();
   try {
     const { parseStripeWebhook } = await import("@/server/payment/stripe");

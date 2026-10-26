@@ -28,7 +28,8 @@ const at = (s: SourceRef, loc: string): SourceRef => ({ ...s, loc });
 
 /** Teintes de profilés publiées pour les plissés (codes du fabricant) ; aperçus indicatifs. */
 const PROFILE_COLOURS: Array<[string, string, string]> = [["01", "Argent", "#b9bcbd"], ["02", "Blanc", "#f2f2ee"], ["08", "Brun foncé", "#3f2c22"], ["09", "Brun", "#6a4a35"], ["15", "Blanc cassé", "#ebe6d8"], ["20", "Noir", "#151515"], ["23", "Gris anthracite", "#3a3e41"]];
-const profileFinishes = (sources: SourceRef[]) => PROFILE_COLOURS.map(([c, label, swatch]) => ({ code: `P${c}`, label: `${label} (teinte ${c})`, status: "established" as const, swatch, sources }));
+const profileFinishes = (sources: SourceRef[], status: "established" | "to_confirm" = "established") => PROFILE_COLOURS.map(([c, label, swatch]) => ({ code: `P${c}`, label: `${label} (teinte ${c})`, status, swatch, sources }));
+const STUDY_ONLY = "la correspondance de ce modèle avec le système du fabricant est en cours de confirmation ; dimensions, poses et teintes sont précisées à l'étude.";
 const WOOD = (sources: SourceRef[]) => ({ code: "WOOD_DECOR", label: "Décor bois (option)", status: "to_confirm" as const, sources, note: "décors R26, R28, R30, R52 avec supplément : conditions au devis" });
 const CORRESPONDENCE = (system: string): HelioFamily["openQuestions"][number] => ({ field: "Correspondance", question: `Correspondance avec le système fabricant ${system} : proposée d'après le principe d'ouverture (confiance moyenne), à confirmer par le client.`, sources: ["private/heliostores/research/moustiquaires.md"], blocks: "publication des caractéristiques" });
 const KIT = { field: "Kit", question: "Contenu du kit livré au client final (le fabricant fournit un système à des fabricants), notice de pose et guide de mesure.", sources: [], blocks: "guide d'installation" };
@@ -43,22 +44,24 @@ const moskifold: HelioFamily = {
   brand: "Aluprof",
   manufacturer: "ALUPROF SA",
   supplierRef: "MPH HARMONY (correspondance proposée, à confirmer)",
-  shortDescription: "Moustiquaire plissée à un vantail pour porte-fenêtre ou balcon, seuil bas, jusqu'à 4 m de large.",
-  description: "MoskiFold est une moustiquaire plissée à ouverture latérale : la toile se replie en accordéon dans le profil latéral et s'arrête dans n'importe quelle position. Elle convient aux portes-fenêtres et aux baies de balcon, avec un seuil bas, jusqu'à 4 m de largeur.",
+  shortDescription: "Moustiquaire plissée à un vantail pour porte-fenêtre ou baie de balcon : présentation et demande d'étude sur mesure.",
+  description: "MoskiFold est une moustiquaire plissée à ouverture latérale et à un vantail, destinée aux portes-fenêtres et aux baies de balcon. Sa fiche technique est en cours de confirmation : les dimensions possibles, la pose et les teintes sont établies lors de l'étude de votre projet, à partir de vos mesures.",
   seoTitle: "Moustiquaire plissée MoskiFold pour porte-fenêtre",
-  seoDescription: "Moustiquaire plissée MoskiFold : un vantail, seuil bas, jusqu'à 4 m de large. Saisissez vos mesures et demandez votre devis.",
+  seoDescription: "Moustiquaire plissée MoskiFold à un vantail pour porte-fenêtre : transmettez vos mesures pour une étude sur mesure et un devis.",
   rules: {
     type: "insect_screen",
     insect: { opening: "pleated", leaves: 1, sources: [at(S.pageHarmony, "description"), at(S.brochure, "p. 4")] },
     dims: {
-      width: { label: "Largeur", minMm: null, maxMm: 4000, sources: [at(S.pageHarmony, "« jusqu'à 4 m »"), at(S.brochure, "p. 4")], note: "Largeur minimale non documentée." },
-      height: { label: "Hauteur", minMm: null, maxMm: 3200, sources: [at(S.brochurePl, "p. 4 — hauteur maximale 3 200 mm")], note: "Hauteur maximale indiquée par la seule brochure polonaise : confirmée au devis." },
+      // bornes du système candidat (4 m ; 3,2 m selon la seule brochure PL) non publiées tant que la correspondance n'est pas confirmée
+      width: { label: "Largeur", minMm: null, maxMm: 0, sources: [at(S.pageHarmony, "« jusqu'à 4 m » (système candidat)"), at(S.brochure, "p. 4")], note: "Dimension souhaitée, étudiée au devis." },
+      height: { label: "Hauteur", minMm: null, maxMm: 0, sources: [at(S.brochurePl, "p. 4 — hauteur maximale 3 200 mm (système candidat)")], note: "Dimension souhaitée, étudiée au devis." },
     },
+    studyOnly: STUDY_ONLY,
     mountings: [
-      { code: "reveal", label: "Dans l'embrasure (niche de balcon)", status: "established", sources: [at(S.pageHarmony, "« dans les niches de balcon »")] },
+      { code: "reveal", label: "Dans l'embrasure (niche de balcon)", status: "to_confirm", sources: [at(S.pageHarmony, "« dans les niches de balcon »")], note: "pose du système candidat, confirmée à l'étude" },
       { code: "frame", label: "En applique (façade)", status: "to_confirm", sources: [at(S.offre, "filtre « Monté sur façade »")], note: "pose en applique citée par un filtre du catalogue, à confirmer" },
     ],
-    finishes: profileFinishes([at(S.pageHarmony, "onglet Couleurs")]),
+    finishes: profileFinishes([at(S.pageHarmony, "onglet Couleurs")], "to_confirm"),
     customFinish: WOOD([at(S.pageHarmony, "onglet Couleurs — avec supplément")]),
     included: [
       { label: "Toile plissée repliée dans le profil latéral, arrêt dans toutes les positions", sources: [at(S.pageHarmony, "description"), at(S.brochure, "p. 4")] },
@@ -70,10 +73,8 @@ const moskifold: HelioFamily = {
   },
   specs: [
     { key: "opening", label: "Ouverture", valueText: "plissée latérale, un vantail", source: "MANUFACTURER_WEBSITE", sourceRef: "aluprof.com — MPH HARMONY" },
-    { key: "width_max", label: "Largeur maximale", valueNum: 4000, unit: "mm", source: "MANUFACTURER_WEBSITE", sourceRef: "aluprof.com — MPH HARMONY ; brochure FR p. 4" },
-    { key: "height_max", label: "Hauteur maximale", valueNum: 3200, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Brochure PL p. 4", note: "valeur absente des documents en français" },
   ],
-  faq: [{ q: "Pour quelles ouvertures ?", a: "Portes-fenêtres et baies de balcon, avec un seuil bas qui facilite le passage." }],
+  faq: [{ q: "Pour quelles ouvertures ?", a: "Portes-fenêtres et baies de balcon. Les dimensions réalisables sont confirmées à l'étude de votre projet." }],
   openQuestions: [CORRESPONDENCE("MPH HARMONY (alternative : MPH VERTI)"), { field: "Dimensions", question: "Hauteur maximale (3 200 mm dans la seule brochure polonaise) et dimensions minimales.", sources: ["brochure-moskitiery-pl p. 4"], blocks: "bornes du configurateur" }, KIT],
 };
 
@@ -87,26 +88,28 @@ const moskifold2: HelioFamily = {
   brand: "Aluprof",
   manufacturer: "ALUPROF SA",
   supplierRef: "MPH DUAL (correspondance proposée, à confirmer)",
-  shortDescription: "Moustiquaire plissée à deux vantaux pour grandes baies et portes coulissantes, jusqu'à 6 m de large.",
-  description: "MoskiFold 2 est une moustiquaire plissée à deux vantaux qui se rejoignent au centre. Elle équipe les portes de terrasse et les grandes portes coulissantes, jusqu'à 6 m de largeur ; une version d'angle sans poteau existe. Toile grise ou noire.",
+  shortDescription: "Moustiquaire plissée à deux vantaux pour grandes baies et portes coulissantes : présentation et demande d'étude sur mesure.",
+  description: "MoskiFold 2 est une moustiquaire plissée à deux vantaux qui se rejoignent au centre, destinée aux portes de terrasse et aux grandes portes coulissantes. Sa fiche technique est en cours de confirmation : dimensions, pose, toile et teintes sont établies lors de l'étude de votre projet.",
   seoTitle: "Moustiquaire plissée deux vantaux MoskiFold 2",
-  seoDescription: "Moustiquaire plissée MoskiFold 2 : deux vantaux, seuil bas, jusqu'à 6 m de large. Saisissez vos mesures et demandez votre devis.",
+  seoDescription: "Moustiquaire plissée MoskiFold 2 à deux vantaux pour grandes baies : transmettez vos mesures pour une étude sur mesure et un devis.",
   rules: {
     type: "insect_screen",
     insect: { opening: "pleated", leaves: 2, sources: [at(S.pageDual, "« variante à deux vantaux »"), at(S.brochure, "p. 5")] },
     dims: {
-      width: { label: "Largeur", minMm: null, maxMm: 6000, sources: [at(S.pageDual, "« jusqu'à 6 m de large »"), at(S.brochure, "p. 5")], note: "Largeur minimale non documentée." },
-      height: { label: "Hauteur", minMm: null, maxMm: 3200, confirmAboveMm: 2700, confirmNote: "2,7 m selon la page et la brochure françaises, 3,2 m selon la brochure polonaise", sources: [at(S.pageDual, "« 2,7 m de haut »"), at(S.brochurePl, "p. 5")] },
+      // bornes du système candidat (6 m ; 2,7 m FR / 3,2 m PL) non publiées tant que la correspondance n'est pas confirmée
+      width: { label: "Largeur", minMm: null, maxMm: 0, sources: [at(S.pageDual, "« jusqu'à 6 m de large » (système candidat)"), at(S.brochure, "p. 5")], note: "Dimension souhaitée, étudiée au devis." },
+      height: { label: "Hauteur", minMm: null, maxMm: 0, sources: [at(S.pageDual, "« 2,7 m de haut » (système candidat)"), at(S.brochurePl, "p. 5")], note: "Dimension souhaitée, étudiée au devis." },
     },
+    studyOnly: STUDY_ONLY,
     mountings: [
-      { code: "reveal", label: "Dans l'embrasure", status: "to_confirm", sources: [at(S.offre, "filtres « Pour portes », « Seuil bas »")], note: "type de pose précisé au relevé" },
-      { code: "frame", label: "En applique (façade)", status: "established", sources: [at(S.offre, "filtre « Monté sur façade »")] },
+      { code: "reveal", label: "Dans l'embrasure", status: "to_confirm", sources: [at(S.offre, "filtres « Pour portes », « Seuil bas »")], note: "type de pose précisé à l'étude" },
+      { code: "frame", label: "En applique (façade)", status: "to_confirm", sources: [at(S.offre, "filtre « Monté sur façade »")], note: "pose du système candidat, confirmée à l'étude" },
     ],
-    finishes: profileFinishes([at(S.pageDual, "onglet Couleurs")]),
+    finishes: profileFinishes([at(S.pageDual, "onglet Couleurs")], "to_confirm"),
     customFinish: WOOD([at(S.pageDual, "onglet Couleurs — avec supplément")]),
     fabrics: [
-      { code: "mesh_grey", label: "Toile grise", status: "established", swatch: "#7c8082", sources: [at(S.pageDual, "toile"), at(S.brochure, "p. 5")] },
-      { code: "mesh_black", label: "Toile noire", status: "established", swatch: "#26282a", sources: [at(S.pageDual, "toile"), at(S.brochure, "p. 5")] },
+      { code: "mesh_grey", label: "Toile grise", status: "to_confirm", swatch: "#7c8082", sources: [at(S.pageDual, "toile"), at(S.brochure, "p. 5")] },
+      { code: "mesh_black", label: "Toile noire", status: "to_confirm", swatch: "#26282a", sources: [at(S.pageDual, "toile"), at(S.brochure, "p. 5")] },
     ],
     included: [
       { label: "Deux vantaux plissés, arrêt dans toutes les positions", sources: [at(S.pageDual, "description")] },
@@ -118,11 +121,8 @@ const moskifold2: HelioFamily = {
   },
   specs: [
     { key: "opening", label: "Ouverture", valueText: "plissée latérale, deux vantaux", source: "MANUFACTURER_WEBSITE", sourceRef: "aluprof.com — MPH DUAL" },
-    { key: "width_max", label: "Largeur maximale", valueNum: 6000, unit: "mm", source: "MANUFACTURER_WEBSITE", sourceRef: "aluprof.com — MPH DUAL ; brochure FR p. 5" },
-    { key: "height_max", label: "Hauteur maximale", valueNum: 2700, unit: "mm", source: "MANUFACTURER_WEBSITE", sourceRef: "aluprof.com — MPH DUAL ; brochure FR p. 5" },
-    { key: "height_max", label: "Hauteur maximale", valueNum: 3200, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Brochure PL p. 5" },
   ],
-  faq: [{ q: "Quelle différence avec MoskiFold ?", a: "MoskiFold 2 a deux vantaux qui se rejoignent au centre : il convient aux baies plus larges, jusqu'à 6 m." }],
+  faq: [{ q: "Quelle différence avec MoskiFold ?", a: "MoskiFold 2 a deux vantaux qui se rejoignent au centre : il est destiné aux baies plus larges. Les dimensions réalisables sont confirmées à l'étude." }],
   openQuestions: [CORRESPONDENCE("MPH DUAL"), { field: "Dimensions", question: "Hauteur maximale 2,7 m ou 3,2 m ; dimensions minimales ; largeur par vantail.", sources: ["aluprof-mph-dual", "brochure-moskitiery-pl p. 5"], blocks: "au-delà de 2,7 m (devis)" }, KIT],
 };
 

@@ -133,7 +133,7 @@ const marbella: HelioFamily = {
     },
     mountings: [
       { code: "freestanding", label: "Autoportante", status: "established", sources: [at(S.iuikSB450, "p. 7–10"), at(S.brochurePergolas, "p. 4")] },
-      { code: "wall", label: "Adossée (un ou deux murs)", status: "established", sources: [at(S.iuikSB450, "p. 7–10 — types de mur 1 à 4"), at(S.suppPergolas, "p. 59")], note: "type de mur (1 à 4) établi au relevé" },
+      { code: "wall", label: "Adossée (un ou deux murs)", status: "established", sources: [at(S.iuikSB450, "p. 7–10 — types de mur 1 à 4"), at(S.suppPergolas, "p. 59")], note: "type de mur (1 à 4) établi à l'étude du projet" },
     ],
     finishes: SB450_RAL.map((c) => finishOf(`${c} mat`, [at(S.pageSB450, "palette de teintes")])),
     customFinish: { code: "WOOD_DECOR", label: "Décor bois (option)", status: "to_confirm", sources: [at(S.pageSB450, "« * Option avec supplément » : R26, R27, R28, R30, R49, R52")], note: "décor bois en supplément : conditions et délai confirmés au devis" },
@@ -173,7 +173,7 @@ const marbella: HelioFamily = {
   ],
   faq: [
     { q: "Quelles dimensions sont possibles ?", a: "Jusqu'à 4 m de largeur et 6 m d'avancée environ ; l'avancée exacte dépend du nombre de lames et la hauteur maximale (2,81 m ou 3 m selon le document) est confirmée au devis." },
-    { q: "Autoportante ou adossée ?", a: "Les deux : Marbella se pose seule sur ses poteaux ou contre un ou deux murs. Le type de fixation murale est établi au relevé." },
+    { q: "Autoportante ou adossée ?", a: "Les deux : Marbella se pose seule sur ses poteaux ou contre un ou deux murs. Le type de fixation murale est établi à l'étude du projet." },
     { q: "Peut-on fermer les côtés ?", a: "Le fabricant cite des fermetures vitrées coulissantes, des panneaux coulissants et des screens latéraux. Les dimensions et fixations sont étudiées au devis ; les fermetures réduisent la résistance au vent." },
     { q: "Quel éclairage ?", a: "Éclairage LED linéaire ou spots dans les lames, et éclairage périphérique, en option." },
   ],

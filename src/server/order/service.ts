@@ -8,6 +8,7 @@ import { consumeReservations, expireReservations, releaseReservations, reserveSt
 import { logger } from "@/lib/logger";
 import { loadCatalog } from "@/server/catalog/load";
 import { estimateCartDelivery } from "@/server/stock/delivery";
+import { ONLINE_SALES_CLOSED, onlineSalesEnabled } from "@/server/payment/mode";
 
 export const ORDER_TTL_MINUTES = 30;
 
@@ -35,6 +36,7 @@ export class OrderError extends Error {
  * Le total est recalculé côté serveur ; rien n'est pris du navigateur.
  */
 export async function createOrderFromCart(opts: { owner: Owner; email: string; shippingAddress: AddressInput; billingAddress?: AddressInput; customerNotes?: string }) {
+  if (!onlineSalesEnabled()) throw new OrderError(ONLINE_SALES_CLOSED, "sales_disabled");
   await expireReservations();
   await expirePendingOrders();
   const cart = await findActiveCart(opts.owner);

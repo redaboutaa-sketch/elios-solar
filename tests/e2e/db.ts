@@ -22,7 +22,8 @@ export { IN_FORCE as IN_FORCE_GRID_SQL };
 
 /** Prix publics en vigueur (grille de vente publiée) : présents en préproduction, absents en CI. */
 export async function publicPricesActive(): Promise<boolean> {
-  const r = await one<{ n: string }>(`SELECT count(*) AS n FROM "SupplierPriceList" l WHERE ${IN_FORCE}`);
+  // grilles des modèles retirés (SB 400 / SB 500, archivés) ignorées : elles ne s'affichent jamais
+  const r = await one<{ n: string }>(`SELECT count(*) AS n FROM "SupplierPriceList" l JOIN "ProductFamily" f ON f.slug = l."familySlug" WHERE ${IN_FORCE} AND f.status <> 'ARCHIVED'`);
   return Number(r?.n ?? 0) > 0;
 }
 

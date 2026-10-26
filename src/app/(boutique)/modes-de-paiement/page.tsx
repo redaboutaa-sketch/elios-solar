@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { METHOD_STATE_FR, paymentMethods } from "@/server/payment/methods";
 
-export const metadata: Metadata = { title: "Modes de paiement", description: "Moyens de paiement disponibles ou envisagés chez HELIOSTORES." };
+export const metadata: Metadata = { title: "Modes de paiement", description: "Moyens de paiement disponibles ou envisagés chez HELIOSTORES.", alternates: { canonical: "/modes-de-paiement" } };
 
 export default async function PaymentMethodsPage() {
   const methods = await paymentMethods();

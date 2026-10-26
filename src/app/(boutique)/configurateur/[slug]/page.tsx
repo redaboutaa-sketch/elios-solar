@@ -27,7 +27,8 @@ export async function generateMetadata(props: PageProps<"/configurateur/[slug]">
   const { slug } = await props.params;
   const s = await systemFamily(slug);
   if (!s) return {};
-  return { title: `Configurer ${s.family.name}`, description: `Configurez ${s.family.name} à vos cotes : dimensions, pose, teinte et équipements, avec vue 3D indicative et prix selon vos dimensions.`, alternates: { canonical: `/configurateur/${slug}` } };
+  // outil interactif (paramètres d'URL, brouillons) : exploré mais non indexé ; la fiche produit est la page de référence
+  return { title: `Configurer ${s.family.name}`, description: `Configurez ${s.family.name} à vos cotes : dimensions, pose, teinte et équipements, avec visualisation indicative, puis demandez votre devis.`, alternates: { canonical: `/configurateur/${slug}` }, robots: { index: false, follow: true } };
 }
 
 export default async function SystemConfiguratorPage(props: PageProps<"/configurateur/[slug]">) {

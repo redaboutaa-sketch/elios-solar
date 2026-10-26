@@ -24,7 +24,7 @@ async function visualOrNull(getVisual?: () => Promise<string | null>): Promise<s
 
 export function QuoteForm({ input, kind, configurationId, onDone, compact = false, getVisual }: { input: unknown; kind: "configuration" | "custom" | "accessory" | "general" | "system"; configurationId: string | null; onDone?: (number: string, visualNote?: string) => void; compact?: boolean; /** visualisation à joindre (dataURL), voir useQuoteVisual */ getVisual?: () => Promise<string | null> }) {
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ number: string; visual: string } | null>(null);
+  const [done, setDone] = useState<{ number: string; visual: string; mailed: boolean } | null>(null);
   const [preparing, setPreparing] = useState(false);
   const [busy, start] = useTransition();
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -36,10 +36,10 @@ export function QuoteForm({ input, kind, configurationId, onDone, compact = fals
       const visual = await visualOrNull(getVisual);
       setPreparing(false);
       const r = await requestQuoteAction(input, form, kind, configurationId, visual, readAttribution());
-      if (r.ok) { setDone({ number: r.data.number, visual: r.data.visual }); onDone?.(r.data.number, getVisual ? VISUAL_DONE[r.data.visual] ?? VISUAL_DONE.NONE : undefined); } else setError(r.error);
+      if (r.ok) { setDone({ number: r.data.number, visual: r.data.visual, mailed: r.data.mailed }); onDone?.(r.data.number, getVisual ? VISUAL_DONE[r.data.visual] ?? VISUAL_DONE.NONE : undefined); } else setError(r.error);
     });
   };
-  if (done) return <Notice tone="success"><span data-testid="quote-done">Demande {done.number} enregistrée. Vous recevez un e-mail de confirmation ; un conseiller vous répond sous 48 h ouvrées.</span>{getVisual && <span data-testid="quote-visual-status" className="block mt-1">{VISUAL_DONE[done.visual] ?? VISUAL_DONE.NONE}</span>}</Notice>;
+  if (done) return <Notice tone="success"><span data-testid="quote-done">Demande {done.number} enregistrée : un conseiller l'étudie et vous recontacte.{done.mailed ? " Un e-mail récapitulatif vous est envoyé." : " Notez ce numéro : il identifie votre demande."}</span>{getVisual && <span data-testid="quote-visual-status" className="block mt-1">{VISUAL_DONE[done.visual] ?? VISUAL_DONE.NONE}</span>}</Notice>;
   return (
     <form onSubmit={submit} className={`grid gap-3 ${compact ? "" : "sm:grid-cols-2"}`} aria-label="Demande de devis">
       <div><label className="label" htmlFor="q-firstName">Prénom</label><input id="q-firstName" name="firstName" required className="input" autoComplete="given-name" /></div>

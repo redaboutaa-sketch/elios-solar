@@ -69,7 +69,7 @@ const helioroof: HelioFamily = {
     notices: [
       "Surface maximale d'un module : 16 m² ; une largeur de 4,5 m est documentée jusqu'à 4 m de projection.",
       "Inclinaison de la toiture : le fabricant indique que le store fonctionne quel que soit l'angle, sans plage chiffrée — la représentation est indicative.",
-      "Chevilles et vis de fixation non fournies : elles dépendent du support et sont prévues au relevé.",
+      "Chevilles et vis de fixation non fournies : elles dépendent du support et sont prévues à l'étude du projet.",
     ],
     wind: { action: "retract", text: "Ne pas utiliser le store par fortes rafales, neige ou pluie verglaçante. Classe de vent déclarée : 2 (déclaration de 2017) ou 1 (déclaration de 2025) — la valeur applicable est confirmée au devis.", status: "to_confirm", sources: [at(S.dte, "p. 9"), at(S.dop2017, "classe 2"), at(S.dop2025, "classe 1")] },
   },

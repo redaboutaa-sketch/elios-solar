@@ -1604,3 +1604,40 @@ model PriceImportFile {
 
   @@index([uploadId])
 }
+
+enum LaunchInputStatus {
+  OPEN
+  ANSWERED
+  VALIDATED
+  WAIVED
+}
+
+enum LaunchInputOwner {
+  CLIENT
+  SUPPLIER
+  OPERATOR
+}
+
+/// Registre de lancement : données fournisseur, commerciales ou d'exploitation attendues, leur conséquence sur le site
+/// et leur validation datée. Aucun montant ni secret : la réponse détaillée reste dans les documents privés.
+model LaunchInput {
+  id             String            @id
+  area           String
+  product        String
+  subject        String
+  sources        String            @default("")
+  divergence     String            @default("")
+  expected       String
+  owner          LaunchInputOwner
+  siteImpact     String
+  blocksLaunch   Boolean           @default(false)
+  status         LaunchInputStatus @default(OPEN)
+  answerNote     String            @default("")
+  validatedAt    DateTime?
+  validatedBy    String?
+  sortOrder      Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([status])
+}

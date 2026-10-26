@@ -3,6 +3,7 @@ import { evaluate, resolveShipping } from "@/domain/engine";
 import type { CatalogSnapshot, ConfigurationInput, DeliveryInput, EvaluationResult, Issue } from "@/domain/types";
 import { loadCatalog } from "@/server/catalog/load";
 import type { Cart, CartLine } from "@/generated/prisma/client";
+import { ONLINE_SALES_CLOSED, onlineSalesEnabled } from "@/server/payment/mode";
 
 export type Owner = { userId?: string | null; guestKey?: string | null };
 
@@ -47,6 +48,7 @@ export async function addLine(owner: Owner, input: ConfigurationInput, configura
   const catalog = await loadCatalog();
   const stripped = stripDelivery(input);
   const result = evaluate(catalog, { ...stripped, delivery: { countryCode: "FR", postalCode: "00000" } } as ConfigurationInput);
+  if (!onlineSalesEnabled()) throw new CartError(ONLINE_SALES_CLOSED);
   if (!result.purchasable) throw new CartError("Cette configuration ne peut pas être ajoutée au panier.", result.issues.filter((i) => i.severity !== "info"));
   const cart = await getOrCreateCart(owner);
   const line = await prisma.cartLine.create({ data: { cartId: cart.id, configurationId: configurationId ?? null, input: stripped as never, qty: 1 } });
@@ -65,6 +67,7 @@ export async function replaceLine(owner: Owner, lineId: string, input: Configura
   const catalog = await loadCatalog();
   const stripped = stripDelivery(input);
   const result = evaluate(catalog, { ...stripped, delivery: { countryCode: "FR", postalCode: "00000" } } as ConfigurationInput);
+  if (!onlineSalesEnabled()) throw new CartError(ONLINE_SALES_CLOSED);
   if (!result.purchasable) throw new CartError("Cette configuration ne peut pas être enregistrée dans le panier.", result.issues.filter((i) => i.severity !== "info"));
   return prisma.cartLine.update({ where: { id: lineId }, data: { input: stripped as never, configurationId: configurationId ?? line.configurationId } });
 }

@@ -13,6 +13,7 @@ import { summarizeStandard } from "@/domain/helpers";
 import { loadCatalog } from "@/server/catalog/load";
 import { estimateCartDelivery } from "@/server/stock/delivery";
 import { DeliveryEstimateBlock } from "@/components/catalog/delivery-estimate";
+import { ONLINE_SALES_CLOSED, onlineSalesEnabled } from "@/server/payment/mode";
 
 export const metadata: Metadata = { title: "Panier", robots: { index: false } };
 
@@ -87,7 +88,8 @@ export default async function CartPage() {
             ) : estimate && <DeliveryEstimateBlock estimate={estimate} demo={catalog.variants.some((v) => v.leadSource === "demo")} />}
             {!ev.purchasable && <div className="mt-3"><Notice tone="warn">Une ligne nécessite une validation : modifiez-la ou demandez un devis.</Notice></div>}
             {ev.shippingStatus === "quote" && <div className="mt-3"><Notice tone="warn">Livraison sur devis pour cette zone : <Link href="/devis" className="underline">demander un devis</Link>.</Notice></div>}
-            {(() => { const ready = ev.purchasable && (ev.shippingStatus === "ok" || ev.shippingStatus === "not_included"); return <Link href="/commande" aria-disabled={!ready} className={`btn-accent w-full mt-5 ${!ready ? "pointer-events-none opacity-50" : ""}`}>Passer la commande</Link>; })()}
+            {!onlineSalesEnabled() && <div className="mt-3"><Notice tone="warn">{ONLINE_SALES_CLOSED}</Notice></div>}
+            {(() => { const ready = onlineSalesEnabled() && ev.purchasable && (ev.shippingStatus === "ok" || ev.shippingStatus === "not_included"); return <Link href="/commande" aria-disabled={!ready} className={`btn-accent w-full mt-5 ${!ready ? "pointer-events-none opacity-50" : ""}`}>Passer la commande</Link>; })()}
             <p className="mt-2 text-xs text-stone-700">Le total est recalculé côté serveur à chaque étape ; aucun montant n'est repris du navigateur.</p>
           </aside>
         </div>

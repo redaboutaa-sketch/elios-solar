@@ -10,10 +10,12 @@ import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { activeProviderName } from "@/server/payment";
 import { installmentsOfferFor } from "@/server/payment/installments";
 import { prisma } from "@/lib/prisma";
+import { onlineSalesEnabled } from "@/server/payment/mode";
 
 export const metadata: Metadata = { title: "Commande", robots: { index: false } };
 
 export default async function CheckoutPage(props: PageProps<"/commande">) {
+  if (!onlineSalesEnabled()) redirect("/panier");
   const sp = await props.searchParams;
   const [session, guestKey] = await Promise.all([getSession(), getGuestKey()]);
   const cart = await findActiveCart({ userId: session?.user.id, guestKey });

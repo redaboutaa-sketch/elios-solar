@@ -142,6 +142,11 @@ export interface SystemRules {
   type: SystemType;
   /** libellé de la dimension « profondeur » : projection (pergola), avancée (store) ; absent pour un screen */
   dims: { width: DimRule; depth?: DimRule; height?: DimRule };
+  /**
+   * Demande d'étude seulement (identité ou bornes du système fabricant non confirmées) : motif public. Les cotes sont
+   * des souhaits libres (bornes `maxMm: 0` = non documentées), jamais une configuration validée ni commandable.
+   */
+  studyOnly?: string;
   /** largeur minimale par valeur de profondeur (combinaisons absentes de la fiche) */
   depthWidthMin?: Array<{ depthMm: number; widthMinMm: number; sources: SourceRef[] }>;
   mountings: MountingChoice[];
@@ -249,6 +254,7 @@ const fmtM = (mm: number) => `${(mm / 1000).toLocaleString("fr-FR", { maximumFra
 
 /** Libellé d'une plage documentée, sans inventer de minimum. */
 export function dimRangeText(r: DimRule): string {
+  if (r.maxMm <= 0) return "à préciser à l'étude";
   if (r.valuesMm?.length) return r.valuesMm.map((v) => fmtM(v)).join(", ");
   const step = r.stepMm ? `, par pas de ${r.stepMm / 10} cm` : "";
   return r.minMm == null ? `jusqu'à ${fmtM(r.maxMm)} (minimum non documenté)` : `de ${fmtM(r.minMm)} à ${fmtM(r.maxMm)}${step}`;
@@ -273,13 +279,14 @@ export function spotsFor(table: SpotRow[] | undefined, depthMm: number | undefin
 /** Valeurs par défaut d'une configuration : premières valeurs documentées, jamais une valeur hors règles. */
 export function defaultSystemInput(familySlug: string, rules: SystemRules): SystemInput {
   const d = rules.dims;
-  const mid = (r: DimRule) => nearestAllowed(r, Math.round(((r.minMm ?? r.maxMm / 2) + r.maxMm) / 2));
+  // bornes non documentées (demande d'étude) : valeur de départ neutre, modifiable, jamais présentée comme une borne
+  const mid = (r: DimRule) => (r.maxMm <= 0 ? 2000 : nearestAllowed(r, Math.round(((r.minMm ?? r.maxMm / 2) + r.maxMm) / 2)));
   return {
     kind: "system",
     familySlug,
     widthMm: mid(d.width),
     depthMm: d.depth ? mid(d.depth) : undefined,
-    heightMm: d.height ? Math.max(d.height.minMm ?? 0, Math.min(d.height.maxMm, rules.type === "pergola" ? 2500 : rules.type === "insect_screen" ? 2200 : 2200)) : undefined,
+    heightMm: d.height ? Math.max(d.height.minMm ?? 0, Math.min(d.height.maxMm > 0 ? d.height.maxMm : 2200, rules.type === "pergola" ? 2500 : rules.type === "insect_screen" ? 2200 : 2200)) : undefined,
     mounting: rules.mountings[0]!.code,
     finishCode: rules.finishes[0]!.code,
     fabricCode: rules.fabrics?.[0]?.code,
@@ -340,7 +347,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
     }
   };
 
-  const custom = input.sizeCode === CUSTOM_SIZE;
+  const custom = input.sizeCode === CUSTOM_SIZE || !!rules.studyOnly;
   const fixed = fixedSizeOf(rules, input);
   if (custom) {
     // demande hors gamme : cotes libres (entiers positifs, plafond de saisie), jamais fabricables en ligne
@@ -352,7 +359,8 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
     sane(rules.dims.width, input.widthMm, "widthMm", true);
     if (rules.dims.depth) sane(rules.dims.depth, input.depthMm, "depthMm", true);
     if (rules.dims.height) sane(rules.dims.height, input.heightMm, "heightMm", rules.type === "screen" || rules.type === "insect_screen");
-    add({ code: "out_of_range_request", severity: "review", message: rules.fixedSizes?.length ? "Demande hors gamme : ce modèle est fabriqué dans des tailles définies ; votre dimension est étudiée au devis, sans garantie de fabrication." : "Demande hors gamme : vos cotes sont étudiées au devis, sans garantie de fabrication.", path: "sizeCode", quoteSuggested: true });
+    if (rules.studyOnly) add({ code: "study_request", severity: "review", message: `Demande d'étude : ${rules.studyOnly} Vos cotes sont transmises comme souhait, sans configuration validée.`, path: "widthMm", quoteSuggested: true });
+    else add({ code: "out_of_range_request", severity: "review", message: rules.fixedSizes?.length ? "Demande hors gamme : ce modèle est fabriqué dans des tailles définies ; votre dimension est étudiée au devis, sans garantie de fabrication." : "Demande hors gamme : vos cotes sont étudiées au devis, sans garantie de fabrication.", path: "sizeCode", quoteSuggested: true });
   } else if (rules.fixedSizes?.length) {
     if (!input.sizeCode) add({ code: "size_missing", severity: "blocking", message: "Choisissez une taille fabriquée, ou demandez une étude hors gamme.", path: "sizeCode" });
     else if (!fixed) add({ code: "size_unavailable", severity: "blocking", message: "Taille non proposée pour ce modèle.", path: "sizeCode" });
@@ -470,7 +478,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
   if (custom) recap.push({ label: "Taille", value: "demande hors gamme (étude au devis)", status: "to_confirm" });
   recap.push({ label: d.width.label, value: Number.isInteger(input.widthMm) ? fmtM(input.widthMm) : "—" });
   if (d.depth) recap.push({ label: d.depth.label, value: input.depthMm != null ? fmtM(input.depthMm) : "—" });
-  if (d.height) recap.push({ label: d.height.label, value: input.heightMm != null ? fmtM(input.heightMm) : "à préciser au relevé", status: input.heightMm == null ? "to_confirm" : undefined });
+  if (d.height) recap.push({ label: d.height.label, value: input.heightMm != null ? fmtM(input.heightMm) : "à préciser", status: input.heightMm == null ? "to_confirm" : undefined });
   if (mounting) recap.push({ label: "Pose", value: MOUNTING_FR[mounting.code], status: mounting.status === "to_confirm" ? "to_confirm" : undefined });
   if (finish) recap.push({ label: "Teinte de structure", value: finish.label, status: finish.status === "to_confirm" || finish === rules.customFinish ? "to_confirm" : undefined });
   if (fabric) recap.push({ label: "Toile", value: fabric.label, status: fabric.status === "to_confirm" ? "to_confirm" : undefined });

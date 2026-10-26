@@ -75,10 +75,8 @@ test("Casablanca structure seule : commande en ligne au prix de la grille, paiem
   await shot(page, "commande-systeme-confirmation");
 });
 
-test("rubriques sans contenu réel : Showroom masqué (404), Réalisations regroupées dans Références ; pages provisoires signalées", async ({ page }) => {
-  expect((await page.goto("/showroom"))?.status()).toBe(404);
-  await page.goto("/realisations");
-  await expect(page).toHaveURL(/\/references#realisations$/);
+test("rubriques sans contenu réel : Showroom, Références et Réalisations masqués (404) ; pages provisoires signalées", async ({ page }) => {
+  for (const u of ["/showroom", "/references", "/realisations"]) expect((await page.goto(u))?.status(), u).toBe(404);
   await page.goto("/cgv");
   await acceptNecessaryOnly(page);
   await expect(page.getByText(/Document provisoire/)).toBeVisible();

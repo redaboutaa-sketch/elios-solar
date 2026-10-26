@@ -7,6 +7,7 @@ import { getGuestKey } from "@/server/guest";
 import { getOrderForOwner } from "@/server/order/service";
 import { splitInstallments } from "@/server/payment/installments-rules";
 import { installmentsSimAction } from "./actions";
+import { salesMode } from "@/server/payment/mode";
 
 export const metadata: Metadata = { title: "Simulateur de paiement fractionné", robots: { index: false } };
 
@@ -17,7 +18,7 @@ export default async function InstallmentsSimPage(props: PageProps<"/commande/[i
   const order = await getOrderForOwner(id, { userId: session?.user.id, guestKey });
   if (!order) notFound();
   if (order.status === "PAID") redirect(`/commande/${order.id}/confirmation`);
-  if (process.env.PAYMENT_PROVIDER === "stripe") redirect(`/commande/${order.id}/confirmation`);
+  if (salesMode() !== "demo") redirect(`/commande/${order.id}/confirmation`);
   const payment = order.payments.find((p) => p.provider === "INSTALLMENTS_SIM" && (typeof sp.ref !== "string" || p.providerRef === sp.ref)) ?? order.payments.find((p) => p.provider === "INSTALLMENTS_SIM");
   const ref = payment?.providerRef ?? "";
   const count = payment?.installments ?? 3;

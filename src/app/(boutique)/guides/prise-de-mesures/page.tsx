@@ -16,7 +16,7 @@ export default async function MeasurePage() {
     <div className="container-x py-10">
       <Breadcrumbs items={[{ href: "/guides", label: "Guides et installation" }, { label: "Prise de mesures" }]} />
       <h1 className="mt-5 font-display text-display font-semibold">Prise de mesures</h1>
-      <p className="mt-3 max-w-3xl text-stone-800 text-pretty">Choisissez votre famille, votre modèle et votre type de pose : le schéma indique ce qu'il faut mesurer. Vos mesures sont comparées aux dimensions documentées du modèle, puis reportées dans le configurateur. Elles restent indicatives : un conseiller les confirme au relevé.</p>
+      <p className="mt-3 max-w-3xl text-stone-800 text-pretty">Choisissez votre famille, votre modèle et votre type de pose : le schéma indique ce qu'il faut mesurer. Vos mesures sont comparées aux dimensions documentées du modèle, puis reportées dans le configurateur. Elles restent indicatives : un conseiller les vérifie avec vous lors de l'étude du devis.</p>
       <div className="mt-8"><MeasureTool models={models} /></div>
       <p className="mt-10 text-sm text-stone-700">Voir aussi : <Link href="/guides/preparation-projet" className="underline">préparer son projet</Link>.</p>
     </div>

@@ -22,8 +22,11 @@ export const BRAND = {
 /**
  * Rubriques publiques masquées (réponse 404, hors navigation et sitemap) tant qu'aucun contenu réel et autorisé n'est
  * fourni — décision client du 2026-10-21. Les fiches restent gérables dans l'administration.
+ * Références : masquées le 2026-10-26 (aucune réalisation ni photo de fabrication authentique publiée). Pour les rouvrir,
+ * publier au moins une fiche (photo, autorisation, produit) puis passer `references` à true ; même ouverte, la page
+ * reste en 404 tant qu'aucune fiche n'est publiée.
  */
-export const PUBLIC_SECTIONS = { realisations: false, production: false, showroom: false, references: true } as const;
+export const PUBLIC_SECTIONS = { realisations: false, production: false, showroom: false, references: false } as const;
 
 /** Navigation principale (en-tête) : services seulement — le catalogue est dans la navigation latérale et le menu mobile. */
 export const NAV = [

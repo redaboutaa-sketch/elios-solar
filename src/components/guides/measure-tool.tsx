@@ -2,7 +2,7 @@
 /**
  * Outil de prise de mesures : famille → modèle → type de pose → schéma de ce qu'il faut mesurer → saisie contrôlée par
  * les bornes DOCUMENTÉES du modèle → report dans le configurateur (brouillon local relu par le configurateur).
- * Les conseils sont des bonnes pratiques de relevé ; les cotes définitives sont toujours confirmées au relevé.
+ * Les conseils sont des bonnes pratiques de relevé ; les cotes définitives sont toujours confirmées lors de l'étude du devis.
  */
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -15,7 +15,7 @@ const FAMILY_LABEL: Record<CategoryKey, string> = { PERGOLAS: "Pergola", SCREENS
 
 /** Ce qu'il faut mesurer, par famille et par pose (conseils génériques de relevé, sans valeur technique inventée). */
 function advice(cat: CategoryKey, mounting: SystemMounting, type: SystemRules["type"]): string[] {
-  const common = "Mesurez en millimètres, à plusieurs endroits, et notez la plus petite valeur pour une pose entre deux appuis ; le conseiller confirme toujours les cotes au relevé.";
+  const common = "Mesurez en millimètres, à plusieurs endroits, et notez la plus petite valeur pour une pose entre deux appuis ; le conseiller vérifie toujours les cotes avec vous lors de l'étude du devis.";
   if (cat === "PERGOLAS") return [
     "Largeur : la dimension hors tout souhaitée, le long du mur pour une pergola adossée.",
     "Avancée (projection) : depuis le mur (ou l'arrière de la structure) jusqu'à l'avant des poteaux.",
@@ -90,7 +90,7 @@ export function MeasureTool({ models }: { models: MeasureModel[] }) {
     if (!model || !r) return;
     const base = defaultSystemInput(model.slug, r);
     const outOfRange = check.some((c) => c.includes("hors de la gamme"));
-    const input: SystemInput = { ...base, mounting: mount, widthMm: vals.w ?? base.widthMm, depthMm: r.dims.depth ? vals.d ?? base.depthMm : undefined, heightMm: r.dims.height ? vals.h ?? base.heightMm : undefined, ...(outOfRange || r.fixedSizes?.length ? { sizeCode: outOfRange ? "custom" : base.sizeCode } : {}), notes: "Mesures reportées depuis le guide de prise de mesures (à confirmer au relevé)." };
+    const input: SystemInput = { ...base, mounting: mount, widthMm: vals.w ?? base.widthMm, depthMm: r.dims.depth ? vals.d ?? base.depthMm : undefined, heightMm: r.dims.height ? vals.h ?? base.heightMm : undefined, ...(outOfRange || r.fixedSizes?.length ? { sizeCode: outOfRange ? "custom" : base.sizeCode } : {}), notes: "Mesures reportées depuis le guide de prise de mesures (à confirmer lors de l'étude)." };
     if (r.fixedSizes?.length && !outOfRange) { input.widthMm = base.widthMm; input.depthMm = base.depthMm; input.heightMm = base.heightMm; }
     try { window.localStorage.setItem(`heliostores:configuration:${model.slug}`, JSON.stringify({ input, at: new Date().toISOString(), from: "mesures" })); } catch { /* stockage indisponible */ }
     router.push(`/configurateur/${model.slug}`);

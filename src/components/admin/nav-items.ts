@@ -4,6 +4,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin", label: "Tableau de bord" },
   { href: "/admin/commandes", label: "Commandes" },
   { href: "/admin/devis", label: "Devis" },
+  { href: "/admin/registre", label: "Registre de lancement" },
   { href: "/admin/contacts", label: "Contacts" },
   { href: "/admin/tarifs", label: "Tarifs (admin)" },
   {

@@ -75,7 +75,8 @@ test("menu mobile : familles, modèles et services ; un modèle s'ouvre depuis l
   await page.getByRole("button", { name: "Ouvrir le menu" }).click();
   const menu = page.getByRole("navigation", { name: "Navigation mobile" });
   await expect(menu).toBeVisible();
-  for (const n of ["Pergolas", "Screens", "Stores bannes", "Moustiquaires", "Malaga", "HelioRoof Screen", "Jamaica", "MoskiFold 2", "Installation et guides", "Références", "Contact", "Devis"]) await expect(menu).toContainText(n);
+  for (const n of ["Pergolas", "Screens", "Stores bannes", "Moustiquaires", "Malaga", "HelioRoof Screen", "Jamaica", "MoskiFold 2", "Installation et guides", "Contact", "Devis"]) await expect(menu).toContainText(n);
+  await expect(menu).not.toContainText("Références");
   await expect(menu.getByRole("link", { name: /Configurer mon projet/ })).toBeVisible();
   expect(await noOverflow(page)).toBe(true);
   await shot(page, "menu-mobile");
@@ -359,16 +360,10 @@ test("pages accessoires, références, guides et modes de paiement : contenu, au
   await expect(page.getByTestId("acc-eclairage")).toContainText("Éclairage LED");
   await shot(page, "accessoires");
 
-  await page.goto("/references");
-  for (const s of ["realisations", "production"]) {
-    await expect(page.getByTestId(`references-${s}`)).toBeVisible();
-    // sans contenu réel publié : état vide explicite (jamais un visuel de fabricant présenté comme un chantier)
-    if (await page.getByTestId(`references-${s}-empty`).count()) await expect(page.getByTestId(`references-${s}-empty`)).toBeVisible();
-  }
-  await page.goto("/realisations");
-  await expect(page).toHaveURL(/\/references#realisations$/);
-  await page.goto("/savoir-faire");
-  await expect(page).toHaveURL(/\/references#production$/);
+  // sans réalisation ni photo de fabrication authentique publiée : rubrique absente de la navigation et en 404
+  for (const u of ["/references", "/realisations", "/savoir-faire"]) expect((await page.goto(u))?.status(), u).toBe(404);
+  await page.goto("/");
+  await expect(page.locator('a[href="/references"]')).toHaveCount(0);
 
   await page.goto("/guides");
   await expect(page.getByTestId("documents-library")).toBeVisible();

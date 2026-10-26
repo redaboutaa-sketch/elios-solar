@@ -2,10 +2,13 @@
 
 > Document publiable : aucun secret, aucun identifiant de compte, aucun montant.
 
-## 1. État au 2026-10-25
+## 1. État au 2026-10-26
 
 | Élément | État |
 |---|---|
+| Mode d'encaissement | `src/server/payment/mode.ts` : `stripe` (clé secrète + secret de webhook), `demo` (simulateur, **jamais sur un site indexable**) ou `disabled`. Production : `PAYMENT_PROVIDER=disabled` → panier, commande et paiement de devis refusés côté serveur, routes du simulateur en 404. Une configuration Stripe incomplète donne `disabled`, jamais un repli sur le simulateur. |
+| Recette Stripe réelle (sandbox) | **non réalisée** : aucune clé de test disponible. Les événements Stripe ne sont vérifiés que par des tests d'intégration en base. |
+| Webhook de préproduction | exception d'accès prête mais **non activée** : `docker/compose.preprod-stripe-webhook.yml` (route exacte `POST /api/webhooks/stripe`, reste du site sous identifiant de revue). |
 | Compte Stripe | **non raccordé** : aucune clé n'est présente dans l'environnement (dev ni préproduction). L'adresse e-mail de l'administrateur Stripe indiquée par le client permet d'administrer le compte, mais ce n'est ni une clé ni un identifiant `acct_…` : aucun compte n'a pu être identifié. |
 | Prestataire actif | `PAYMENT_PROVIDER=demo` : paiement **simulé** (aucun débit). |
 | Code Stripe | prêt et testé (unitaires + intégration, événements simulés en base, aucun appel réseau). |

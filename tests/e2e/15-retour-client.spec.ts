@@ -84,9 +84,6 @@ test("modes de paiement : rien d'envisagé présenté comme actif ; rubriques sa
   await expect(method("Paiement en plusieurs fois")).toHaveAttribute("data-state", /^(planned|simulated)$/);
   await expect(list).not.toContainText("Acompte et solde sur devis");
   await expect(list).not.toContainText(/mensualit|gratuit/i);
-  for (const [u, hash] of [["/realisations", "realisations"], ["/savoir-faire", "production"]] as const) {
-    await page.goto(u);
-    await expect(page, u).toHaveURL(new RegExp(`/references#${hash}$`));
-    await expect(page.getByTestId(`references-${hash}`)).toBeVisible();
-  }
+  // Références masquées tant qu'aucun contenu authentique n'est publié (2026-10-26) : anciennes rubriques en 404, sans redirection vers une page vide
+  for (const u of ["/realisations", "/savoir-faire"]) expect((await page.goto(u))?.status(), u).toBe(404);
 });

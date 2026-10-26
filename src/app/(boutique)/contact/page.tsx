@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { ContactForm } from "@/components/forms/contact-form";
 import { getSiteSettings } from "@/server/catalog/queries";
-export const metadata: Metadata = { title: "Contact", description: "Contactez nos conseillers pour votre projet de pergola, store banne ou accessoires." };
+export const metadata: Metadata = { title: "Contact", description: "Contactez un conseiller HELIOSTORES pour votre projet de pergola, de screen, de store banne ou de moustiquaire.", alternates: { canonical: "/contact" } };
 export default async function Page() {
   const s = await getSiteSettings();
   return (

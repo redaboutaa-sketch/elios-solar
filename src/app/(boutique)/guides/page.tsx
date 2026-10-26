@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { GUIDES } from "@/server/content/guides";
+import { PUBLISHED_GUIDES } from "@/server/content/guides";
 import { INSTALL_GUIDES } from "@/server/content/install-guides";
 import { guideStatuses } from "@/server/guides/status";
 import { publicDocumentsLibrary } from "@/server/documents/queries";
 import { DOCUMENT_KIND_FR as KIND_FR } from "@/server/documents/versions";
 
-export const metadata: Metadata = { title: "Guides et installation", description: "Prise de mesures, choix des toiles et motorisations, documents par modèle et guides d'installation validés.", alternates: { canonical: "/guides" } };
+export const metadata: Metadata = { title: "Guides et installation", description: "Prise de mesures, choix d'une pergola, d'un screen ou d'une moustiquaire, toiles et motorisations, documents par modèle et guides d'installation validés.", alternates: { canonical: "/guides" } };
 
 /** Guides pratiques et guides d'installation (seuls les guides validés techniquement et publiés sont listés). */
 export default async function GuidesIndex() {
@@ -16,12 +16,7 @@ export default async function GuidesIndex() {
   const installs = INSTALL_GUIDES.filter((g) => st.get(g.slug)?.status === "PUBLISHED");
   const docs = await publicDocumentsLibrary();
   const byFamily = [...new Set(docs.map((d) => d.familyName ?? ""))].map((name) => ({ name, docs: docs.filter((d) => (d.familyName ?? "") === name) }));
-  const items = [
-    { href: "/guides/prise-de-mesures", title: "Prise de mesures", description: "Schémas par famille et type de pose, contrôle des dimensions du modèle et report de vos mesures dans le configurateur." },
-    { href: "/guides/choisir-toile-et-motorisation", title: "Choisir sa toile et sa motorisation", description: "Toiles et manœuvres proposées par modèle, ce qui est compris, et comment choisir." },
-    { href: "/guides/preparation-projet", title: "Préparer son projet et prendre les mesures", description: "Emplacement, cotes extérieur poteau à extérieur poteau, hauteur, pente, ancrage, câble 230 V, orientation, accès livraison et démarches : la liste de contrôle avant de commander." },
-    ...Object.entries(GUIDES).map(([slug, g]) => ({ href: `/guides/${slug}`, title: g.title, description: g.description })),
-  ];
+  const items = PUBLISHED_GUIDES;
   return (
     <div className="container-x py-10">
       <Breadcrumbs items={[{ label: "Guides et installation" }]} />
@@ -37,7 +32,7 @@ export default async function GuidesIndex() {
         ))}
       </ul>
       <section className="mt-14" aria-labelledby="documents" data-testid="documents-library">
-        <h2 id="documents" className="font-display text-2xl font-semibold">Fiches techniques, notices et vidéos</h2>
+        <h2 id="documents" className="font-display text-2xl font-semibold">Fiches techniques et notices</h2>
         {byFamily.length ? byFamily.map((g) => (
           <div key={g.name} className="mt-6"><h3 className="font-semibold">{g.name}</h3>
             <ul className="mt-2 space-y-1 text-sm">{g.docs.map((d) => <li key={d.id}>{d.href ? <a href={d.href} className="link-brand">{d.title}</a> : d.title} <span className="text-stone-700">— {KIND_FR[d.kind] ?? d.kind}, version {d.version}</span></li>)}</ul>

@@ -1,0 +1,107 @@
+# Production HELIOSTORES (heliostores.com) — pile DISTINCTE de la préproduction (docker/compose.prod.yml) :
+# projet, conteneurs, base, volumes, réseau interne et secrets séparés (.env.heliostores-prod, jamais commité).
+# - aucune authentification de revue ; X-Robots-Tag géré par l'application (src/proxy.ts, pages privées seulement) ;
+# - www.heliostores.com → https://heliostores.com (301, Traefik) ;
+# - routage Traefik inactif tant que TRAEFIK_ENABLE ≠ true (à activer quand le DNS pointe vers le VPS) ;
+# - app liée à 127.0.0.1:${APP_PORT} pour le contrôle local ; migrations par le service `migrate`.
+# Usage : docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod up -d
+# Procédure complète, sauvegarde et retour arrière : docs/production-runbook.md
+name: heliostores-prod
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: heliostores-prod-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-heliostores}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD requis}
+      POSTGRES_DB: ${POSTGRES_DB:-heliostores}
+    volumes:
+      - heliostores_prod_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-heliostores} -d ${POSTGRES_DB:-heliostores}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+    logging: &log
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+    networks: [internal]
+
+  migrate:
+    image: elios-solar/tools:${IMAGE_TAG:?IMAGE_TAG requis (commit déployé)}
+    command: ["pnpm", "db:deploy"]
+    env_file: [../.env.heliostores-prod]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-heliostores}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-heliostores}?schema=public
+      MEDIA_STORAGE_DIR: /app/uploads
+    volumes:
+      - heliostores_prod_uploads:/app/uploads
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: "no"
+    logging: *log
+    networks: [internal]
+
+  app:
+    image: elios-solar/app:${IMAGE_TAG:?IMAGE_TAG requis (commit déployé)}
+    container_name: heliostores-prod-app
+    env_file: [../.env.heliostores-prod]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-heliostores}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-heliostores}?schema=public
+      MEDIA_STORAGE_DIR: /app/uploads
+    volumes:
+      - heliostores_prod_uploads:/app/uploads
+    ports:
+      - "127.0.0.1:${APP_PORT:-3402}:3400"
+    depends_on:
+      postgres: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    restart: unless-stopped
+    logging: *log
+    networks: [internal, traefik-public]
+    labels:
+      - "traefik.enable=${TRAEFIK_ENABLE:-false}"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.services.heliostores-prod.loadbalancer.server.port=3400"
+      # domaine principal
+      - "traefik.http.routers.heliostores-prod.rule=Host(`${SITE_DOMAIN:?SITE_DOMAIN requis}`)"
+      - "traefik.http.routers.heliostores-prod.entrypoints=websecure"
+      - "traefik.http.routers.heliostores-prod.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.heliostores-prod.service=heliostores-prod"
+      - "traefik.http.routers.heliostores-prod.middlewares=heliostores-prod-hsts"
+      - "traefik.http.middlewares.heliostores-prod-hsts.headers.stsSeconds=31536000"
+      # www → domaine principal (une seule redirection, chemin et requête conservés)
+      - "traefik.http.routers.heliostores-prod-www.rule=Host(`www.${SITE_DOMAIN}`)"
+      - "traefik.http.routers.heliostores-prod-www.entrypoints=websecure"
+      - "traefik.http.routers.heliostores-prod-www.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.heliostores-prod-www.service=heliostores-prod"
+      - "traefik.http.routers.heliostores-prod-www.middlewares=heliostores-prod-www"
+      - "traefik.http.middlewares.heliostores-prod-www.redirectregex.regex=^https?://www\\.(.+)"
+      - "traefik.http.middlewares.heliostores-prod-www.redirectregex.replacement=https://$${1}"
+      - "traefik.http.middlewares.heliostores-prod-www.redirectregex.permanent=true"
+
+  worker:
+    image: elios-solar/tools:${IMAGE_TAG:?IMAGE_TAG requis (commit déployé)}
+    container_name: heliostores-prod-worker
+    command: ["pnpm", "mail:worker"]
+    env_file: [../.env.heliostores-prod]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-heliostores}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-heliostores}?schema=public
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    restart: unless-stopped
+    logging: *log
+    networks: [internal]
+
+volumes:
+  heliostores_prod_pg:
+    name: heliostores_prod_pg
+  heliostores_prod_uploads:
+    name: heliostores_prod_uploads
+
+networks:
+  internal:
+    name: heliostores_prod_internal
+  traefik-public:
+    external: true

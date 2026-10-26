@@ -16,8 +16,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     return legacyProductRedirects();
   },
+  // X-Robots-Tag : posé à l'exécution par src/proxy.ts (headers() est figé au build, pour tous les environnements)
   async headers() {
-    const preprod = process.env.SITE_INDEXABLE !== "true";
     const common = [
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "X-Frame-Options", value: "DENY" },
@@ -27,7 +27,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/:path*",
-        headers: preprod ? [...common, { key: "X-Robots-Tag", value: "noindex, nofollow" }] : common,
+        headers: common,
       },
     ];
   },

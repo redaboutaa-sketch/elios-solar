@@ -12,13 +12,25 @@ import { HeroSlider, type HeroSlide } from "@/components/home/hero-slider";
 import { ModelTabs } from "@/components/home/model-tabs";
 import { ScenePreview } from "@/components/home/scene-preview";
 import type { PublishedMedia } from "@/server/media/types";
+import type { Metadata } from "next";
+import { JsonLd } from "@/components/seo/json-ld";
+import { organizationJsonLd } from "@/server/seo/structured-data";
+import { getSiteSettings } from "@/server/catalog/queries";
+import { BRAND } from "@/config/brand";
+import { DEFAULT_OG_IMAGE, OG_BASE } from "@/server/seo/og";
+
+export const metadata: Metadata = {
+  description: "Pergolas, screens, stores bannes et moustiquaires HELIOSTORES : comparez les modèles, configurez vos dimensions et demandez votre devis.",
+  alternates: { canonical: "/" },
+  openGraph: { ...OG_BASE, type: "website", url: "/", title: `${BRAND.name} — ${BRAND.tagline}`, description: "Pergolas, screens, stores bannes et moustiquaires : configurez vos dimensions et demandez votre devis.", images: [DEFAULT_OG_IMAGE] },
+};
 
 const NATURE: Record<string, string> = { PHOTO: "Photographie", RENDER: "Rendu", ILLUSTRATION: "Schéma" };
 
 const STEPS = [
-  ["Choisir", "Pergola, screen ou store banne : comparez les modèles et leurs caractéristiques.", "/#solutions"],
-  ["Configurer", "Saisissez vos cotes, la pose, la teinte et les équipements ; la 3D et le prix suivent vos choix.", "/configurateur"],
-  ["Commander ou demander un devis", "La structure seule se commande en ligne au prix de la grille ; options, pose, livraison et délai sont établis par devis.", "/devis"],
+  ["Choisir", "Pergola, screen, store banne ou moustiquaire : comparez les modèles et leurs caractéristiques.", "/#solutions"],
+  ["Configurer", "Saisissez vos cotes, la pose, la teinte et les équipements ; la visualisation suit vos choix.", "/configurateur"],
+  ["Demander un devis", "Votre configuration et sa visualisation sont jointes à la demande ; options, pose et livraison sont établies par devis.", "/devis"],
   ["Échanger avec un conseiller", "Un conseiller vérifie la faisabilité, les fixations et les points à confirmer.", "/contact"],
 ] as const;
 
@@ -49,10 +61,12 @@ export default async function HomePage() {
   const sceneShot = p0 ? productShot(media.get(p0.slug) ?? []) : null;
 
   // composition éditoriale : détails techniques (rôle « detail »), jamais présentés comme des réalisations
+  const settings = await getSiteSettings();
   const details = all.flatMap(({ f }) => (media.get(f.slug) ?? []).filter((m) => m.role === "detail" && (m.width ?? 0) >= 800).slice(0, 2).map((m) => ({ ...m, model: f.name }))).slice(0, 4);
 
   return (
     <>
+      <JsonLd data={[organizationJsonLd({ name: BRAND.name, siteUrl: BRAND.siteUrl, logoPath: BRAND.logo.src, legalName: settings?.legalName, phone: settings?.phone, email: settings?.contactEmail, address: settings ? { line1: settings.addressLine1, postalCode: settings.postalCode, city: settings.city, countryCode: settings.countryCode } : null }), { "@context": "https://schema.org", "@type": "WebSite", name: BRAND.name, url: BRAND.siteUrl, inLanguage: "fr-FR", publisher: { "@id": `${BRAND.siteUrl.replace(/\/$/, "")}/#organisation` } }]} />
       {/* Entrée principale (retour client du 2026-10-21) : choisir une famille par son dessin, dès le premier écran.
           Les photographies suivent juste en dessous et restent dans les fiches produit. */}
       <section id="solutions" className="home-entry scroll-mt-16 pb-6 pt-5 sm:pt-7" aria-labelledby="solutions-titre">
@@ -132,7 +146,7 @@ export default async function HomePage() {
             <div>
               <p className="eyebrow">Configurateur</p>
               <h2 id="composer" className="mt-2 font-display text-display font-semibold">Composez votre projet</h2>
-              <p className="mt-4 text-stone-800">Dimensions, pose, teinte et équipements : la vue 3D reprend vos cotes et le prix de la structure suit la grille. La visualisation est indicative ; un conseiller vérifie la faisabilité.</p>
+              <p className="mt-4 text-stone-800">Dimensions, pose, teinte et équipements : la visualisation reprend vos cotes et vos choix, puis votre demande de devis les transmet au conseiller. La visualisation est indicative ; un conseiller vérifie la faisabilité.</p>
               <div className="mt-6 flex flex-wrap gap-3"><Link href={configuratorHref(p0.slug)} className="btn-accent">Configurer la {p0.name} <ArrowRight className="size-4" aria-hidden="true" /></Link><Link href="/configurateur" className="btn-secondary">Tous les configurateurs</Link></div>
             </div>
             <ScenePreview model={sceneModel} poster={sceneShot ? <div className="relative aspect-[16/10]"><MediaImage media={sceneShot} sizes="(min-width: 1024px) 55vw, 92vw" className="absolute inset-0 size-full object-contain p-6" alt={`${sceneShot.alt} (image fixe)`} /></div> : <div className="aspect-[16/10]" />} />

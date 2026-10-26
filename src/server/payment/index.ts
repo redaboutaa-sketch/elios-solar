@@ -5,6 +5,7 @@ import type { PaymentProvider as ProviderName } from "@/generated/prisma/enums";
 import { markOrderFailed, markOrderPaid } from "@/server/order/service";
 import { logger } from "@/lib/logger";
 import type { InstallmentPlan } from "./installments-rules";
+import { ONLINE_SALES_CLOSED, salesMode } from "./mode";
 
 export interface CheckoutResult { checkoutUrl: string; providerRef: string; providerAccount?: string; livemode?: boolean }
 export type PaymentMethod = "card" | "installments" | "bank_transfer";
@@ -31,10 +32,11 @@ export class PaymentError extends Error {
 }
 
 export function activeProviderName(): ProviderName {
-  return process.env.PAYMENT_PROVIDER === "stripe" && process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET ? "STRIPE" : "DEMO";
+  return salesMode() === "stripe" ? "STRIPE" : "DEMO";
 }
 
 export async function getProvider(): Promise<PaymentProvider> {
+  if (salesMode() === "disabled") throw new PaymentError(ONLINE_SALES_CLOSED, "sales_disabled");
   if (activeProviderName() === "STRIPE") return (await import("./stripe")).stripeProvider;
   return (await import("./demo")).demoProvider;
 }
@@ -47,6 +49,7 @@ export interface StartPaymentOptions { method?: PaymentMethod; installments?: nu
  * (recalculé côté serveur), jamais à partir d'une valeur envoyée par le navigateur.
  */
 export async function startPayment(orderId: string, opts: StartPaymentOptions = {}): Promise<{ payment: Payment; checkoutUrl: string }> {
+  if (salesMode() === "disabled") throw new PaymentError(ONLINE_SALES_CLOSED, "sales_disabled");
   const order = await prisma.order.findUniqueOrThrow({ where: { id: orderId }, include: { payments: true } });
   if (order.status !== "PENDING_PAYMENT") throw new PaymentError("Commande non payable", "not_payable");
   if (order.expiresAt && order.expiresAt < new Date()) throw new PaymentError("Commande expirée", "expired");

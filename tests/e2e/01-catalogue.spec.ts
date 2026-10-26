@@ -30,7 +30,7 @@ test("catalogue HELIOSTORES : quatre familles, fiches sans référence fabricant
   // en-tête : services seulement ; le catalogue est dans la navigation latérale et le menu mobile
   // (masqué sous 1024 px : lu dans le DOM, quel que soit l'appareil)
   const mainNav = page.locator('header nav[aria-label="Navigation principale"] a');
-  expect((await mainNav.allTextContents()).map((t) => t.trim())).toEqual(["Installation et guides", "Références", "Contact", "Devis"]);
+  expect((await mainNav.allTextContents()).map((t) => t.trim())).toEqual(["Installation et guides", "Contact", "Devis"]);
   await expect(page.locator('a[href="/comparer"], a[href="/realisations"], a[href="/savoir-faire"]')).toHaveCount(0);
   for (const key of ["PERGOLAS", "SCREENS", "STORES_BANNES", "MOUSTIQUAIRES"]) await expect(page.getByTestId(`home-${key}`)).toBeVisible();
   await expectNoSupplier(page);

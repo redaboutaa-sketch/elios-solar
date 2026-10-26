@@ -5,6 +5,7 @@ import type { NavCategory } from "@/server/catalog/navigation";
 import { MobileMenu } from "./mobile-menu";
 import { HeaderShell } from "./header-shell";
 import { Logo } from "@/components/brand/logo";
+import { onlineSalesEnabled } from "@/server/payment/mode";
 
 /** Données de navigation transmises par le layout (sérialisables, partagées avec le menu mobile). */
 export type HeaderCategory = Pick<NavCategory, "key" | "label" | "href" | "intro" | "items">;
@@ -38,11 +39,11 @@ export function Header({ cartCount = 0, signedIn = false, isAdmin = false, categ
               <UserRound className="size-5" aria-hidden="true" />
               <span className="hidden sm:inline lg:hidden xl:inline">{signedIn ? "Compte" : "Connexion"}</span>
             </Link>
-            <Link href="/panier" className={`${darkBtn} relative`} aria-label={`Panier, ${cartCount} article${cartCount > 1 ? "s" : ""}`}>
+            {(onlineSalesEnabled() || cartCount > 0) && <Link href="/panier" className={`${darkBtn} relative`} aria-label={`Panier, ${cartCount} article${cartCount > 1 ? "s" : ""}`}>
               <ShoppingBag className="size-5" aria-hidden="true" />
               <span className="hidden sm:inline lg:hidden xl:inline">Panier</span>
               {cartCount > 0 && <span className="absolute -top-0.5 right-0 rounded-full bg-sage-400 text-night text-[11px] font-semibold leading-5 min-w-5 text-center px-1">{cartCount}</span>}
-            </Link>
+            </Link>}
             <Link href="/configurateur" className="btn-cta ml-2 hidden lg:inline-flex px-4 py-2 text-sm whitespace-nowrap"><span className="xl:hidden">Configurer</span><span className="hidden xl:inline">Configurer mon projet</span></Link>
           </div>
         </div>

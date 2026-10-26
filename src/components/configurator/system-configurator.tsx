@@ -303,9 +303,9 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
             ) : null}
             {(!rules.fixedSizes?.length || custom) && (
               <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                <DimField id="dim-width" rule={rules.dims.width} value={input.widthMm} free={custom} onChange={(v) => set({ widthMm: v ?? 0 })} />
-                {rules.dims.depth && <DimField id="dim-depth" rule={rules.dims.depth} value={input.depthMm} free={custom} onChange={(v) => set({ depthMm: v })} />}
-                {rules.dims.height && <DimField id="dim-height" rule={rules.dims.height} value={input.heightMm} free={custom} onChange={(v) => set({ heightMm: v })} />}
+                <DimField id="dim-width" rule={rules.dims.width} value={input.widthMm} free={custom || !!rules.studyOnly} onChange={(v) => set({ widthMm: v ?? 0 })} />
+                {rules.dims.depth && <DimField id="dim-depth" rule={rules.dims.depth} value={input.depthMm} free={custom || !!rules.studyOnly} onChange={(v) => set({ depthMm: v })} />}
+                {rules.dims.height && <DimField id="dim-height" rule={rules.dims.height} value={input.heightMm} free={custom || !!rules.studyOnly} onChange={(v) => set({ heightMm: v })} />}
               </div>
             )}
             {!rules.fixedSizes?.length && (

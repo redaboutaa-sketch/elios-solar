@@ -26,9 +26,10 @@ test("consultation des grilles importées", async ({ page }) => {
 
 test("modifier une cellule (nouveau brouillon), comparer, simuler, puis rejeter le brouillon", async ({ page }, info) => {
   test.skip(info.project.name !== "desktop", "parcours d'écriture : une seule fois par campagne");
-  await loginAdmin(page, "/admin/tarifs?produit=helioscreen&nature=SALE&statut=in_force");
+  // grille de vente importée, en vigueur ou désactivée (le 2026-10-26, HelioScreen est passé sur devis : grille désactivée)
+  await loginAdmin(page, "/admin/tarifs?produit=helioscreen&nature=SALE");
   const row = page.getByTestId("tariff-list").getByRole("row").filter({ hasText: "HelioScreen" }).filter({ hasText: "Prix final" });
-  test.skip((await row.count()) === 0, "aucune grille de vente en vigueur (base sans import du classeur)");
+  test.skip((await row.count()) === 0, "aucune grille importée du classeur (base CI sans import) : parcours couvert par les tests d'intégration des grilles");
   await row.first().getByRole("link").first().click();
   await expect(page.getByTestId("tariff-matrix")).toBeVisible();
   // origine d'une cellule importée

@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { FamilySketch } from "@/components/illustrations/sketches";
 import { ArrowRight } from "lucide-react";
 
-export const metadata: Metadata = { title: "Configurateurs", description: "Configurez une pergola, un screen ou un store banne HELIOSTORES à vos cotes, avec vue 3D indicative et prix selon vos dimensions." };
+export const metadata: Metadata = { title: "Configurateurs", description: "Configurez une pergola, un screen, un store banne ou une moustiquaire HELIOSTORES à vos cotes, avec visualisation indicative, puis demandez votre devis.", robots: { index: false, follow: true } };
 
 /**
  * Choix du configurateur. Les liens de l'ancien configurateur (`?gamme=`, `?projet=`, `?ligne=`) ne sont jamais

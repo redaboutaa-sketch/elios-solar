@@ -167,7 +167,7 @@ const sb400: HelioFamily = {
   rules: {
     type: "pergola",
     dims: {
-      width: { label: "Largeur", minMm: 1400, maxMm: 4000, sources: [at(sb400Sheet, "Spécifications"), at(SOURCES.catalogueSB400, "p. 2"), T("p. 11")], note: "Pas de largeur non documenté : cote au centimètre, confirmée au relevé." },
+      width: { label: "Largeur", minMm: 1400, maxMm: 4000, sources: [at(sb400Sheet, "Spécifications"), at(SOURCES.catalogueSB400, "p. 2"), T("p. 11")], note: "Pas de largeur non documenté : cote au centimètre, confirmée à l'étude du projet." },
       depth: { label: "Projection", minMm: 1400, maxMm: 7000, stepMm: 200, sources: [at(sb400Sheet, "Spécifications : « disponible tous les 20 cm »"), at(SOURCES.aluprofSB400, "« module projection is a multiple of the blade interval (20 cm) »"), at(SOURCES.catalogueSB400, "p. 2"), T("p. 11")] },
       height: { label: "Hauteur de passage", minMm: null, maxMm: 3020, confirmAboveMm: 2800, confirmNote: "les documents techniques indiquent 2,8 m ou 3,02 m selon le document", sources: [at(SOURCES.aluprofSB400, "Maximum height 2.8 m"), at(SOURCES.catalogueSB400, "p. 1, schéma « max 2.8 m »"), T("p. 10"), at(SOURCES.dopStructSB400, "max. dimensions 7000x4000x3020 mm")], note: "Hauteur minimale non documentée." },
     },
@@ -215,7 +215,7 @@ const sb400: HelioFamily = {
     modules: { maxSingleWidthMm: 4000, multiModule: "documented", sources: [at(SOURCES.aluprofSB400, "« Modular system: Yes »")], note: "Système modulaire ; composition (modules, poteaux, gouttières) établie au devis." },
     closureWishes: [{ familySlug: "helioscreen", label: "Screen HelioScreen", status: "to_confirm", note: "la documentation cite des screens en panneaux latéraux sans désigner de modèle — intégration d'un screen HELIO Ombra étudiée au devis selon les ouvertures réelles." }],
     structure3d: { postMm: [150, 85], beamMm: [212, 85], bladeMm: [216, 40] },
-    notices: ["Fixations, fondations et raccordement électrique non inclus ; la tenue de l'ouvrage dépend du support et se vérifie au relevé."],
+    notices: ["Fixations, fondations et raccordement électrique non inclus ; la tenue de l'ouvrage dépend du support et se vérifie à l'étude du projet."],
     wind: { action: "blades", text: "Par vent fort (plus de 45 km/h), le capteur de vent ouvre les lames si les côtés sont ouverts et les ferme si les côtés sont fermés ; la même documentation demande aussi des lames fermées par fortes rafales. Comportement à confirmer avec le fabricant ; documenté pour la version à commande radio io.", status: "to_confirm", sources: [at(SOURCES.dteSB400Pro, "p. 44, 45, 52")] },
   },
   specs: [
@@ -288,7 +288,7 @@ const sb500: HelioFamily = {
   rules: {
     type: "pergola",
     dims: {
-      width: { label: "Largeur", minMm: 1400, maxMm: 5000, sources: [at(sb500Sheet, "Spécifications"), T("p. 7")], note: "Pas de largeur non documenté : cote au centimètre, confirmée au relevé." },
+      width: { label: "Largeur", minMm: 1400, maxMm: 5000, sources: [at(sb500Sheet, "Spécifications"), T("p. 7")], note: "Pas de largeur non documenté : cote au centimètre, confirmée à l'étude du projet." },
       depth: { label: "Projection", minMm: 2000, maxMm: 7000, stepMm: 250, sources: [at(sb500Sheet, "Spécifications : « disponible tous les 25 cm »"), T("p. 7")] },
       height: { label: "Hauteur de passage", minMm: null, maxMm: 3200, sources: [T("p. 6, schéma « max 3.2 m »")], note: "Hauteur minimale non documentée." },
     },
@@ -348,7 +348,7 @@ const sb500: HelioFamily = {
     modules: { maxSingleWidthMm: 5000, multiModule: "documented", sources: [T("p. 7 — « possibility of modular connection »"), at(sb500Sheet, "tableau « Module suivant (extension) »")] },
     closureWishes: [{ familySlug: "helioscreen", label: "Screen HelioScreen", status: "to_confirm", note: "compatibilité avec HELIO Panorama non documentée par les sources — étude des ouvertures réelles au devis." }],
     structure3d: { postMm: [150, 150], beamMm: [290, 150], bladeMm: [267, 42], gutters: 2 },
-    notices: ["Fixations, fondations et raccordement électrique non inclus ; la tenue de l'ouvrage dépend du support et se vérifie au relevé.", "Gouttières fournies sans évacuation : le raccordement des descentes d'eau est prévu au devis."],
+    notices: ["Fixations, fondations et raccordement électrique non inclus ; la tenue de l'ouvrage dépend du support et se vérifie à l'étude du projet.", "Gouttières fournies sans évacuation : le raccordement des descentes d'eau est prévu au devis."],
     wind: { action: "not_documented", text: "Aucun comportement en cas de vent n'est documenté pour ce modèle (automatisme météo cité sans détail) : la position des lames et les capteurs sont définis au devis.", status: "to_confirm", sources: [T("p. 7")] },
   },
   specs: [
@@ -561,7 +561,7 @@ const casablanca: HelioFamily = {
     wind: { action: "retract", text: "Par vent fort, le store se replie : au-delà de sa classe de vent déclarée, il doit être enroulé immédiatement ; l'automatisme de vent recommandé ne protège pas contre les rafales qui dépassent ses réglages.", status: "established", sources: [at(SOURCES.dteCasablanca, "p. 18–19"), at(SOURCES.noticeAwnings, "p. 10")] },
     protection: { label: "coffre intégral avec joint", level: "full", status: "established", sources: [T("p. 115"), at(SOURCES.brochureAwnings, "p. 9")] },
     structure3d: { tiltDeg: [5, 40], cassetteMm: [300, 245] },
-    notices: ["Fixations adaptées au support (béton, maçonnerie, charpente) à déterminer au relevé ; pas de pose directe sur un support non porteur.", "Résistance au vent déclarée : classe 2 jusqu'à 4,10 × 3,10 m, classe 1 au-delà (déclaration des performances du fabricant) — un store banne se replie par vent fort.", "Manivelles et engrenages disponibles en RAL 9010, 1013, 8017, 9006, 7016.", "Éclairage LED : non proposé sur ce modèle."],
+    notices: ["Fixations adaptées au support (béton, maçonnerie, charpente) à déterminer à l'étude du projet ; pas de pose directe sur un support non porteur.", "Résistance au vent déclarée : classe 2 jusqu'à 4,10 × 3,10 m, classe 1 au-delà (déclaration des performances du fabricant) — un store banne se replie par vent fort.", "Manivelles et engrenages disponibles en RAL 9010, 1013, 8017, 9006, 7016.", "Éclairage LED : non proposé sur ce modèle."],
   },
   specs: [
     { key: "width_range", label: "Largeur", valueText: "200 à 600 cm", source: "CLIENT_SHEET", sourceRef: "Fiche CASABLANCA — Spécifications" },
@@ -588,7 +588,7 @@ const casablanca: HelioFamily = {
     { q: "Peut-on commander en ligne ?", a: "Oui pour la structure seule : aux dimensions couvertes par la grille, sans option ni choix à confirmer, la configuration s'ajoute au panier (TVA ajoutée au total). La livraison et la pose s'organisent ensuite avec un conseiller. Dans les autres cas, demandez un devis depuis le configurateur." },
     { q: "Quelles avancées sont proposées ?", a: "1,6 m, 2,1 m, 2,6 m, 3,1 m et 3,6 m. Les grandes avancées demandent une largeur minimale : 2,91 m pour 2,6 m d'avancée, 3,51 m pour 3,1 m et 3,6 m." },
     { q: "Existe-t-il une version motorisée ?", a: "Le catalogue cite une commande électrique ; la fiche transmise décrit la version à manivelle. La motorisation est donc étudiée au devis." },
-    { q: "Où peut-on le poser ?", a: "Au mur, au plafond ou sur chevrons. Les fixations dépendent du support et se déterminent au relevé." },
+    { q: "Où peut-on le poser ?", a: "Au mur, au plafond ou sur chevrons. Les fixations dépendent du support et se déterminent à l'étude du projet." },
   ],
   openQuestions: [
     { field: "Motorisation", question: "Moteur, commande et conditions de la version électrique citée par le catalogue.", sources: ["catalogue-thysens p. 114"], blocks: "version électrique (devis)" },

@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { MediaImage } from "@/components/ui/media-image";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_SECTIONS } from "@/config/brand";
 
 export const metadata: Metadata = { title: "Références", description: "Réalisations clients et production : uniquement des contenus authentiques, autorisés et identifiés.", alternates: { canonical: "/references" } };
 
@@ -20,6 +22,7 @@ export default async function ReferencesPage() {
     prisma.realisation.findMany({ where: { published: true, placeholder: false, isDemo: false }, include: { media: true }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }),
     prisma.productFamily.findMany({ where: { legacy: false }, select: { slug: true, name: true } }),
   ]);
+  if (!PUBLIC_SECTIONS.references || items.length === 0) notFound();
   const nameOf = new Map(families.map((f) => [f.slug, f.name]));
   return (
     <div className="container-x py-10">

@@ -10,6 +10,10 @@ import { formatSystemPrice } from "@/domain/system-pricing";
 import type { listSystemFamilies } from "@/server/catalog/systems";
 import { publishedMediaFor } from "@/server/media/queries";
 import type { PublishedMedia } from "@/server/media/types";
+import { FamilyGuide } from "@/components/catalog/family-guide";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd } from "@/server/seo/structured-data";
+import { BRAND } from "@/config/brand";
 
 type Item = Awaited<ReturnType<typeof listSystemFamilies>>[number];
 
@@ -51,7 +55,7 @@ function EquipmentReading({ items }: { items: Item[] }) {
 }
 
 /** Comparatif des cotes et poses documentées, lorsque la famille compte plusieurs modèles. */
-function Comparison({ items }: { items: Item[] }) {
+export function Comparison({ items }: { items: Item[] }) {
   const rows: Array<[string, (f: Item) => string]> = [
     [items[0]!.rules.dims.width.label, (f) => dimRangeText(f.rules.dims.width)],
     ...(items.some((f) => f.rules.dims.depth) ? [[items.find((f) => f.rules.dims.depth)!.rules.dims.depth!.label, (f: Item) => (f.rules.dims.depth ? dimRangeText(f.rules.dims.depth) : "—")] as [string, (f: Item) => string]] : []),
@@ -111,7 +115,7 @@ export async function SystemCollection({ category, items, drafts = [] }: { categ
           <div>
             <Breadcrumbs items={[{ label: cat.label }]} tone="light" />
             <h1 id="famille-titre" className="mt-5 font-display text-hero font-semibold">{cat.label}</h1>
-            <p className="mt-3 max-w-xl text-lg text-sand-100 text-pretty">{cat.intro} Le prix s'affiche lorsque vos dimensions figurent dans la grille tarifaire ; sinon, sur devis.</p>
+            <p className="mt-3 max-w-xl text-lg text-sand-100 text-pretty">{cat.intro} {items.some((f) => f.fromPrice) ? "Le prix s'affiche lorsque vos dimensions figurent dans la grille tarifaire ; sinon, sur devis." : "Prix sur devis : configurez vos dimensions, un conseiller établit votre devis."}</p>
             {items.length > 1 && <p className="mt-4 text-sm text-sand-200">{items.length} modèles · <a href="#comparatif" className="text-white underline underline-offset-4">comparer</a></p>}
           </div>
           <FamilySketch kind={category} tone="light" sun={false} decorative={false} className="sketch-trigger hidden w-56 md:block" />
@@ -155,8 +159,10 @@ export async function SystemCollection({ category, items, drafts = [] }: { categ
             <ul className="mt-6 grid gap-4 md:grid-cols-3">{drafts.map((d) => <li key={d.slug} className="rounded-2xl border border-dashed border-sand-300 bg-white p-5"><p className="font-display text-xl font-semibold">{d.name}</p><p className="mt-1 text-sm text-stone-700">{d.shortDescription}</p><Link href={`/devis?produit=${d.slug}`} className="btn-secondary mt-4 text-sm">Demander un devis</Link></li>)}</ul>
           </section>
         )}
+        <FamilyGuide category={category} items={items} />
       </div>
       <div className="h-6" aria-hidden="true" />
+      <JsonLd data={breadcrumbJsonLd(BRAND.siteUrl, [{ name: cat.label, path: cat.href }])} />
     </>
   );
 }

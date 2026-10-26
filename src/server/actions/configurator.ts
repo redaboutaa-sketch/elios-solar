@@ -10,6 +10,7 @@ import { addLine, CartError, replaceLine } from "@/server/cart/service";
 import { createQuote } from "@/server/quote/service";
 import { rateLimit } from "@/server/rate-limit";
 import { ensureCatalogSnapshot } from "@/server/catalog/public-snapshot";
+import { mailDeliveryReal } from "@/server/mail/transport";
 
 export type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string; issues?: EvaluationResult["issues"] };
 
@@ -62,7 +63,7 @@ export async function addToCartAndGo(raw: unknown, configurationId: string | nul
   return r;
 }
 
-export async function requestQuoteAction(raw: unknown, form: unknown, kind: "configuration" | "custom" | "accessory" | "general" | "system", configurationId: string | null, visual: unknown = null, attribution: unknown = null): Promise<ActionResult<{ id: string; number: string; visual: "SCENE_3D" | "PLAN_2D" | "NONE" }>> {
+export async function requestQuoteAction(raw: unknown, form: unknown, kind: "configuration" | "custom" | "accessory" | "general" | "system", configurationId: string | null, visual: unknown = null, attribution: unknown = null): Promise<ActionResult<{ id: string; number: string; visual: "SCENE_3D" | "PLAN_2D" | "NONE"; mailed: boolean }>> {
   const f = quoteFormSchema.safeParse(form);
   if (!f.success) return { ok: false, error: f.error.issues[0]?.message ?? "Formulaire incomplet." };
   if (!(await rateLimit("quote", 10, 600))) return { ok: false, error: "Trop de demandes, réessayez plus tard." };
@@ -77,7 +78,7 @@ export async function requestQuoteAction(raw: unknown, form: unknown, kind: "con
   const session = await getSession();
   const guestKey = await ensureGuestKey();
   const q = await createQuote({ kind, ...f.data, input, result, configurationId, visual, attribution: sanitizeAttribution(attribution) }, { userId: session?.user.id ?? null, guestKey });
-  return { ok: true, data: { id: q.id, number: q.number, visual: q.visualKind } };
+  return { ok: true, data: { id: q.id, number: q.number, visual: q.visualKind, mailed: mailDeliveryReal() } };
 }
 
 export async function getCatalogForClient() {

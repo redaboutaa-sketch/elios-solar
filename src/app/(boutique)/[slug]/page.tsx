@@ -11,7 +11,8 @@ const SLUGS = ["mentions-legales", "cgv", "confidentialite", "cookies", "livrais
 export async function generateMetadata(props: PageProps<"/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
   const page = SLUGS.includes(slug) ? await prisma.contentPage.findUnique({ where: { slug } }) : null;
-  return page ? { title: page.title, alternates: { canonical: `/${slug}` } } : {};
+  // document provisoire (non publié) : consultable, jamais indexé ni dans le sitemap
+  return page ? { title: page.title, alternates: { canonical: `/${slug}` }, ...(page.status !== "PUBLISHED" ? { robots: { index: false, follow: true } } : {}) } : {};
 }
 
 export default async function ContentPage(props: PageProps<"/[slug]">) {

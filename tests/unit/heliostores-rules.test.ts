@@ -291,7 +291,12 @@ describe("Marbella, Sevilla, HelioRoof Screen, stores bannes, moustiquaires", ()
     expect(rules("moskifold").insect).toMatchObject({ opening: "pleated", leaves: 1 });
     expect(rules("moskifold-2").insect).toMatchObject({ opening: "pleated", leaves: 2 });
     expect(rules("moskifold").dims.width.minMm).toBeNull();
-    expect(codes("moskifold-2", { heightMm: 3000 })).toContain("review:dimension_to_confirm");
-    expect(codes("moskifold", { widthMm: 4100 })).toContain("blocking:dimension_out_of_bounds");
+    // correspondance fabricant non confirmée : demande d'étude, cotes souhaitées sans borne publiée ni configuration validée
+    for (const slug of ["moskifold", "moskifold-2"]) {
+      expect(rules(slug).studyOnly).toBeTruthy();
+      expect(rules(slug).dims.width.maxMm).toBe(0);
+      expect(codes(slug, { widthMm: 4100, heightMm: 3000 })).toContain("review:study_request");
+      expect(codes(slug, { widthMm: 4100, heightMm: 3000 }).some((c) => c.startsWith("blocking:"))).toBe(false);
+    }
   });
 });

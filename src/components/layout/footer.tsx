@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BRAND } from "@/config/brand";
+import { BRAND, PUBLIC_SECTIONS } from "@/config/brand";
 import { CookiePreferencesButton } from "@/components/consent/cookie-banner";
 import { Logo } from "@/components/brand/logo";
 
@@ -9,7 +9,7 @@ interface FooterCategory { key: string; label: string; href: string; items: Read
 /** Pied de page : coordonnées UNIQUEMENT issues de SiteSettings (rien n'est inventé). */
 export function Footer({ settings, categories = [] }: { settings?: FooterSettings | null; categories?: ReadonlyArray<FooterCategory> }) {
   const cols = [
-    { title: "Nos produits", links: [...categories.map((c) => [c.href, c.label] as const), ["/accessoires", "Options et accessoires"] as const, ["/references", "Références"] as const] },
+    { title: "Nos produits", links: [...categories.map((c) => [c.href, c.label] as const), ["/accessoires", "Options et accessoires"] as const, ...(PUBLIC_SECTIONS.references ? [["/references", "Références"] as const] : [])] },
     { title: "Accompagnement", links: [["/devis", "Demander un devis"], ["/contact", "Conseil & contact"], ["/rappel", "Être rappelé"], ["/livraison-installation", "Livraison & installation"], ["/modes-de-paiement", "Modes de paiement"], ["/guides", "Guides et installation"], ["/aide", "Centre d'aide"]] as const },
     { title: "Informations", links: [["/mentions-legales", "Mentions légales"], ["/cgv", "Conditions générales de vente"], ["/confidentialite", "Confidentialité"], ["/cookies", "Cookies"]] as const },
   ];
@@ -42,7 +42,7 @@ export function Footer({ settings, categories = [] }: { settings?: FooterSetting
         <div className="container-x py-4 flex flex-col gap-2 text-xs text-sand-300">
           <p>Visuels non contractuels.</p>
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
-            <p>© {new Date().getFullYear()} {BRAND.name}. Préproduction : identité juridique du vendeur en cours de validation.</p>
+            <p>© {new Date().getFullYear()} {BRAND.name}.{process.env.SITE_INDEXABLE !== "true" ? " Préproduction : identité juridique du vendeur en cours de validation." : ""}</p>
             <span className="[&_button:hover]:text-white"><CookiePreferencesButton /></span>
           </div>
         </div>

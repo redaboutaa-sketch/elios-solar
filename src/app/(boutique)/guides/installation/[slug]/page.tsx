@@ -7,7 +7,7 @@ import { guideMedia, isPublished } from "@/server/guides/status";
 
 export async function generateMetadata(props: PageProps<"/guides/installation/[slug]">): Promise<Metadata> {
   const g = installGuide((await props.params).slug);
-  return g ? { title: g.title, description: g.summary } : {};
+  return g ? { title: g.title, description: g.summary, alternates: { canonical: `/guides/installation/${g.slug}` } } : {};
 }
 
 /** Guide d'installation publié (validé techniquement) ; un brouillon n'existe pas pour le public. */

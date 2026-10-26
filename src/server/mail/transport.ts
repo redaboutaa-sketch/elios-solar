@@ -7,6 +7,14 @@ export interface MailMessage { to: string; subject: string; html: string; text: 
 
 export interface MailTransport { send(message: MailMessage): Promise<{ id: string }> }
 
+/**
+ * Fournisseurs : « smtp » (envoi réel), « log » (développement : journalisé et marqué envoyé, rien ne part),
+ * « hold » (aucun fournisseur disponible : les messages restent en file, non envoyés, visibles dans Administration → E-mails,
+ * et partiront dès qu'un SMTP sera configuré). Ne jamais utiliser « log » sur un environnement public.
+ */
+export const mailProvider = () => process.env.MAIL_PROVIDER ?? "log";
+export const mailDeliveryReal = () => mailProvider() === "smtp" && !!process.env.SMTP_HOST;
+
 export function createTransport(): MailTransport {
   const provider = process.env.MAIL_PROVIDER ?? "log";
   if (provider === "smtp") {
@@ -35,6 +43,7 @@ const BACKOFF_MINUTES = [1, 5, 15, 60, 240];
 
 /** Traite les e-mails en attente. Retourne le nombre envoyés / échoués. Idempotent (statuts). */
 export async function processOutbox(transport: MailTransport = createTransport(), limit = 20) {
+  if (mailProvider() === "hold") return { sent: 0, failed: 0, pending: 0, held: true };
   const now = new Date();
   const pending = await prisma.emailOutbox.findMany({ where: { status: { in: ["PENDING", "FAILED"] }, nextAttemptAt: { lte: now } }, orderBy: { createdAt: "asc" }, take: limit });
   let sent = 0, failed = 0;
