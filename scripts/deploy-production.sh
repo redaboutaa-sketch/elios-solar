@@ -36,5 +36,8 @@ log "relais sain : recréation de app et du worker"
 "${DC[@]}" up -d --no-deps app worker
 wait_healthy heliostores-prod-app || { log "app non saine : le relais (nouvelle version) reste en service ; voir runbook § 7"; exit 1; }
 sleep 5
+# retrait du relais : sortie du réseau Traefik d'abord (plus de nouvelle requête), courte attente, puis arrêt
+docker network disconnect traefik-public heliostores-prod-app-relay >/dev/null 2>&1 || true
+sleep 3
 "${DC[@]}" --profile relay rm -sf app-relay
 log "terminé : $(curl -s "http://127.0.0.1:$(sed -n 's/^APP_PORT=//p' "$ENV" | grep . || echo 3402)/api/health")"

@@ -77,8 +77,11 @@ services:
       - "traefik.http.routers.heliostores-prod.entrypoints=websecure"
       - "traefik.http.routers.heliostores-prod.tls.certresolver=letsencrypt"
       - "traefik.http.routers.heliostores-prod.service=heliostores-prod"
-      - "traefik.http.routers.heliostores-prod.middlewares=heliostores-prod-hsts"
+      - "traefik.http.routers.heliostores-prod.middlewares=heliostores-prod-hsts,heliostores-prod-retry"
       - "traefik.http.middlewares.heliostores-prod-hsts.headers.stsSeconds=31536000"
+      # nouvel essai sur l'autre instance quand la connexion à une instance échoue (arrêt pendant un déploiement)
+      - "traefik.http.middlewares.heliostores-prod-retry.retry.attempts=3"
+      - "traefik.http.middlewares.heliostores-prod-retry.retry.initialinterval=100ms"
       # www → domaine principal (une seule redirection, chemin et requête conservés)
       - "traefik.http.routers.heliostores-prod-www.rule=Host(`www.${SITE_DOMAIN}`)"
       - "traefik.http.routers.heliostores-prod-www.entrypoints=websecure"
