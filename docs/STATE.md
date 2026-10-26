@@ -1,5 +1,16 @@
 # État réel du projet
 
+## Lancement (2026-10-26)
+
+- **Production heliostores.com** : pile distincte `heliostores-prod` (docker/compose.production.yml, `.env.heliostores-prod`,
+  127.0.0.1:3402), commit `e2afbed`, **déployée mais non publique** : DNS chez GoDaddy non modifié, routage Traefik
+  désactivé (`TRAEFIK_ENABLE=false`). Site sur devis : `PAYMENT_PROVIDER=disabled`, `MAIL_PROVIDER=hold`.
+- Préproduction : commit `e2afbed`, identifiant de revue, noindex.
+- État et critères : `docs/launch-readiness.md` ; éléments à fournir : `docs/client-inputs.md` (et Administration →
+  Registre de lancement) ; procédures : `docs/production-runbook.md` ; recette : `docs/test-report.md` ;
+  SEO/GEO : `docs/seo-geo-plan-90-days.md`.
+
+
 Mis à jour : 2026-10-21 (refonte « catalogue fabricant ») — **migration HELIOSTORES** (branche `feat/heliostores`, draft PR #2 vers `feat/storefront-configurator`).
 Le bilan complet est dans `docs/heliostores/README.md`, avec les sources, correspondances, médias, la revue tarifaire, l'import et l'identité.
 

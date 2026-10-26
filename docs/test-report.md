@@ -1,3 +1,51 @@
+# Rapport de vérification — 2026-10-26 (préparation de la production)
+
+Commit vérifié et déployé : **`e2afbed`** (préproduction et production ; `GET /api/health`). CI GitHub Actions verte
+(push et pull request) sur ce commit.
+
+| Contrôle | Environnement | Résultat |
+|---|---|---|
+| TypeScript, lint | local | ✅ 0 erreur (2 avertissements existants dans `guide-view.tsx`) |
+| Unitaires | `pnpm test:unit` | ✅ 263/263 (dont mode d'encaissement, en-tête robots, SEO, demande d'étude) |
+| Intégration (base dédiée) | `pnpm test:integration` | ✅ 99/99 (dont panier/commande/paiement de devis refusés quand l'encaissement est fermé) |
+| Recette navigateur **HTTPS derrière Traefik** (pile équivalente à la production, identifiant de revue), 1440 et 390 px, une campagne, `retries: 0` | `scripts/e2e-docker.sh .env.prod` | ✅ **69 réussis, 0 échec, 4 ignorés** (10,5 min) |
+| Recette navigateur sur build de production local (base de dev) | `pnpm build` + Playwright | 65 réussis, 4 échecs, 4 ignorés au premier passage ; les 4 échecs venaient d'une aide de test (grilles des modèles retirés comptées comme prix publics) ; specs rejouées après correction : 7/7 |
+| Anti-force brute derrière le proxy | spec 13 (desktop + mobile) | ✅ 6/6 : verrou par compte avec essais espacés de plus de 10 s ; limite par IP vérifiée, X-Forwarded-For forgé sans effet (429 maintenu) ; comptes dédiés supprimés après le test |
+| Production locale (127.0.0.1:3402) | curl | ✅ 200 ; `index, follow` ; canoniques `https://heliostores.com` ; sitemap 31 URL ; robots `Allow` hors pages privées ; `X-Robots-Tag` seulement sur les pages privées ; 0 « € » ; routes de paiement 404 ; aucun lien vers la démo ; aucun compte |
+| Préproduction | curl externe | ✅ 401 sans identifiant ; `noindex` (en-tête et robots `Disallow: /`) |
+| Autres sites du VPS | curl externe des hôtes routés par Traefik | ✅ réponses inchangées |
+| Sauvegarde / restauration | PostgreSQL jetable sans réseau | ✅ sommes de contrôle OK ; 31 familles, 196 médias, 15 migrations restaurés ; conteneur supprimé |
+| Captures 390 / 768 / 1440 px de la production locale | Playwright | ✅ 24 captures (hors dépôt) |
+
+## Tests ignorés (motif et couverture)
+
+| Test | Projet ignoré | Motif | Couverture effective |
+|---|---|---|---|
+| 14 — modifier une cellule, comparer, simuler, rejeter | mobile | parcours d'écriture exécuté une seule fois par campagne | exécuté et réussi en desktop |
+| 14 — grille de test incomplète refusée, complète publiée puis désactivée | mobile | idem | exécuté et réussi en desktop |
+| 16 — navigation latérale | mobile | la navigation latérale n'existe qu'à partir de 1024 px | exécutée en desktop ; le menu mobile est testé en mobile |
+| 16 — menu mobile | desktop | le menu mobile n'existe que sous 1024 px | exécuté en mobile |
+
+## Incidents de recette expliqués
+
+- Une campagne HTTPS intermédiaire a été **interrompue et invalidée** : la création du réseau Docker de la production
+  pendant son exécution a provoqué `net::ERR_NETWORK_CHANGED` dans Chromium. Aucune infrastructure n'a été modifiée
+  pendant la campagne finale.
+- Le premier essai du test anti-force brute derrière le proxy échouait au 4ᵉ essai : better-auth ne remet le compteur
+  par IP à zéro qu'après 10 s **sans requête**. Les essais sont maintenant espacés en conséquence ; aucune limite n'a été
+  relevée et aucun en-tête n'a été rendu de confiance.
+
+## Non testé (raison)
+
+- **Stripe en sandbox** : aucune clé de test disponible (aucun débit, aucun appel réseau Stripe).
+- **Réception réelle d'un e-mail** (accusé de devis, notification) : aucun SMTP fourni ; `MAIL_PROVIDER=hold` en
+  production. La création de la demande et sa consultation dans l'administration sont couvertes.
+- **Production publique** (HTTPS, certificat, en-têtes vus de l'extérieur) : le DNS de heliostores.com pointe encore
+  vers GoDaddy.
+- Performances terrain (Core Web Vitals) : mesures de laboratoire seulement (`docs/seo-geo-plan-90-days.md` § 2).
+
+---
+
 # Rapport de vérification — 2026-10-19 (itération 3)
 
 ## Itération 3 — résultats

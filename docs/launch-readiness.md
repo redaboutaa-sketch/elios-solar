@@ -14,6 +14,11 @@
   devis le 2026-10-26), aucun compte Stripe identifié, aucune recette sandbox possible. Le site n'est **pas prêt à
   vendre** en ligne ; il est prêt à recevoir des demandes de devis dès son ouverture.
 
+## Version
+
+Commit **`e2afbed`** exécuté en préproduction et en production (`/api/health`), CI verte. Recette HTTPS derrière
+Traefik : 69 réussis, 0 échec, 4 ignorés justifiés (`docs/test-report.md`).
+
 ## Niveau A — critères
 
 | Critère | État | Preuve / remarque |
