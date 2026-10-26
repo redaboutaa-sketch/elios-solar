@@ -15,6 +15,18 @@ export const PUBLIC_FORBIDDEN_NAMES =
   /aluprof|thysens|\bselt\b|euro[\s-]?confort|\bsb\s?[3-5][05]0\b|refleksol|zi{2,}p|\bzip\s?120\b|\br\s?120\b|veranda\s?fts|\bfts\b|sunbreaker|zoomtech|blebox|elero|somfy|linak|picolo|\baltus\b|sunilus|suntop|varieco|\bdm45|palladio|tahoma|eolis|soliris|ondeis|madeira|openslide|\bmph\s?(harmony|dual|verti)\b|\bm(zn|zh|zp|rp|rs|rsz|ro)\b/i;
 
 /**
+ * Entité juridique du vendeur (décision du propriétaire du 2026-10-26) : THYSENS exploite la marque HELIOSTORES. Son nom
+ * figure dans l'identité légale du site (pied de page, mentions légales, confidentialité, données structurées
+ * Organization) et jamais dans un contenu produit, où il reste interdit (PUBLIC_FORBIDDEN_NAMES).
+ */
+export const SELLER_LEGAL_NAME = "THYSENS";
+
+/** Texte d'une page publique sans les mentions de l'entité juridique du vendeur (contrôle des fuites hors identité légale). */
+export function withoutSellerIdentity(text: string): string {
+  return text.replace(new RegExp(`\\b${SELLER_LEGAL_NAME}\\b`, "gi"), "");
+}
+
+/**
  * Noms de modèles du fabricant autorisés en public par décision du client (2026-10-25) : Casablanca, Corsica, Jamaica,
  * Madera. Ils ne sont pas dans la liste ci-dessus ; « Madeira » (orthographe du fabricant) l'est.
  */

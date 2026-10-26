@@ -1,5 +1,6 @@
 "use client";
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { requestQuoteAction } from "@/server/actions/configurator";
 import { Notice } from "@/components/ui/alert";
 import { readAttribution } from "@/components/analytics/attribution";
@@ -22,9 +23,21 @@ async function visualOrNull(getVisual?: () => Promise<string | null>): Promise<s
   }
 }
 
+/** Recours direct après l'enregistrement : téléphone et e-mail publics (Réglages), en citant la référence de la demande. */
+function ContactAlternatives({ contact, number }: { contact: { phone: string | null; email: string | null }; number: string }) {
+  if (!contact.phone && !contact.email) return null;
+  return (
+    <span data-testid="quote-contact" className="block mt-1">
+      Pour compléter votre demande, contactez-nous en rappelant la référence {number}
+      {contact.phone && <> : <a href={`tel:${contact.phone.replace(/\s+/g, "")}`} className="underline">{contact.phone}</a></>}
+      {contact.email && <>{contact.phone ? " ou " : " : "}<a href={`mailto:${contact.email}?subject=${encodeURIComponent(`Demande ${number}`)}`} className="underline">{contact.email}</a></>}.
+    </span>
+  );
+}
+
 export function QuoteForm({ input, kind, configurationId, onDone, compact = false, getVisual }: { input: unknown; kind: "configuration" | "custom" | "accessory" | "general" | "system"; configurationId: string | null; onDone?: (number: string, visualNote?: string) => void; compact?: boolean; /** visualisation à joindre (dataURL), voir useQuoteVisual */ getVisual?: () => Promise<string | null> }) {
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ number: string; visual: string; mailed: boolean } | null>(null);
+  const [done, setDone] = useState<{ number: string; visual: string; mailed: boolean; contact: { phone: string | null; email: string | null } } | null>(null);
   const [preparing, setPreparing] = useState(false);
   const [busy, start] = useTransition();
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -36,10 +49,10 @@ export function QuoteForm({ input, kind, configurationId, onDone, compact = fals
       const visual = await visualOrNull(getVisual);
       setPreparing(false);
       const r = await requestQuoteAction(input, form, kind, configurationId, visual, readAttribution());
-      if (r.ok) { setDone({ number: r.data.number, visual: r.data.visual, mailed: r.data.mailed }); onDone?.(r.data.number, getVisual ? VISUAL_DONE[r.data.visual] ?? VISUAL_DONE.NONE : undefined); } else setError(r.error);
+      if (r.ok) { setDone({ number: r.data.number, visual: r.data.visual, mailed: r.data.mailed, contact: r.data.contact }); onDone?.(r.data.number, getVisual ? VISUAL_DONE[r.data.visual] ?? VISUAL_DONE.NONE : undefined); } else setError(r.error);
     });
   };
-  if (done) return <Notice tone="success"><span data-testid="quote-done">Demande {done.number} enregistrée : un conseiller l'étudie et vous recontacte.{done.mailed ? " Un e-mail récapitulatif vous est envoyé." : " Notez ce numéro : il identifie votre demande."}</span>{getVisual && <span data-testid="quote-visual-status" className="block mt-1">{VISUAL_DONE[done.visual] ?? VISUAL_DONE.NONE}</span>}</Notice>;
+  if (done) return <Notice tone="success"><span data-testid="quote-done">Demande {done.number} enregistrée : un conseiller l'étudie et vous recontacte.{done.mailed ? " Un e-mail récapitulatif vous est envoyé." : " Notez ce numéro : il identifie votre demande."}</span>{getVisual && <span data-testid="quote-visual-status" className="block mt-1">{VISUAL_DONE[done.visual] ?? VISUAL_DONE.NONE}</span>}<ContactAlternatives contact={done.contact} number={done.number} /></Notice>;
   return (
     <form onSubmit={submit} className={`grid gap-3 ${compact ? "" : "sm:grid-cols-2"}`} aria-label="Demande de devis">
       <div><label className="label" htmlFor="q-firstName">Prénom</label><input id="q-firstName" name="firstName" required className="input" autoComplete="given-name" /></div>
@@ -48,7 +61,7 @@ export function QuoteForm({ input, kind, configurationId, onDone, compact = fals
       <div><label className="label" htmlFor="q-phone">Téléphone (facultatif)</label><input id="q-phone" name="phone" type="tel" className="input" autoComplete="tel" /></div>
       <div><label className="label" htmlFor="q-cp">Code postal du projet</label><input id="q-cp" name="postalCode" className="input" inputMode="numeric" autoComplete="postal-code" /></div>
       <div className={compact ? "" : "sm:col-span-2"}><label className="label" htmlFor="q-message">Votre projet, vos contraintes</label><textarea id="q-message" name="message" rows={3} className="input" /></div>
-      <label className={`flex items-start gap-2 text-sm ${compact ? "" : "sm:col-span-2"}`}><input type="checkbox" name="consent" required className="mt-1" /> J'accepte que mes informations soient utilisées pour traiter ma demande de devis (voir la politique de confidentialité).</label>
+      <label className={`flex items-start gap-2 text-sm ${compact ? "" : "sm:col-span-2"}`}><input type="checkbox" name="consent" required className="mt-1" /> <span>J'accepte que mes informations soient utilisées pour traiter ma demande de devis (voir la <Link href="/confidentialite" className="underline" target="_blank">politique de confidentialité</Link>).</span></label>
       {error && <div className={compact ? "" : "sm:col-span-2"}><Notice tone="error">{error}</Notice></div>}
       <div className={compact ? "" : "sm:col-span-2"}><button className="btn-primary" type="submit" disabled={busy}>{preparing ? "Préparation de la visualisation…" : "Envoyer la demande de devis"}</button></div>
     </form>

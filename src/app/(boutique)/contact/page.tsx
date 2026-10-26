@@ -7,7 +7,7 @@ export default async function Page() {
   const s = await getSiteSettings();
   return (
     <div className="container-x py-8 max-w-3xl"><Breadcrumbs items={[{ label: "Contact" }]} /><h1 className="mt-4 font-display text-4xl">Contact</h1>
-      <p className="mt-2 text-stone-700">{s?.phone ? `Par téléphone : ${s.phone}. ` : "Numéro de téléphone à renseigner dans l'administration. "}{s?.contactEmail ? `Par e-mail : ${s.contactEmail}.` : ""}</p>
+      <p className="mt-2 text-stone-700" data-testid="contact-direct">{s?.phone ? <>Par téléphone : <a href={`tel:${s.phone.replace(/\s+/g, "")}`} className="underline">{s.phone}</a>. </> : "Numéro de téléphone à renseigner dans l'administration. "}{s?.contactEmail ? <>Par e-mail : <a href={`mailto:${s.contactEmail}`} className="underline">{s.contactEmail}</a>.</> : ""}</p>
       <div className="mt-6"><ContactForm kind="contact" /></div>
     </div>
   );

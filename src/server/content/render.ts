@@ -1,10 +1,11 @@
-/** Rendu Markdown minimal et sûr (titres, paragraphes, listes, gras, liens internes) — pas de HTML brut. */
+/** Rendu Markdown minimal et sûr (titres, paragraphes, listes, gras, liens internes, mailto:, tel: et https) — pas de HTML brut. */
 export function renderMarkdown(md: string, vars: Record<string, string | null | undefined> = {}): string {
   const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
   const inline = (s: string) => esc(s)
     .replace(/\{\{(\w+)\}\}/g, (_, k: string) => (vars[k] ? esc(String(vars[k])) : `<mark class="bg-warning/20">[${k} à renseigner]</mark>`))
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\[([^\]]+)\]\((\/[^)\s]*)\)/g, '<a href="$2">$1</a>');
+    .replace(/\[([^\]]+)\]\((\/[^)\s]*|mailto:[^)\s]+|tel:\+?\d+)\)/g, '<a href="$2">$1</a>')
+    .replace(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g, '<a href="$2" rel="noopener noreferrer">$1</a>');
   const lines = md.replace(/\r/g, "").split("\n");
   const out: string[] = [];
   let list = false, para: string[] = [];

@@ -1,7 +1,7 @@
 import { test, expect, newClientContext } from "./fixtures";
 import { acceptNecessaryOnly, createAccount, fillQuote, goStep, loginAdmin, openConfigurator, setDim, shot, stepIssues, uid } from "./helpers";
 import { one, publicCell, publicPricesActive } from "./db";
-import { PUBLIC_FORBIDDEN_NAMES } from "../../src/domain/public-sanitize";
+import { PUBLIC_FORBIDDEN_NAMES, withoutSellerIdentity } from "../../src/domain/public-sanitize";
 
 // Chromium headless : rendu WebGL logiciel (SwiftShader).
 test.use({ launchOptions: { args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] } });
@@ -102,7 +102,7 @@ test("Marbella : règles de cotes, options, fermeture souhaitée, 3D, projet enr
   const pdf = await page.request.get(`/api/devis/${quote!.id}/pdf`);
   expect(pdf.status()).toBe(200);
   expect(pdf.headers()["content-type"]).toBe("application/pdf");
-  expect(Buffer.from(await pdf.body()).toString("latin1")).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
+  expect(withoutSellerIdentity(Buffer.from(await pdf.body()).toString("latin1"))).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
 
   await page.goto("/compte/projets");
   const project = page.locator("li").filter({ hasText: title });

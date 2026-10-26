@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "./fixtures";
 import { acceptNecessaryOnly, drawingAttr, goStep, openConfigurator, setDim, shot, stepIssues } from "./helpers";
-import { PUBLIC_FORBIDDEN_NAMES } from "../../src/domain/public-sanitize";
+import { PUBLIC_FORBIDDEN_NAMES, withoutSellerIdentity } from "../../src/domain/public-sanitize";
 
 /**
  * Nomenclature du 2026-10-25 : quatre familles (pergolas, screens, stores bannes, moustiquaires), navigation latérale
@@ -397,8 +397,8 @@ test("pages accessoires, références, guides et modes de paiement : contenu, au
   for (const path of pages) {
     await page.goto(path);
     const text = await page.locator("body").innerText();
-    expect(text, path).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
-    expect(await page.content(), `${path} (source HTML)`).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
+    expect(withoutSellerIdentity(text), path).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
+    expect(withoutSellerIdentity(await page.content()), `${path} (source HTML)`).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
     expect(text, path).not.toMatch(OLD_NAMES);
     expect(await noOverflow(page), `${path} : débordement horizontal`).toBe(true);
   }

@@ -21,7 +21,7 @@ export default async function ContentPage(props: PageProps<"/[slug]">) {
   const [page, settings, session] = await Promise.all([prisma.contentPage.findUnique({ where: { slug } }), prisma.siteSettings.findUnique({ where: { id: 1 } }), getSession()]);
   if (!page) notFound();
   const role = (session?.user as { role?: string } | undefined)?.role;
-  const vars = { legalName: settings?.legalName, legalForm: settings?.legalForm, addressLine1: settings?.addressLine1, postalCode: settings?.postalCode, city: settings?.city, siret: settings?.siret, vatNumber: settings?.vatNumber, contactEmail: settings?.contactEmail, phone: settings?.phone };
+  const vars = { legalName: settings?.legalName, legalForm: settings?.legalForm, addressLine1: settings?.addressLine1, postalCode: settings?.postalCode, city: settings?.city, siret: settings?.siret, vatNumber: settings?.vatNumber, shareCapital: settings?.shareCapital, rcsCity: settings?.rcsCity, contactEmail: settings?.contactEmail, phone: settings?.phone, phoneHref: settings?.phone?.replace(/\s+/g, "") };
   const missing = (page.missingFields as string[]).filter((k) => !vars[k as keyof typeof vars]);
   return (
     <div className="container-x py-8 max-w-3xl">

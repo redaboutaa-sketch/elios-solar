@@ -1,17 +1,17 @@
 import { test, expect, type Page } from "./fixtures";
 import { acceptNecessaryOnly, shot } from "./helpers";
 import { one, publicPricesActive } from "./db";
-import { PUBLIC_FORBIDDEN_NAMES } from "../../src/domain/public-sanitize";
+import { PUBLIC_FORBIDDEN_NAMES, withoutSellerIdentity } from "../../src/domain/public-sanitize";
 
 // fabricant, fournisseur et références (produits, moteurs) : jamais sur une page publique ni dans ses données
 const FORBIDDEN = PUBLIC_FORBIDDEN_NAMES;
 const AMOUNT = /\d[\d\s  ]*(,\d+)?[\s ]?(€|EUR|DH|MAD)/;
 const FROM_PRICE = /À partir de[\s ]+\d[\d\s  ]*(,\d+)?[\s ]€[\s ]HT/i;
 
-/** Page publique : aucune mention du fabricant ni du fournisseur (texte visible ET source HTML). */
+/** Page publique : aucune mention du fabricant ni du fournisseur (texte visible ET source HTML ; l'entité juridique du vendeur n'est admise que dans l'identité légale, hors contenu principal). */
 async function expectNoSupplier(page: Page) {
   expect(await page.locator("main").innerText()).not.toMatch(FORBIDDEN);
-  expect(await page.content()).not.toMatch(FORBIDDEN);
+  expect(withoutSellerIdentity(await page.content())).not.toMatch(FORBIDDEN);
 }
 
 /** Nomenclature du 2026-10-25 : quatre familles et leurs modèles configurables (brouillons exclus). */
@@ -34,7 +34,7 @@ test("catalogue HELIOSTORES : quatre familles, fiches sans référence fabricant
   await expect(page.locator('a[href="/comparer"], a[href="/realisations"], a[href="/savoir-faire"]')).toHaveCount(0);
   for (const key of ["PERGOLAS", "SCREENS", "STORES_BANNES", "MOUSTIQUAIRES"]) await expect(page.getByTestId(`home-${key}`)).toBeVisible();
   await expectNoSupplier(page);
-  await expect(page.locator("footer")).not.toContainText(FORBIDDEN);
+  expect(withoutSellerIdentity(await page.locator("footer").innerText())).not.toMatch(FORBIDDEN);
   await shot(page, "accueil");
 
   for (const [path, names, hasGrid] of FAMILIES) {
