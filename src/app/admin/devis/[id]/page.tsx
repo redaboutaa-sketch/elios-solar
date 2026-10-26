@@ -91,6 +91,13 @@ export default async function QuoteAdminPage(props: PageProps<"/admin/devis/[id]
             <div><label className="label" htmlFor="qualification">Qualification du prospect</label><select id="qualification" name="qualification" className="input" defaultValue={quote.qualification}>{Object.entries(QUALIFICATION_FR).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
             <div><label className="label" htmlFor="proposedTotal">Montant proposé TTC (€)</label><input id="proposedTotal" name="proposedTotal" inputMode="decimal" className="input" defaultValue={centsToEuros(quote.proposedTotalCents)} /></div>
             <div><label className="label" htmlFor="validUntil">Valable jusqu'au</label><input id="validUntil" name="validUntil" type="date" className="input" defaultValue={toDateInput(quote.validUntil)} /></div>
+            <fieldset className="space-y-3 border-t border-sand-200 pt-3" data-testid="quote-outcome">
+              <legend className="text-sm font-semibold">Issue commerciale (vente réglée hors ligne)</legend>
+              <p className="text-xs text-stone-700">Gagné = statut « Accepté » ; perdu = « Refusé » ou « Expiré ». Laissez le montant vide tant qu&apos;il n&apos;est pas encaissé : il reste « non renseigné » dans le suivi par origine.</p>
+              <div><label className="label" htmlFor="cashedNet">Montant HT encaissé (€)</label><input id="cashedNet" name="cashedNet" inputMode="decimal" className="input" defaultValue={centsToEuros(quote.cashedNetCents)} /></div>
+              <div><label className="label" htmlFor="cashedAt">Encaissé le</label><input id="cashedAt" name="cashedAt" type="date" className="input" defaultValue={toDateInput(quote.cashedAt)} /></div>
+              <div><label className="label" htmlFor="outcomeNote">Motif du gain ou de la perte</label><input id="outcomeNote" name="outcomeNote" maxLength={1000} className="input" defaultValue={quote.outcomeNote ?? ""} /></div>
+            </fieldset>
             <div><label className="label" htmlFor="adminNotes">Notes internes</label><textarea id="adminNotes" name="adminNotes" rows={5} className="input" defaultValue={quote.adminNotes ?? ""} /></div>
             <button className="btn-primary w-full" type="submit">Enregistrer</button>
           </form>

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/server/audit";
 import { enqueueEmail } from "@/server/mail/outbox";
 import { QuoteStatus } from "@/generated/prisma/enums";
-import { actorOf, back, fields, firstError, zOpt, zOptDateEnd, zOptEuros, zReq } from "@/server/admin/form";
+import { actorOf, back, fields, firstError, zOpt, zOptDate, zOptDateEnd, zOptEuros, zReq } from "@/server/admin/form";
 import type { EvaluationResult } from "@/domain/types";
 
 const schema = z.object({
@@ -15,6 +15,9 @@ const schema = z.object({
   validUntil: zOptDateEnd,
   adminNotes: zOpt(5000),
   qualification: z.enum(["TO_QUALIFY", "QUALIFIED", "NOT_QUALIFIED"]).optional(),
+  cashedNet: zOptEuros,
+  cashedAt: zOptDate,
+  outcomeNote: zOpt(1000),
 });
 
 export async function updateQuoteAction(formData: FormData) {
@@ -25,7 +28,7 @@ export async function updateQuoteAction(formData: FormData) {
   const d = parsed.data;
   const quote = await prisma.quote.findUnique({ where: { id: d.quoteId } });
   if (!quote) back("/admin/devis", "Devis introuvable", "err");
-  const updated = await prisma.quote.update({ where: { id: quote.id }, data: { status: d.status, proposedTotalCents: d.proposedTotal, validUntil: d.validUntil, adminNotes: d.adminNotes, ...(d.qualification ? { qualification: d.qualification } : {}) } });
+  const updated = await prisma.quote.update({ where: { id: quote.id }, data: { status: d.status, proposedTotalCents: d.proposedTotal, validUntil: d.validUntil, adminNotes: d.adminNotes, cashedNetCents: d.cashedNet, cashedAt: d.cashedAt, outcomeNote: d.outcomeNote, ...(d.qualification ? { qualification: d.qualification } : {}) } });
   let mailed = false;
   if (d.status === "SENT" && quote.status !== "SENT") {
     const snapshot = quote.snapshot as { result?: EvaluationResult | null } | null;
@@ -35,8 +38,8 @@ export async function updateQuoteAction(formData: FormData) {
   }
   await audit({
     ...actorOf(session), action: "quote.update", entity: "Quote", entityId: quote.id,
-    before: { status: quote.status, proposedTotalCents: quote.proposedTotalCents, validUntil: quote.validUntil, qualification: quote.qualification },
-    after: { status: updated.status, proposedTotalCents: updated.proposedTotalCents, validUntil: updated.validUntil, qualification: updated.qualification, emailQueued: mailed },
+    before: { status: quote.status, proposedTotalCents: quote.proposedTotalCents, validUntil: quote.validUntil, qualification: quote.qualification, cashedNetCents: quote.cashedNetCents, cashedAt: quote.cashedAt },
+    after: { status: updated.status, proposedTotalCents: updated.proposedTotalCents, validUntil: updated.validUntil, qualification: updated.qualification, cashedNetCents: updated.cashedNetCents, cashedAt: updated.cashedAt, emailQueued: mailed },
   });
   back(`/admin/devis/${quote.id}`, mailed ? "Devis mis à jour, e-mail envoyé au client (file d'attente)." : "Devis mis à jour.");
 }

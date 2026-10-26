@@ -39,7 +39,7 @@ export const CONTENT_PAGES = [
     slug: "aide",
     title: "Centre d'aide",
     status: "PUBLISHED",
-    body: `## Avant la commande\n- Quelle dimension choisir ? Mesurez l'emprise au sol d'extérieur de poteau à extérieur de poteau.\n- Adossée ou autoportée ? Adossée si un mur porteur couvre toute la longueur, sinon autoportée.\n- Faut-il une autorisation ? Au-delà de 5 m² d'emprise, une déclaration préalable est généralement requise ; au-delà de 20 m², un permis de construire. Vérifiez auprès de votre mairie.\n- Peut-on commander en ligne ? Oui pour la structure seule, aux dimensions couvertes par la grille de prix et sans option ni choix à confirmer. Sinon, demandez un devis depuis le configurateur.\n\n## Après la commande\n- Un conseiller vous contacte pour organiser la livraison et la pose, et vous confirmer le délai de fabrication.\n- Suivi de commande depuis votre compte.\n- Service client : voir la page Contact.`,
+    body: `## Avant la demande de devis\n- Quelle dimension choisir ? Mesurez l'emprise au sol d'extérieur de poteau à extérieur de poteau : voir le guide [Prise de mesures](/guides/prise-de-mesures).\n- Adossée ou autoportée ? Adossée si un mur porteur couvre toute la longueur, sinon autoportée : voir [Pergola adossée ou autoportante ?](/guides/adossee-ou-autoportee).\n- Faut-il une autorisation ? En France, au-delà de 5 m² d'emprise, une déclaration préalable est généralement requise ; au-delà de 20 m², un permis de construire (40 m² pour une extension en zone urbaine couverte par un PLU). Vérifiez auprès de votre mairie.\n- Peut-on commander en ligne ? Non : chaque projet est établi sur devis. Configurez votre modèle puis envoyez votre demande ; elle est enregistrée avec une référence.\n\n## Après la demande\n- Un conseiller étudie votre demande et revient vers vous pour préciser les mesures, la livraison et la pose éventuelle.\n- Délai de livraison : entre 4 et 7 semaines selon le lieu de livraison.\n- Service client : voir la page [Contact](/contact).`,
     missingFields: [],
   },
 ] as const;
@@ -51,5 +51,5 @@ export const CONTENT_PAGES = [
 export const PREVIOUS_DEFAULT_BODY_SHA256: Record<string, string[]> = {
   cgv: ["6393dc1712b69462652908bbf65f54f5e9e15836fbc562c93711042bd1b6e434"],
   "livraison-installation": ["6f2ebf980fc0a784c8af094a75ea9acd6b293ccaf778f2e5e4fd2dc8e0bb0c4c"],
-  aide: ["2d1f9373c4d3f5d0af0cc6a399a42fc5543c67550c877ce56c20d877c2b579d2"],
+  aide: ["2d1f9373c4d3f5d0af0cc6a399a42fc5543c67550c877ce56c20d877c2b579d2", "74c05e2397e25bbfca7a83dcc69afbecb08bf7f93f67b555d0b7f20a83bebd84"],
 };

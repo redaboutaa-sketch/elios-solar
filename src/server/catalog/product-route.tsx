@@ -15,8 +15,8 @@ export async function productMetadata(category: CategoryKey, slug: string): Prom
   const f = await getSystemFamily(category, slug);
   if (f) {
     const path = `${categoryByKey(category)!.href}/${f.slug}`;
-    // titre « Nom — Nature » ; un titre saisi en administration n'est repris que s'il suit ce format
-    const title = f.seoTitle?.startsWith(`${f.name} — `) ? f.seoTitle : productTitle(f.name, f.rules);
+    // titre dérivé des règles documentées du modèle (les titres saisis en administration, anciens, ne sont plus repris)
+    const title = productTitle(f.name, f.rules);
     const description = quoteSafeDescription(f.seoDescription ?? f.shortDescription, !!f.fromPrice);
     const img = (await publishedMediaFor(f.slug)).find((m) => m.nature !== "DOCUMENT" && m.nature !== "VIDEO" && m.role !== "technical" && (m.width ?? 0) >= 600);
     return {

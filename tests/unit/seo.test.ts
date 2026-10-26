@@ -45,10 +45,13 @@ describe("données structurées", () => {
   });
 });
 
-describe("titres « Nom — Nature »", () => {
+describe("titres de fiche", () => {
   it("qualification confirmée seulement", () => {
-    expect(productTitle("HelioScreen", { type: "screen" })).toBe("HelioScreen — Store screen extérieur");
-    expect(productTitle("Malaga", { type: "pergola", roof: "louvres" })).toBe("Malaga — Pergola à lames orientables");
+    expect(productTitle("HelioScreen", { type: "screen" })).toBe("Store screen extérieur HelioScreen sur mesure");
+    // tailles définies : jamais « sur mesure » ; « bioclimatique » réservé au titre des pergolas à lames
+    expect(productTitle("Malaga", { type: "pergola", roof: "louvres", fixedSizes: [{}] })).toBe("Pergola bioclimatique Malaga");
+    expect(productTitle("Sevilla", { type: "pergola", roof: "fabric" })).toBe("Pergola à toiture en toile Sevilla sur mesure");
+    expect(productTitle("Madera", { type: "awning", protection: { level: "full", status: "to_confirm" } })).toBe("Store banne Madera sur mesure");
     expect(productNature({ type: "awning", protection: { level: "full", status: "to_confirm" } })).toBe("Store banne");
     expect(productNature({ type: "awning", protection: { level: "semi", status: "established" } })).toBe("Store banne semi-coffre");
     expect(productNature({ type: "insect_screen", insect: { opening: "pleated", leaves: 2 } })).toBe("Moustiquaire plissée à deux vantaux");

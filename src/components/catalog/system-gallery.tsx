@@ -56,7 +56,7 @@ export function SystemGallery({ name, media, scene = null }: { name: string; med
           <figure className="overflow-hidden border border-sand-200 bg-white">
             <div className="group relative aspect-[4/3] bg-white">
               {/* eslint-disable-next-line @next/next/no-img-element -- médias servis par /api/media, dimensions connues */}
-              <img key={m.id} src={m.path} alt={m.alt} width={m.width ?? undefined} height={m.height ?? undefined} className="absolute inset-0 size-full object-contain animate-fade-in" loading={i === 0 ? "eager" : "lazy"} />
+              <img key={m.id} src={m.path} srcSet={m.smallPath && m.width && m.width > 640 ? `${m.smallPath} 640w, ${m.path} ${m.width}w` : undefined} sizes="(min-width: 1024px) 55vw, 100vw" alt={m.alt} width={m.width ?? undefined} height={m.height ?? undefined} className="absolute inset-0 size-full object-contain animate-fade-in" loading={i === 0 ? "eager" : "lazy"} fetchPriority={i === 0 ? "high" : undefined} />
               <button type="button" onClick={() => dialog.current?.showModal()} aria-label={`Agrandir : ${m.alt}`} className="absolute right-3 top-3 grid size-10 place-items-center border border-sand-300 bg-white/90 text-ink hover:bg-white"><Expand className="size-4" aria-hidden="true" /></button>
               {list.length > 1 && <>
                 <button type="button" onClick={() => step(-1)} aria-label="Visuel précédent" className="absolute left-3 top-1/2 grid size-10 -translate-y-1/2 place-items-center border border-sand-300 bg-white/90 hover:bg-white"><ChevronLeft className="size-5" aria-hidden="true" /></button>
@@ -74,7 +74,7 @@ export function SystemGallery({ name, media, scene = null }: { name: string; med
                 <li key={x.id} className="shrink-0 snap-start">
                   <button type="button" onClick={() => setI(k)} aria-pressed={k === i} aria-label={`Afficher : ${x.alt}`} className={`block size-20 overflow-hidden border bg-white transition-[border-color,opacity] duration-150 ${k === i ? "border-brand-700 ring-1 ring-brand-700" : "border-sand-300 opacity-80 hover:opacity-100 hover:border-brand-700/50"}`}>
                     {/* eslint-disable-next-line @next/next/no-img-element -- vignette de la médiathèque */}
-                    <img src={x.smallPath ?? x.path} alt="" className="size-full object-contain" loading="lazy" />
+                    <img src={x.smallPath ?? x.path} alt="" width={80} height={80} className="size-full object-contain" loading="lazy" decoding="async" />
                   </button>
                 </li>
               ))}
@@ -84,7 +84,7 @@ export function SystemGallery({ name, media, scene = null }: { name: string; med
             <div className="flex items-center justify-between gap-3 border-b border-sand-200 px-4 py-2 text-sm"><span className="truncate"><span className="font-medium">{m.caption || m.title}</span> · {NATURE[m.nature] ?? m.nature}</span><button type="button" onClick={() => dialog.current?.close()} aria-label="Fermer" className="grid size-10 place-items-center hover:bg-sand-100"><X className="size-5" aria-hidden="true" /></button></div>
             <div className="relative h-[min(80dvh,56rem)] bg-white">
               {/* eslint-disable-next-line @next/next/no-img-element -- agrandissement du visuel courant */}
-              <img src={m.path} alt={m.alt} className="absolute inset-0 size-full object-contain p-4" />
+              <img src={m.path} alt={m.alt} className="absolute inset-0 size-full object-contain p-4" loading="lazy" decoding="async" />
               {list.length > 1 && <>
                 <button type="button" onClick={() => step(-1)} aria-label="Visuel précédent" className="absolute left-3 top-1/2 grid size-11 -translate-y-1/2 place-items-center border border-sand-300 bg-white hover:bg-sand-50"><ChevronLeft className="size-5" aria-hidden="true" /></button>
                 <button type="button" onClick={() => step(1)} aria-label="Visuel suivant" className="absolute right-3 top-1/2 grid size-11 -translate-y-1/2 place-items-center border border-sand-300 bg-white hover:bg-sand-50"><ChevronRight className="size-5" aria-hidden="true" /></button>

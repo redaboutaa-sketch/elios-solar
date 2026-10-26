@@ -820,6 +820,11 @@ model Quote {
   attribution        Json?
   /// qualification commerciale (à qualifier, qualifié, non qualifié) — indépendante du statut du devis
   qualification      String         @default("TO_QUALIFY")
+  /// montant HT réellement encaissé hors ligne (centimes) ; null = non renseigné (jamais 0 par défaut)
+  cashedNetCents     Int?
+  cashedAt           DateTime?
+  /// motif de gain ou de perte (saisie commerciale)
+  outcomeNote        String?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   visuals            QuoteVisual[]

@@ -249,8 +249,8 @@ const sb400: HelioFamily = {
     { key: "colours_standard", label: "Teintes standard", valueText: "RAL 9016 mat, FSM 71319, RAL 7016 mat", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 10 ; catalogue SB400 p. 1" },
   ],
   faq: [
-    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, pour les cotes de la grille ; une autre cote est chiffrée au devis). Les options, la pose et la livraison sont chiffrées sur votre devis." },
-    { q: "Peut-on commander en ligne ?", a: "Oui pour la structure seule : aux dimensions couvertes par la grille, sans option ni choix à confirmer, la configuration s'ajoute au panier (TVA ajoutée au total). La livraison et la pose s'organisent ensuite avec un conseiller. Dans les autres cas, demandez un devis depuis le configurateur." },
+    { q: "Le prix est-il affiché en ligne ?", a: "Non : aucun prix n'est affiché en ligne. Le prix est établi sur devis selon vos dimensions, vos options, la pose et la livraison." },
+    { q: "Peut-on commander en ligne ?", a: "Non : chaque projet est établi sur devis. Configurez votre modèle puis envoyez votre demande depuis le configurateur ; elle est enregistrée avec une référence. Délai de livraison : entre 4 et 7 semaines selon le lieu de livraison." },
     { q: "Quelles dimensions sont possibles ?", a: "Un module mesure de 1,4 m à 4 m de largeur et de 1,4 m à 7 m de projection, par pas de 20 cm en projection (l'entraxe des lames). La documentation indique un système modulaire : une installation de plusieurs modules est composée au devis." },
     { q: "Quelle hauteur de passage ?", a: "La documentation technique indique 2,8 m au maximum ; un autre document mentionne 3 020 mm. Au-delà de 2,8 m, la hauteur est confirmée au devis. La hauteur minimale n'est pas documentée." },
     { q: "Peut-on fermer les côtés ?", a: "La documentation cite des fermetures latérales (parois coulissantes, screens, panneaux à lames) sans préciser les modèles. Une fermeture latérale dépend des ouvertures réelles : nous l'étudions au devis." },
@@ -374,8 +374,8 @@ const sb500: HelioFamily = {
     { key: "colours_standard", label: "Teintes standard", valueText: "RAL 9016 mat, FSM 71319, RAL 7016 mat", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 6" },
   ],
   faq: [
-    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, pour les cotes de la grille ; une autre cote est chiffrée au devis). Les options, la pose et la livraison sont chiffrées sur votre devis." },
-    { q: "Peut-on commander en ligne ?", a: "Oui pour la structure seule : aux dimensions couvertes par la grille, sans option ni choix à confirmer, la configuration s'ajoute au panier (TVA ajoutée au total). La livraison et la pose s'organisent ensuite avec un conseiller. Dans les autres cas, demandez un devis depuis le configurateur." },
+    { q: "Le prix est-il affiché en ligne ?", a: "Non : aucun prix n'est affiché en ligne. Le prix est établi sur devis selon vos dimensions, vos options, la pose et la livraison." },
+    { q: "Peut-on commander en ligne ?", a: "Non : chaque projet est établi sur devis. Configurez votre modèle puis envoyez votre demande depuis le configurateur ; elle est enregistrée avec une référence. Délai de livraison : entre 4 et 7 semaines selon le lieu de livraison." },
     { q: "Peut-on couvrir plus de 5 m de largeur ?", a: "Oui, HELIO Panorama accepte l'assemblage de plusieurs modules. La composition (modules, poteaux, gouttières) est établie au devis." },
     { q: "Quels moteurs sont proposés ?", a: "Une motorisation radio en commande RTS ou io, ou une motorisation 24 V en commande io uniquement. Le moteur retenu est précisé sur votre devis." },
     { q: "Les gouttières sont-elles fournies ?", a: "Deux gouttières sont incluses, sans évacuation : le raccordement des descentes est prévu au devis." },
@@ -486,8 +486,8 @@ const refleksol: HelioFamily = {
     { key: "colours", label: "Teintes", valueText: "palette de 26 teintes standard, autre RAL en option", source: "SUPPLIER_DOCUMENT", sourceRef: "Catalogue THYSENS p. 66–67, 150" },
   ],
   faq: [
-    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, pour les cotes de la grille ; une autre cote est chiffrée au devis). Les options, la pose et la livraison sont chiffrées sur votre devis." },
-    { q: "Peut-on commander en ligne ?", a: "Oui pour la structure seule : aux dimensions couvertes par la grille, sans option ni choix à confirmer, la configuration s'ajoute au panier (TVA ajoutée au total). La livraison et la pose s'organisent ensuite avec un conseiller. Dans les autres cas, demandez un devis depuis le configurateur." },
+    { q: "Le prix est-il affiché en ligne ?", a: "Non : aucun prix n'est affiché en ligne. Le prix est établi sur devis selon vos dimensions, vos options, la pose et la livraison." },
+    { q: "Peut-on commander en ligne ?", a: "Non : chaque projet est établi sur devis. Configurez votre modèle puis envoyez votre demande depuis le configurateur ; elle est enregistrée avec une référence. Délai de livraison : entre 4 et 7 semaines selon le lieu de livraison." },
     { q: "Quelle largeur maximale ?", a: "Jusqu'à 4 m, toutes les sources concordent. Au-delà, les documents du fabricant divergent (5 m ou 7 m) et la hauteur est limitée à 3 m : la faisabilité est confirmée au devis." },
     { q: "Peut-on le manœuvrer à la main ?", a: "Non : HelioScreen est uniquement à commande électrique. Le moteur est défini avec vous au devis." },
     { q: "Peut-il fermer le côté d'une pergola ?", a: "Un screen vendu seul n'est pas automatiquement compatible avec une pergola : l'intégration se vérifie au devis selon les ouvertures et les fixations." },
@@ -584,8 +584,8 @@ const casablanca: HelioFamily = {
     { key: "colours_standard", label: "Teintes standard", valueText: "RAL 9010, RAL 1015, RAL 8014, RAL 9006, FSM 71319", source: "CLIENT_SHEET", sourceRef: "Fiche CASABLANCA — Couleurs disponibles" },
   ],
   faq: [
-    { q: "Le prix est-il affiché en ligne ?", a: "Oui : le configurateur affiche le prix hors taxes de la structure selon vos dimensions (grille tarifaire HELIOSTORES, pour les cotes de la grille ; une autre cote est chiffrée au devis). Les options, la pose et la livraison sont chiffrées sur votre devis." },
-    { q: "Peut-on commander en ligne ?", a: "Oui pour la structure seule : aux dimensions couvertes par la grille, sans option ni choix à confirmer, la configuration s'ajoute au panier (TVA ajoutée au total). La livraison et la pose s'organisent ensuite avec un conseiller. Dans les autres cas, demandez un devis depuis le configurateur." },
+    { q: "Le prix est-il affiché en ligne ?", a: "Non : aucun prix n'est affiché en ligne. Le prix est établi sur devis selon vos dimensions, vos options, la pose et la livraison." },
+    { q: "Peut-on commander en ligne ?", a: "Non : chaque projet est établi sur devis. Configurez votre modèle puis envoyez votre demande depuis le configurateur ; elle est enregistrée avec une référence. Délai de livraison : entre 4 et 7 semaines selon le lieu de livraison." },
     { q: "Quelles avancées sont proposées ?", a: "1,6 m, 2,1 m, 2,6 m, 3,1 m et 3,6 m. Les grandes avancées demandent une largeur minimale : 2,91 m pour 2,6 m d'avancée, 3,51 m pour 3,1 m et 3,6 m." },
     { q: "Existe-t-il une version motorisée ?", a: "Le catalogue cite une commande électrique ; la fiche transmise décrit la version à manivelle. La motorisation est donc étudiée au devis." },
     { q: "Où peut-on le poser ?", a: "Au mur, au plafond ou sur chevrons. Les fixations dépendent du support et se déterminent à l'étude du projet." },

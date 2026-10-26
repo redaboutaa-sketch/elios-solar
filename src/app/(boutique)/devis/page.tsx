@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { configuratorHref } from "@/domain/categories";
 import { canonicalFamilySlug } from "@/server/catalog/legacy-slugs";
 
-export const metadata: Metadata = { title: "Demander un devis", description: "Devis pour votre pergola, votre screen, votre store banne ou votre moustiquaire HELIOSTORES.", alternates: { canonical: "/devis" } };
+export const metadata: Metadata = { title: "Demander un devis de pergola, store ou moustiquaire", description: "Demandez un devis pour une pergola, un store screen, un store banne ou une moustiquaire sur mesure : décrivez votre projet et vos mesures, votre demande est enregistrée avec une référence.", alternates: { canonical: "/devis" } };
 
 export default async function Page(props: PageProps<"/devis">) {
   const sp = await props.searchParams;
