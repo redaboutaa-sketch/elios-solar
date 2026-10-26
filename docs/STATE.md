@@ -3,7 +3,9 @@
 ## Lancement (2026-10-26)
 
 - **Production heliostores.com publique, sur devis** (2026-10-26) : pile `heliostores-prod`, image applicative
-  **`0886bb3`**, compose et script de déploiement `5e1df9c` (relais sans interruption, `TZ=Europe/Paris`).
+  **`1f311ba`** (mission SEO/GEO : titres, descriptions, FAQ et aide sans commande en ligne, variantes d'images 1080 px,
+  suivi commercial par origine — `docs/seo/changes-and-validation.md`), compose et script de déploiement `5e1df9c`
+  (relais sans interruption, `TZ=Europe/Paris`).
   - Coordonnées commerciales : HELIOSTORES, 59650 Villeneuve-d'Ascq, `contact@heliostores.com`, sans téléphone.
   - Délai de livraison affiché (fiches, récapitulatif, confirmation, nouveaux devis).
   - Administrateur `reda.boutaa@gmail.com` créé et vérifié ; consultation des demandes vérifiée.
@@ -14,7 +16,7 @@
 - Préproduction : commit `a8172e5`, identifiant de revue, noindex.
 - État et critères : `docs/launch-readiness.md` ; éléments à fournir : `docs/client-inputs.md` (et Administration →
   Registre de lancement) ; procédures : `docs/production-runbook.md` ; recette : `docs/test-report.md` ;
-  SEO/GEO : `docs/seo-geo-plan-90-days.md`.
+  SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
 
 Mis à jour : 2026-10-21 (refonte « catalogue fabricant ») — **migration HELIOSTORES** (branche `feat/heliostores`, draft PR #2 vers `feat/storefront-configurator`).

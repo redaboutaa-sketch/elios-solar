@@ -227,6 +227,16 @@ demande, le délai de livraison et l'adresse de contact) :
   docker stop heliostores-restore-check
   ```
 
+## 6 ter. Médias : variantes d'images
+
+Après un import de médias, produire la variante 1080 px (écrans mobiles haute densité) ; l'original et la variante
+640 px ne sont pas modifiés. Le worker ne monte pas le volume des médias : passer par le service `migrate`.
+```bash
+docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod run --rm --no-deps migrate pnpm media:variants          # simulation
+docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod run --rm --no-deps migrate pnpm media:variants --apply  # idempotent
+```
+Suivi commercial : Administration → Suivi par origine (montant HT encaissé saisi sur chaque devis gagné).
+
 ## 6 bis. Identité et pages légales
 
 Mise à jour du 2026-10-26 (après-midi), à la demande du propriétaire :

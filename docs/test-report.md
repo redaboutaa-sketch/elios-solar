@@ -1,3 +1,11 @@
+# Vérification de la mission SEO/GEO — 2026-10-26 (soir)
+
+Commit déployé en production : **`1f311ba`**. Détail, conditions et limites : `docs/seo/changes-and-validation.md` § 3.
+Unitaires 274/274, intégration 100/100, CI verte (push et PR), crawl des 34 URL du sitemap sans anomalie ni doublon,
+captures avant/après 1440 et 390 px aux dimensions identiques, parcours fiche → configurateur → demande et
+administration (suivi par origine) vérifiés sur une copie de la production. Recette navigateur complète
+(`scripts/e2e-docker.sh`) **non rejouée** pour cette mission.
+
 # Rapport de vérification — 2026-10-26 (préparation de la production)
 
 Commit vérifié et déployé : **`e2afbed`** (préproduction et production ; `GET /api/health`). CI GitHub Actions verte

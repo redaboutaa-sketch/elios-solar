@@ -1,5 +1,11 @@
 # SEO et GEO : livraison technique et plan sur 90 jours
 
+> **Mission SEO/GEO du 2026-10-26 (soir)** : audit, backlog et corrections livrées dans `docs/seo/` —
+> [audit initial et backlog](seo/audit-initial.md), [matrice intentions/pages](seo/keyword-page-map.csv),
+> [modifications et validation](seo/changes-and-validation.md), [plan de contenus 90 jours](seo/content-plan-90-days.md),
+> [partenariats et GEO](seo/partnerships-and-geo.md). Ces documents priment sur les sections ci-dessous lorsqu'ils
+> diffèrent (titres de fiche, « bioclimatique », images, suivi par origine, procédure Search Console).
+
 Mise à jour : 2026-10-26. Domaine de production retenu : `https://heliostores.com` (`www` redirigé vers le domaine nu par le
 proxy). Ce document ne garantit ni position, ni volume de trafic, ni citation dans une réponse d'IA.
 
@@ -24,7 +30,7 @@ proxy). Ce document ne garantit ni position, ni volume de trafic, ni citation da
 - **Guides d'installation** : seuls les guides validés et publiés sont listés et indexés (inchangé ; aucun n'est publié aujourd'hui).
 
 ### Titres, descriptions, Open Graph
-- Fiches : titre « Nom — Nature », dérivé des règles documentées du modèle. Une qualification « à confirmer » n'est jamais retenue. Exemples : « HelioScreen — Store screen extérieur », « Malaga — Pergola à lames orientables », « Sevilla — Pergola à toiture en toile ». Madera reste « Store banne », car son type de coffre est à confirmer. « Bioclimatique » n'est pas employé.
+- Fiches : titre « Nature Nom sur mesure » depuis le 2026-10-26 (`docs/seo/changes-and-validation.md`) ; auparavant « Nom — Nature », dérivé des règles documentées du modèle. Une qualification « à confirmer » n'est jamais retenue. Exemples : « HelioScreen — Store screen extérieur », « Malaga — Pergola à lames orientables », « Sevilla — Pergola à toiture en toile ». Madera reste « Store banne », car son type de coffre est à confirmer. « Bioclimatique » n'est pas employé.
 - Les mentions « prix selon vos dimensions » sont retirées des descriptions quand aucun prix public n'existe.
 - Open Graph : titre, description, URL, nom du site, langue et image publiée dimensionnée (photo ou rendu du modèle, sinon le logo sur plaque, 1360 × 427).
 - Familles : « Pergolas à lames orientables ou à toiture en toile », « Screens extérieurs et screens de toiture », « Stores bannes à coffre, semi-coffre ou sans coffre », « Moustiquaires sur mesure ».
@@ -116,7 +122,7 @@ Limites :
 | Google Search Console | **Non raccordé** (aucun accès disponible dans cette mission) | Après ouverture publique : créer une propriété « Domaine » `heliostores.com`, vérifier par l'enregistrement **TXT** fourni par Google dans la zone DNS (GoDaddy). Sinon, propriété « Préfixe d'URL » et variable `GOOGLE_SITE_VERIFICATION=<jeton>` (balise meta émise seulement en production indexable). Puis soumettre `https://heliostores.com/sitemap.xml`. |
 | Bing Webmaster Tools | **Non raccordé** | Importer la propriété depuis la Search Console, ou vérifier par l'enregistrement CNAME/TXT fourni, ou par la variable `BING_SITE_VERIFICATION=<jeton>` (balise `msvalidate.01`). Soumettre le sitemap. |
 | Mesure d'audience | **Aucune activée** | Recommandation : un outil auto-hébergé sans cookie (Matomo en mode sans cookie ou Plausible auto-hébergé), désactivé par défaut et mentionné dans la politique de confidentialité. Le site prévoit déjà un script conditionné au consentement (Réglages : `analyticsEnabled` et `analyticsScriptUrl`). Aucun traceur publicitaire n'est ajouté. |
-| Suivi CRM prospect → devis → encaissement | Partiel, dans l'application | L'origine (UTM, référent, page d'entrée) est conservée avec la demande et visible dans le devis, puis la commande et l'encaissement dans l'administration. Aucun CRM externe n'est raccordé. |
+| Suivi CRM prospect → devis → encaissement | Dans l'application : Administration → **Suivi par origine** (2026-10-26), montant HT encaissé saisi sur le devis | L'origine (UTM, référent, page d'entrée) est conservée avec la demande et visible dans le devis, puis la commande et l'encaissement dans l'administration. Aucun CRM externe n'est raccordé. |
 | Google Business Profile | **Non créé** | Seulement si l'entreprise est éligible (adresse réelle ou zone de service effective) et si ses informations sont validées. Aucune adresse n'est renseignée aujourd'hui. |
 
 **Attribution UTM** (`src/domain/attribution.ts`) :
