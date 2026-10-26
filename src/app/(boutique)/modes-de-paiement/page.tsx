@@ -3,7 +3,11 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { METHOD_STATE_FR, paymentMethods } from "@/server/payment/methods";
 
-export const metadata: Metadata = { title: "Modes de paiement", description: "Moyens de paiement disponibles ou envisagés chez HELIOSTORES.", alternates: { canonical: "/modes-de-paiement" } };
+/** Tant qu'aucun moyen n'est disponible (paiement en ligne fermé), la page reste consultable mais hors index. */
+export async function generateMetadata(): Promise<Metadata> {
+  const open = (await paymentMethods()).some((m) => m.state === "active");
+  return { title: "Modes de paiement", description: "Moyens de paiement disponibles ou envisagés chez HELIOSTORES.", alternates: { canonical: "/modes-de-paiement" }, ...(open ? {} : { robots: { index: false, follow: true } }) };
+}
 
 export default async function PaymentMethodsPage() {
   const methods = await paymentMethods();
