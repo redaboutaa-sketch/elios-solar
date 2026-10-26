@@ -75,7 +75,7 @@ export function SystemGallery({ name, media, scene = null }: { name: string; med
                 <li key={x.id} className="shrink-0 snap-start">
                   <button type="button" onClick={() => setI(k)} aria-pressed={k === i} aria-label={`Afficher : ${x.alt}`} className={`block size-20 overflow-hidden border bg-white transition-[border-color,opacity] duration-150 ${k === i ? "border-brand-700 ring-1 ring-brand-700" : "border-sand-300 opacity-80 hover:opacity-100 hover:border-brand-700/50"}`}>
                     {/* eslint-disable-next-line @next/next/no-img-element -- vignette de la médiathèque */}
-                    <img src={x.smallPath ?? x.path} alt="" width={80} height={80} className="size-full object-contain" loading="lazy" decoding="async" />
+                    <img src={x.smallPath ?? x.path} alt="" width={80} height={80} className="size-full object-contain" loading="lazy" decoding="async" fetchPriority="low" />
                   </button>
                 </li>
               ))}
