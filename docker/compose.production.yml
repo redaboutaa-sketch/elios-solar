@@ -107,7 +107,14 @@ services:
       - heliostores_prod_uploads:/app/uploads
     depends_on:
       postgres: { condition: service_healthy }
-    healthcheck: *app_health
+    # sonde rapide ; échoue dès que /tmp/drain existe : Traefik retire le relais du routage avant son arrêt
+    healthcheck:
+      test: ["CMD-SHELL", "test ! -f /tmp/drain && node -e \"fetch('http://127.0.0.1:3400/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 2s
+      timeout: 3s
+      retries: 1
+      start_period: 90s
+      start_interval: 2s
     restart: "no"
     logging: *log
     networks: [internal, traefik-public]
