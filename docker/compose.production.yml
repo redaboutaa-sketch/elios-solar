@@ -35,6 +35,7 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-heliostores}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-heliostores}?schema=public
       MEDIA_STORAGE_DIR: /app/uploads
+      TZ: Europe/Paris
     volumes:
       - heliostores_prod_uploads:/app/uploads
     depends_on:
@@ -50,6 +51,7 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-heliostores}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-heliostores}?schema=public
       MEDIA_STORAGE_DIR: /app/uploads
+      TZ: Europe/Paris
     volumes:
       - heliostores_prod_uploads:/app/uploads
     ports:
@@ -103,6 +105,7 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-heliostores}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-heliostores}?schema=public
       MEDIA_STORAGE_DIR: /app/uploads
+      TZ: Europe/Paris
     volumes:
       - heliostores_prod_uploads:/app/uploads
     depends_on:
@@ -126,6 +129,7 @@ services:
     command: ["pnpm", "mail:worker"]
     env_file: [../.env.heliostores-prod]
     environment:
+      TZ: Europe/Paris
       DATABASE_URL: postgresql://${POSTGRES_USER:-heliostores}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-heliostores}?schema=public
     depends_on:
       migrate: { condition: service_completed_successfully }
