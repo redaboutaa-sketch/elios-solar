@@ -38,6 +38,30 @@ docker tag elios-solar/app:preprod elios-solar/app:$TAG && docker tag elios-sola
 
 `GET /api/health` renvoie `commit`, `builtAt` et `lastMigration` : c'est la preuve du commit exécuté.
 
+## 2 bis. Déployer la production sans interruption
+
+Après une sauvegarde (§ 6) et avec la CI verte sur le commit :
+```bash
+scripts/deploy-production.sh <TAG>      # ex. 0886bb3bcd1c
+```
+Le script, limité au projet `heliostores-prod`, procède en quatre temps :
+1. Il met `IMAGE_TAG` à jour et lance les migrations. Elles doivent rester additives : l'ancienne version tourne encore.
+2. Il démarre le relais `app-relay` (profil `relay`, nouvelle image, mêmes labels Traefik) et attend qu'il soit sain.
+   Traefik répartit alors entre l'ancienne et la nouvelle instance.
+3. Il recrée `app` et le worker, puis attend qu'`app` soit sain (sonde de démarrage toutes les 2 s).
+4. Il vide le relais : sa sonde échoue (`/tmp/drain`), Traefik le retire du routage, puis il est supprimé.
+
+Un middleware de nouvel essai (`heliostores-prod-retry`, propre au routeur HELIOSTORES) couvre les échecs de
+connexion. Mesure du 2026-10-26 : 3 déploiements, 1 001 requêtes publiques, aucune erreur.
+
+Limites :
+- si les **labels Traefik** changent entre deux versions, Traefik refuse un routeur défini différemment par deux
+  conteneurs (404 observés le 2026-10-26). Le script le détecte, recrée `app` directement et annonce une coupure de
+  quelques secondes ;
+- pendant le recouvrement, les deux versions répondent et les compteurs anti-abus en mémoire sont propres à chaque
+  instance ;
+- échec avant l'étape 3 : l'ancienne `app` sert toujours et `IMAGE_TAG` est remis à sa valeur précédente.
+
 ## 3. Première mise en place de la production
 
 1. Sauvegarde de la préproduction (source des données de catalogue) :
@@ -105,9 +129,16 @@ contournement (le verrou par compte reste par e-mail).
   pour `172.23.0.1` affaiblirait la protection (non retenu).
 - Correction de fond (hors projet, à planifier avec les autres sites) : activer l'IPv6 sur `traefik-public` (réseau à
   recréer, interruption de tous les sites routés) ou publier Traefik en `network_mode: host`.
-- **Repli recommandé** tant que ce n'est pas fait : retirer l'enregistrement `AAAA @` chez GoDaddy (l'IPv4 est validé
-  de bout en bout depuis le 2026-10-26). Les visiteurs IPv6 passent alors par l'IPv4 (double pile) et chacun retrouve
-  sa propre limite. Rétablir l'AAAA quand le réseau commun gère l'IPv6.
+- **Repli décidé par le propriétaire** (2026-10-26) : retirer l'enregistrement `AAAA @` chez GoDaddy. L'IPv4 a été
+  revérifié de bout en bout le 2026-10-26 (sondes externes, redirections, certificats). À conserver : `A @ 76.13.44.177`,
+  `CNAME www heliostores.com`, NS et SOA. Aucun changement sur le serveur : son adresse IPv6 et le réseau des autres
+  sites restent tels quels. Les visiteurs en double pile passent par l'IPv4 et chacun retrouve sa propre limite.
+  **Non exécuté** : aucun accès GoDaddy autorisé n'est disponible ici.
+- **Rétablissement de l'AAAA** (plus tard), seulement quand l'adresse réelle des visiteurs IPv6 parvient à Traefik
+  (IPv6 sur le réseau commun ou Traefik en `network_mode: host`, décision commune à tous les sites). Test préalable :
+  depuis deux clients IPv6 distincts, vérifier dans un journal d'accès Traefik temporaire que chacun apparaît avec sa
+  propre adresse, et non `172.23.0.1`. Ensuite seulement, recréer `AAAA @ 2a02:4780:7:f4ca::1` et revérifier HTTPS en
+  IPv6.
 
 Redéploiement : Traefik ne route que les conteneurs « healthy » ; pendant le redémarrage de `heliostores-prod-app`
 (environ une minute) le site répond 404. Redéployer hors des heures d'affluence.
@@ -133,19 +164,41 @@ Avant l'ouverture DNS, les contrôles HTTPS se font depuis le serveur en forçan
 
 ## 5 bis. Suivi des demandes sans SMTP
 
-Préalable : un compte administrateur de production (aucun au 2026-10-26). La personne habilitée le crée elle-même,
-dans un terminal sur le serveur, mot de passe saisi masqué (12 caractères au minimum) :
-```
-cd /opt/pergola && docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod run --rm -it migrate pnpm admin:bootstrap
-```
+**Compte administrateur** (créé le 2026-10-26 par `pnpm admin:bootstrap`, mot de passe aléatoire) :
+- connexion : `https://heliostores.com/compte/connexion` ;
+- compte : `reda.boutaa@gmail.com`, rôle ADMIN ;
+- mot de passe initial : `/root/heliostores-admin-bootstrap.txt` (root, 0600, hors dépôt), à lire en SSH ;
+- changement : une fois connecté, Mon compte → Sécurité → « Changer le mot de passe ». Les autres sessions sont
+  fermées ; supprimer ensuite le fichier (`shred -u /root/heliostores-admin-bootstrap.txt`) ;
+- autre administrateur : `cd /opt/pergola && docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod run --rm -it migrate pnpm admin:bootstrap`
+  (saisie masquée). Le lien « mot de passe oublié » ne fonctionne pas sans SMTP.
 
-`MAIL_PROVIDER=hold` : aucun e-mail ne part ; accusés de réception et notifications restent en file
-(Administration → E-mails, état « en attente »). Le visiteur voit la référence de sa demande, le téléphone et l'e-mail
-publics ; aucun e-mail ne lui est promis. Surveillance manuelle **au moins une fois par jour ouvré** :
-Administration → tableau de bord (compteurs), Devis, Contacts (contact et rappel), Conversations (chat). Quand un SMTP
-HELIOSTORES sera fourni : `MAIL_PROVIDER=smtp` + `SMTP_*` dans `.env.heliostores-prod`, `up -d --no-deps app worker`,
-puis décider dans Administration → E-mails quels messages anciens renvoyer (les accusés de réception tardifs peuvent
-être abandonnés). `ADMIN_NOTIFICATION_EMAIL` est renseigné avec l'e-mail public de contact.
+**Messagerie au 2026-10-26** :
+- adresse affichée au public : `contact@heliostores.com` (Réglages) ;
+- boîte de réception : **aucune**, le domaine n'a pas d'enregistrement MX, donc rien n'arrive à cette adresse ;
+- envoi : **aucun SMTP HELIOSTORES** sur le serveur (`MAIL_PROVIDER=hold`) ; aucun service d'un autre projet n'est
+  emprunté ;
+- les mentions légales et la confidentialité gardent `karim_ajaji@hotmail.com`, adresse joignable de l'éditeur.
+
+**Suivi manuel, chaque jour ouvré** (aucun e-mail n'est envoyé ni promis ; le visiteur voit la référence de sa
+demande, le délai de livraison et l'adresse de contact) :
+1. Administration → tableau de bord : compteurs « devis nouveaux » et « contacts nouveaux ».
+2. Devis : ouvrir chaque demande « Nouveau ». On y trouve les coordonnées, le produit et la configuration, la
+   visualisation, le PDF et l'origine. La passer « En étude » et répondre au prospect depuis sa propre messagerie.
+3. Contacts (contact et rappel), puis Conversations (chat).
+4. E-mails : les messages en attente montrent ce qui aurait été envoyé. « Abandonner » écarte ceux qui sont devenus
+   inutiles.
+
+**Raccordement futur d'une messagerie** :
+1. Créer la boîte `contact@heliostores.com` chez un fournisseur choisi par le propriétaire (MX, SPF, DKIM et DMARC
+   dans la zone GoDaddy).
+2. Déposer les paramètres SMTP dans `.env.heliostores-prod` (`MAIL_PROVIDER=smtp`, `SMTP_*`, `MAIL_FROM`).
+3. Fixer `MAIL_SEND_AFTER=<date ISO du raccordement>` : les messages antérieurs ne partent jamais seuls. Les revoir
+   dans Administration → E-mails, « Réessayer » ceux à envoyer, « Abandonner » les autres.
+4. Déployer (§ 2 bis), puis tester l'envoi et la réception avec un destinataire contrôlé.
+
+`ADMIN_NOTIFICATION_EMAIL=contact@heliostores.com` est déjà en place ; `MAIL_SEND_AFTER` vaut aujourd'hui
+`2026-10-26T12:51:29Z`.
 
 ## 6. Sauvegardes et restauration
 
@@ -159,6 +212,10 @@ puis décider dans Administration → E-mails quels messages anciens renvoyer (l
   45 4 * * * root flock -n /run/heliostores-prod-backup.lock bash -c 'cd /opt/pergola && umask 077 && PG_CONTAINER=heliostores-prod-postgres POSTGRES_USER=heliostores POSTGRES_DB=heliostores MEDIA_VOLUME=heliostores_prod_uploads bash scripts/backup.sh backups/production && chmod 600 backups/production/* && find backups/production -maxdepth 1 -type f \( -name "db_*.dump" -o -name "media_*.tar.gz" -o -name "checksums_*.txt" \) -mtime +14 -delete' >> /var/log/heliostores-prod-backup.log 2>&1
   ```
   Journaux : `/var/log/heliostores-prod-{purge,backup}.log`. Les sauvegardes restent sur le VPS (aucune copie externe).
+  Horaires en **heure de Paris** (fuseau du serveur `Europe/Paris`, CET/CEST) : purge à 04:15, sauvegarde à 04:45.
+  Revérifié le 2026-10-26 : fichier unique, aucun doublon (`cron.d`, crontab root, timers systemd), service cron
+  actif. Restauration isolée de `db_20261026_132425.dump` (conteneur sans réseau) : 31 familles, 196 médias,
+  16 migrations, 4 pages publiées.
   La purge du chat (180 j après clôture, 365 j sans activité) est annoncée dans la politique de confidentialité.
 - Conservation annoncée des demandes de devis, contact et rappel sans suite : 3 ans au plus après le dernier contact.
   Aucune purge automatique ni suppression dans l'administration : revue manuelle (au moins annuelle) en base.
@@ -171,6 +228,14 @@ puis décider dans Administration → E-mails quels messages anciens renvoyer (l
   ```
 
 ## 6 bis. Identité et pages légales
+
+Mise à jour du 2026-10-26 (après-midi), à la demande du propriétaire :
+- coordonnées commerciales : `contact@heliostores.com`, téléphone retiré des Réglages ; la présentation commerciale
+  montre « HELIOSTORES, 59650 Villeneuve-d'Ascq, France » sans rue ;
+- mentions légales : identité de l'éditeur conservée (THYSENS, siège, téléphone en texte simple, sans lien d'appel,
+  e-mail joignable) ;
+- page `livraison-installation` publiée avec le délai fourni et sans condition inventée.
+Sources hors dépôt : `private/legal-2026-10-26/apply-contact.sql` (versions précédentes `*.v1.md`).
 
 Réglages (`SiteSettings`) et pages `mentions-legales`, `confidentialite`, `cookies` publiés le 2026-10-26 en base de
 production (sources hors dépôt : `private/legal-2026-10-26/`, avec le SQL appliqué ; trace `AuditLog`

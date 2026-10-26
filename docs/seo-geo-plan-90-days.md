@@ -32,7 +32,7 @@ proxy). Ce document ne garantit ni position, ni volume de trafic, ni citation da
 ### Données structurées (JSON-LD)
 
 Elles sont générées par des fonctions pures et testées (`src/server/seo/structured-data.ts`) :
-- **Organization** (accueil) : nom, URL, logo. Raison sociale, adresse, téléphone et e-mail n'apparaissent que s'ils sont renseignés dans les Réglages. Aujourd'hui, ils sont vides. Un **WebSite** l'accompagne.
+- **Organization** (accueil) : marque `HELIOSTORES` (`name`), entité juridique `THYSENS` (`legalName`), URL, logo, e-mail commercial `contact@heliostores.com` et localité (59650 Villeneuve-d'Ascq, FR), depuis les Réglages. Ni téléphone ni rue (décision du 2026-10-26). Un **WebSite** l'accompagne.
 - **BreadcrumbList** sur les familles, les fiches et les guides.
 - **Product** sur les fiches : nom, description, URL, catégorie (nature), images. **Aucune offre pour un produit sur devis**, donc jamais de prix à 0. Aucune note, aucun avis, aucun stock, aucun GTIN, aucune marque ni fabricant. Une offre n'est émise que pour un prix public strictement positif, avec sa devise et sa base fiscale (`valueAddedTaxIncluded`). Depuis la désactivation des grilles Casablanca et HelioScreen, aucune fiche n'a d'offre.
 - **Pas de LocalBusiness** : aucune adresse d'établissement validée. **Pas de hreflang** : une seule version, en français. **Pas de `llms.txt`**.
@@ -100,6 +100,17 @@ Limites :
 
 ## 3. Outils : état des connexions
 
+**Procédure courte (état au 2026-10-26 : aucun accès Search Console ni Bing disponible, aucun jeton fourni)**
+1. Google Search Console → Ajouter une propriété → **Domaine** `heliostores.com` → copier l'enregistrement **TXT**
+   proposé et l'ajouter dans la zone DNS GoDaddy (ne rien supprimer d'autre). Variante sans DNS : propriété
+   **Préfixe d'URL** `https://heliostores.com/`, méthode « Balise HTML » : la valeur de `content` va dans
+   `GOOGLE_SITE_VERIFICATION=` de `.env.heliostores-prod`, puis `scripts/deploy-production.sh <IMAGE_TAG actuel>`
+   (lecture à l'exécution vérifiée le 2026-10-26).
+2. Une fois vérifiée : Sitemaps → soumettre `https://heliostores.com/sitemap.xml`.
+3. Bing Webmaster Tools → importer depuis la Search Console, ou méthode « Balise meta » : valeur dans
+   `BING_SITE_VERIFICATION=`, même redéploiement ; soumettre le même sitemap.
+4. Une soumission ne vaut pas indexation : suivre le rapport « Pages » avant toute conclusion.
+
 | Outil | État | Action exacte restante |
 |---|---|---|
 | Google Search Console | **Non raccordé** (aucun accès disponible dans cette mission) | Après ouverture publique : créer une propriété « Domaine » `heliostores.com`, vérifier par l'enregistrement **TXT** fourni par Google dans la zone DNS (GoDaddy). Sinon, propriété « Préfixe d'URL » et variable `GOOGLE_SITE_VERIFICATION=<jeton>` (balise meta émise seulement en production indexable). Puis soumettre `https://heliostores.com/sitemap.xml`. |
@@ -129,15 +140,20 @@ Responsables : **Client** = HELIOSTORES (direction, commercial) ; **Tech** = exp
 ### J0 à J7 : ouverture vérifiée
 | Priorité | Action | Responsable | Dépendance | Livrable | Indicateur |
 |---|---|---|---|---|---|
-| P0 | Contrôle d'indexabilité en production : `robots.txt`, sitemap, absence de `noindex` et de `X-Robots-Tag` sur les pages publiques, canoniques en `https://heliostores.com` | Tech | DNS et HTTPS de production | compte rendu de contrôle | 0 page publique en `noindex` ; 0 URL du sitemap en erreur |
+| P0 | **Fait le 2026-10-26** : contrôle d'indexabilité en production (34 URL du sitemap : 200, sans `noindex` ni `X-Robots-Tag`, canonique exacte, Open Graph, aucun lien de préproduction) | Tech | — | `docs/test-report.md` | 0 anomalie |
 | P0 | Vérifier la Search Console et Bing (TXT DNS), soumettre le sitemap | Client + Tech | accès GoDaddy et compte Google | propriétés vérifiées | sitemap « réussi » |
 | P0 | Inspection d'URL : accueil, quatre familles, trois fiches, deux guides | Tech | Search Console | demandes d'indexation | pages « indexées » |
 | P1 | Suivi des erreurs (404, 5xx) et des demandes reçues, avec leur origine | Tech + Client | administration | point quotidien | demandes par jour ; 0 erreur 5xx |
 | P1 | Vérifier l'éligibilité au Google Business Profile (adresse réelle ou zone de service effective) | Client | identité juridique validée | décision écrite | profil créé ou écarté |
 
 ### J8 à J30 : pages prioritaires et premiers médias
+Priorité aux **quatre familles et aux fiches dont les données sont fiables** ; les guides existants (choix, mesures,
+toiles et motorisation, comparatif) sont améliorés plutôt que multipliés.
+
 | Priorité | Action | Responsable | Dépendance | Livrable | Indicateur |
 |---|---|---|---|---|---|
+| P0 | Pages familles et fiches fiables : réponses aux questions réelles des prospects (origine et message des demandes), délai de livraison affiché, points « à confirmer » explicites | Rédaction + Tech | demandes reçues | textes révisés | demandes par famille |
+| P1 | Guides de choix et de prise de mesures : compléter d'après les erreurs de cotes observées dans les demandes | Rédaction | demandes reçues | guides mis à jour | demandes à cotes incohérentes en baisse |
 | P0 | Compléter les données en attente (registre fournisseur), puis enrichir les fiches concernées | Client + Tech | réponses du fournisseur | fiches mises à jour | points « à confirmer » levés |
 | P1 | Améliorer les quatre pages familles d'après les premières requêtes observées | Rédaction | 2 à 3 semaines de données Search Console | textes révisés | CTR des pages familles |
 | P1 | Publier les guides d'installation validés (notices fournisseur) | Tech + Client | validation technique | guides publiés | pages indexées |
@@ -151,7 +167,8 @@ Responsables : **Client** = HELIOSTORES (direction, commercial) ; **Tech** = exp
 | P1 | Rouvrir Références avec des réalisations documentées (lieu au niveau de la ville, avec accord) | Client + Tech | médias autorisés | rubrique publiée | réalisations publiées |
 | P1 | Contenus répondant aux questions reçues des prospects (FAQ par famille) | Rédaction | demandes reçues | questions et réponses ajoutées | demandes « hors sujet » en baisse |
 | P1 | Page « Devenir partenaire installateur » avec des conditions réelles | Client | conditions définies | page publiée | candidatures |
-| P2 | Liens éditoriaux légitimes depuis les sites partenaires (installateurs, prescripteurs) ; aucun achat de liens | Client | partenariats signés | liens obtenus | domaines référents |
+| P2 | Liens éditoriaux légitimes depuis les sites partenaires (installateurs, prescripteurs, fournisseurs autorisés à citer la marque) ; aucun achat de liens | Client | partenariats signés | liens obtenus | domaines référents |
+| P2 | Contenus régionaux **uniquement pour les zones réellement desservies** (liste validée par écrit) ; aucune page par ville sans activité réelle | Client + Rédaction | zones desservies validées | pages publiées | demandes de ces zones |
 
 ### J61 à J90 : optimisation
 | Priorité | Action | Responsable | Dépendance | Livrable | Indicateur |
@@ -170,6 +187,8 @@ Responsables : **Client** = HELIOSTORES (direction, commercial) ; **Tech** = exp
 - taux de passage configuration → demande ;
 - devis émis, ventes et encaissements attribuables (devis → commande → paiement dans l'administration) ;
 - visites dont le référent est un moteur d'IA (référents chatgpt.com, perplexity.ai, copilot.microsoft.com, gemini.google.com…), visibles dans l'origine des demandes et dans l'outil d'audience s'il est activé.
+
+**Aucune promesse de classement ni de citation par un moteur ou un assistant d'IA.**
 
 **Simples observations (non mesurables de façon fiable) :**
 - présence ou citation de HELIOSTORES dans les réponses des assistants d'IA, relevée à la main sur un panel fixe de questions ;

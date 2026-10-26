@@ -186,3 +186,47 @@ externes :
 - robots.txt, sitemap (33 URL, aucune page privée), mentions légales, confidentialité, cookies : 200.
 - Tâches planifiées installées et exécutées une fois (purge : 0 ; sauvegarde valide).
 - Consultation depuis l'administration : **non vérifiée** (aucun administrateur de production).
+
+## 2026-10-26 — exploitation commerciale (image `0886bb3`, compose `5e1df9c`)
+
+- Contrôles statiques et tests : typage et lint sans erreur ; unitaires 269/269 ; intégration 100/100, dont le seuil
+  `MAIL_SEND_AFTER` et la mention de délai figée dans le devis ; CI verte (push et PR) sur `0886bb3`, `b0bad38` et `5e1df9c`.
+- Administrateur créé par `pnpm admin:bootstrap` (mot de passe aléatoire passé par variable d'environnement, jamais
+  affiché). Connexion par le vrai formulaire (`/compte/connexion`), arrivée sur `/admin` (« Tableau de bord »).
+- Consultation administrative de `DEV-202610-HGSLP3` puis d'une nouvelle demande `DEV-202610-WXEV95` :
+  - liste et coordonnées ;
+  - origine (« entrée /pergolas/marbella ») ;
+  - récapitulatif du produit et de la configuration ;
+  - visualisation affichée (1 600 px) ;
+  - visuel et PDF en 200 pour l'administrateur (`private, no-store`), 404 sans session ;
+  - passage « En étude » et notes enregistrées ;
+  - file des e-mails (4 en attente, fournisseur `hold`, mention du suivi manuel).
+- Défauts relevés en administration et corrigés :
+  - bandeau « préproduction » en production ;
+  - mention « (préproduction) » incrustée dans la visualisation exportée ;
+  - promesse d'e-mail au passage « Envoyé » sans SMTP ;
+  - heures affichées en UTC (désormais heure de Paris) ;
+  - message « e-mail de réinitialisation envoyé » sans SMTP.
+- Coordonnées, contrôlées par le DNS public :
+  - accueil, Contact, fiches et Livraison : aucun lien `tel:`, ni numéro, ni rue, ni THYSENS visible, ni adresse
+    personnelle ; `contact@heliostores.com` présent ;
+  - mentions légales et confidentialité : identité juridique conservée, téléphone en texte simple ;
+  - PDF du devis : « HELIOSTORES - 59650 Villeneuve-d'Ascq, France - contact@heliostores.com ».
+- Délai :
+  - présent sur la fiche, dans le récapitulatif, la confirmation, l'e-mail en file et le PDF du nouveau devis ;
+  - absent du PDF du devis antérieur (pas de modification rétroactive).
+- Déploiement par relais, sous sonde publique toutes les 0,1 s :
+  - 1re version du script : une 502 au retrait du relais ;
+  - changement de labels : 49 × 404 (conflit de routeur Traefik), désormais détecté ;
+  - version finale : 3 déploiements consécutifs, 1 001 requêtes, 0 erreur.
+- SEO :
+  - 34 URL du sitemap (dont `/livraison-installation`) : 200, sans `noindex` ni `X-Robots-Tag`, canonique exacte,
+    Open Graph, aucun lien de préproduction ;
+  - JSON-LD Organization : `name` HELIOSTORES, `legalName` THYSENS, e-mail et localité, sans téléphone ni rue ;
+    aucune offre, aucun avis, aucun stock ;
+  - balises de vérification Google et Bing lues à l'exécution (conteneur isolé, jetons fictifs) ;
+  - préproduction : 401.
+- Sauvegardes et purge : tâches actives à l'heure de Paris, sans doublon ; restauration isolée de
+  `db_20261026_132425.dump` réussie.
+- Nettoyage : demandes `HGSLP3` et `WXEV95`, leurs 2 visuels et leurs 4 notifications supprimés (trace `AuditLog`) ;
+  les 7 consentements anonymes sont conservés (site public : origine non distinguable).

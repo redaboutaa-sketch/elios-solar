@@ -2,13 +2,15 @@
 
 ## Lancement (2026-10-26)
 
-- **Production heliostores.com publique** (2026-10-26) : pile `heliostores-prod`, commit applicatif **`a8172e5`**,
-  DNS GoDaddy corrigé (A, AAAA, CNAME www seuls), routeur Traefik activé, certificats Let's Encrypt (`heliostores.com`,
-  `www`), sans authentification de revue, indexable. Identité THYSENS et pages légales publiées. Site sur devis :
-  `PAYMENT_PROVIDER=disabled`, prix non validés masqués, `MAIL_PROVIDER=hold` (suivi manuel, runbook § 5 bis).
-  Purge du chat et sauvegarde quotidienne planifiées (`/etc/cron.d/heliostores-prod`). **Aucun administrateur de
-  production** : suivi commercial non opérationnel tant que le bootstrap n'est pas fait. Limite anti-abus partagée
-  entre visiteurs IPv6 (runbook § 4 : repli = retrait de l'AAAA).
+- **Production heliostores.com publique, sur devis** (2026-10-26) : pile `heliostores-prod`, image applicative
+  **`0886bb3`**, compose et script de déploiement `5e1df9c` (relais sans interruption, `TZ=Europe/Paris`).
+  - Coordonnées commerciales : HELIOSTORES, 59650 Villeneuve-d'Ascq, `contact@heliostores.com`, sans téléphone.
+  - Délai de livraison affiché (fiches, récapitulatif, confirmation, nouveaux devis).
+  - Administrateur `reda.boutaa@gmail.com` créé et vérifié ; consultation des demandes vérifiée.
+  - `MAIL_PROVIDER=hold` : `contact@heliostores.com` n'a ni boîte (pas de MX) ni SMTP ; suivi manuel (runbook § 5 bis).
+  - Purge du chat et sauvegarde quotidiennes, restauration vérifiée.
+  - Limite anti-abus partagée entre visiteurs IPv6 tant que l'AAAA reste publié (retrait demandé, accès GoDaddy
+    indisponible ici).
 - Préproduction : commit `a8172e5`, identifiant de revue, noindex.
 - État et critères : `docs/launch-readiness.md` ; éléments à fournir : `docs/client-inputs.md` (et Administration →
   Registre de lancement) ; procédures : `docs/production-runbook.md` ; recette : `docs/test-report.md` ;
