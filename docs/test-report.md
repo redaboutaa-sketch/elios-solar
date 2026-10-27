@@ -1,3 +1,21 @@
+# Carrousel de l'accueil et légendes des photos fournisseur — 2026-10-27
+
+- Code `02d4cce` (CI verte, push et PR) : unitaires 280/280, intégration 101/101, tsc et eslint sans erreur.
+- Copie de la production (sauvegarde du jour restaurée dans un PostgreSQL jetable, réseau interne, copie du volume des
+  médias, supprimés ensuite) : import des visuels idempotent (2ᵉ passage : métadonnées seulement), correctif des
+  légendes conditionnel (0 restante).
+- Carrousel à 390 (DPR 3), 768 (DPR 2) et 1440 px, en production après déploiement : quatre vues « Pergolas /
+  Screens / Stores bannes / Moustiquaires · Visualisation », AVIF 1672 px servi (WebP en repli, 12 + 12 variantes en
+  200, cache immuable), cadrage mobile 72 / 28 / 50 / 60 %, aucun débordement horizontal, fondu sans vide ; au
+  chargement : première vue prioritaire et vue suivante seulement ; anciens visuels du carrousel non demandés.
+- Lisibilité (blanc sur image, 95ᵉ centile de luminance sous le texte) : titre ≥ 3,7:1, légende ≥ 10,9:1.
+- Captures avant / après de l'accueil complet : seule la section « La précision dans le détail » raccourcit (légendes
+  plus courtes) ; fiches produit inchangées (même visuel principal).
+- 34 URL du sitemap en 200 : « visuel du fabricant » 0 occurrence (26 avant) ; conservés : pied de page « Visuels non
+  contractuels. », mentions légales, mentions des visualisations de devis, titres des documents officiels.
+- Déploiement par le relais : 290 requêtes de sonde pendant la bascule, toutes en 200. Préproduction 401.
+- Non vérifié : navigateur sans AVIF (repli WebP vérifié par les URL seulement) ; recette e2e complète non rejouée.
+
 # Vérification de la mission SEO/GEO — 2026-10-26 (soir)
 
 Commit déployé en production : **`1f311ba`**. Détail, conditions et limites : `docs/seo/changes-and-validation.md` § 3.

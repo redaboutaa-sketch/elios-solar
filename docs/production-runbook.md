@@ -237,6 +237,22 @@ docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod
 ```
 Suivi commercial : Administration → Suivi par origine (montant HT encaissé saisi sur chaque devis gagné).
 
+**Visuels du carrousel de l'accueil** (un par famille ; manifeste `src/server/media/home-visuals.ts`) : visualisations
+générées fournies par le client, originaux dans `inputs/heliostores/homepage/` (hors Git et hors Docker, jamais
+modifiés). L'import produit WebP et AVIF en 640, 1080 px et largeur d'origine, sous des noms publics descriptifs, et
+enregistre provenance, empreinte et cadrage (`focus`). Sans visuel importé, le carrousel reprend le visuel principal du
+premier modèle de chaque famille. Après un changement de cadrage ou de texte alternatif dans le manifeste, relancer
+l'import (métadonnées seulement si l'original n'a pas changé).
+```bash
+docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod run --rm --no-deps \
+  -v /opt/pergola/inputs/heliostores/homepage:/staging:ro migrate node_modules/.bin/tsx scripts/import-home-visuals.ts --dir /staging          # aperçu
+docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod run --rm --no-deps \
+  -v /opt/pergola/inputs/heliostores/homepage:/staging:ro migrate node_modules/.bin/tsx scripts/import-home-visuals.ts --dir /staging --apply  # idempotent
+```
+Légendes publiques : les photos fournisseur autorisées ne portent plus de mention générique « visuel du fabricant, non
+contractuel » ; les visualisations de l'accueil sont légendées « Visualisation » ; les rendus 3D et visuels joints aux
+devis gardent « visualisation non contractuelle » ; crédits et sources restent dans la médiathèque (non publiés).
+
 ## 6 bis. Identité et pages légales
 
 Mise à jour du 2026-10-26 (après-midi), à la demande du propriétaire :

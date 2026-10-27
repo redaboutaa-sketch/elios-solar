@@ -3,8 +3,9 @@
 ## Lancement (2026-10-26)
 
 - **Production heliostores.com publique, sur devis** (2026-10-26) : pile `heliostores-prod`, image applicative
-  **`1f311ba`** (mission SEO/GEO : titres, descriptions, FAQ et aide sans commande en ligne, variantes d'images 1080 px,
-  suivi commercial par origine — `docs/seo/changes-and-validation.md`), compose et script de déploiement `5e1df9c`
+  **`02d4cce`** (2026-10-27 : carrousel de l'accueil en visualisations générées, WebP/AVIF, cadrage par écran, légende
+  « Visualisation » ; mention « visuel du fabricant, non contractuel » retirée des légendes des photos fournisseur —
+  runbook § 6 ter ; auparavant `1f311ba`, mission SEO/GEO — `docs/seo/changes-and-validation.md`), compose et script de déploiement `5e1df9c`
   (relais sans interruption, `TZ=Europe/Paris`).
   - Coordonnées commerciales : HELIOSTORES, 59650 Villeneuve-d'Ascq, `contact@heliostores.com`, sans téléphone.
   - Délai de livraison affiché (fiches, récapitulatif, confirmation, nouveaux devis).
