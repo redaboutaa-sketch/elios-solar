@@ -91,12 +91,12 @@ const RIVIERA: InstallGuide = {
         "Outils (p. 10) : forets, perceuse à percussion, escabeau/échafaudage, tournevis, marteau, double-mètre, crayon/marqueur, niveau, clés polygonales/plates, clés Allen, chevilles.",
         "Préparation (p. 10) : déballer et contrôler les éléments, vérifier la capacité portante, préparer l'outillage.",
       ],
-      media: [{ key: "alu-casa-07", caption: "Coffre fermé en vue transparente (visuel du fabricant, illustratif)." }, { key: "alu-casa-11", caption: "Articulation d'un bras (visuel du fabricant, illustratif)." }],
+      media: [{ key: "alu-casa-07", caption: "Coffre fermé en vue transparente." }, { key: "alu-casa-11", caption: "Articulation d'un bras." }],
     },
     {
       id: "pose-murale",
       title: "Pose murale",
-      media: [{ key: "alu-casa-13", caption: "Schéma coté de la pose murale (visuel du fabricant ; les figures d'étapes sont dans la notice, p. 12-14)." }],
+      media: [{ key: "alu-casa-13", caption: "Schéma coté de la pose murale (les figures d'étapes sont dans la notice, p. 12-14)." }],
       steps: [
         { text: "Tracer au niveau ; présenter le premier support à l'endroit marqué au dos de la cassette, « sur l'axe » des supports de bras ; marquer les trous.", page: "p. 12" },
         { text: "Percer, cheviller, serrer le support.", page: "p. 12" },
@@ -110,7 +110,7 @@ const RIVIERA: InstallGuide = {
     {
       id: "pose-plafond-chevrons",
       title: "Pose au plafond ou sur chevrons",
-      media: [{ key: "alu-casa-14", caption: "Schéma coté de la pose au plafond (visuel du fabricant)." }, { key: "alu-casa-12", caption: "Schéma coté de la pose sur chevrons (visuel du fabricant)." }],
+      media: [{ key: "alu-casa-14", caption: "Schéma coté de la pose au plafond." }, { key: "alu-casa-12", caption: "Schéma coté de la pose sur chevrons." }],
       steps: [
         { text: "Plafond : supports aux emplacements « marqués par des autocollants en couleur … dans la partie arrière de la casette », « sur une seule ligne, c'est-à dire à la même distance du mur » ; supports muraux reliés aux supports de plafond « à l'aide des vis M10x35 avec rondelles et écrous ».", page: "p. 15" },
         { text: "Chevrons : fixations pour le bois, sur une seule ligne ; « disposer les supports de toiture droite / gauche en alternance - c'est-à-dire en partant du côté droit du store (quand on regarde du front du store banne) » ; jeu de vis M10x35 avec rondelles et écrous.", page: "p. 15" },
@@ -204,12 +204,12 @@ const OMBRA: InstallGuide = {
         { text: "Le fabricant décline toute responsabilité en cas de fonctionnement incorrect « si le substrat ne garantit pas la linéarité et l'horizontalité du montage du profil du guide ».", page: "p. 16" },
         { text: "« Le manque de distance appropriée des guides des éléments auxquels l'installation est fait peut entraîner un mauvais fonctionnement du système et son endommagement mécanique. »", page: "p. 22" },
       ],
-      media: [{ key: "alu-r120-04", caption: "Coupe cotée du coffre (visuel du fabricant)." }],
+      media: [{ key: "alu-r120-04", caption: "Coupe cotée du coffre." }],
     },
     {
       id: "pose",
       title: "Pose des coulisses et du coffre",
-      media: [{ key: "alu-r120-06", caption: "Coulisse en deux parties, vue éclatée (visuel du fabricant ; les photos d'étapes 1 à 9 sont dans la notice, p. 10-15)." }, { key: "alu-r120-08", caption: "Coffre avec trappe de visite ouverte (visuel du fabricant)." }],
+      media: [{ key: "alu-r120-06", caption: "Coulisse en deux parties, vue éclatée (les photos d'étapes 1 à 9 sont dans la notice, p. 10-15)." }, { key: "alu-r120-08", caption: "Coffre avec trappe de visite ouverte." }],
       steps: [
         { text: "Supports modulaires : introduire les plaques dans les guides, puis visser le support.", page: "p. 10" },
         { text: "Marquer les points de fixation des guides ; percer.", page: "p. 13 (photos 1-2)" },

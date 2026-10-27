@@ -46,3 +46,33 @@ export async function publishedMediaFor(familySlug: string, ctx: MediaContext = 
     match: (r.media.provenance as { match?: string } | null)?.match ?? null,
   }));
 }
+
+/** Visuel du carrousel de l'accueil (scripts/import-home-visuals.ts) : variantes WebP et AVIF, cadrage par écran. */
+export interface HomeVisualMedia {
+  category: string;
+  path: string;
+  alt: string;
+  width: number | null;
+  height: number | null;
+  smallPath: string | null;
+  mediumPath: string | null;
+  avif: { path: string; width: number }[];
+  focus: { mobile: string; desktop: string } | null;
+}
+
+/** Visuels PUBLIÉS du carrousel de l'accueil, un par famille (le premier dans l'ordre d'affichage). */
+export async function homeVisuals(): Promise<Map<string, HomeVisualMedia>> {
+  const now = new Date();
+  const rows = await prisma.media.findMany({
+    where: { status: "PUBLISHED", kind: "image", provenance: { path: ["placement"], equals: "home-hero" }, OR: [{ rightsExpiresAt: null }, { rightsExpiresAt: { gt: now } }] },
+    orderBy: { sortOrder: "asc" },
+    select: { path: true, alt: true, width: true, height: true, provenance: true },
+  });
+  const out = new Map<string, HomeVisualMedia>();
+  for (const r of rows) {
+    const p = (r.provenance ?? {}) as { category?: string; focus?: { mobile: string; desktop: string }; variants?: { small?: { path?: string }; medium?: { path?: string }; avif?: { path: string; width: number }[] } };
+    if (!p.category || out.has(p.category)) continue;
+    out.set(p.category, { category: p.category, path: r.path, alt: r.alt, width: r.width, height: r.height, smallPath: p.variants?.small?.path ?? null, mediumPath: p.variants?.medium?.path ?? null, avif: p.variants?.avif ?? [], focus: p.focus ?? null });
+  }
+  return out;
+}

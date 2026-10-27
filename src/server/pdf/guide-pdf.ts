@@ -49,7 +49,7 @@ export async function buildGuidePdf(guide: InstallGuide, status: string): Promis
     s.steps?.forEach((st, k) => para(`${k + 1}) ${st.text} (notice, ${st.page})`, { indent: 10 }));
     s.items?.forEach((it) => para(`• ${it}`, { indent: 10 }));
     s.warnings?.forEach((w) => para(`AVERTISSEMENT — ${w.text} (${w.page})`, { indent: 10, color: warn }));
-    if (s.media?.length) para("Illustrations : voir la version en ligne (visuels illustratifs du fabricant).", { size: 8, color: grey });
+    if (s.media?.length) para("Illustrations : voir la version en ligne.", { size: 8, color: grey });
     y -= 6;
   });
   para(`${guide.sections.length + 1}. Notices officielles`, { size: 13, f: bold, color: green });

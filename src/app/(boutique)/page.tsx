@@ -5,7 +5,7 @@ import { dimRangeText } from "@/domain/system";
 import { formatSystemPrice } from "@/domain/system-pricing";
 import { listSystemFamilies } from "@/server/catalog/systems";
 import { defaultSceneModel } from "@/server/catalog/scene-preview";
-import { publishedMediaFor } from "@/server/media/queries";
+import { homeVisuals, publishedMediaFor } from "@/server/media/queries";
 import { FamilySketch } from "@/components/illustrations/sketches";
 import { MediaImage, mediumPathOf, smallPathOf } from "@/components/ui/media-image";
 import { HeroSlider, type HeroSlide } from "@/components/home/hero-slider";
@@ -46,10 +46,14 @@ export default async function HomePage() {
   const heroOf = (f: Family | undefined) => (f?.hero ? { path: f.hero.path, alt: f.hero.alt, width: f.hero.width, height: f.hero.height, provenance: f.hero.provenance, nature: f.hero.nature } : null);
   const byCat = Object.fromEntries(families.map(({ c, items }) => [c.key, items])) as Record<CategoryKey, Family[]>;
 
-  // grand visuel : une vue en situation par famille (visuel principal du premier modèle)
+  // grand visuel : une visualisation par famille (visuels de l'accueil, aucun modèle précis : lien vers la famille) ;
+  // à défaut, le visuel principal du premier modèle de la famille
+  const home = await homeVisuals();
   const slides: HeroSlide[] = families.flatMap(({ c, items }) => {
+    // composant client : seuls chemins, texte alternatif, dimensions et cadrage partent au navigateur (jamais la provenance)
+    const v = home.get(c.key);
+    if (v) return [{ id: `accueil-${c.key.toLowerCase()}`, media: { path: v.path, alt: v.alt, width: v.width, height: v.height, smallPath: v.smallPath, mediumPath: v.mediumPath, avif: v.avif, focus: v.focus }, label: c.label, href: c.href, nature: "Visualisation" }];
     const f = items[0]; const h = heroOf(f);
-    // composant client : seuls chemin, texte alternatif et dimensions partent au navigateur (jamais la provenance)
     return f && h ? [{ id: f.slug, media: { path: h.path, alt: h.alt, width: h.width, height: h.height, smallPath: smallPathOf(h), mediumPath: mediumPathOf(h) }, label: f.name, href: productHref(c.key, f.slug), nature: NATURE[h.nature] ?? h.nature }] : [];
   });
   // panneaux : une famille par panneau, illustrée par son dessin
@@ -68,7 +72,7 @@ export default async function HomePage() {
     <>
       <JsonLd data={[organizationJsonLd({ name: BRAND.name, siteUrl: BRAND.siteUrl, logoPath: BRAND.logo.src, legalName: settings?.legalName, email: settings?.contactEmail, address: settings ? { postalCode: settings.postalCode, city: settings.city, countryCode: settings.countryCode } : null }), { "@context": "https://schema.org", "@type": "WebSite", name: BRAND.name, url: BRAND.siteUrl, inLanguage: "fr-FR", publisher: { "@id": `${BRAND.siteUrl.replace(/\/$/, "")}/#organisation` } }]} />
       {/* Entrée principale (retour client du 2026-10-21) : choisir une famille par son dessin, dès le premier écran.
-          Les photographies suivent juste en dessous et restent dans les fiches produit. */}
+          Les visuels en situation suivent juste en dessous ; les photographies restent dans les fiches produit. */}
       <section id="solutions" className="home-entry scroll-mt-16 pb-6 pt-5 sm:pt-7" aria-labelledby="solutions-titre">
         <div className="container-x flex flex-wrap items-end justify-between gap-x-8 gap-y-1">
           <div>
@@ -99,7 +103,8 @@ export default async function HomePage() {
         </ul>
       </section>
 
-      {/* Photographies en situation (visuels de la documentation produit, jamais présentés comme des réalisations) */}
+      {/* Visuels en situation : visualisations générées (légende « Visualisation »), jamais présentées comme des
+          photographies du fabricant ni comme des réalisations */}
       <HeroSlider slides={slides}>
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/90">En situation</p>
         <h2 className="mt-4 max-w-3xl font-display text-display font-semibold text-balance">Pergolas, screens, stores bannes et moustiquaires configurés à vos cotes.</h2>

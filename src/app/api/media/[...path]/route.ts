@@ -16,7 +16,9 @@ async function accessFor(name: string): Promise<Access> {
   // une variante réduite (vignette) suit les règles d'accès de son média
   const media = (await prisma.media.findFirst({ where: { path: url }, select: { id: true, status: true, documents: { select: { status: true, audience: true } } } }))
     ?? (await prisma.media.findFirst({ where: { provenance: { path: ["variants", "small", "path"], equals: url } }, select: { id: true, status: true, documents: { select: { status: true, audience: true } } } }))
-    ?? (await prisma.media.findFirst({ where: { provenance: { path: ["variants", "medium", "path"], equals: url } }, select: { id: true, status: true, documents: { select: { status: true, audience: true } } } }));
+    ?? (await prisma.media.findFirst({ where: { provenance: { path: ["variants", "medium", "path"], equals: url } }, select: { id: true, status: true, documents: { select: { status: true, audience: true } } } }))
+    // variantes listées (WebP / AVIF des visuels de l'accueil, scripts/import-home-visuals.ts)
+    ?? (await prisma.media.findFirst({ where: { provenance: { path: ["files"], array_contains: [url] } }, select: { id: true, status: true, documents: { select: { status: true, audience: true } } } }));
   if (!media) return "none";
   const docs = media.documents;
   if (docs.length > 0) {

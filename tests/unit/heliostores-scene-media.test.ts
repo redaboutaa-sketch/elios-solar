@@ -73,6 +73,9 @@ describe("médias HELIOSTORES : provenance et rattachement", () => {
   it("aucune image présentée comme une réalisation HELIOSTORES", () => {
     for (const m of HELIOSTORES_MEDIA) expect(`${m.caption} ${m.alt}`).not.toMatch(/réalisation|installée par HELIOSTORES|chez nos clients/i);
   });
+  it("légendes et textes alternatifs publics sans mention générique « visuel du fabricant, non contractuel » (photos autorisées)", () => {
+    for (const m of HELIOSTORES_MEDIA) expect(`${m.caption} ${m.alt}`, m.key).not.toMatch(/visuel (du )?fabricant|non[ -]contractuel|\(\s*\)|\s\.$/i);
+  });
 });
 
 describe("attribution du prospect", () => {
