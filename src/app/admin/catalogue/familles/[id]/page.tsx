@@ -8,6 +8,7 @@ import { DATA_STATUS_FR, DataStatusBadge, FAMILY_STATUS_FR, Flash, Options, Page
 import { SPEC_SOURCE_FR, formatSpecValue, reviewSpec, type SpecSource } from "@/domain/technical-spec";
 import { specTargetId } from "@/server/validation/targets";
 import { LEGACY_FAMILY_SLUGS } from "@/server/catalog/legacy-slugs";
+import { NAME_TRANSCO } from "@/server/catalog/name-transco";
 import type { SystemRules } from "@/domain/system";
 import { addFamilyDocumentAction, addFamilyMediaAction, removeFamilyDocumentAction, removeFamilyMediaAction, updateFamilyAction } from "@/server/actions/admin/catalog";
 
@@ -29,6 +30,7 @@ export default async function FamilyEditPage(props: PageProps<"/admin/catalogue/
   const included = ((family.included as string[]) ?? []).join("\n");
   const images = medias.filter((m) => m.kind === "image");
   const legacySlugs = [...new Set([...family.legacySlugs, ...Object.entries(LEGACY_FAMILY_SLUGS).filter(([, to]) => to === family.slug).map(([from]) => from)])];
+  const transco = NAME_TRANSCO.find((t) => t.kind === "product" && t.slug === family.slug);
   const rules = family.systemRules as unknown as SystemRules | null;
   const supplierItems = rules ? [...(rules.controls ?? []), ...rules.included, ...rules.options].filter((x): x is typeof x & { supplierRef: string } => !!x.supplierRef && x.supplierRef !== x.label) : [];
   const pdfs = medias.filter((m) => m.kind === "document" || m.mimeType === "application/pdf");
@@ -44,9 +46,10 @@ export default async function FamilyEditPage(props: PageProps<"/admin/catalogue/
           <p className="mb-3 text-xs text-stone-700">Données internes, jamais publiées : le site n'affiche que le nom commercial (nomenclature HELIOSTORES).</p>
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm" data-testid="supplier-mapping">
             <dt className="text-stone-700">Identifiant interne (stable)</dt><dd className="font-mono">{family.id}</dd>
-            <dt className="text-stone-700">Nom commercial</dt><dd>{family.name} <span className="text-xs text-stone-700">(modifiable ci-dessous ; provisoire tant que le client ne l'a pas approuvé)</span></dd>
+            <dt className="text-stone-700">Nom commercial</dt><dd>{family.name} <span className="text-xs text-stone-700">(modifiable ci-dessous{transco ? " ; nom validé par le client le 2026-10-31" : " ; provisoire tant que le client ne l'a pas approuvé"})</span></dd>
             <dt className="text-stone-700">Slug public</dt><dd className="font-mono">{family.slug} <span className="font-sans text-xs text-stone-700">(changement par migration, avec redirection)</span></dd>
             <dt className="text-stone-700">Référence fournisseur</dt><dd>{family.supplierRef ?? "—"}</dd>
+            {transco && <><dt className="text-stone-700">Transcodification (validation client)</dt><dd data-testid="name-transco">{transco.previous.join(" / ")} → {transco.name} · réf. {transco.supplierRef} · statut technique : {transco.technical === "etabli" ? "établi" : <strong className="text-amber-800">à confirmer</strong>}{"note" in transco && transco.note ? ` — ${transco.note}` : ""}</dd></>}
             <dt className="text-stone-700">Fabricant</dt><dd>{family.manufacturer ?? "—"}</dd>
             <dt className="text-stone-700">Marque</dt><dd>{family.brand ?? "—"}</dd>
             {legacySlugs.length > 0 && <><dt className="text-stone-700">Ancien identifiant</dt><dd className="font-mono">{legacySlugs.join(", ")} (redirigé)</dd></>}

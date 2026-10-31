@@ -6,7 +6,7 @@ import { PUBLIC_FORBIDDEN_NAMES, withoutSellerIdentity } from "../../src/domain/
 // Chromium headless : rendu WebGL logiciel (SwiftShader).
 test.use({ launchOptions: { args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] } });
 
-test("Marbella : règles de cotes, options, fermeture souhaitée, 3D, projet enregistré et devis avec visualisation", async ({ page }) => {
+test("HelioMax : règles de cotes, options, fermeture souhaitée, 3D, projet enregistré et devis avec visualisation", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
@@ -39,7 +39,7 @@ test("Marbella : règles de cotes, options, fermeture souhaitée, 3D, projet enr
   await expect(page.getByTestId("wind-behaviour")).toContainText("ouvrir les lames à 90°");
   await page.locator("#side-front").selectOption({ label: "Fermetures latérales coulissantes (vitrage) (à étudier)" });
 
-  // 4. récapitulatif : points à confirmer, prix de la grille (aucune grille Marbella : sur devis)
+  // 4. récapitulatif : points à confirmer, prix de la grille (aucune grille HelioMax : sur devis)
   await page.getByTestId("step-next").click();
   const issues = stepIssues(page, "recap").first();
   await expect(issues).toContainText("Hauteur supérieure à 2,81 m");
@@ -48,7 +48,7 @@ test("Marbella : règles de cotes, options, fermeture souhaitée, 3D, projet enr
   await expect(issues).toContainText("Fermetures latérales coulissantes (vitrage) côté avant");
   await expect(issues).toContainText("Chauffage : souhait noté pour le devis");
   const recap = page.getByTestId("system-recap");
-  await expect(recap).toContainText("Marbella");
+  await expect(recap).toContainText("HelioMax");
   await expect(recap).toContainText("5 m");
   await expect(recap).toContainText("Fermeture côté avant");
   const expectedCell = (await publicPricesActive()) ? await publicCell("marbella", "autoportante", 5000, 3600) : null;
@@ -97,7 +97,7 @@ test("Marbella : règles de cotes, options, fermeture souhaitée, 3D, projet enr
 
   await page.goto("/compte/devis");
   const card = page.getByTestId("account-quote").filter({ hasText: number });
-  await expect(card).toContainText(priced ? /Marbella · structure \d/ : /Marbella · prix sur devis/);
+  await expect(card).toContainText(priced ? /HelioMax · structure \d/ : /HelioMax · prix sur devis/);
   await expect.poll(() => card.getByTestId("quote-visual").locator("img").evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBeGreaterThan(0);
   const pdf = await page.request.get(`/api/devis/${quote!.id}/pdf`);
   expect(pdf.status()).toBe(200);
@@ -133,7 +133,7 @@ test("devis en administration : récapitulatif, origine du prospect, qualificati
   const admin = await newClientContext(page.context().browser()!, { viewport: page.viewportSize() });
   const adminPage = await admin.newPage();
   await loginAdmin(adminPage, `/admin/devis/${quote!.id}`);
-  await expect(adminPage.getByTestId("quote-recap")).toContainText("Marbella");
+  await expect(adminPage.getByTestId("quote-recap")).toContainText("HelioMax");
   await expect(adminPage.getByTestId("quote-system-price")).toContainText(priced ? "Prix de la structure affiché au client" : "sur devis");
   await expect(adminPage.getByTestId("quote-attribution")).toContainText("utm_source=e2e");
   await expect(adminPage.getByTestId("quote-qualification")).toHaveText("À qualifier");
@@ -166,7 +166,7 @@ test("devis en administration : récapitulatif, origine du prospect, qualificati
   await expect.poll(async () => (await one<{ status: string }>('SELECT status FROM "Order" WHERE id = $1', [order!.id]))!.status, { timeout: 20_000 }).toBe("PAID");
 });
 
-test("Sevilla sans WebGL : toiture toile en modules, souhait d'automatisme ; le dessin du projet est joint au devis", async ({ browser, page }) => {
+test("HelioLux sans WebGL : toiture toile en modules, souhait d'automatisme ; le dessin du projet est joint au devis", async ({ browser, page }) => {
   const ctx = await newClientContext(browser, { viewport: page.viewportSize() });
   await ctx.addInitScript(() => {
     const orig = HTMLCanvasElement.prototype.getContext;

@@ -166,13 +166,21 @@ body:has(nav[aria-label="Navigation mobile"]) [data-chat-launcher] { display: no
    compact au défilement. Les états sont portés par data-overlay / data-scrolled (HeaderShell). */
 .site-header { position: sticky; --bar-h: 4.5rem; }
 .site-header .header-bar { background: var(--color-night); border-bottom: 1px solid rgb(255 255 255 / 0.08); transition: background-color 300ms var(--ease-out), border-color 300ms; }
-.site-header[data-scrolled] { --bar-h: 4rem; box-shadow: 0 8px 24px -16px rgb(0 0 0 / 0.5); }
+/* Bandeau défilé : même hauteur que l'état initial (aucun décalage du contenu) ; le logo s'agrandit (hauteur
+   proportionnelle, image nette jusqu'à 240 px de large affichés) et se centre sur la largeur du bandeau. La
+   navigation se range à gauche ; connexion, panier et CTA restent à droite (aucune fonction retirée). */
+.site-header[data-scrolled] { box-shadow: 0 8px 24px -16px rgb(0 0 0 / 0.5); }
+.site-header[data-scrolled] .header-logo { position: absolute; left: 50%; top: 50%; translate: -50% -50%; margin: 0; animation: header-logo-in 260ms var(--ease-out); }
+.site-header[data-scrolled] .header-logo img { height: 2.25rem; }
+@media (min-width: 40rem) { .site-header[data-scrolled] .header-logo img { height: 2.75rem; } }
+@media (min-width: 80rem) { .site-header[data-scrolled] .header-logo img { height: 3.25rem; } }
+@keyframes header-logo-in { from { opacity: 0; scale: 0.92; } to { opacity: 1; scale: 1; } }
 .site-header[data-overlay] { position: fixed; inset-inline: 0; }
 /* transparent : le voile du grand visuel assure la lisibilité (pas de second dégradé, qui marquait une ligne) */
 .site-header[data-overlay]:not([data-scrolled]) .header-bar { background: transparent; border-color: transparent; }
 /* panneau « Nos solutions » ouvert sur l'en-tête transparent : fond plein pour la lisibilité */
 .site-header[data-overlay]:not([data-scrolled]):has(.group\/sol:hover, .group\/sol:focus-within) .header-bar { background: var(--color-night); }
-@media (prefers-reduced-motion: reduce) { .site-header .header-bar, .site-header .header-bar > div { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .site-header .header-bar, .site-header .header-bar > div { transition: none; } .site-header .header-logo { animation: none; } }
 
 /* « Nos solutions » : panneaux extensibles (desktop, pointeur fin). Le panneau survolé ou focalisé prend ~50 % de la
    largeur ; transition de flex-grow en CSS uniquement. Sur écran tactile et mobile : panneaux empilés, CTA visible. */

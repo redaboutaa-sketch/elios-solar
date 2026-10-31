@@ -5,7 +5,7 @@ import { IN_FORCE_GRID_SQL, one, publicPricesActive } from "./db";
 const fmt = (minor: number) => new Intl.NumberFormat("fr-FR", { minimumFractionDigits: minor % 100 ? 2 : 0, maximumFractionDigits: 2 }).format(minor / 100);
 const norm = (s: string | null) => (s ?? "").replace(/[\u00a0\u202f]/g, " ");
 
-test("Casablanca structure seule : commande en ligne au prix de la grille, paiement simulé ; avec option, choix à confirmer ou pose, devis seulement", async ({ page }) => {
+test("HelioSun structure seule : commande en ligne au prix de la grille, paiement simulé ; avec option, choix à confirmer ou pose, devis seulement", async ({ page }) => {
   await openConfigurator(page, "casablanca");
   const order = page.getByTestId("online-order");
   if (!(await publicPricesActive())) {
@@ -49,7 +49,7 @@ test("Casablanca structure seule : commande en ligne au prix de la grille, paiem
 
   await page.getByTestId("add-to-cart").click();
   await page.waitForURL(/\/panier/);
-  await expect(page.getByTestId("cart-lines")).toContainText("Casablanca");
+  await expect(page.getByTestId("cart-lines")).toContainText("HelioSun");
   expect(norm(await page.getByTestId("cart-line-ht").textContent())).toContain(`${norm(fmt(cell!.amountMinor))} € HT`);
   await expect(page.getByTestId("cart-delivery-not-included")).toContainText("non comprises");
   await expect(page.getByTestId("cart-system-note")).toContainText("Livraison et pose non comprises");

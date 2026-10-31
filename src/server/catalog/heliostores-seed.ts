@@ -11,6 +11,9 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import { HELIOSTORES_FAMILIES, HELIOSTORES_SLUGS } from "./heliostores-data";
 import { LEGACY_FAMILY_SLUGS } from "./legacy-slugs";
+import { NAME_TRANSCO } from "./name-transco";
+
+const renameNote = (slug: string) => (NAME_TRANSCO.some((t) => t.slug === slug) ? "nomenclature HELIO validée par le client (2026-10-31)" : "renommage du catalogue");
 
 /** Textes commerciaux : modifiables dans l'administration, jamais écrasés ensuite par le seed. */
 const COMMERCIAL_KEYS = ["name", "shortDescription", "description", "seoTitle", "seoDescription", "faq"] as const;
@@ -42,9 +45,11 @@ export async function seedHeliostores(prisma: PrismaClient): Promise<{ families:
       sortOrder: f.sortOrder,
     };
     const legacySlugs = Object.entries(LEGACY_FAMILY_SLUGS).filter(([, to]) => to === f.slug).map(([from]) => from);
-    const existing = await prisma.productFamily.findUnique({ where: { slug: f.slug }, select: { commercialEditedAt: true, legacySlugs: true } });
+    const existing = await prisma.productFamily.findUnique({ where: { slug: f.slug }, select: { commercialEditedAt: true, legacySlugs: true, name: true, nameHistory: true } });
     const update: Record<string, unknown> = { ...content, legacySlugs: [...new Set([...(existing?.legacySlugs ?? []), ...legacySlugs])] };
     if (existing?.commercialEditedAt) for (const k of COMMERCIAL_KEYS) delete update[k];
+    // renommage par le catalogue (même identifiant, même slug) : l'ancien nom est gardé en alias interne
+    else if (existing && existing.name !== f.name) update.nameHistory = [...(Array.isArray(existing.nameHistory) ? existing.nameHistory : []), { name: existing.name, until: new Date().toISOString().slice(0, 10), by: HELIOSTORES_SEED_TAG, note: renameNote(f.slug) }] as never;
     // modèle retiré : toujours archivé et hors navigation (la fiche reste pour l'historique, sans conversion)
     if (f.retired) { update.status = "ARCHIVED"; }
     const row = await prisma.productFamily.upsert({ where: { slug: f.slug }, update: update as never, create: { slug: f.slug, status: f.status, ...content, legacySlugs } });

@@ -66,7 +66,7 @@ describe("médias HELIOSTORES : provenance et rattachement", () => {
   });
   it("une photo par produit publié en tête de galerie, aucune image d'un autre produit (SB 400 PRO, SB500 sur la page SB 400)", () => {
     for (const slug of ["helioscreen", "casablanca", "malaga", "sevilla", "corsica", "jamaica", "madera", "helioroof-screen", "moskifold", "moskifold-2"]) expect(HELIOSTORES_MEDIA.filter((m) => m.familySlug === slug && m.role === "hero"), slug).toHaveLength(1);
-    // Marbella : la galerie du fabricant montre un autre produit → aucune image rattachée (visuel à fournir)
+    // HelioMax : la galerie du fabricant montre un autre produit → aucune image rattachée (visuel à fournir)
     expect(HELIOSTORES_MEDIA.some((m) => m.familySlug === "marbella")).toBe(false);
     expect(HELIOSTORES_MEDIA.some((m) => /400_Pro|PRO|SB500/.test(m.source.type === "url" ? m.source.url : ""))).toBe(false);
   });
@@ -91,7 +91,7 @@ describe("attribution du prospect", () => {
 });
 
 describe("visualisation liée à la configuration (nomenclature du 2026-10-25)", () => {
-  it("toiture toile (Sevilla), teinte de toile suivie, LED et capteur représentés seulement s'ils sont choisis", () => {
+  it("toiture toile (HelioLux), teinte de toile suivie, LED et capteur représentés seulement s'ils sont choisis", () => {
     const sev = scene(input("sevilla", { fabricCode: "serge_600" }));
     expect(sev).toMatchObject({ kind: "pergola", roof: "fabric", roofFabricColor: "#a7a59d", mounting: "wall" });
     const plain = scene(input("corsica", { depthMm: 2600, widthMm: 4000 }));
@@ -103,7 +103,7 @@ describe("visualisation liée à la configuration (nomenclature du 2026-10-25)",
     expect(scene(input("helioroof-screen"))).toMatchObject({ kind: "roof_screen" });
     expect(scene(input("moskifold-2", { widthMm: 3000, heightMm: 2200 }))).toMatchObject({ kind: "insect", opening: "pleated", leaves: 2, widthMm: 3000, heightMm: 2200 });
   });
-  it("taille fabriquée (Malaga) : la géométrie suit la taille choisie", () => {
+  it("taille fabriquée (HelioSky) : la géométrie suit la taille choisie", () => {
     const a = scene(input("malaga", { sizeCode: "3500x3400", depthMm: 3400 }));
     const b = scene(input("malaga", { sizeCode: "3500x4750", depthMm: 4750 }));
     expect(a?.kind === "pergola" && a.widthMm).toBe(3400);

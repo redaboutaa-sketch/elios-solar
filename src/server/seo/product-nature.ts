@@ -12,7 +12,7 @@ export interface NatureRules {
   roof?: string | null;
   protection?: { level?: string | null; status?: string | null } | null;
   insect?: { opening?: string | null; leaves?: number | null } | null;
-  /** tailles définies (ex. Malaga) : le modèle n'est pas présenté « sur mesure » */
+  /** tailles définies (ex. HelioSky) : le modèle n'est pas présenté « sur mesure » */
   fixedSizes?: unknown[] | null;
 }
 

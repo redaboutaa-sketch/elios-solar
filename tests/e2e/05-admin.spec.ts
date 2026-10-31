@@ -7,7 +7,7 @@ test("administration HELIOSTORES : familles du catalogue, tarifs fournisseur pri
   await page.goto("/admin/catalogue/familles");
   await expect(page.getByRole("heading", { name: "Familles de produits" })).toBeVisible();
   // nomenclature du 2026-10-25 : quatre familles et leurs modèles (les modèles retirés restent listés pour l'historique)
-  for (const n of ["Malaga", "Marbella", "Sevilla", "HelioScreen", "HelioRoof Screen", "Casablanca", "Corsica", "Jamaica", "Madera", "MoskiFold", "MoskiFold 2", "MoskiUp", "MoskiSlide", "MoskiFix"]) await expect(page.getByRole("main")).toContainText(n);
+  for (const n of ["HelioSky", "HelioMax", "HelioLux", "HelioScreen", "HelioRoof", "HelioSun", "HelioShade", "HelioPro", "HelioSquare", "MoskiFold", "MoskiFold 2", "MoskiUp", "MoskiSlide", "MoskiFix"]) await expect(page.getByRole("main")).toContainText(n);
   await shot(page, "admin-familles");
 
   await page.goto("/admin/catalogue/tarifs-fournisseur");

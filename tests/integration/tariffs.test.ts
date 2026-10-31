@@ -42,7 +42,7 @@ async function xlsx(amounts: number[]): Promise<Uint8Array> {
 }
 
 const unknown = { enabled: true, nature: "UNKNOWN" as const, currency: null, taxBasis: "UNKNOWN" as const };
-// le bloc détecté (« VERANDA FTS », produit en brouillon) est rattaché à une variante de test de Marbella
+// le bloc détecté (« VERANDA FTS », produit en brouillon) est rattaché à une variante de test de HelioMax
 const mapping = { [groupId("helio-verriere", "")]: { familySlug: "marbella", variantKey: VARIANT, dimAKey: "projection" as const } };
 const saleParams = (over: Partial<GridParamsInput> = {}): GridParamsInput => ({ nature: "SALE", natureNote: "test", currency: "EUR", taxBasis: "HT", vatRateBps: 2000, clientele: "ALL", dimRule: "EXACT", dimRuleNote: "", validFrom: null, validTo: null, scopeNote: "", included: "", excluded: "", notes: "", zeroConfirmed: false, ...over });
 const rev = async (id: string) => (await getGrid(id)).revision;

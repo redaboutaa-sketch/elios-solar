@@ -129,7 +129,7 @@ export function buildPergolaScene(model: PergolaSceneModel): BuiltScene {
   blades.castShadow = true;
   blades.receiveShadow = false; // évite l'acné d'ombre sur les lames fines
   group.add(blades);
-  // toiture toile (Sevilla) : pas de lames, une toile tendue inclinée du mur vers la poutre avant (pente indicative)
+  // toiture toile (HelioLux) : pas de lames, une toile tendue inclinée du mur vers la poutre avant (pente indicative)
   if (model.roof === "fabric") {
     blades.visible = false;
     const fabricMat = new THREE.MeshStandardMaterial({ color: model.roofFabricColor ?? "#8d8f8c", roughness: 0.95, side: THREE.DoubleSide });

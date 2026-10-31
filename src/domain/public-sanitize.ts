@@ -12,7 +12,7 @@ import type { TechnicalSpecValue } from "./technical-spec";
  * des tests et du contrôle des médias) : fabricant, fournisseur, références des produits et des moteurs.
  */
 export const PUBLIC_FORBIDDEN_NAMES =
-  /aluprof|thysens|\bselt\b|euro[\s-]?confort|\bsb\s?[3-5][05]0\b|refleksol|zi{2,}p|\bzip\s?120\b|\br\s?120\b|veranda\s?fts|\bfts\b|sunbreaker|zoomtech|blebox|elero|somfy|linak|picolo|\baltus\b|sunilus|suntop|varieco|\bdm45|palladio|tahoma|eolis|soliris|ondeis|madeira|openslide|\bmph\s?(harmony|dual|verti)\b|\bm(zn|zh|zp|rp|rs|rsz|ro)\b/i;
+  /aluprof|thysens|\bselt\b|euro[\s-]?confort|\bsb\s?[3-5][05]0\b|refleksol|zi{2,}p|\bzip\s?120\b|\br\s?120\b|veranda\s?fts|\bfts\b|sunbreaker|zoomtech|blebox|elero|somfy|linak|picolo|\baltus\b|sunilus|suntop|varieco|\bdm45|palladio|tahoma|eolis|soliris|ondeis|madeira|open\s?slide|system\s?slide|veranda\s?v\b|pergola\s?solid|\bmph\s?(harmony|dual|verti)\b|\bm(zn|zh|zp|rp|rs|rsz|ro)\b/i;
 
 /**
  * Entité juridique du vendeur (décision du propriétaire du 2026-10-26) : THYSENS exploite la marque HELIOSTORES. Son nom
@@ -27,10 +27,11 @@ export function withoutSellerIdentity(text: string): string {
 }
 
 /**
- * Noms de modèles du fabricant autorisés en public par décision du client (2026-10-25) : Casablanca, Corsica, Jamaica,
- * Madera. Ils ne sont pas dans la liste ci-dessus ; « Madeira » (orthographe du fabricant) l'est.
+ * Anciens noms commerciaux (alias internes depuis la transcodification HELIO du 2026-10-31) et désignations des modèles
+ * chez le fournisseur : jamais dans un texte public. Sensible à la casse : les slugs historiques en minuscules
+ * (`/stores-bannes/casablanca`…) restent des URL valides et ne sont pas visés.
  */
-export const PUBLIC_ALLOWED_SUPPLIER_MODEL_NAMES = ["Casablanca", "Corsica", "Jamaica", "Madera"] as const;
+export const PUBLIC_RETIRED_NAMES = /\b(Malaga|Marbella|Sevill?i?a|Casablanca|Corsica|Jamaica|Madera|CASABLANCA|CORSICA|JAMAICA|MADERA)\b|HelioRoof Screen/;
 
 /** Clés internes retirées des règles publiques. */
 const INTERNAL_RULE_KEYS = new Set(["sources", "supplierRef"]);

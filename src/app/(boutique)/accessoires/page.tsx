@@ -15,12 +15,12 @@ export const metadata: Metadata = {
 type Fam = { slug: string; name: string; category: CategoryKey; rules: SystemRules };
 
 /** Rubriques d'équipements : rattachement d'une option par son code, son groupe ou son rendu. */
-const KINDS: Array<{ id: string; title: string; intro: string; match: (o: OptionDef) => boolean; closure?: string }> = [
+const KINDS: Array<{ id: string; title: string; intro: string; match: (o: OptionDef) => boolean; closure?: readonly string[] }> = [
   { id: "telecommandes", title: "Télécommandes", intro: "Émetteurs radio pour piloter un produit motorisé. Le modèle dépend du moteur : il est défini au devis.", match: (o) => o.visual === "remote" || /remote/.test(o.code) },
   { id: "domotique", title: "Box domotique et commande par smartphone", intro: "Une box pilote depuis une application les moteurs radio compatibles ; elle ne rend pas connecté un moteur qui ne l'est pas.", match: (o) => o.visual === "box" || /box/.test(o.code) },
   { id: "capteurs", title: "Capteurs de vent, de soleil et de pluie", intro: "Ils commandent automatiquement le produit motorisé selon des seuils réglés. Ils ne dispensent jamais de replier le produit au-delà de la vitesse de vent admissible.", match: (o) => o.visual === "wind_sensor" || /sensor|weather|wind/.test(o.code) },
   { id: "eclairage", title: "Éclairage LED", intro: "Éclairage intégré à la structure (lames, profil, coffre ou bras) selon le modèle.", match: (o) => o.group === "lighting" },
-  { id: "fermetures", title: "Fermetures latérales coulissantes", intro: "Parois vitrées coulissantes et autres fermetures des côtés d'une pergola : un accessoire, étudié selon les ouvertures réelles, les fixations et la résistance au vent.", match: () => false, closure: "sliding_glass" },
+  { id: "fermetures", title: "Fermetures latérales coulissantes", intro: "Parois vitrées coulissantes et autres fermetures des côtés d'une pergola : un accessoire, étudié selon les ouvertures réelles, les fixations et la résistance au vent.", match: () => false, closure: ["sliding_glass", "sliding_panels"] },
 ];
 
 const statusText = (o: { wish?: boolean; status: string }) => (o.wish ? "à étudier au devis (compatibilité non confirmée)" : o.status === "to_confirm" ? "option documentée, à confirmer au devis" : "option documentée");
@@ -38,7 +38,7 @@ export default async function AccessoriesPage() {
         const list = fams.flatMap((f) => {
           const opts = f.rules.options.filter(k.match).map((o) => ({ label: o.label, status: statusText(o), prereq: o.prerequisite }));
           const incl = k.id === "telecommandes" ? f.rules.included.filter((i) => /télécommande|émetteur/i.test(i.label)).map((i) => ({ label: i.label, status: i.status === "to_confirm" ? "inclus, à confirmer" : "inclus", prereq: undefined })) : [];
-          const closures = k.closure ? (f.rules.closureWishes ?? []).filter((w) => w.familySlug === k.closure).map((w) => ({ label: w.label, status: w.note, prereq: undefined })) : [];
+          const closures = k.closure ? (f.rules.closureWishes ?? []).filter((w) => k.closure!.includes(w.familySlug)).map((w) => ({ label: w.label, status: w.note, prereq: undefined })) : [];
           const all = [...incl, ...opts, ...closures];
           return all.length ? [{ f, all }] : [];
         });

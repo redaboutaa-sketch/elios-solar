@@ -1,5 +1,5 @@
 /**
- * Stores bannes Corsica, Jamaica et Madera (nomenclature du 2026-10-25 : noms conservés par le client). Casablanca reste
+ * Stores bannes HelioShade, HelioPro et HelioSquare (noms publics du 2026-10-31 ; anciens noms Corsica, Jamaica, Madera conservés en alias internes). HelioSun reste
  * dans heliostores-data.ts (fiche historique renommée, même produit). Chaque règle cite sa source (documents du fabricant
  * téléchargés le 2026-10-25, inventaire privé : private/heliostores/research/awnings*.json) ; les contradictions sont
  * signalées et validées au devis. Aucun classement « basique / équipé » n'est attribué par le fabricant : la lecture par
@@ -46,12 +46,12 @@ function commandWishes(sources: SourceRef[]) {
 const minWidth = (pairs: Array<[number, number]>, sources: SourceRef[]) => pairs.map(([depthMm, widthMinMm]) => ({ depthMm, widthMinMm, sources }));
 
 /* ------------------------------------------------------------------ */
-/* Corsica — semi-coffre, motorisé                                     */
+/* HelioShade — semi-coffre, motorisé                                     */
 /* ------------------------------------------------------------------ */
 
 const corsica: HelioFamily = {
   slug: "corsica",
-  name: "Corsica",
+  name: "HelioShade",
   category: "STORES_BANNES",
   kind: "AWNING_SYSTEM",
   status: "QUOTE_ONLY",
@@ -61,9 +61,9 @@ const corsica: HelioFamily = {
   supplierRef: "CORSICA (DT-E 11.6)",
   shortDescription: "Store banne à semi-coffre, uniquement motorisé, jusqu'à 7 m de largeur ; éclairage LED possible.",
   description:
-    "Corsica est un store de terrasse à semi-coffre et barre porteuse carrée, proposé uniquement motorisé. En pose murale, le semi-coffre se referme comme un coffre intégral. Il mesure jusqu'à 7 m de largeur et 3,6 m d'avancée, avec deux ou trois bras selon les dimensions. Le profil bas et les bras de 3,1 et 3,6 m peuvent recevoir un éclairage LED.",
-  seoTitle: "Store banne Corsica motorisé à semi-coffre",
-  seoDescription: "Store banne Corsica : semi-coffre, motorisation, jusqu'à 7 × 3,6 m, éclairage LED en option. Configurez et demandez votre devis.",
+    "HelioShade est un store de terrasse à semi-coffre et barre porteuse carrée, proposé uniquement motorisé. En pose murale, le semi-coffre se referme comme un coffre intégral. Il mesure jusqu'à 7 m de largeur et 3,6 m d'avancée, avec deux ou trois bras selon les dimensions. Le profil bas et les bras de 3,1 et 3,6 m peuvent recevoir un éclairage LED.",
+  seoTitle: "Store banne HelioShade motorisé à semi-coffre",
+  seoDescription: "Store banne HelioShade : semi-coffre, motorisation, jusqu'à 7 × 3,6 m, éclairage LED en option. Configurez et demandez votre devis.",
   rules: {
     type: "awning",
     dims: {
@@ -104,24 +104,24 @@ const corsica: HelioFamily = {
     { key: "cassette", label: "Coffre", valueText: "semi-coffre (« cassette » dans le supplément)", source: "SUPPLIER_DOCUMENT", sourceRef: "Brochure p. 13 ; supplément p. 51, 53" },
   ],
   faq: [
-    { q: "Corsica existe-t-il à la manivelle ?", a: "Non : le fabricant le propose uniquement motorisé." },
+    { q: "HelioShade existe-t-il à la manivelle ?", a: "Non : le fabricant le propose uniquement motorisé." },
     { q: "L'éclairage LED est-il compris ?", a: "Les documents du fabricant divergent (de série ou en option) : il est confirmé et chiffré au devis. Le kit d'éclairage n'est compatible qu'avec certains moteurs, désignés par le fabricant : le moteur est choisi en conséquence au devis." },
     { q: "Quelle largeur minimale ?", a: "L'avancée plus 0,5 m : par exemple 3,1 m de largeur pour 2,6 m d'avancée." },
   ],
   openQuestions: [
     { field: "Éclairage", question: "LED du profil bas : de série ou en option, montage, tension (12 V ou 24 V).", sources: ["supp-stores p. 51", "aluprof-corsica", "dte-led-stores"], blocks: "inclus / option LED" },
     { field: "Moteur", question: "Moteur, télécommande et capteurs fournis par le distributeur.", sources: ["dte-corsica-fr p. 6"], blocks: "équipements inclus" },
-    { field: "Tarifs", question: "Aucune grille de prix Corsica.", sources: [], blocks: "prix affiché" },
+    { field: "Tarifs", question: "Aucune grille de prix HelioShade.", sources: [], blocks: "prix affiché" },
   ],
 };
 
 /* ------------------------------------------------------------------ */
-/* Jamaica — sans coffre, manivelle ou moteur                          */
+/* HelioPro — sans coffre, manivelle ou moteur                          */
 /* ------------------------------------------------------------------ */
 
 const jamaica: HelioFamily = {
   slug: "jamaica",
-  name: "Jamaica",
+  name: "HelioPro",
   category: "STORES_BANNES",
   kind: "AWNING_SYSTEM",
   status: "QUOTE_ONLY",
@@ -131,9 +131,9 @@ const jamaica: HelioFamily = {
   supplierRef: "JAMAICA (DT-E 11.4)",
   shortDescription: "Store banne sans coffre, à manivelle ou motorisé, jusqu'à 7 m ; lambrequin, auvent et supports télescopiques en option.",
   description:
-    "Jamaica est un store de terrasse sans coffre, sur barre porteuse carrée en acier, à manivelle ou motorisé. Il mesure jusqu'à 7 m de largeur et 3,6 m d'avancée. Un auvent en aluminium peut protéger la toile enroulée ; un lambrequin, des supports télescopiques et des bras éclairés (3,1 et 3,6 m) sont proposés en option.",
-  seoTitle: "Store banne Jamaica sans coffre, manuel ou motorisé",
-  seoDescription: "Store banne Jamaica jusqu'à 7 × 3,6 m : manivelle ou moteur, lambrequin, auvent et bras LED en option. Configurez et demandez votre devis.",
+    "HelioPro est un store de terrasse sans coffre, sur barre porteuse carrée en acier, à manivelle ou motorisé. Il mesure jusqu'à 7 m de largeur et 3,6 m d'avancée. Un auvent en aluminium peut protéger la toile enroulée ; un lambrequin, des supports télescopiques et des bras éclairés (3,1 et 3,6 m) sont proposés en option.",
+  seoTitle: "Store banne HelioPro sans coffre, manuel ou motorisé",
+  seoDescription: "Store banne HelioPro jusqu'à 7 × 3,6 m : manivelle ou moteur, lambrequin, auvent et bras LED en option. Configurez et demandez votre devis.",
   rules: {
     type: "awning",
     dims: {
@@ -178,23 +178,23 @@ const jamaica: HelioFamily = {
     { key: "cassette", label: "Coffre", valueText: "sans coffre ; auvent en option", source: "SUPPLIER_DOCUMENT", sourceRef: "Brochure p. 15 ; supplément p. 17" },
   ],
   faq: [
-    { q: "Jamaica a-t-il un coffre ?", a: "Non : c'est un store sans coffre. Un auvent en aluminium peut protéger la toile enroulée (pas en pose au plafond)." },
+    { q: "HelioPro a-t-il un coffre ?", a: "Non : c'est un store sans coffre. Un auvent en aluminium peut protéger la toile enroulée (pas en pose au plafond)." },
     { q: "Manivelle ou moteur ?", a: "Les deux sont possibles ; le moteur et ses commandes sont définis au devis." },
   ],
   openQuestions: [
     { field: "Avancée", question: "Avancée maximale 3,0 m (supplément p. 17) ou 3,6 m (toutes les autres sources) ?", sources: ["supp-stores p. 17", "dte-jamaica-fr"], blocks: "3,6 m confirmé au devis" },
     { field: "Moteur", question: "Moteur, télécommande et capteurs fournis par le distributeur.", sources: [], blocks: "équipements inclus" },
-    { field: "Tarifs", question: "Aucune grille de prix Jamaica.", sources: [], blocks: "prix affiché" },
+    { field: "Tarifs", question: "Aucune grille de prix HelioPro.", sources: [], blocks: "prix affiché" },
   ],
 };
 
 /* ------------------------------------------------------------------ */
-/* Madera — réf. MADEIRA, coffre, motorisé                             */
+/* HelioSquare — réf. MADEIRA, coffre, motorisé                             */
 /* ------------------------------------------------------------------ */
 
 const madera: HelioFamily = {
   slug: "madera",
-  name: "Madera",
+  name: "HelioSquare",
   category: "STORES_BANNES",
   kind: "AWNING_SYSTEM",
   status: "QUOTE_ONLY",
@@ -204,9 +204,9 @@ const madera: HelioFamily = {
   supplierRef: "MADEIRA (orthographe du fabricant)",
   shortDescription: "Store banne à coffre aux lignes droites, motorisé, jusqu'à 6 m de largeur et 50° d'inclinaison.",
   description:
-    "Madera est un store de terrasse à coffre cubique aux lignes droites, proposé uniquement motorisé, avec une manœuvre de secours possible à la manivelle. Il mesure jusqu'à 6 m de largeur et 3,6 m d'avancée, avec une inclinaison de 5° à 50°. Sa pose documentée est murale ; un éclairage LED intégré est annoncé par le fabricant.",
-  seoTitle: "Store banne Madera à coffre, motorisé",
-  seoDescription: "Store banne Madera : coffre aux lignes droites, motorisé, jusqu'à 6 × 3,6 m, inclinaison jusqu'à 50°. Configurez et demandez votre devis.",
+    "HelioSquare est un store de terrasse à coffre cubique aux lignes droites, proposé uniquement motorisé, avec une manœuvre de secours possible à la manivelle. Il mesure jusqu'à 6 m de largeur et 3,6 m d'avancée, avec une inclinaison de 5° à 50°. Sa pose documentée est murale ; un éclairage LED intégré est annoncé par le fabricant.",
+  seoTitle: "Store banne HelioSquare à coffre, motorisé",
+  seoDescription: "Store banne HelioSquare : coffre aux lignes droites, motorisé, jusqu'à 6 × 3,6 m, inclinaison jusqu'à 50°. Configurez et demandez votre devis.",
   rules: {
     type: "awning",
     dims: {
@@ -226,7 +226,7 @@ const madera: HelioFamily = {
     supports: { label: "Supports muraux", rows: [{ upToMm: 3500, count: 2 }, { upToMm: 4700, count: 3 }, { upToMm: 5900, count: 4 }, { upToMm: 6000, count: 5 }], sources: [at(S.supp, "p. 5"), at(S.imMadeira, "p. 10–11")] },
     options: [
       { code: "led_cassette", label: "Éclairage LED intégré au coffre", group: "lighting", status: "to_confirm", requiresControlKind: "electric", pricing: "quote", visual: "led_cassette", sources: [at(S.pageMadeira, "« de série »"), at(S.brochure, "p. 5"), at(S.supp, "p. 3 — « possibilité »")], note: "de série selon la page web et la brochure, en option selon le supplément technique" },
-      { code: "led_arms", label: "Bras éclairés LED", group: "lighting", status: "to_confirm", wish: true, requiresControlKind: "electric", pricing: "quote", visual: "led_arms", sources: [at(S.brochure, "p. 5"), at(S.supp, "p. 3")], note: "Madera est absent des listes du kit LED pour bras" },
+      { code: "led_arms", label: "Bras éclairés LED", group: "lighting", status: "to_confirm", wish: true, requiresControlKind: "electric", pricing: "quote", visual: "led_arms", sources: [at(S.brochure, "p. 5"), at(S.supp, "p. 3")], note: "HelioSquare est absent des listes du kit LED pour bras" },
       ...commandWishes([at(S.pageMadeira, "onglet Automatisation : deux entrées seulement"), at(S.brochure, "p. 5 — automatisme météorologique et domotique possibles")]),
     ],
     wind: { action: "retract", text: "Le store se replie par vent fort ; classe de vent 1 déclarée par le fabricant : il doit être enroulé au-delà.", status: "established", sources: [at(S.dopMadeira, "« Class 1 »"), at(S.notice, "p. 11")] },
@@ -241,14 +241,14 @@ const madera: HelioFamily = {
     { key: "wind_class_dop", label: "Résistance au vent (EN 13561)", valueText: "classe 1", source: "SUPPLIER_DOCUMENT", sourceRef: "DoP MA/MADEIRA/21/26" },
   ],
   faq: [
-    { q: "Madera peut-il se poser au plafond ?", a: "La documentation du fabricant ne décrit que la pose murale : une autre pose est étudiée au devis." },
+    { q: "HelioSquare peut-il se poser au plafond ?", a: "La documentation du fabricant ne décrit que la pose murale : une autre pose est étudiée au devis." },
     { q: "L'éclairage LED est-il compris ?", a: "Annoncé de série par la page et la brochure du fabricant, en option par son supplément technique : il est confirmé au devis." },
   ],
   openQuestions: [
     { field: "Coffre", question: "Coffre intégral (brochure) ou demi-coffre (page web) ?", sources: ["brochure-stores-bannes p. 5", "aluprof-madeira"], blocks: "description du coffre" },
     { field: "Éclairage", question: "LED de série ou option ; bras LED disponibles ?", sources: ["aluprof-madeira", "supp-stores p. 3, 83"], blocks: "inclus / option LED" },
     { field: "Documents", question: "Documentation technique (DT-E) et déclaration de performances en français ; disponibilité chez le distributeur (absent du catalogue THYSENS).", sources: [], blocks: "guide, validation" },
-    { field: "Tarifs", question: "Aucune grille de prix Madera.", sources: [], blocks: "prix affiché" },
+    { field: "Tarifs", question: "Aucune grille de prix HelioSquare.", sources: [], blocks: "prix affiché" },
   ],
 };
 

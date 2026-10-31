@@ -154,7 +154,7 @@ const sb400: HelioFamily = {
   category: "PERGOLAS",
   kind: "PERGOLA_SYSTEM",
   status: "ARCHIVED",
-  retired: { since: "2026-10-25", reason: "Nomenclature du 2026-10-25 : les pergolas proposées sont Malaga (SB 350), Marbella (SB 450) et Sevilla (PERGOLA V ZiiiP), des produits différents ; fiche conservée pour l'historique (devis, projets, commandes), sans conversion des configurations.", suggest: ["malaga", "marbella", "sevilla"] },
+  retired: { since: "2026-10-25", reason: "Nomenclature du 2026-10-25 : les pergolas proposées sont HelioSky (SB 350), HelioMax (SB 450) et HelioLux (PERGOLA V ZiiiP), des produits différents ; fiche conservée pour l'historique (devis, projets, commandes), sans conversion des configurations.", suggest: ["malaga", "marbella", "sevilla"] },
   sortOrder: 10,
   brand: "SELT by Aluprof",
   manufacturer: "ALUPROF SA (usine d'Opole, ex-SELT)",
@@ -275,7 +275,7 @@ const sb500: HelioFamily = {
   category: "PERGOLAS",
   kind: "PERGOLA_SYSTEM",
   status: "ARCHIVED",
-  retired: { since: "2026-10-25", reason: "Nomenclature du 2026-10-25 : les pergolas proposées sont Malaga (SB 350), Marbella (SB 450) et Sevilla (PERGOLA V ZiiiP), des produits différents ; fiche conservée pour l'historique (devis, projets, commandes), sans conversion des configurations.", suggest: ["malaga", "marbella", "sevilla"] },
+  retired: { since: "2026-10-25", reason: "Nomenclature du 2026-10-25 : les pergolas proposées sont HelioSky (SB 350), HelioMax (SB 450) et HelioLux (PERGOLA V ZiiiP), des produits différents ; fiche conservée pour l'historique (devis, projets, commandes), sans conversion des configurations.", suggest: ["malaga", "marbella", "sevilla"] },
   sortOrder: 20,
   brand: "SELT",
   manufacturer: "SELT (fusionnée avec ALUPROF SA)",
@@ -508,7 +508,7 @@ const casaSheet = SOURCES.ficheCasablanca;
 const casaGrid = at(casaSheet, "tableau des dimensions (projection × largeur)");
 const casablanca: HelioFamily = {
   slug: "casablanca",
-  name: "Casablanca",
+  name: "HelioSun",
   category: "STORES_BANNES",
   kind: "AWNING_SYSTEM",
   status: "QUOTE_ONLY",
@@ -518,9 +518,9 @@ const casablanca: HelioFamily = {
   supplierRef: "CASABLANCA",
   shortDescription: "Store banne à coffre intégral avec joint, manivelle ou moteur, jusqu'à 6 m de largeur et 3,6 m d'avancée.",
   description:
-    "Casablanca est un store de terrasse à coffre en aluminium extrudé. Le joint du coffre protège la toile, les bras sont à chaînes Flyer et un support de tube d'enroulement équipe les grandes largeurs. Il se pose au mur, au plafond ou sur chevrons, avec une inclinaison de 5° à 40°. Il se manœuvre à la manivelle ou, sur devis, par un moteur.",
-  seoTitle: "Store banne Casablanca à coffre — prix selon vos dimensions",
-  seoDescription: "Store banne coffre Casablanca : jusqu'à 6 m de largeur et 3,6 m d'avancée, pose murale, plafond ou chevrons. Configurez et demandez un devis.",
+    "HelioSun est un store de terrasse à coffre en aluminium extrudé. Le joint du coffre protège la toile, les bras sont à chaînes Flyer et un support de tube d'enroulement équipe les grandes largeurs. Il se pose au mur, au plafond ou sur chevrons, avec une inclinaison de 5° à 40°. Il se manœuvre à la manivelle ou, sur devis, par un moteur.",
+  seoTitle: "Store banne HelioSun à coffre — prix selon vos dimensions",
+  seoDescription: "Store banne coffre HelioSun : jusqu'à 6 m de largeur et 3,6 m d'avancée, pose murale, plafond ou chevrons. Configurez et demandez un devis.",
   rules: {
     type: "awning",
     dims: {
@@ -607,7 +607,7 @@ const veranda: HelioFamily = {
   category: null,
   kind: "ROOF_BLIND_SYSTEM",
   status: "ARCHIVED",
-  retired: { since: "2026-10-25", reason: "Fiche VERANDA FTS (deux moteurs) : l'offre de screen de toiture retenue est HelioRoof Screen (store « Veranda » standard, un moteur), un produit différent — aucune caractéristique FTS n'est reprise.", suggest: ["helioroof-screen"] },
+  retired: { since: "2026-10-25", reason: "Fiche VERANDA FTS (deux moteurs) : l'offre de screen de toiture retenue est HelioRoof (store « Veranda » standard, un moteur), un produit différent — aucune caractéristique FTS n'est reprise.", suggest: ["helioroof-screen"] },
   sortOrder: 90,
   brand: null,
   manufacturer: null,

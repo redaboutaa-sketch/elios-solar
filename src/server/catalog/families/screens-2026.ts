@@ -1,5 +1,6 @@
 /**
- * HelioRoof Screen — screen de toiture (nomenclature du 2026-10-25), référence fournisseur ALUPROF « Veranda »
+ * HelioRoof (ex-HelioRoof Screen) — screen de toiture. Correspondance client du 2026-10-31 : VERANDA V ZiiiP. Les données
+ * ci-dessous viennent de la référence ALUPROF « Veranda »
  * (store de véranda standard, UN moteur). Ce n'est PAS le modèle « Veranda FTS » (deux moteurs, 6,5 m) de l'ancienne
  * fiche `helio-verriere`, retirée : aucune caractéristique FTS n'est reprise (private/heliostores/research/screens.md § B).
  * La fiche et la grille transmises par le client portent sur FTS : le choix Veranda / FTS reste à confirmer.
@@ -22,19 +23,19 @@ const at = (s: SourceRef, loc: string): SourceRef => ({ ...s, loc });
 
 const helioroof: HelioFamily = {
   slug: "helioroof-screen",
-  name: "HelioRoof Screen",
+  name: "HelioRoof",
   category: "SCREENS",
   kind: "ROOF_BLIND_SYSTEM",
   status: "QUOTE_ONLY",
   sortOrder: 32,
   brand: "Aluprof",
   manufacturer: "ALUPROF SA (usine d'Opole, ex-SELT)",
-  supplierRef: "Veranda (store de véranda standard, DT-E 4.1) — pas Veranda FTS",
+  supplierRef: "VERANDA V ZiiiP (correspondance client du 2026-10-31) — données actuelles issues de « Veranda » standard (DT-E 4.1), à confirmer ; pas Veranda FTS",
   shortDescription: "Screen de toiture motorisé pour verrière, véranda ou toiture vitrée, jusqu'à 4,5 × 5 m (16 m²).",
   description:
-    "HelioRoof Screen est un store de toiture à toile tendue pour les surfaces vitrées horizontales ou inclinées : vérandas, verrières, jardins d'hiver. La toile, guidée dans des coulisses en aluminium, est tendue par un système intégré à la barre avant et entraînée par un moteur. Un module mesure jusqu'à 4,5 m de largeur et 5 m de projection, dans la limite de 16 m².",
-  seoTitle: "Screen de toiture HelioRoof Screen pour véranda",
-  seoDescription: "Store de toiture HelioRoof Screen : toile tendue motorisée pour véranda et verrière, jusqu'à 4,5 × 5 m. Configurez et demandez votre devis.",
+    "HelioRoof est un store de toiture à toile tendue pour les surfaces vitrées horizontales ou inclinées : vérandas, verrières, jardins d'hiver. La toile, guidée dans des coulisses en aluminium, est tendue par un système intégré à la barre avant et entraînée par un moteur. Un module mesure jusqu'à 4,5 m de largeur et 5 m de projection, dans la limite de 16 m².",
+  seoTitle: "Screen de toiture HelioRoof pour véranda",
+  seoDescription: "Store de toiture HelioRoof : toile tendue motorisée pour véranda et verrière, jusqu'à 4,5 × 5 m. Configurez et demandez votre devis.",
   rules: {
     type: "roof_blind",
     dims: {
@@ -67,6 +68,7 @@ const helioroof: HelioFamily = {
     ],
     structure3d: { cassetteMm: [206, 146], tiltDeg: [5, 15] },
     notices: [
+      "Désignation commerciale mise à jour le 2026-10-31 : les caractéristiques techniques présentées sont en cours de confirmation. Dimensions, pose et équipements sont confirmés sur devis.",
       "Surface maximale d'un module : 16 m² ; une largeur de 4,5 m est documentée jusqu'à 4 m de projection.",
       "Inclinaison de la toiture : le fabricant indique que le store fonctionne quel que soit l'angle, sans plage chiffrée — la représentation est indicative.",
       "Chevilles et vis de fixation non fournies : elles dépendent du support et sont prévues à l'étude du projet.",
@@ -85,6 +87,7 @@ const helioroof: HelioFamily = {
     { q: "Quelle taille maximale ?", a: "4,5 m de largeur et jusqu'à 5 m de projection pour un module, dans la limite de 16 m² ; plusieurs modules peuvent se juxtaposer." },
   ],
   openQuestions: [
+    { field: "Modèle", question: "Correspondance client du 2026-10-31 : HelioRoof = VERANDA V ZiiiP (gamme screen, 5,0 × 6,0 m, inclinaison 0–45° selon la page fabricant), alors que les données publiées viennent de « Veranda » standard (DT-E 4.1). Fournir la documentation VERANDA V ZiiiP avant de remplacer dimensions, inclinaison et commande ; aucune donnée FTS n'est reprise.", sources: ["validation client 2026-10-31", "page fabricant VERANDA V ZiiiP"], blocks: "caractéristiques, configurateur et prix" },
     { field: "Modèle", question: "Le client vend-il Veranda (un moteur, ≤ 4,5 × 5 m, 16 m²) ou Veranda FTS (deux moteurs, 6,5 m) ? Sa fiche et sa grille portent sur FTS.", sources: ["private/heliostores/research/screens.md § B"], blocks: "prix, publication définitive" },
     { field: "Dimensions", question: "Largeur minimale 800 mm (supplément 2026) ou 1 250 mm (documentation technique) ; plage d'inclinaison.", sources: ["supp-screens p. 222", "dte-veranda-fr p. 7"], blocks: "bornes (devis)" },
     { field: "Vent", question: "Classe 2 (2017) ou classe 1 (2025) ?", sources: ["dop-67-mw-2017", "dop-67m-mw-2025"], blocks: "communication sur le vent" },

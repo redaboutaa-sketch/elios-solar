@@ -40,7 +40,7 @@ function EquipmentReading({ items }: { items: Item[] }) {
   return (
     <section className="section-y border-t border-sand-200" aria-labelledby="lecture" data-testid="levels">
       <h2 id="lecture" className="font-display text-display font-semibold">Lire la gamme</h2>
-      <p className="mt-2 max-w-3xl text-stone-700 text-pretty">Une lecture par l'équipement électrique, établie d'après la documentation de chaque modèle : ce n'est pas un classement du fabricant. Pour la protection de la toile repliée, l'ordre change (voir le comparatif) : Casablanca a le coffre le plus fermé.</p>
+      <p className="mt-2 max-w-3xl text-stone-700 text-pretty">Une lecture par l'équipement électrique, établie d'après la documentation de chaque modèle : ce n'est pas un classement du fabricant. Pour la protection de la toile repliée, l'ordre change (voir le comparatif) : HelioSun a le coffre le plus fermé.</p>
       <ol className="mt-6 grid gap-4 md:grid-cols-3">
         {cols.map((c) => (
           <li key={c.label} className="rounded-2xl border border-sand-200 bg-white p-5">

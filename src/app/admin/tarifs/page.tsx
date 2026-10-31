@@ -33,7 +33,7 @@ export default async function TariffsPage(props: PageProps<"/admin/tarifs">) {
       <ConfidentialNote />
 
       <Section title="Base du prix de vente">
-        <p className="text-sm text-stone-800" data-testid="sale-price-basis">Le prix affiché au client est lu tel quel dans une grille de <strong>vente</strong> publiée et en vigueur, pour le modèle exact, la variante et la cote saisie (lecture exacte des cotes, sauf règle de grille contraire). Aucune marge, conversion de devise, coefficient ou supplément n'est ajouté par le site ; un coût d'achat n'est jamais affiché. Un modèle sans grille publiée (Malaga, Marbella, Sevilla, HelioRoof Screen, Corsica, Jamaica, Madera, moustiquaires) reste sur devis. Les grilles d'un modèle retiré (SB 400, SB 500) ne s'appliquent pas aux modèles SB 350 / SB 450. Un devis ou une commande déjà émis conserve son instantané : modifier une grille ne le change pas.</p>
+        <p className="text-sm text-stone-800" data-testid="sale-price-basis">Le prix affiché au client est lu tel quel dans une grille de <strong>vente</strong> publiée et en vigueur, pour le modèle exact, la variante et la cote saisie (lecture exacte des cotes, sauf règle de grille contraire). Aucune marge, conversion de devise, coefficient ou supplément n'est ajouté par le site ; un coût d'achat n'est jamais affiché. Un modèle sans grille publiée (HelioSky, HelioMax, HelioLux, HelioRoof, HelioShade, HelioPro, HelioSquare, moustiquaires) reste sur devis. Les grilles d'un modèle retiré (SB 400, SB 500) ne s'appliquent pas aux modèles SB 350 / SB 450. Un devis ou une commande déjà émis conserve son instantané : modifier une grille ne le change pas.</p>
       </Section>
 
       <Section title="Tableau de bord">

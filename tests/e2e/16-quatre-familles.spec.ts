@@ -47,11 +47,11 @@ test("navigation latérale (ordinateur) : familles, modèles et rubrique active"
   await expect(family).toHaveAttribute("aria-current", "page");
   await expect(family).toHaveAttribute("data-active", "true");
   // famille de la page dépliée : ses modèles sont listés
-  for (const n of ["Casablanca", "Corsica", "Jamaica", "Madera"]) await expect(side.getByRole("link", { name: n, exact: true })).toBeVisible();
+  for (const n of ["HelioSun", "HelioShade", "HelioPro", "HelioSquare"]) await expect(side.getByRole("link", { name: n, exact: true })).toBeVisible();
   await expect(side.locator('[aria-current="page"]')).toHaveCount(1);
   // configurateur d'un modèle : le modèle est la rubrique active
   await page.goto("/configurateur/corsica");
-  await expect(side.getByRole("link", { name: "Corsica", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(side.getByRole("link", { name: "HelioShade", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(side.getByRole("link", { name: "Stores bannes", exact: true })).not.toHaveAttribute("aria-current", "page");
   // une autre famille depuis la navigation latérale
   await side.getByRole("link", { name: "Moustiquaires", exact: true }).click();
@@ -75,7 +75,7 @@ test("menu mobile : familles, modèles et services ; un modèle s'ouvre depuis l
   await page.getByRole("button", { name: "Ouvrir le menu" }).click();
   const menu = page.getByRole("navigation", { name: "Navigation mobile" });
   await expect(menu).toBeVisible();
-  for (const n of ["Pergolas", "Screens", "Stores bannes", "Moustiquaires", "Malaga", "HelioRoof Screen", "Jamaica", "MoskiFold 2", "Installation et guides", "Contact", "Devis"]) await expect(menu).toContainText(n);
+  for (const n of ["Pergolas", "Screens", "Stores bannes", "Moustiquaires", "HelioSky", "HelioRoof", "HelioPro", "MoskiFold 2", "Installation et guides", "Contact", "Devis"]) await expect(menu).toContainText(n);
   await expect(menu).not.toContainText("Références");
   await expect(menu.getByRole("link", { name: /Configurer mon projet/ })).toBeVisible();
   expect(await noOverflow(page)).toBe(true);
@@ -85,9 +85,9 @@ test("menu mobile : familles, modèles et services ; un modèle s'ouvre depuis l
   await expect(menu).toBeHidden();
   await expect(page.getByRole("button", { name: "Ouvrir le menu" })).toBeFocused();
   await page.getByRole("button", { name: "Ouvrir le menu" }).click();
-  await menu.getByRole("link", { name: "Sevilla", exact: true }).click();
+  await menu.getByRole("link", { name: "HelioLux", exact: true }).click();
   await expect(page).toHaveURL(/\/pergolas\/sevilla$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Sevilla");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("HelioLux");
   await expect(menu).toBeHidden();
 });
 
@@ -97,7 +97,7 @@ test("modèle retiré : page explicative et gammes actuelles ; renommage : redir
   await acceptNecessaryOnly(page);
   const retired = page.getByTestId("retired-product");
   await expect(retired.getByRole("heading", { level: 1 })).toHaveText("Ce modèle n'est plus proposé");
-  for (const n of ["Malaga", "Marbella", "Sevilla"]) await expect(retired.getByRole("heading", { name: n })).toBeVisible();
+  for (const n of ["HelioSky", "HelioMax", "HelioLux"]) await expect(retired.getByRole("heading", { name: n })).toBeVisible();
   await expect(retired).not.toContainText(OLD_NAMES);
   await shot(page, "modele-retire");
   // le configurateur retiré ne propose aucune conversion : on choisit une gamme et on recommence
@@ -113,7 +113,7 @@ test("modèle retiré : page explicative et gammes actuelles ; renommage : redir
   expect(redirect.status()).toBe(308);
   await page.goto("/stores-bannes/helio-riviera");
   await expect(page).toHaveURL(/\/stores-bannes\/casablanca$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Casablanca");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("HelioSun");
   await page.goto("/configurateur/helio-ombra");
   await expect(page).toHaveURL(/\/configurateur\/helioscreen$/);
 });
@@ -213,7 +213,7 @@ test("configurateur : un éclairage LED choisi apparaît sur le dessin (data-led
   await shot(page, "configurateur-led");
 });
 
-test("Sevilla : pergola à toiture toile, sans lames ; moustiquaire et screen de toiture : dessin 2D seul", async ({ page }) => {
+test("HelioLux : pergola à toiture toile, sans lames ; moustiquaire et screen de toiture : dessin 2D seul", async ({ page }) => {
   await openConfigurator(page, "sevilla");
   const drawing = page.getByTestId("project-drawing");
   await expect(drawing).toHaveAttribute("data-kind", "pergola");
@@ -246,7 +246,7 @@ test("Sevilla : pergola à toiture toile, sans lames ; moustiquaire et screen de
   await expect(page.getByTestId("view-3d-toggle")).toBeDisabled();
 });
 
-test("Malaga : tailles fabriquées, puis demande hors gamme sans commande en ligne ; hors gamme d'un modèle sur mesure", async ({ page }) => {
+test("HelioSky : tailles fabriquées, puis demande hors gamme sans commande en ligne ; hors gamme d'un modèle sur mesure", async ({ page }) => {
   await openConfigurator(page, "malaga");
   const sizes = page.getByTestId("fixed-sizes");
   await expect(sizes.getByRole("radio")).toHaveCount(5);
@@ -299,12 +299,12 @@ test("étapes Précédent / Suivant ; choix conservés après un aller-retour ve
   // liens du configurateur : fiche, tous les modèles, autres modèles
   const links = page.getByTestId("config-links");
   await expect(links.getByRole("link", { name: "Tous les modèles pergolas" })).toHaveAttribute("href", "/pergolas");
-  await expect(links.getByRole("link", { name: "Malaga" })).toHaveAttribute("href", /malaga/);
-  await links.getByRole("link", { name: "Fiche Marbella" }).click();
+  await expect(links.getByRole("link", { name: "HelioSky" })).toHaveAttribute("href", /malaga/);
+  await links.getByRole("link", { name: "Fiche HelioMax" }).click();
   await expect(page).toHaveURL(/\/pergolas\/marbella$/);
   await page.goBack();
   await expect(page).toHaveURL(/\/configurateur\/marbella$/);
-  await expect(page.getByText("Vos choix précédents pour Marbella ont été conservés")).toBeVisible();
+  await expect(page.getByText("Vos choix précédents pour HelioMax ont été conservés")).toBeVisible();
   await expect(page.locator("#dim-width")).toHaveValue("3200");
   await goStep(page, "pose");
   await expect(page.getByRole("radio", { name: /Adossée/ })).toBeChecked();
@@ -318,7 +318,7 @@ test("étapes Précédent / Suivant ; choix conservés après un aller-retour ve
   await page.getByTestId("config-reset").click();
   await expect(page.getByTestId("step-dims")).toBeVisible();
   await expect(page.locator("#dim-width")).not.toHaveValue("3200");
-  await expect(page.getByText("Vos choix précédents pour Marbella ont été conservés")).toHaveCount(0);
+  await expect(page.getByText("Vos choix précédents pour HelioMax ont été conservés")).toHaveCount(0);
 });
 
 test("prise de mesures : contrôle des cotes du modèle, report dans son configurateur", async ({ page }) => {
@@ -326,14 +326,14 @@ test("prise de mesures : contrôle des cotes du modèle, report dans son configu
   await acceptNecessaryOnly(page);
   const tool = page.getByTestId("measure-tool");
   await tool.getByText("Store banne", { exact: true }).click();
-  await tool.getByLabel("2. Modèle").selectOption({ label: "Corsica" });
+  await tool.getByLabel("2. Modèle").selectOption({ label: "HelioShade" });
   await tool.getByLabel("Largeur (mm)").fill("4500");
   await tool.getByLabel("Avancée (mm)").fill("3100");
   await expect(page.getByTestId("measure-check")).toHaveCount(0);
   await shot(page, "prise-de-mesures");
   await page.getByTestId("measure-report").click();
   await expect(page).toHaveURL(/\/configurateur\/corsica$/);
-  await expect(page.getByText("Vos choix précédents pour Corsica ont été conservés")).toBeVisible();
+  await expect(page.getByText("Vos choix précédents pour HelioShade ont été conservés")).toBeVisible();
   await expect(page.locator("#dim-width")).toHaveValue("4500");
   await expect(page.getByTestId("dim-depth-values").getByRole("radio", { name: "3,1 m" })).toBeChecked();
   await expect(page.getByTestId("project-drawing")).toHaveAttribute("data-width-mm", "4500");
@@ -342,7 +342,7 @@ test("prise de mesures : contrôle des cotes du modèle, report dans son configu
   // mesure hors de la gamme documentée : signalée, reportée en demande hors gamme
   await page.goto("/guides/prise-de-mesures");
   await tool.getByText("Store banne", { exact: true }).click();
-  await tool.getByLabel("2. Modèle").selectOption({ label: "Corsica" });
+  await tool.getByLabel("2. Modèle").selectOption({ label: "HelioShade" });
   await tool.getByLabel("Largeur (mm)").fill("9000");
   await tool.getByLabel("Avancée (mm)").fill("3100");
   await expect(page.getByTestId("measure-check")).toContainText("hors de la gamme documentée");

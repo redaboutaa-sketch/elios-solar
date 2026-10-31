@@ -54,7 +54,7 @@ test("screen HelioScreen : largeur contradictoire signalée, largeur minimale du
   expect(q!.snapshot.result.systemPrice?.amountMinor ?? null).toBe(expected);
 });
 
-test("store banne Casablanca : avancées et largeurs documentées, commande électrique à confirmer, options soumises à la motorisation", async ({ page }) => {
+test("store banne HelioSun : avancées et largeurs documentées, commande électrique à confirmer, options soumises à la motorisation", async ({ page }) => {
   await openConfigurator(page, "casablanca");
   await setDim(page, "dim-width", 3000);
   await page.getByTestId("dim-depth-values").getByText("3,1 m", { exact: true }).click();
@@ -78,7 +78,7 @@ test("store banne Casablanca : avancées et largeurs documentées, commande éle
   await goStep(page, "recap");
   await expect(stepIssues(page, "recap").first()).toContainText("motorisation citée par le catalogue");
   const recap = page.getByTestId("system-recap");
-  await expect(recap).toContainText("Casablanca");
+  await expect(recap).toContainText("HelioSun");
   await expect(recap).toContainText("Télécommande radio");
   await expect(recap).not.toContainText(/LED|câble/);
   await page.getByTestId("view-3d-toggle").click();

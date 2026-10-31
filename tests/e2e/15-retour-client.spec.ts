@@ -30,10 +30,10 @@ test("stores bannes : lecture de la gamme et comparatif des quatre modèles ; op
   await acceptNecessaryOnly(page);
   const levels = page.getByTestId("levels");
   await expect(levels.getByRole("heading", { name: "Lire la gamme" })).toBeVisible();
-  for (const n of ["Casablanca", "Corsica", "Jamaica", "Madera"]) await expect(levels.getByRole("link", { name: n }).first()).toBeVisible();
+  for (const n of ["HelioSun", "HelioShade", "HelioPro", "HelioSquare"]) await expect(levels.getByRole("link", { name: n }).first()).toBeVisible();
   const compare = page.getByTestId("collection-compare");
   await expect(compare.locator("thead th")).toHaveCount(5);
-  for (const n of ["Casablanca", "Corsica", "Jamaica", "Madera"]) await expect(compare.locator("thead")).toContainText(n);
+  for (const n of ["HelioSun", "HelioShade", "HelioPro", "HelioSquare"]) await expect(compare.locator("thead")).toContainText(n);
   await expect(page.locator("main")).not.toContainText(/\b(Essentiel|Premium)\b|HELIO Azur|HELIO Riviera/);
   await shot(page, "stores-bannes-lecture");
   await page.goto("/configurateur/casablanca");

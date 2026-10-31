@@ -42,8 +42,8 @@ export interface InstallGuide {
 const RIVIERA: InstallGuide = {
   slug: "casablanca-installation",
   familySlug: "casablanca",
-  title: "Casablanca — guide d'installation",
-  summary: "Préparer, poser et contrôler un store banne Casablanca : étapes de la notice officielle, points de contrôle et consignes de sécurité.",
+  title: "HelioSun — guide d'installation",
+  summary: "Préparer, poser et contrôler un store banne HelioSun : étapes de la notice officielle, points de contrôle et consignes de sécurité.",
   officialDocs: [
     { title: "Documentation technique et d'utilisation du store (instructions de montage, d'utilisation et de sécurité), éd. 5, juin 2019", pages: "29 p.", note: "notice officielle de référence pour la pose" },
     { title: "Notice d'utilisation et d'entretien des stores de terrasse et de balcon", pages: "20 p.", note: "générique ; ne contient pas d'étapes de montage" },
@@ -273,11 +273,11 @@ const pending = (slug: string, familySlug: string, name: string, have: string[],
 export const INSTALL_GUIDES: InstallGuide[] = [
   RIVIERA,
   OMBRA,
-  pending("malaga-installation", "malaga", "Malaga", ["Documentation technique et d'utilisation du modèle (édition 2025, français)"], ["Notice graphique de montage : document séparé, non publié par le fabricant."]),
-  pending("marbella-installation", "marbella", "Marbella", ["Notice de montage du modèle (français, état au 2026-01-01)", "Notice d'utilisation et d'entretien (français)"], ["Synthèse à rédiger à partir de la notice de montage, puis validation technique."]),
-  pending("sevilla-installation", "sevilla", "Sevilla", ["Documentation technique du modèle (français, 2021)"], ["Notice de montage graphique et notice d'utilisation propres au modèle."]),
-  pending("helioroof-screen-installation", "helioroof-screen", "HelioRoof Screen", ["Documentation technique du store de toiture (français, 2020)"], ["Synthèse à rédiger et validation technique ; confirmation du modèle (un ou deux moteurs)."]),
-  pending("madera-installation", "madera", "Madera", ["Notice de montage du modèle (français, 2026)"], ["Synthèse à rédiger et validation technique."]),
+  pending("malaga-installation", "malaga", "HelioSky", ["Documentation technique et d'utilisation du modèle (édition 2025, français)"], ["Notice graphique de montage : document séparé, non publié par le fabricant."]),
+  pending("marbella-installation", "marbella", "HelioMax", ["Notice de montage du modèle (français, état au 2026-01-01)", "Notice d'utilisation et d'entretien (français)"], ["Synthèse à rédiger à partir de la notice de montage, puis validation technique."]),
+  pending("sevilla-installation", "sevilla", "HelioLux", ["Documentation technique du modèle (français, 2021)"], ["Notice de montage graphique et notice d'utilisation propres au modèle."]),
+  pending("helioroof-screen-installation", "helioroof-screen", "HelioRoof", ["Documentation technique du store de toiture (français, 2020)"], ["Synthèse à rédiger et validation technique ; confirmation du modèle (un ou deux moteurs)."]),
+  pending("madera-installation", "madera", "HelioSquare", ["Notice de montage du modèle (français, 2026)"], ["Synthèse à rédiger et validation technique."]),
 ];
 
 export const installGuide = (slug: string) => INSTALL_GUIDES.find((g) => g.slug === slug);

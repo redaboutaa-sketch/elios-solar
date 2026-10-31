@@ -16,15 +16,15 @@ async function expectNoSupplier(page: Page) {
 
 /** Nomenclature du 2026-10-25 : quatre familles et leurs modèles configurables (brouillons exclus). */
 const FAMILIES: Array<[string, string[], boolean]> = [
-  ["/pergolas", ["Malaga", "Marbella", "Sevilla"], false],
-  ["/screens", ["HelioScreen", "HelioRoof Screen"], true],
-  ["/stores-bannes", ["Casablanca", "Corsica", "Jamaica", "Madera"], true],
+  ["/pergolas", ["HelioSky", "HelioMax", "HelioLux"], false],
+  ["/screens", ["HelioScreen", "HelioRoof"], true],
+  ["/stores-bannes", ["HelioSun", "HelioShade", "HelioPro", "HelioSquare"], true],
   ["/moustiquaires", ["MoskiFold", "MoskiFold 2"], false],
 ];
 
 test("catalogue HELIOSTORES : quatre familles, fiches sans référence fabricant/fournisseur, prix de la grille, modèles retirés et renommés", async ({ page }) => {
   const priced = await publicPricesActive();
-  test.info().annotations.push({ type: "prix", description: priced ? "grilles de vente actives (Casablanca, HelioScreen) : prix « à partir de » vérifiés" : "aucune grille active dans cet environnement : prix sur devis vérifié" });
+  test.info().annotations.push({ type: "prix", description: priced ? "grilles de vente actives (HelioSun, HelioScreen) : prix « à partir de » vérifiés" : "aucune grille active dans cet environnement : prix sur devis vérifié" });
   await page.goto("/");
   await acceptNecessaryOnly(page);
   // en-tête : services seulement ; le catalogue est dans la navigation latérale et le menu mobile
@@ -78,7 +78,7 @@ test("catalogue HELIOSTORES : quatre familles, fiches sans référence fabricant
 
   // pergola sur mesure sans grille : prix sur devis, bornes documentées
   await page.goto("/pergolas/marbella");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Marbella");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("HelioMax");
   await expect(page.getByTestId("price-on-quote")).toContainText("Prix sur devis");
   await expect(page.getByRole("tab", { name: "Points à confirmer" })).toHaveCount(0);
   await expectNoSupplier(page);

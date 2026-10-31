@@ -1,5 +1,6 @@
 /**
- * Pergolas de la nomenclature du 2026-10-25 : Malaga (SB 350), Marbella (SB 450), Sevilla (PERGOLA V ZiiiP).
+ * Pergolas (noms publics du 2026-10-31) : HelioSky (SB 350, ex-Malaga), HelioMax (SB 450, ex-Marbella), HelioLux
+ * (ex-Sevilla ; correspondance client SOLID, données actuelles PERGOLA V ZiiiP à confirmer).
  *
  * Trois produits DIFFÉRENTS des anciennes fiches SB 400 / SB 500 (retirées, conservées pour l'historique) : aucune valeur,
  * limite, teinte ni option n'est reprise d'un autre modèle. Chaque règle cite sa source (documents du fabricant
@@ -9,6 +10,7 @@
 import type { SourceRef } from "@/domain/system";
 import type { HelioFamily } from "../heliostores-data";
 import { finishOf, src } from "./shared";
+import { ACCESSORY_LABELS } from "@/domain/nomenclature";
 
 export const PERGOLA_SOURCES = {
   pageSB350: src("aluprof-sb-350", "Page fabricant « SB 350 Pergola – ready-made product »", "https://aluprof.com/en/product/pergola-sb-350"),
@@ -31,16 +33,18 @@ const S = PERGOLA_SOURCES;
 const at = (s: SourceRef, loc: string): SourceRef => ({ ...s, loc });
 
 /** Fermetures latérales coulissantes vitrées (MB-OpenSlide) : accessoire, jamais une famille. */
-export const OPENSLIDE_WISH_LABEL = "Fermetures latérales coulissantes (vitrage)";
+export const OPENSLIDE_WISH_LABEL = ACCESSORY_LABELS.sideClosure;
+/** Panneaux coulissants aluminium (Slide) : HelioSlide ALU, accessoire de fermeture, jamais une famille. */
+export const SLIDE_WISH_LABEL = ACCESSORY_LABELS.slidingPanels;
 
 /* ------------------------------------------------------------------ */
-/* Malaga — SB 350, produit prêt à poser en tailles fixes              */
+/* HelioSky — SB 350, produit prêt à poser en tailles fixes              */
 /* ------------------------------------------------------------------ */
 
 const MALAGA_DEPTHS = [3400, 3850, 4300, 4750];
 const malaga: HelioFamily = {
   slug: "malaga",
-  name: "Malaga",
+  name: "HelioSky",
   category: "PERGOLAS",
   kind: "PERGOLA_SYSTEM",
   status: "QUOTE_ONLY",
@@ -50,9 +54,9 @@ const malaga: HelioFamily = {
   supplierRef: "SB 350 (Pergola – ready-made product, DT-E 5.13)",
   shortDescription: "Pergola autoportante à lames orientables, livrée prête à poser en 3,5 m de large et quatre avancées.",
   description:
-    "Malaga est une pergola autoportante sur quatre poteaux, à toiture de lames aluminium plates orientables de 0 à 120°. Elle est fabriquée dans des tailles définies : 3,5 m de largeur, quatre avancées et 2,5 m de hauteur libre, en blanc ou gris anthracite. Le moteur 24 V et la télécommande sont fournis ; une application pour smartphone pilote la toiture en Wi-Fi.",
-  seoTitle: "Pergola Malaga à lames orientables — tailles prêtes à poser",
-  seoDescription: "Pergola autoportante Malaga : lames orientables motorisées, 3,5 m de large, quatre avancées, télécommande et application incluses. Demandez votre devis.",
+    "HelioSky est une pergola autoportante sur quatre poteaux, à toiture de lames aluminium plates orientables de 0 à 120°. Elle est fabriquée dans des tailles définies : 3,5 m de largeur, quatre avancées et 2,5 m de hauteur libre, en blanc ou gris anthracite. Le moteur 24 V et la télécommande sont fournis ; une application pour smartphone pilote la toiture en Wi-Fi.",
+  seoTitle: "Pergola HelioSky à lames orientables — tailles prêtes à poser",
+  seoDescription: "Pergola autoportante HelioSky : lames orientables motorisées, 3,5 m de large, quatre avancées, télécommande et application incluses. Demandez votre devis.",
   rules: {
     type: "pergola",
     roof: "louvres",
@@ -76,7 +80,7 @@ const malaga: HelioFamily = {
     ],
     closureWishes: [{ familySlug: "sliding_glass", label: OPENSLIDE_WISH_LABEL, status: "to_confirm", note: "aucune fermeture latérale n'est documentée pour ce modèle : souhait étudié au devis, sans garantie de compatibilité." }],
     structure3d: { postMm: [130, 130], beamMm: [165, 85], bladeMm: [150, 27] },
-    notices: ["Malaga est fabriquée dans les tailles proposées : pour une autre dimension, demandez une étude hors gamme."],
+    notices: ["HelioSky est fabriquée dans les tailles proposées : pour une autre dimension, demandez une étude hors gamme."],
     wind: { action: "blades", text: "En cas de fortes rafales, les lames doivent être placées en position ouverte ; un automatisme de vent est recommandé. Classe de vent 3. Le comportement automatique d'un capteur n'est pas documenté.", status: "established", sources: [at(S.dteSB350, "p. 9, 34"), at(S.dopSB350, "classe 3")] },
   },
   specs: [
@@ -90,7 +94,7 @@ const malaga: HelioFamily = {
     { key: "profiles", label: "Profilés", valueText: "poteau 130 × 130, poutre 85 × 165, lame 195 × 27,5 mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Supplément PERGOLAS p. 110" },
   ],
   faq: [
-    { q: "Malaga existe-t-elle sur mesure ?", a: "Non : Malaga est fabriquée en 3,5 m de largeur, dans quatre avancées et avec 2,5 m de hauteur libre. Pour une autre dimension, le configurateur vous permet de demander une étude hors gamme, sans garantie de fabrication." },
+    { q: "HelioSky existe-t-elle sur mesure ?", a: "Non : HelioSky est fabriquée en 3,5 m de largeur, dans quatre avancées et avec 2,5 m de hauteur libre. Pour une autre dimension, le configurateur vous permet de demander une étude hors gamme, sans garantie de fabrication." },
     { q: "Peut-on l'adosser à un mur ?", a: "Non : la documentation du fabricant décrit une pergola autoportante sur quatre poteaux." },
     { q: "Qu'est-ce qui est fourni ?", a: "La structure et ses lames orientables, le moteur 24 V préinstallé, la télécommande et le pilotage par application en Wi-Fi. Les ancrages, la pose et le raccordement électrique sont étudiés au devis." },
     { q: "Que faire par grand vent ?", a: "Le fabricant demande de placer les lames en position ouverte en cas de fortes rafales et recommande un capteur de vent ; le modèle compatible est confirmé au devis." },
@@ -104,13 +108,13 @@ const malaga: HelioFamily = {
 };
 
 /* ------------------------------------------------------------------ */
-/* Marbella — SB 450, sur mesure                                       */
+/* HelioMax — SB 450, sur mesure                                       */
 /* ------------------------------------------------------------------ */
 
 const SB450_RAL = ["RAL 7016", "RAL 9016", "RAL 9001", "RAL 9010", "RAL 1013", "RAL 1015", "RAL 7001", "RAL 7012", "RAL 7015", "RAL 7021", "RAL 7024", "RAL 7035", "RAL 7037", "RAL 9006", "RAL 9007", "RAL 9005", "RAL 8014", "RAL 8016", "RAL 7022", "RAL 7039", "RAL 7043", "RAL 8003"];
 const marbella: HelioFamily = {
   slug: "marbella",
-  name: "Marbella",
+  name: "HelioMax",
   category: "PERGOLAS",
   kind: "PERGOLA_SYSTEM",
   status: "QUOTE_ONLY",
@@ -120,9 +124,9 @@ const marbella: HelioFamily = {
   supplierRef: "SB 450 (Pergola de terrasse – produit fini)",
   shortDescription: "Pergola bioclimatique sur mesure, autoportante ou adossée, jusqu'à 4 × 6 m, lames orientables motorisées.",
   description:
-    "Marbella est une pergola à lames orientables, autoportante ou adossée, fabriquée à vos dimensions jusqu'à 4 m de largeur et 6 m d'avancée. Le moteur est dissimulé dans la structure et se commande par émetteur radio ou application. Éclairage LED dans les lames ou périphérique, capteurs et fermetures latérales sont étudiés au devis.",
-  seoTitle: "Pergola bioclimatique Marbella sur mesure",
-  seoDescription: "Pergola Marbella à lames orientables, autoportante ou adossée, jusqu'à 4 × 6 m : configurez vos cotes et demandez votre devis.",
+    "HelioMax est une pergola à lames orientables, autoportante ou adossée, fabriquée à vos dimensions jusqu'à 4 m de largeur et 6 m d'avancée. Le moteur est dissimulé dans la structure et se commande par émetteur radio ou application. Éclairage LED dans les lames ou périphérique, capteurs et fermetures latérales sont étudiés au devis.",
+  seoTitle: "Pergola bioclimatique HelioMax sur mesure",
+  seoDescription: "Pergola HelioMax à lames orientables, autoportante ou adossée, jusqu'à 4 × 6 m : configurez vos cotes et demandez votre devis.",
   rules: {
     type: "pergola",
     roof: "louvres",
@@ -155,7 +159,7 @@ const marbella: HelioFamily = {
     closureWishes: [
       { familySlug: "sliding_glass", label: OPENSLIDE_WISH_LABEL, status: "to_confirm", note: "fermeture vitrée citée pour ce modèle par le fabricant, sans détail de raccordement : dimensions et fixations étudiées au devis." },
       { familySlug: "helioscreen", label: "Screen latéral HelioScreen", status: "to_confirm", note: "stores screen latéraux cités par le fabricant : intégration étudiée au devis." },
-      { familySlug: "sliding_panels", label: "Panneaux coulissants (lames ou plein)", status: "to_confirm", note: "modules coulissants cités par le fabricant : modèle et fixations étudiés au devis." },
+      { familySlug: "sliding_panels", label: SLIDE_WISH_LABEL, status: "to_confirm", note: "modules coulissants cités par le fabricant : modèle et fixations étudiés au devis." },
     ],
     modules: { maxSingleWidthMm: 4000, multiModule: "not_documented", sources: [at(S.brochurePergolas, "p. 4 — montage modulaire NON")], note: "variantes à une travée documentées" },
     structure3d: { beamMm: [190, 120] },
@@ -173,7 +177,7 @@ const marbella: HelioFamily = {
   ],
   faq: [
     { q: "Quelles dimensions sont possibles ?", a: "Jusqu'à 4 m de largeur et 6 m d'avancée environ ; l'avancée exacte dépend du nombre de lames et la hauteur maximale (2,81 m ou 3 m selon le document) est confirmée au devis." },
-    { q: "Autoportante ou adossée ?", a: "Les deux : Marbella se pose seule sur ses poteaux ou contre un ou deux murs. Le type de fixation murale est établi à l'étude du projet." },
+    { q: "Autoportante ou adossée ?", a: "Les deux : HelioMax se pose seule sur ses poteaux ou contre un ou deux murs. Le type de fixation murale est établi à l'étude du projet." },
     { q: "Peut-on fermer les côtés ?", a: "Le fabricant cite des fermetures vitrées coulissantes, des panneaux coulissants et des screens latéraux. Les dimensions et fixations sont étudiées au devis ; les fermetures réduisent la résistance au vent." },
     { q: "Quel éclairage ?", a: "Éclairage LED linéaire ou spots dans les lames, et éclairage périphérique, en option." },
   ],
@@ -186,24 +190,27 @@ const marbella: HelioFamily = {
 };
 
 /* ------------------------------------------------------------------ */
-/* Sevilla — PERGOLA V ZiiiP (toiture en toile)                        */
+/* HelioLux (ex-Sevilla) — correspondance client SOLID ; données V ZiiiP à confirmer */
 /* ------------------------------------------------------------------ */
 
 const sevilla: HelioFamily = {
   slug: "sevilla",
-  name: "Sevilla",
+  name: "HelioLux",
   category: "PERGOLAS",
   kind: "PERGOLA_SYSTEM",
   status: "QUOTE_ONLY",
   sortOrder: 7,
   brand: "Aluprof",
   manufacturer: "SELT Sp. z o.o. (Opole) — ALUPROF",
-  supplierRef: "PERGOLA V ZiiiP (MT, DT-E 5.6)",
+  // Correspondance client du 2026-10-31 : HelioLux = SOLID. Les règles et caractéristiques ci-dessous viennent de la
+  // documentation PERGOLA V ZiiiP (ancienne correspondance) : elles ne sont PAS transférées vers SOLID ni validées pour
+  // lui ; dossier de validation technique « helioLux-solid » (docs/product-naming-transco.csv).
+  supplierRef: "SOLID (correspondance client du 2026-10-31) — données actuelles issues de PERGOLA V ZiiiP (MT, DT-E 5.6), à confirmer",
   shortDescription: "Pergola adossée à toiture en toile tendue motorisée, jusqu'à 5 × 6 m par module.",
   description:
-    "Sevilla est une pergola adossée à toiture en toile enroulable, tendue par des ressorts à gaz et motorisée. Un module mesure jusqu'à 5 m de largeur et 6 m d'avancée ; plusieurs modules s'assemblent en largeur. Elle protège du soleil mais pas de la pluie : la toile s'enroule par pluie, neige, gel ou vent fort.",
-  seoTitle: "Pergola toile Sevilla adossée, motorisée",
-  seoDescription: "Pergola Sevilla à toiture en toile tendue motorisée, adossée, jusqu'à 5 × 6 m par module. Configurez et demandez votre devis.",
+    "HelioLux est une pergola adossée à toiture en toile enroulable, tendue par des ressorts à gaz et motorisée. Un module mesure jusqu'à 5 m de largeur et 6 m d'avancée ; plusieurs modules s'assemblent en largeur. Elle protège du soleil mais pas de la pluie : la toile s'enroule par pluie, neige, gel ou vent fort.",
+  seoTitle: "Pergola toile HelioLux adossée, motorisée",
+  seoDescription: "Pergola HelioLux à toiture en toile tendue motorisée, adossée, jusqu'à 5 × 6 m par module. Configurez et demandez votre devis.",
   rules: {
     type: "pergola",
     roof: "fabric",
@@ -229,7 +236,7 @@ const sevilla: HelioFamily = {
     ],
     modules: { maxSingleWidthMm: 5000, multiModule: "documented", sources: [at(S.dteVZiiiP, "p. 5, 10 — modules avec deux supports avant communs")] },
     structure3d: { postMm: [68, 68], beamMm: [136, 75] },
-    notices: ["Sevilla ne protège pas de la pluie : la toile doit être enroulée par pluie, neige ou gel. L'installation de parois latérales n'est pas prévue par le fabricant."],
+    notices: ["Désignation commerciale mise à jour le 2026-10-31 : les caractéristiques techniques présentées sont en cours de confirmation. Dimensions, pose et équipements sont confirmés sur devis.", "HelioLux ne protège pas de la pluie : la toile doit être enroulée par pluie, neige ou gel. L'installation de parois latérales n'est pas prévue par le fabricant."],
     wind: { action: "retract", text: "La toile doit être enroulée dès que le vent dépasse la classe de vent du produit (classe 2) ; un automatisme de vent est recommandé.", status: "established", sources: [at(S.dteVZiiiP, "p. 32, 41"), at(S.dopVZiiiP, "classe 2")] },
   },
   specs: [
@@ -240,11 +247,12 @@ const sevilla: HelioFamily = {
     { key: "rain", label: "Pluie", valueText: "ne protège pas de la pluie", source: "SUPPLIER_DOCUMENT", sourceRef: "DT-E 5.6 p. 10" },
   ],
   faq: [
-    { q: "Sevilla protège-t-elle de la pluie ?", a: "Non : c'est une protection solaire. Le fabricant demande d'enrouler la toile par pluie, neige, gel ou vent fort." },
-    { q: "Peut-on la poser sans mur ?", a: "Non : Sevilla se fixe au mur et repose sur deux poteaux avant." },
+    { q: "HelioLux protège-t-elle de la pluie ?", a: "Non : c'est une protection solaire. Le fabricant demande d'enrouler la toile par pluie, neige, gel ou vent fort." },
+    { q: "Peut-on la poser sans mur ?", a: "Non : HelioLux se fixe au mur et repose sur deux poteaux avant." },
     { q: "Peut-on fermer les côtés ?", a: "Non : le fabricant indique que l'installation de parois n'est pas prévue sur ce modèle." },
   ],
   openQuestions: [
+    { field: "Modèle", question: "Correspondance client du 2026-10-31 : HelioLux = SOLID, alors que les données publiées (adossée, modules de 5 × 6 m, ressorts à gaz) viennent de PERGOLA V ZiiiP. La page fabricant décrit SOLID comme une pergola toile prête à poser, autoportante ou adossée, 4,0 m de largeur maximale. Fournir la documentation SOLID (dimensions, poses, toile, commande, fermetures) avant de remplacer ces caractéristiques.", sources: ["validation client 2026-10-31", "aluprof-pergolas (page de gamme)"], blocks: "caractéristiques, configurateur et prix" },
     { field: "Vent", question: "Classe 2 : 84 Pa (déclaration de performances) ou 70 Pa / 38 km/h (documentation technique) ? Seuil du capteur de vent.", sources: ["dop-100-mw-2021", "dte-pergola-v-fr"], blocks: "communication sur le vent" },
     { field: "Commande", question: "Télécommande et moteur livrés (protocole, canaux).", sources: ["dte-pergola-v-fr"], blocks: "équipements inclus" },
     { field: "Toiles", question: "Facteur d'ouverture de la toile Serge 600 ; coloris proposés.", sources: ["brochure-pergolas-fr"], blocks: "choix de toile (devis)" },

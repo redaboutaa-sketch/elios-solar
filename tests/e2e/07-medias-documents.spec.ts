@@ -22,7 +22,7 @@ test("médiathèque et documents : nouvelle version PDF publiée, visible sur la
     await page.locator("#new-title").fill(title);
     await page.locator("#new-kind").selectOption("guide");
     await page.locator("#new-audience").selectOption("PUBLIC");
-    await page.locator("#new-family").selectOption({ label: "Casablanca" });
+    await page.locator("#new-family").selectOption({ label: "HelioSun" });
     await page.locator("#new-ds").selectOption("DEMO");
     await page.locator("#new-source").fill("Test automatisé");
     await page.locator("#new-summary").fill("Document de démonstration créé par le test de bout en bout.");

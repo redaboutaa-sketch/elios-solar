@@ -17,19 +17,19 @@ const codes = (slug: string, over: Partial<SystemInput> = {}) => evaluate(catalo
 const realCodes = (slug: string, over: Partial<SystemInput> = {}) => evaluate(base, input(slug, over)).issues.map((i) => `${i.severity}:${i.code}`);
 
 describe("catalogue HELIOSTORES : périmètre", () => {
-  it("quatre familles publiques ; modèles actuels de la nomenclature du 2026-10-25", () => {
+  it("quatre familles publiques ; modèles actuels (noms HELIO du 2026-10-31)", () => {
     expect(CATEGORIES.map((c) => c.label)).toEqual(["Pergolas", "Screens", "Stores bannes", "Moustiquaires"]);
     const offered = HELIOSTORES_FAMILIES.filter((f) => f.status === "QUOTE_ONLY" || f.status === "PUBLISHED");
     expect(offered.map((f) => [f.slug, f.name, f.category])).toEqual([
-      ["malaga", "Malaga", "PERGOLAS"],
-      ["marbella", "Marbella", "PERGOLAS"],
-      ["sevilla", "Sevilla", "PERGOLAS"],
+      ["malaga", "HelioSky", "PERGOLAS"],
+      ["marbella", "HelioMax", "PERGOLAS"],
+      ["sevilla", "HelioLux", "PERGOLAS"],
       ["helioscreen", "HelioScreen", "SCREENS"],
-      ["helioroof-screen", "HelioRoof Screen", "SCREENS"],
-      ["casablanca", "Casablanca", "STORES_BANNES"],
-      ["corsica", "Corsica", "STORES_BANNES"],
-      ["jamaica", "Jamaica", "STORES_BANNES"],
-      ["madera", "Madera", "STORES_BANNES"],
+      ["helioroof-screen", "HelioRoof", "SCREENS"],
+      ["casablanca", "HelioSun", "STORES_BANNES"],
+      ["corsica", "HelioShade", "STORES_BANNES"],
+      ["jamaica", "HelioPro", "STORES_BANNES"],
+      ["madera", "HelioSquare", "STORES_BANNES"],
       ["moskifold", "MoskiFold", "MOUSTIQUAIRES"],
       ["moskifold-2", "MoskiFold 2", "MOUSTIQUAIRES"],
     ]);
@@ -179,7 +179,7 @@ describe("HelioScreen (R 120 ZiiiP, ex-HELIO Ombra)", () => {
   });
 });
 
-describe("Casablanca", () => {
+describe("HelioSun", () => {
   it("avancées documentées seulement, avec largeur minimale selon l'avancée", () => {
     expect(codes("casablanca", { depthMm: 2000 })).toContain("blocking:dimension_value");
     expect(codes("casablanca", { depthMm: 2600, widthMm: 2900 })).toContain("blocking:depth_width_combination");
@@ -213,11 +213,11 @@ describe("Casablanca", () => {
 
 describe("options, souhaits et protection au vent (nomenclature du 2026-10-25)", () => {
   const rules = (slug: string) => catalog.families.find((f) => f.slug === slug)!.systemRules!;
-  it("Casablanca : plus de niveaux factices ; un ancien choix de niveau reste lisible sans effet", () => {
+  it("HelioSun : plus de niveaux factices ; un ancien choix de niveau reste lisible sans effet", () => {
     expect(rules("casablanca").packs).toBeUndefined();
     expect(codes("casablanca", { packCode: "confort" })).not.toContain("blocking:pack_unavailable");
   });
-  it("une option motorisée exige la motorisation ; aucune LED sur Casablanca", () => {
+  it("une option motorisée exige la motorisation ; aucune LED sur HelioSun", () => {
     expect(codes("casablanca", { controlCode: "crank_1500", options: [{ code: "remote_control" }] })).toContain("blocking:option_requires_control");
     expect(codes("casablanca", { controlCode: "electric", options: [{ code: "remote_control" }] })).not.toContain("blocking:option_requires_control");
     expect(rules("casablanca").options.some((o) => o.group === "lighting")).toBe(false);
@@ -243,7 +243,7 @@ describe("options, souhaits et protection au vent (nomenclature du 2026-10-25)",
   });
 });
 
-describe("Malaga (SB 350) : produit prêt à poser en tailles fixes", () => {
+describe("HelioSky (SB 350) : produit prêt à poser en tailles fixes", () => {
   it("tailles fabriquées seulement ; une autre dimension est une demande hors gamme explicite", () => {
     expect(rules("malaga").fixedSizes!.map((z) => z.depthMm)).toEqual([3400, 3850, 4300, 4750]);
     expect(codes("malaga")).not.toContain("blocking:size_missing");
@@ -260,28 +260,28 @@ describe("Malaga (SB 350) : produit prêt à poser en tailles fixes", () => {
   });
 });
 
-describe("Marbella, Sevilla, HelioRoof Screen, stores bannes, moustiquaires", () => {
-  it("Marbella : sur mesure jusqu'à 4 × 6,01 m, adossée ou autoportante ; fermetures coulissantes en souhait étudié", () => {
+describe("HelioMax, HelioLux, HelioRoof, stores bannes, moustiquaires", () => {
+  it("HelioMax : sur mesure jusqu'à 4 × 6,01 m, adossée ou autoportante ; fermetures coulissantes en souhait étudié", () => {
     expect(codes("marbella", { widthMm: 4100 })).toContain("blocking:dimension_out_of_bounds");
     expect(codes("marbella", { heightMm: 2950 })).toContain("review:dimension_to_confirm");
     expect(codes("marbella", { mounting: "wall", sides: { front: "sliding_glass" } })).toContain("review:closure_to_confirm");
   });
-  it("Sevilla : toiture toile, adossée uniquement, aucune fermeture latérale", () => {
+  it("HelioLux : toiture toile, adossée uniquement, aucune fermeture latérale", () => {
     expect(rules("sevilla").roof).toBe("fabric");
     expect(codes("sevilla", { mounting: "freestanding" })).toContain("blocking:mounting_unavailable");
     expect(rules("sevilla").closureWishes).toBeUndefined();
   });
-  it("HelioRoof Screen : 4,5 × 5 m maximum, projection > 4 m à confirmer ; aucune donnée FTS (6,5 m, deux moteurs)", () => {
+  it("HelioRoof : 4,5 × 5 m maximum, projection > 4 m à confirmer ; aucune donnée FTS (6,5 m, deux moteurs)", () => {
     expect(codes("helioroof-screen", { depthMm: 4500 })).toContain("review:dimension_to_confirm");
     expect(codes("helioroof-screen", { depthMm: 6500 })).toContain("blocking:dimension_out_of_bounds");
     expect(JSON.stringify(rules("helioroof-screen").included)).not.toMatch(/deux moteurs|6,5/i);
   });
-  it("supports muraux selon la largeur (Corsica, Jamaica, Madera)", () => {
+  it("supports muraux selon la largeur (HelioShade, HelioPro, HelioSquare)", () => {
     const sup = (slug: string, w: number) => evaluate(catalog, input(slug, { widthMm: w, depthMm: 1600 })).recap!.find((x) => x.label === "Supports muraux")!.value;
     expect([sup("corsica", 3500), sup("corsica", 4000), sup("corsica", 6000)]).toEqual(["2", "3", "5"]);
     expect(sup("madera", 5000)).toBe("4");
   });
-  it("Corsica et Madera : motorisation imposée ; Jamaica : manivelle ou moteur", () => {
+  it("HelioShade et HelioSquare : motorisation imposée ; HelioPro : manivelle ou moteur", () => {
     expect(rules("corsica").controls!.every((c) => c.kind === "electric")).toBe(true);
     expect(rules("madera").controls!.every((c) => c.kind === "electric")).toBe(true);
     expect(rules("jamaica").controls!.some((c) => c.kind === "manual")).toBe(true);

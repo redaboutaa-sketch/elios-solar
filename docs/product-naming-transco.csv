@@ -1,0 +1,14 @@
+identifiant_stable,type,ancien_nom,nouveau_nom,reference_fournisseur,source,statut_commercial,statut_technique,remarque
+helioscreen,produit,HelioScreen,HelioScreen,Screen R 120 ZiiiP,validation client 2026-10-31,appliqué,établi,nom inchangé
+marbella,produit,Marbella,HelioMax,SB450,validation client 2026-10-31,appliqué,établi,
+sevilla,produit,Sevilla / Sevillia,HelioLux,SOLID,validation client 2026-10-31,appliqué,à confirmer,données publiées issues de PERGOLA V ZiiiP (ancienne correspondance) : non transférées vers SOLID ; documentation SOLID attendue ; avis « caractéristiques en cours de confirmation » sur la fiche
+malaga,produit,Malaga,HelioSky,SB350,validation client 2026-10-31,appliqué,établi,
+helioroof-screen,produit,HelioRoof Screen,HelioRoof,VERANDA V ZiiiP,validation client 2026-10-31,appliqué,à confirmer,données publiées issues de « Veranda » standard (DT-E 4.1) ; jamais assimilé à VERANDA FTS ; documentation VERANDA V ZiiiP attendue
+casablanca,produit,Casablanca,HelioSun,CASABLANCA,validation client 2026-10-31,appliqué,établi,
+sliding_panels,équipement de fermeture,Remplissage de pergola en aluminium (libellé précédent : Panneaux coulissants (lames ou plein)),HelioSlide ALU,SYSTEM SLIDE,validation client 2026-10-31,appliqué (souhait étudié au devis),à confirmer,souhait de fermeture existant de HelioMax (modules coulissants Slide cités par le fabricant) ; modèle et fixations à confirmer ; aucune fiche ni caractéristique publiée
+sliding_glass,équipement de fermeture,Fermeture vitrée de pergola (libellé précédent : Fermetures latérales coulissantes (vitrage)),HelioSlide VERRE,OPEN SLIDE,validation client 2026-10-31,appliqué (souhait étudié au devis),établi,souhait de fermeture existant (HelioSky et HelioMax) ; compatibilité par modèle étudiée au devis
+corsica,produit,Corsica,HelioShade,CORSICA,validation client 2026-10-31,appliqué,établi,
+jamaica,produit,Jamaica,HelioPro,JAMAICA,validation client 2026-10-31,appliqué,établi,
+madera,produit,Madera,HelioSquare,MADERA,validation client 2026-10-31,appliqué,établi,orthographe fabricant MADEIRA dans les documents officiels
+moskifold,produit,MoskiFold,MoskiFold,,décision client 2026-10-25,inchangé,correspondance proposée à confirmer,moustiquaires : noms conservés
+moskifold-2,produit,MoskiFold 2,MoskiFold 2,,décision client 2026-10-25,inchangé,correspondance proposée à confirmer,moustiquaires : noms conservés

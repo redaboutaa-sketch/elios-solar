@@ -752,7 +752,7 @@ function pergolaSystemScene(family: Family, rules: SystemRules, input: SystemInp
 
 /** Libellé lisible d'un système de fermeture souhaité (slug de famille). */
 function catalog_name(slug: string) {
-  return slug === "helioscreen" ? "Screen HelioScreen" : slug === "sliding_glass" ? "Fermeture latérale coulissante (vitrage)" : slug === "sliding_panels" ? "Panneaux coulissants" : slug;
+  return slug === "helioscreen" ? "Screen HelioScreen" : slug === "sliding_glass" ? "HelioSlide VERRE (vitrage coulissant)" : slug === "sliding_panels" ? "HelioSlide ALU (panneaux aluminium coulissants)" : slug;
 }
 
 export { MOUNTING_FR };

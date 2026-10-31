@@ -14,12 +14,12 @@ test("consultation des grilles importées", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "Tarifs" })).toBeVisible();
   // grilles importées du classeur (préproduction, dev) ; sans import (CI) : produits listés, aucun tarif en vigueur
   const list = page.getByTestId("tariff-list");
-  // grilles existantes rattachées à Casablanca et HelioScreen (nouveaux modèles : aucune grille, prix sur devis)
-  const imported = (await list.getByRole("row").filter({ hasText: "Prix final" }).filter({ hasText: "Casablanca" }).count()) > 0;
+  // grilles existantes rattachées à HelioSun et HelioScreen (nouveaux modèles : aucune grille, prix sur devis)
+  const imported = (await list.getByRole("row").filter({ hasText: "Prix final" }).filter({ hasText: "HelioSun" }).count()) > 0;
   if (imported) await expect(list).toContainText("HelioScreen");
   await expect(page.getByTestId("tariff-counts")).toBeVisible();
   const products = page.getByRole("table", { name: "Produits et tarif de vente en vigueur" });
-  for (const n of ["Casablanca", "HelioScreen", "Marbella", "MoskiFold"]) await expect(products).toContainText(n);
+  for (const n of ["HelioSun", "HelioScreen", "HelioMax", "MoskiFold"]) await expect(products).toContainText(n);
   await shot(page, "admin-tarifs");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });
@@ -67,7 +67,7 @@ test("grille de test : incomplète refusée, complète publiée puis désactivé
   test.skip(info.project.name !== "desktop", "parcours d'écriture : une seule fois par campagne");
   await loginAdmin(page, "/admin/tarifs");
   const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Créer le brouillon" }) });
-  // Marbella (sans grille) : variante propre au test, qui ne correspond à aucune pose (murale / autoportante) → jamais affichée
+  // HelioMax (sans grille) : variante propre au test, qui ne correspond à aucune pose (murale / autoportante) → jamais affichée
   await form.getByLabel("Produit").selectOption("marbella");
   await form.getByLabel(/Variante/).fill(`e2e-${uid()}`);
   await form.getByLabel("Libellé").fill("Grille de test e2e");

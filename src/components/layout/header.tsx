@@ -22,11 +22,11 @@ export function Header({ cartCount = 0, signedIn = false, isAdmin = false, categ
       )}
       <div className="header-bar">
         <div className="container-x relative flex h-[var(--bar-h)] items-center justify-between gap-4 transition-[height] duration-300">
-          <div className="flex items-center gap-2">
-            <MobileMenu categories={categories} services={NAV_SERVICES} />
-            <Link href="/" aria-label={`${BRAND.name} — accueil`} className="inline-flex items-center py-1"><Logo className="h-7 sm:h-8 xl:h-9" priority /></Link>
-          </div>
-          <nav aria-label="Navigation principale" className="hidden lg:flex items-center gap-6 text-sm font-medium">
+          <MobileMenu categories={categories} services={NAV_SERVICES} />
+          {/* Au défilement (data-scrolled), le logo s'agrandit et se centre sur la largeur du bandeau : positionné par
+              rapport au conteneur (centré dans la fenêtre), il ne dépend pas de la largeur des boutons latéraux. */}
+          <Link href="/" aria-label={`${BRAND.name} — accueil`} data-header-logo className="header-logo max-lg:-ml-2 mr-auto inline-flex items-center py-1"><Logo className="h-7 sm:h-8 xl:h-9" priority /></Link>
+          <nav aria-label="Navigation principale" className="mr-auto hidden lg:flex items-center gap-6 text-sm font-medium">
             {/* le catalogue (quatre familles, modèles) est dans la navigation latérale : un seul menu de catalogue */}
             {NAV_SERVICES.map((n) => (
               <Link key={n.href} href={n.href} className={navLink}>{n.label}</Link>
