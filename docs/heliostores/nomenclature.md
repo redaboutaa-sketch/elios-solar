@@ -1,5 +1,42 @@
 # Nomenclature commerciale HELIOSTORES
 
+## Transcodification HELIO — validation client du 2026-10-31 (en vigueur)
+
+Table complète (identifiant stable, ancien nom, nouveau nom, référence fournisseur, source, statuts commercial et
+technique) : `docs/product-naming-transco.csv` ; code : `src/domain/nomenclature.ts` (noms publics, alias sans
+référence) et `src/server/catalog/name-transco.ts` (module serveur, références privées).
+
+| Nouveau nom public | Ancien nom | Identifiant stable (slug, URL inchangée) | Statut technique |
+|---|---|---|---|
+| HelioScreen | HelioScreen | `helioscreen` | établi |
+| HelioMax | Marbella | `marbella` | établi |
+| HelioLux | Sevilla | `sevilla` | **à confirmer** : correspondance SOLID ; données publiées issues de PERGOLA V ZiiiP, non transférées |
+| HelioSky | Malaga | `malaga` | établi |
+| HelioRoof | HelioRoof Screen | `helioroof-screen` | **à confirmer** : correspondance VERANDA V ZiiiP ; données issues de « Veranda » standard, jamais de FTS |
+| HelioSun | Casablanca | `casablanca` | établi |
+| HelioShade | Corsica | `corsica` | établi |
+| HelioPro | Jamaica | `jamaica` | établi |
+| HelioSquare | Madera | `madera` | établi |
+| HelioSlide VERRE | Fermetures latérales coulissantes (vitrage) | souhait `sliding_glass` | établi (souhait étudié au devis) |
+| HelioSlide ALU | Panneaux coulissants (lames ou plein) | souhait `sliding_panels` | **à confirmer** (SYSTEM SLIDE) |
+
+Règles appliquées :
+- même identifiant et même slug : aucun doublon, aucune redirection nouvelle, aucune URL contenant une référence
+  fournisseur ; les anciennes URL (`/stores-bannes/casablanca`…) restent valides ;
+- ancien nom conservé en alias interne : `ProductFamily.nameHistory` (ajouté par le seed lors du renommage) et
+  `NAME_ALIASES` (chat) ; la liste « Mes projets » affiche le nom actuel sans modifier la configuration ;
+- devis, commandes, PDF et e-mails déjà émis gardent le nom de leur date (instantanés) ; nouveaux devis, PDF et
+  e-mails lisent le nom actuel ;
+- références fournisseur (y compris CASABLANCA, CORSICA, JAMAICA, MADERA, SOLID, VERANDA V ZiiiP, SYSTEM SLIDE,
+  OPEN SLIDE) : jamais dans un texte public ; garde-fous `PUBLIC_FORBIDDEN_NAMES` et `PUBLIC_RETIRED_NAMES` ;
+- titres des documents officiels du fabricant inchangés (désignations d'origine) ;
+- écarts : avis public « caractéristiques en cours de confirmation » (HelioLux, HelioRoof), questions ouvertes en
+  administration, statut technique sur la fiche d'administration, registre de lancement (`heliolux-solid`,
+  `helioroof-veranda-v`, `helioslide-alu`).
+Application en base : `scripts/catalogue-sync.ts` (familles) et `scripts/media-names-sync.ts` (textes des médias),
+runbook § 2 ter.
+
+## Historique : décision client du 2026-10-25
 **Décision client du 2026-10-25** (remplace la nomenclature HELIO du 2026-10-22) : quatre familles — Pergolas,
 Screens, Stores bannes, Moustiquaires. Casablanca, Corsica, Jamaica et Madera gardent le nom du modèle du fabricant
 (exception voulue par le client). Les références du fournisseur restent des données internes (administration,

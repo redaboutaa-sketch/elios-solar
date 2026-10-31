@@ -62,6 +62,22 @@ Limites :
   instance ;
 - échec avant l'étape 3 : l'ancienne `app` sert toujours et `IMAGE_TAG` est remis à sa valeur précédente.
 
+## 2 ter. Synchroniser le catalogue et les textes des médias après un changement de données
+
+Le déploiement n'applique que les migrations. Quand une version modifie les données des familles (noms, descriptions,
+règles, questions ouvertes : `src/server/catalog/families/*`, `heliostores-data.ts`) ou les textes des médias
+(manifestes `src/server/media/heliostores-media*.ts`), après le déploiement et une sauvegarde :
+```bash
+DC="docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod"
+$DC run --rm --no-deps migrate node_modules/.bin/tsx scripts/catalogue-sync.ts            # aperçu champ par champ
+$DC run --rm --no-deps migrate node_modules/.bin/tsx scripts/catalogue-sync.ts --apply    # idempotent, AuditLog catalogue.sync
+$DC run --rm --no-deps migrate node_modules/.bin/tsx scripts/media-names-sync.ts          # aperçu
+$DC run --rm --no-deps migrate node_modules/.bin/tsx scripts/media-names-sync.ts --apply  # idempotent, AuditLog media.names_sync
+```
+Règles : statut des familles jamais réécrit ; textes commerciaux modifiés dans l'administration conservés ; ancien nom
+historisé (`nameHistory`) ; un texte de média retouché dans l'administration est conservé (signalé). Aucune donnée
+tarifaire touchée. Le cache du site se renouvelle en 10 s.
+
 ## 3. Première mise en place de la production
 
 1. Sauvegarde de la préproduction (source des données de catalogue) :

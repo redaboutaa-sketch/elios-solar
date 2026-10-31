@@ -20,6 +20,21 @@
   SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
 
+## Livraison du 2026-10-31 (noms HELIO, logo, chat, configurateur, préparation SELT)
+
+- **Noms HELIO** (transcodification validée par le client) appliqués : HelioSky, HelioMax, HelioLux, HelioRoof, HelioSun,
+  HelioShade, HelioPro, HelioSquare (HelioScreen, moustiquaires inchangés), HelioSlide VERRE / ALU (souhaits de
+  fermeture). Slugs et URL inchangés, anciens noms en alias internes, historique intact. Écarts techniques ouverts :
+  HelioLux = SOLID, HelioRoof = VERANDA V ZiiiP, HelioSlide ALU = SYSTEM SLIDE (`docs/product-naming-transco.csv`,
+  `docs/heliostores/nomenclature.md`). En base : `scripts/catalogue-sync.ts`, `scripts/media-names-sync.ts` (runbook § 2 ter).
+- **Bandeau** : au défilement, logo agrandi et centré, hauteur du bandeau constante (aucun saut), aucune collision.
+- **Chat** : aide immédiate déterministe + demandes collectées ; **aucun LLM configuré** ; raccordement prêt
+  (anthropic ou API compatible OpenAI, plafonds, masquage des coordonnées) — `docs/chatbot.md`.
+- **Configurateur** : pastilles de teintes nommées, fermetures distinctes par côté, repères, aperçu mobile —
+  `docs/configurator-visual-upgrade.md`.
+- **Tarifs SELT** : format normalisé, nature « prix catalogue fournisseur », remise fournisseur ; **aucun catalogue
+  reçu, aucun prix publié** — `docs/pricing/selt-import.md`. Répertoire privé : `inputs/heliostores/selt-pricing/`.
+
 Mis à jour : 2026-10-21 (refonte « catalogue fabricant ») — **migration HELIOSTORES** (branche `feat/heliostores`, draft PR #2 vers `feat/storefront-configurator`).
 Le bilan complet est dans `docs/heliostores/README.md`, avec les sources, correspondances, médias, la revue tarifaire, l'import et l'identité.
 
