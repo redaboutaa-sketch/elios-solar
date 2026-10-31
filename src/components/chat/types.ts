@@ -7,7 +7,7 @@ export interface ChatMessageDto {
   author: ChatAuthor;
   body: string;
   createdAt: string;
-  meta: { kind?: string; handover?: boolean; configurationId?: string; shareToken?: string; quoteId?: string; orderId?: string } | null;
+  meta: { kind?: string; handover?: boolean; configurationId?: string; shareToken?: string; quoteId?: string; orderId?: string; links?: Array<{ href: string; label: string }> } | null;
 }
 
 export interface ChatConversationDto {
@@ -26,6 +26,8 @@ export interface ChatState {
   offlineMessage: string;
   /** un assistant automatique est configuré (jamais affiché comme « IA » sinon) */
   assistant: boolean;
+  /** une messagerie réelle est raccordée : sinon aucune réponse par e-mail n'est promise */
+  mailDelivery: boolean;
   signedIn: boolean;
   email: string | null;
   name: string | null;

@@ -6,6 +6,9 @@ import { ensureGuestKey, getGuestKey } from "@/server/guest";
 import { listConfigurations } from "@/server/configuration/service";
 import { getAssistant } from "@/server/chat/assistant";
 import { maybeAutoReply } from "@/server/chat/auto-reply";
+import { guideKnowledge } from "@/server/chat/guide";
+import { mailDeliveryReal } from "@/server/mail/transport";
+import { GUIDE_TOPICS, topicAnswer, type GuideAnswer, type GuideTopicId } from "@/domain/chat-guide";
 import { toConversationDto, toMessageDto } from "@/server/chat/dto";
 import { ChatError, MESSAGE_MAX_LENGTH, advisorsOnline, chatSettings, closeConversation, getActiveConversation, linkConfiguration, listMessages, postCustomerMessage, requestHandover, type Actor } from "@/server/chat/service";
 import type { ChatConversationDto, ChatMessageDto, ChatState } from "@/components/chat/types";
@@ -43,6 +46,7 @@ export async function loadChatAction(): Promise<ChatActionResult<ChatState>> {
         online,
         offlineMessage: settings.offlineMessage,
         assistant: getAssistant() !== null,
+        mailDelivery: mailDeliveryReal(),
         signedIn: Boolean(actor.userId),
         email: actor.email,
         name: actor.name,
@@ -91,7 +95,10 @@ export async function sendChatMessageAction(raw: unknown): Promise<ChatActionRes
         /* pièce jointe facultative : le message est déjà enregistré */
       }
     }
-    after(() => maybeAutoReply(conversation.id));
+    // aide immédiate : réponse déterministe enregistrée avant le retour (visible tout de suite) ; un assistant LLM
+    // répond après la réponse HTTP (relevé par le rafraîchissement) et se replie sur l'aide immédiate en cas d'échec
+    if (getAssistant()) after(() => maybeAutoReply(conversation.id));
+    else await maybeAutoReply(conversation.id);
     const messages = await listMessages(conversation.id, actor);
     const fresh = { ...conversation, configurationId: conversation.configurationId ?? (input.configurationId || null) };
     return { ok: true, data: { conversation: toConversationDto(fresh), messages: messages.map(toMessageDto), online } };
@@ -134,6 +141,20 @@ export async function closeChatAction(raw: unknown): Promise<ChatActionResult<nu
     const actor = await currentActor(false);
     await closeConversation(parsed.data.conversationId, actor);
     return { ok: true, data: null };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/**
+ * Aide immédiate sur un thème proposé (boutons du panneau) : réponse déterministe, rien n'est enregistré et aucune
+ * donnée personnelle n'est demandée.
+ */
+export async function guideTopicAction(raw: unknown): Promise<ChatActionResult<GuideAnswer>> {
+  const parsed = z.object({ topic: z.enum(GUIDE_TOPICS.map((t) => t.id) as [GuideTopicId, ...GuideTopicId[]]) }).safeParse(raw);
+  if (!parsed.success) return { ok: false, error: "Thème inconnu" };
+  try {
+    return { ok: true, data: topicAnswer(parsed.data.topic, await guideKnowledge()) };
   } catch (e) {
     return fail(e);
   }
