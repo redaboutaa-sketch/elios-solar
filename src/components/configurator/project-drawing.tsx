@@ -138,7 +138,7 @@ function drawPergola(c: Canvas, s: Extract<SceneModel, { kind: "pergola" }>, vie
   // repères des côtés (avant = côté opposé au mur ; vue de face = depuis l'avant)
   if (view !== "front") {
     // trois quarts : au-dessus de la poutre de chaque côté (les cotes occupent le sol) ; dessus : au-delà du bord
-    const y = H + 0.3, o = view === "top" ? 0.5 : 0;
+    const y = H + 0.75, o = view === "top" ? 0.5 : 0;
     c.label([L / 2, y, D + o], "Avant", "middle", "side-label");
     c.label([L / 2, y, -o], s.wall ? "Arrière (mur)" : "Arrière", "middle", "side-label");
     c.label([-o, y, D / 2], "Gauche", view === "top" ? "end" : "middle", "side-label");
@@ -374,7 +374,7 @@ export const ProjectDrawing = forwardRef<SVGSVGElement, ProjectDrawingProps>(fun
 
   // échelle fixe : enveloppe documentée du produit (marges pour les cotes)
   const env = new Canvas(view);
-  env.box(-0.45, envelope.w + 0.5, -0.3, envelope.h + (model.kind === "pergola" ? 0.8 : 0.4), -0.1, envelope.d + 0.5, "#000");
+  env.box(-0.45, envelope.w + 0.5, -0.3, envelope.h + (model.kind === "pergola" ? 1.1 : 0.4), -0.1, envelope.d + 0.5, "#000");
   const pts = env.prims.flatMap((p) => p.d.split(" ").map((xy) => xy.split(",").map(Number) as [number, number]));
   const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
   const ex0 = Math.min(...xs), ex1 = Math.max(...xs), ey0 = Math.min(...ys), ey1 = Math.max(...ys);
