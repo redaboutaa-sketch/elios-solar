@@ -341,3 +341,26 @@ export async function parseXlsx(buf: Uint8Array, opts: XlsxOptions): Promise<Par
     xlsx: { structure, sheets },
   };
 }
+
+/**
+ * Première feuille visible d'un classeur, en cellules texte (format normalisé). Une formule donne sa valeur en cache
+ * (jamais recalculée) ; une formule sans cache donne une cellule vide, signalée par le lecteur du format.
+ */
+export async function firstSheetTable(buf: Uint8Array, maxRows = 5000): Promise<string[][]> {
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(buf as unknown as ExcelJS.Buffer);
+  const ws = wb.worksheets.find((w) => w.state === "visible") ?? wb.worksheets[0];
+  if (!ws) return [];
+  const out: string[][] = [];
+  ws.eachRow({ includeEmpty: false }, (row) => {
+    if (out.length >= maxRows) return;
+    const cells: string[] = [];
+    for (let c = 1; c <= ws.columnCount; c += 1) {
+      const r = readCell(row.getCell(c));
+      const v = r.value;
+      cells.push(v == null ? "" : v instanceof Date ? v.toISOString().slice(0, 10) : String(v));
+    }
+    out.push(cells);
+  });
+  return out;
+}

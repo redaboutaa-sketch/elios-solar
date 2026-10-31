@@ -12,6 +12,7 @@ import { audit } from "@/server/audit";
 import { MAX_SOURCE_BYTES, sha256, type SourceFile } from "@/server/supplier-prices/analyse";
 import { applySupplierPrices, previewSupplierPrices } from "@/server/supplier-prices/import";
 import { axesOf, diffCells, type Nature, type TariffCell, type TaxBasis } from "@/domain/tariffs";
+import { NORMALIZED_ROLE_NATURE } from "@/server/supplier-prices/normalized";
 import { COLUMN_FR, deriveGridsFromImport, gridCells, gridKey, groupId, TariffError, type Actor, type ColumnSetting, type DeriveFromImportResult, type GroupMapping } from "./grids";
 
 export const MAX_UPLOAD_FILES = 6;
@@ -30,10 +31,11 @@ export async function createUpload(files: { name: string; bytes: Uint8Array }[],
   if (files.reduce((n, f) => n + f.bytes.byteLength, 0) > MAX_UPLOAD_BYTES) throw new TariffError("8 Mo au plus par téléversement.");
   for (const f of files) {
     const name = f.name.split(/[\\/]/).pop() ?? "";
-    if (!/^[^\0<>:"|?*]{1,180}\.(xlsx|docx)$/i.test(name)) throw new TariffError(`${name || "fichier"} : seuls les classeurs .xlsx et les fiches .docx sont acceptés.`);
+    if (!/^[^\0<>:"|?*]{1,180}\.(xlsx|docx|csv)$/i.test(name)) throw new TariffError(`${name || "fichier"} : seuls les classeurs .xlsx, les fiches .docx et les fichiers .csv au format normalisé sont acceptés.`);
     if (f.bytes.byteLength === 0) throw new TariffError(`${name} : fichier vide.`);
     if (f.bytes.byteLength > Math.min(MAX_SOURCE_BYTES, MAX_UPLOAD_BYTES)) throw new TariffError(`${name} : 8 Mo au plus.`);
-    if (!(f.bytes[0] === 0x50 && f.bytes[1] === 0x4b)) throw new TariffError(`${name} : ce n'est pas une archive Office.`);
+    if (/\.csv$/i.test(name)) { if (f.bytes.includes(0)) throw new TariffError(`${name} : fichier texte attendu.`); }
+    else if (!(f.bytes[0] === 0x50 && f.bytes[1] === 0x4b)) throw new TariffError(`${name} : ce n'est pas une archive Office.`);
   }
   const up = await prisma.priceImportUpload.create({
     data: { createdBy: actor.actorEmail ?? null, files: { create: files.map((f) => ({ fileName: f.name.split(/[\\/]/).pop()!, sha256: sha256(f.bytes), size: f.bytes.byteLength, bytes: Buffer.from(f.bytes) })) } },
@@ -115,7 +117,9 @@ export async function previewUpload(uploadId: string): Promise<UploadPreview> {
         changes.push({ group: id, role, sourceKey, previous: prev ? { version: prev.version, status: prev.status } : null, added: d.added.length, removed: d.removed.length, changed: d.changed.length, unchanged: d.unchanged });
         if (!defaults.columns[role]) {
           const pub = await prisma.supplierPriceList.findFirst({ where: { sourceKey, status: "ACTIVE" }, orderBy: { publishedAt: "desc" }, select: { nature: true, currency: true, taxBasis: true } });
-          defaults.columns[role] = saved.columns?.[role] ?? { enabled: true, nature: (pub?.nature ?? "UNKNOWN") as Nature, currency: pub?.currency ?? s.currency, taxBasis: (pub?.taxBasis ?? "UNKNOWN") as TaxBasis };
+          // format normalisé : nature, devise et base DÉCLARÉES dans le fichier, proposées à l'administrateur qui les valide
+          const declared = s.type === "normalized" ? { nature: NORMALIZED_ROLE_NATURE[role] ?? "UNKNOWN", taxBasis: s.taxBasis ?? "UNKNOWN" } : null;
+          defaults.columns[role] = saved.columns?.[role] ?? { enabled: true, nature: (pub?.nature ?? declared?.nature ?? "UNKNOWN") as Nature, currency: pub?.currency ?? s.currency, taxBasis: (pub?.taxBasis ?? declared?.taxBasis ?? "UNKNOWN") as TaxBasis };
         }
       }
     }

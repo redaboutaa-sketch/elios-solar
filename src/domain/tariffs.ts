@@ -18,12 +18,12 @@ export interface TariffCell {
   amountMinor: number | null;
 }
 
-export type Nature = "UNKNOWN" | "PURCHASE" | "SALE" | "RECOMMENDED" | "EXAMPLE";
+export type Nature = "UNKNOWN" | "PURCHASE" | "SALE" | "RECOMMENDED" | "EXAMPLE" | "SUPPLIER_LIST";
 export type TaxBasis = "UNKNOWN" | "HT" | "TTC";
 export type Clientele = "ALL" | "PARTICULIER" | "PROFESSIONNEL";
 export type DimRule = "EXACT" | "ROUND_UP";
 
-export const NATURE_LABEL: Record<Nature, string> = { UNKNOWN: "Nature non établie", PURCHASE: "Achat fournisseur", SALE: "Vente", RECOMMENDED: "Prix public conseillé", EXAMPLE: "Exemple" };
+export const NATURE_LABEL: Record<Nature, string> = { UNKNOWN: "Nature non établie", PURCHASE: "Achat fournisseur", SALE: "Vente", RECOMMENDED: "Prix public conseillé", EXAMPLE: "Exemple", SUPPLIER_LIST: "Prix catalogue fournisseur" };
 export const CLIENTELE_LABEL: Record<Clientele, string> = { ALL: "Toutes clientèles", PARTICULIER: "Particuliers", PROFESSIONNEL: "Professionnels" };
 export const DIM_RULE_LABEL: Record<DimRule, string> = { EXACT: "Cote exacte de la grille (sinon devis)", ROUND_UP: "Dimension de grille immédiatement supérieure" };
 
@@ -113,6 +113,7 @@ export function checkGrid(p: GridCheckInput, cells: TariffCell[]): GridCheck[] {
     if (p.family.known && p.family.status !== "PUBLISHED" && p.family.status !== "QUOTE_ONLY") warn("family_not_public", "Produit non publié : la grille ne rend pas le produit visible ; aucun prix n'est affiché.");
   }
   if (p.nature === "PURCHASE") warn("purchase_internal", "Coût d'achat : référence interne, jamais affichée sur le site ni dans les documents clients.");
+  if (p.nature === "SUPPLIER_LIST") warn("supplier_list_internal", "Prix catalogue du fournisseur : référence interne, ni un prix d'achat net ni un prix de vente. Le prix de vente se dérive par une règle explicite (remise fournisseur puis coefficient, majoration ou marge) validée par l'administrateur.");
   if (!p.family.known) block("family_unknown", "Produit inconnu du catalogue.");
   if (p.dimRule === "ROUND_UP" && p.dimRuleNote.trim().length < 5) block("dim_rule_unconfirmed", "Lecture à la dimension supérieure : indiquez qui l'a confirmée (règle non établie par la source).");
   if (p.validFrom && p.validTo && p.validTo <= p.validFrom) block("validity_inverted", "La fin de validité précède le début.");
@@ -177,11 +178,12 @@ export const sameCells = (a: TariffCell[], b: TariffCell[]) => { const d = diffC
  * - marge sur prix de vente : prix = coût ÷ (1 − t) — t exprimé en % du prix de vente (taux de marque).
  * Aucune valeur par défaut : l'administrateur saisit la valeur, qui est enregistrée avec la version.
  */
-export type DeriveMode = "coefficient" | "markup_on_cost" | "margin_on_price";
+export type DeriveMode = "coefficient" | "markup_on_cost" | "margin_on_price" | "supplier_discount";
 export const DERIVE_LABEL: Record<DeriveMode, string> = {
   coefficient: "Coefficient multiplicateur (prix = base × k)",
   markup_on_cost: "Majoration sur coût d'achat (prix = coût × (1 + m %))",
   margin_on_price: "Marge sur prix de vente (prix = coût ÷ (1 − t %))",
+  supplier_discount: "Remise fournisseur (achat net = prix catalogue × (1 − r %))",
 };
 
 /** Décimal positif « 1,2345 » → [numérateur, dénominateur] exacts (6 décimales au plus). */
@@ -202,6 +204,10 @@ export function deriveRatio(mode: DeriveMode, value: string): { ok: true; num: b
     return { ok: true, num: n, den: q, formula: `base × ${value.trim()}` };
   }
   if (mode === "markup_on_cost") return { ok: true, num: 100n * q + n, den: 100n * q, formula: `coût × (1 + ${value.trim()} %)` };
+  if (mode === "supplier_discount") {
+    if (n >= 100n * q) return { ok: false, error: "Une remise fournisseur doit être inférieure à 100 %." };
+    return { ok: true, num: 100n * q - n, den: 100n * q, formula: `prix catalogue × (1 − ${value.trim()} %)` };
+  }
   if (n >= 100n * q) return { ok: false, error: "Une marge sur prix de vente doit être inférieure à 100 %." };
   return { ok: true, num: 100n * q, den: 100n * q - n, formula: `coût ÷ (1 − ${value.trim()} %)` };
 }

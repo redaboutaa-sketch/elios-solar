@@ -6,7 +6,7 @@
 
 export type RowKind = "GRID" | "OPTION";
 export type RowStatus = "OK" | "TO_CHECK" | "REJECTED";
-export type SourceType = "xlsx" | "docx";
+export type SourceType = "xlsx" | "docx" | "normalized";
 
 /** Rôle du montant dans la source (colonne d'origine). */
 export const AMOUNT_ROLES = {
@@ -16,6 +16,10 @@ export const AMOUNT_ROLES = {
   FINAL_PRICE: "PRIX_FINAL",
   /** équipement / supplément */
   OPTION: "OPTION",
+  /** format normalisé (catalogues fournisseur) : nature déclarée par ligne */
+  SUPPLIER_LIST: "CATALOGUE_FOURNISSEUR",
+  NET_PURCHASE: "ACHAT_NET",
+  SALE: "VENTE",
 } as const;
 export type AmountRole = (typeof AMOUNT_ROLES)[keyof typeof AMOUNT_ROLES];
 
@@ -23,6 +27,9 @@ export const AMOUNT_ROLE_FR: Record<string, string> = {
   PRIX_SOURCE: "Prix source (« Prix » / « Prix fournisseur »)",
   PRIX_FINAL: "Prix final HELIOSTORES",
   OPTION: "Option / supplément",
+  CATALOGUE_FOURNISSEUR: "Prix catalogue fournisseur",
+  ACHAT_NET: "Prix d'achat net",
+  VENTE: "Prix de vente HELIOSTORES",
 };
 
 export interface ParsedRow {
@@ -121,6 +128,10 @@ export interface ParsedSource {
   natureNote: string;
   rows: ParsedRow[];
   notes: string[];
+  /** format normalisé : base HT/TTC déclarée (uniforme), période et documents sources cités */
+  taxBasis?: "HT" | "TTC" | null;
+  validity?: { from: string | null; to: string | null };
+  documents?: string[];
   xlsx?: { structure: WorkbookStructure; sheets: SheetReport[] };
   docx?: { title: string; tables: DocxTableReport[]; optionLines: number; currencies: string[] };
 }

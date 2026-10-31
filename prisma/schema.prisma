@@ -1432,6 +1432,8 @@ enum PriceNature {
   SALE
   RECOMMENDED
   EXAMPLE
+  /// prix catalogue du fournisseur (tarif public du fournisseur) : ni un prix d'achat net, ni un prix de vente HELIOSTORES
+  SUPPLIER_LIST
 }
 
 enum TaxBasis {

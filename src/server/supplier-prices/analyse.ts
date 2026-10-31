@@ -7,7 +7,10 @@ import { compareSources, type CompareResult } from "./compare";
 import { parseDocx } from "./docx";
 import { addIssue, countRows, findGridGaps, markDuplicates } from "./normalise";
 import type { Discrepancy, GridGap, ParsedRow, ParsedSource } from "./types";
-import { parseXlsx } from "./xlsx";
+import { firstSheetTable, parseXlsx } from "./xlsx";
+import { isNormalizedHeader, parseNormalizedRows, parseCsv, productMatcher } from "./normalized";
+import { NAME_TRANSCO } from "@/server/catalog/name-transco";
+import { HELIOSTORES_FAMILIES } from "@/server/catalog/heliostores-data";
 
 export const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
 
@@ -42,18 +45,35 @@ export class SourceError extends Error {
   }
 }
 
+/** Rapprochement des références fournisseur : transcodification validée (produits du catalogue actuel). */
+const normalizedOptions = (f: SourceFile) => ({
+  fileName: f.fileName, sourceKey: f.sourceKey,
+  productOf: productMatcher(NAME_TRANSCO.filter((t) => t.kind === "product").map((t) => ({ slug: t.slug, supplierRef: t.supplierRef }))),
+  knownProducts: new Set(HELIOSTORES_FAMILIES.filter((x) => !x.retired).map((x) => x.slug)),
+});
+
 export async function parseSource(f: SourceFile): Promise<ParsedSource> {
   if (f.bytes.byteLength > MAX_SOURCE_BYTES) throw new SourceError(`${f.fileName} : fichier trop volumineux (20 Mo maximum)`);
   const ext = f.fileName.toLowerCase().split(".").pop();
+  if (ext === "csv") {
+    let text: string;
+    try { text = new TextDecoder("utf-8", { fatal: true }).decode(f.bytes); } catch { throw new SourceError(`${f.fileName} : encodage UTF-8 attendu`); }
+    if (text.includes("\0")) throw new SourceError(`${f.fileName} : fichier texte attendu`);
+    try { return parseNormalizedRows(parseCsv(text), normalizedOptions(f)); } catch (e) { throw new SourceError(`${f.fileName} : ${(e as Error).message}`); }
+  }
   const isZip = f.bytes[0] === 0x50 && f.bytes[1] === 0x4b;
-  if (!isZip) throw new SourceError(`${f.fileName} : format non reconnu (archive Office attendue)`);
+  if (!isZip) throw new SourceError(`${f.fileName} : format non reconnu (archive Office ou CSV attendu)`);
   try {
-    if (ext === "xlsx") return await parseXlsx(f.bytes, { fileName: f.fileName, sourceKey: f.sourceKey });
+    if (ext === "xlsx") {
+      const table = await firstSheetTable(f.bytes);
+      if (table[0] && isNormalizedHeader(table[0])) return parseNormalizedRows(table, normalizedOptions(f));
+      return await parseXlsx(f.bytes, { fileName: f.fileName, sourceKey: f.sourceKey });
+    }
     if (ext === "docx") return parseDocx(f.bytes, { fileName: f.fileName, sourceKey: f.sourceKey });
   } catch (e) {
     throw new SourceError(`${f.fileName} : lecture impossible (${(e as Error).message})`);
   }
-  throw new SourceError(`${f.fileName} : extension non prise en charge (.xlsx ou .docx)`);
+  throw new SourceError(`${f.fileName} : extension non prise en charge (.xlsx, .docx ou .csv au format normalisé)`);
 }
 
 /** Analyse un lot : les fiches DOCX sont rapprochées des classeurs XLSX fournis dans le même lot. */

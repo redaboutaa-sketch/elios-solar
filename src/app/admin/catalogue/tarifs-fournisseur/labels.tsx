@@ -2,7 +2,7 @@ import { StatusBadge } from "@/components/admin/ui";
 
 export const LIST_STATUS_FR: Record<string, string> = { DRAFT: "Brouillon", ACTIVE: "Active", ARCHIVED: "Archivée", REJECTED: "Rejetée" };
 export const ROW_STATUS_FR: Record<string, string> = { OK: "OK", TO_CHECK: "À vérifier", REJECTED: "Rejetée" };
-export const NATURE_FR: Record<string, string> = { UNKNOWN: "Nature non établie", PURCHASE: "Achat", SALE: "Vente", RECOMMENDED: "Prix conseillé", EXAMPLE: "Exemple" };
+export const NATURE_FR: Record<string, string> = { UNKNOWN: "Nature non établie", PURCHASE: "Achat", SALE: "Vente", RECOMMENDED: "Prix conseillé", SUPPLIER_LIST: "Prix catalogue fournisseur", EXAMPLE: "Exemple" };
 export const TAX_FR: Record<string, string> = { UNKNOWN: "HT/TTC inconnu", HT: "HT", TTC: "TTC" };
 export const DISCREPANCY_FR: Record<string, string> = {
   AMOUNT_MISMATCH: "Montants différents",

@@ -68,7 +68,7 @@ const dateTime = z.preprocess((v) => (v == null ? "" : v), z.string().trim()).tr
 });
 const paramsSchema = z.object({
   id, revision: rev,
-  nature: z.enum(["UNKNOWN", "PURCHASE", "SALE", "RECOMMENDED", "EXAMPLE"]),
+  nature: z.enum(["UNKNOWN", "PURCHASE", "SALE", "RECOMMENDED", "EXAMPLE", "SUPPLIER_LIST"]),
   natureNote: opt(),
   currency: opt(3).transform((v) => (v ? v.toUpperCase() : null)).refine((v) => v == null || /^[A-Z]{3}$/.test(v), "Devise : code ISO à trois lettres"),
   taxBasis: z.enum(["UNKNOWN", "HT", "TTC"]),
@@ -133,7 +133,7 @@ export async function rejectAction(formData: FormData) {
 
 export async function deriveAction(formData: FormData) {
   const actor = await admin();
-  const p = z.object({ id, baseId: id, mode: z.enum(["coefficient", "markup_on_cost", "margin_on_price"]), value: z.string().trim().min(1).max(20) }).safeParse(fields(formData));
+  const p = z.object({ id, baseId: id, mode: z.enum(["coefficient", "markup_on_cost", "margin_on_price", "supplier_discount"]), value: z.string().trim().min(1).max(20) }).safeParse(fields(formData));
   if (!p.success) back(BASE, "Requête invalide : choisissez une grille de base, une règle et une valeur.", "err");
   await run(gridPath(p.data.id), () => deriveDraft(p.data.baseId, p.data.id, p.data.mode, p.data.value, actor), (c) => `Brouillon v${c.version} recalculé : vérifiez chaque montant avant publication.`, (c) => gridPath(c.id));
 }
@@ -161,7 +161,7 @@ export async function uploadAction(formData: FormData) {
 
 const mappingSchema = z.object({
   groups: z.record(z.string().max(200), z.object({ familySlug: z.string().max(80).nullable(), variantKey: z.string().max(40), dimAKey: z.enum(["projection", "hauteur"]) })),
-  columns: z.record(z.string().max(40), z.object({ enabled: z.boolean(), nature: z.enum(["UNKNOWN", "PURCHASE", "SALE", "RECOMMENDED", "EXAMPLE"]), currency: z.string().max(3).nullable(), taxBasis: z.enum(["UNKNOWN", "HT", "TTC"]) })),
+  columns: z.record(z.string().max(40), z.object({ enabled: z.boolean(), nature: z.enum(["UNKNOWN", "PURCHASE", "SALE", "RECOMMENDED", "EXAMPLE", "SUPPLIER_LIST"]), currency: z.string().max(3).nullable(), taxBasis: z.enum(["UNKNOWN", "HT", "TTC"]) })),
 });
 
 function mappingFrom(formData: FormData): UploadMapping {

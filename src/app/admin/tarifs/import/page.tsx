@@ -20,13 +20,13 @@ export default async function ImportPage(props: PageProps<"/admin/tarifs/import"
       <ConfidentialNote />
       <Section title="1. Téléverser">
         <ol className="mb-3 list-decimal pl-5 text-sm text-stone-800">
-          <li>Téléverser le classeur (.xlsx) et, si besoin, les fiches (.docx) des mêmes produits : elles sont rapprochées du classeur.</li>
+          <li>Téléverser le classeur (.xlsx) et, si besoin, les fiches (.docx) des mêmes produits : elles sont rapprochées du classeur. Catalogues fournisseur (SELT) : reporter les tarifs au <strong>format normalisé</strong> (.csv ou .xlsx, en-têtes et règles dans <code>docs/pricing/selt-import.md</code>) — une ligne par prix, avec sa localisation dans le catalogue, sa nature (catalogue fournisseur, achat net, vente), sa devise et HT/TTC ; les produits sont rapprochés par la référence fournisseur.</li>
           <li>Analyser et prévisualiser : produits reconnus, grilles, unités, montants interprétés, cellules inexploitables, changements.</li>
           <li>Corriger les correspondances (produit, variante, axe ; nature, devise et HT/TTC de chaque colonne).</li>
           <li>Importer : des <strong>brouillons</strong> de grille sont créés. Rien n'est publié ; un fichier déjà importé n'est pas dupliqué.</li>
         </ol>
         <form action={uploadAction} className="flex flex-wrap items-end gap-3 text-sm">
-          <label className="flex flex-col">Fichiers (.xlsx, .docx — 8 Mo au total)<input type="file" name="files" multiple accept=".xlsx,.docx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="input" required data-testid="upload-input" /></label>
+          <label className="flex flex-col">Fichiers (.xlsx, .docx, .csv — 8 Mo au total)<input type="file" name="files" multiple accept=".xlsx,.docx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="input" required data-testid="upload-input" /></label>
           <button className="btn-primary" type="submit">Analyser</button>
         </form>
         <p className="mt-2 text-xs text-stone-700">Les fichiers restent privés : enregistrés en base le temps de l'analyse puis effacés à l'import ou à l'abandon. Les formules ne sont jamais recalculées, les liens externes jamais suivis, aucune macro n'est exécutée.</p>

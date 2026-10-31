@@ -32,7 +32,7 @@ type Tx = Prisma.TransactionClient;
 /** Lignée d'une grille : les versions successives partagent cette clé. */
 export const gridKey = (familySlug: string, variantKey: string, amountRole: string) => `grid:${familySlug}:${variantKey || "_"}:${amountRole}`;
 
-export const COLUMN_FR: Record<string, string> = { PRIX_FINAL: "Prix final HELIOSTORES", PRIX_SOURCE: "Prix (colonne source / « prix fournisseur »)", MANUAL: "Saisie manuelle", DERIVED: "Recalcul" };
+export const COLUMN_FR: Record<string, string> = { PRIX_FINAL: "Prix final HELIOSTORES", PRIX_SOURCE: "Prix (colonne source / « prix fournisseur »)", MANUAL: "Saisie manuelle", DERIVED: "Recalcul", CATALOGUE_FOURNISSEUR: "Prix catalogue fournisseur", ACHAT_NET: "Prix d'achat net", VENTE: "Prix de vente HELIOSTORES" };
 
 export const EDITABLE = new Set(["DRAFT", "VERIFIED"]);
 
@@ -380,6 +380,10 @@ export async function rejectGrid(id: string, actor: Actor) {
 export async function deriveDraft(baseId: string, targetId: string, mode: DeriveMode, value: string, actor: Actor) {
   const [base, target] = await Promise.all([getGrid(baseId), getGrid(targetId)]);
   if (base.familySlug !== target.familySlug || base.variantKey !== target.variantKey) throw new TariffError("La grille de base doit porter sur le même produit et la même variante.");
+  // règles distinctes : la remise fournisseur s'applique au prix catalogue et donne un achat net ; majoration et marge
+  // s'appliquent à un coût d'achat (jamais à un prix catalogue pris pour un coût)
+  if (mode === "supplier_discount" && (base.nature !== "SUPPLIER_LIST" || target.nature !== "PURCHASE")) throw new TariffError("La remise fournisseur se calcule depuis une grille « prix catalogue fournisseur » vers une grille « achat fournisseur ».");
+  if ((mode === "markup_on_cost" || mode === "margin_on_price") && base.nature !== "PURCHASE") throw new TariffError("Majoration et marge se calculent sur un coût d'achat : la grille de base doit être de nature « achat fournisseur ».");
   const r = deriveCells(await gridCells(base.id), mode, value);
   if (!r.ok) throw new TariffError(r.error);
   const now = new Date().toISOString().slice(0, 10);
@@ -504,6 +508,9 @@ async function refreshCatalog() {
   try {
     const { invalidateCatalogCache } = await import("@/server/catalog/load");
     invalidateCatalogCache();
+    // aide immédiate du chat : statut de prix (affiché / sur devis) relu à la prochaine question
+    const { resetGuideCache } = await import("@/server/chat/guide");
+    resetGuideCache();
   } catch {
     // hors serveur Next (scripts) : rien à invalider
   }
