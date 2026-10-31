@@ -19,7 +19,8 @@ export async function storeUploadedFile(file: unknown, opts: { accept?: readonly
   if (!(file instanceof File) || file.size === 0) return { ok: false, error: "Aucun fichier reçu." };
   if (file.size > MAX_MEDIA_BYTES) return { ok: false, error: "Fichier trop volumineux (8 Mo maximum)." };
   const mime = file.type;
-  if (!isMediaMime(mime)) return { ok: false, error: "Type de fichier refusé (JPEG, PNG, WebP, SVG ou PDF)." };
+  // AVIF : variantes produites par les imports seulement, pas de téléversement
+  if (!isMediaMime(mime) || mime === "image/avif") return { ok: false, error: "Type de fichier refusé (JPEG, PNG, WebP, SVG ou PDF)." };
   if (opts.accept && !opts.accept.includes(mime)) return { ok: false, error: `Type de fichier refusé (${opts.accept.join(", ")} attendu).` };
   const buf = Buffer.from(await file.arrayBuffer());
   const bad = checkSignature(buf, mime);

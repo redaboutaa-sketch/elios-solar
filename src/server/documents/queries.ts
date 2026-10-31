@@ -19,8 +19,8 @@ export interface PublicDocument {
   variantSku: string | null;
 }
 
-function flatten(d: { id: string; groupKey: string; version: number; title: string; kind: string; summary: string; audience: DocumentAudience; dataStatus: string; publishedAt: Date | null; variantSku: string | null; media: { path: string } | null; family: { name: string; slug: string } | null }): PublicDocument {
-  return { id: d.id, groupKey: d.groupKey, version: d.version, title: d.title, kind: d.kind, summary: d.summary, audience: d.audience, dataStatus: d.dataStatus, publishedAt: d.publishedAt, href: d.media?.path ?? null, familyName: d.family?.name ?? null, familySlug: d.family?.slug ?? null, variantSku: d.variantSku };
+function flatten(d: { id: string; groupKey: string; version: number; title: string; kind: string; summary: string; audience: DocumentAudience; dataStatus: string; publishedAt: Date | null; variantSku: string | null; media: { path: string; externalUrl?: string | null } | null; family: { name: string; slug: string } | null }): PublicDocument {
+  return { id: d.id, groupKey: d.groupKey, version: d.version, title: d.title, kind: d.kind, summary: d.summary, audience: d.audience, dataStatus: d.dataStatus, publishedAt: d.publishedAt, href: d.media?.externalUrl || d.media?.path || null, familyName: d.family?.name ?? null, familySlug: d.family?.slug ?? null, variantSku: d.variantSku };
 }
 
 /**
@@ -31,7 +31,20 @@ function flatten(d: { id: string; groupKey: string; version: number; title: stri
 export async function publicDocumentsForFamily(familyId: string): Promise<PublicDocument[]> {
   const rows = await prisma.document.findMany({
     where: { familyId, status: "PUBLISHED", audience: "PUBLIC" },
-    include: { media: { select: { path: true } }, family: { select: { name: true, slug: true } } },
+    include: { media: { select: { path: true, externalUrl: true } }, family: { select: { name: true, slug: true } } },
+    orderBy: [{ kind: "asc" }, { title: "asc" }, { version: "desc" }],
+  });
+  return latestPerGroup(rows).map(flatten);
+}
+
+/**
+ * Bibliothèque publique (rubrique Guides) : documents PUBLIÉS d'audience PUBLIC, dernière version de chaque groupe,
+ * rattachés à un modèle du catalogue actuel. Aucun document n'est affiché s'il n'a pas été publié dans l'administration.
+ */
+export async function publicDocumentsLibrary(): Promise<PublicDocument[]> {
+  const rows = await prisma.document.findMany({
+    where: { status: "PUBLISHED", audience: "PUBLIC", family: { legacy: false, category: { not: null }, status: { in: ["PUBLISHED", "QUOTE_ONLY"] } } },
+    include: { media: { select: { path: true, externalUrl: true } }, family: { select: { name: true, slug: true } } },
     orderBy: [{ kind: "asc" }, { title: "asc" }, { version: "desc" }],
   });
   return latestPerGroup(rows).map(flatten);
@@ -64,7 +77,7 @@ export async function customerDocuments(userId: string): Promise<PublicDocument[
   const familyIds = await familyIdsOrderedBy(userId);
   const rows = await prisma.document.findMany({
     where: { status: "PUBLISHED", audience: { in: ["PUBLIC", "CUSTOMER"] }, OR: [{ familyId: null }, { familyId: { in: familyIds } }] },
-    include: { media: { select: { path: true } }, family: { select: { name: true, slug: true } } },
+    include: { media: { select: { path: true, externalUrl: true } }, family: { select: { name: true, slug: true } } },
     orderBy: [{ familyId: "asc" }, { kind: "asc" }, { title: "asc" }, { version: "desc" }],
   });
   return latestPerGroup(rows).map(flatten);

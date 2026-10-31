@@ -2,6 +2,9 @@
 import { useEffect, useState } from "react";
 import { saveConsentAction } from "@/server/actions/consent";
 
+/** Aucun traceur publicitaire ni service marketing n'est intégré : la catégorie reste refusée tant qu'il n'en existe pas. */
+const MARKETING_AVAILABLE = false;
+
 export const CONSENT_VERSION = "2026-10";
 const KEY = "es_consent_v";
 
@@ -45,7 +48,7 @@ export function CookieBanner({ analyticsAvailable }: { analyticsAvailable: boole
             <div className="mt-2 flex flex-col gap-1">
               <label className="flex items-center gap-2"><input type="checkbox" checked disabled /> Nécessaires (toujours actifs)</label>
               <label className="flex items-center gap-2"><input type="checkbox" checked={prefs.analytics} onChange={(e) => setPrefs({ ...prefs, analytics: e.target.checked })} disabled={!analyticsAvailable} /> Mesure d'audience</label>
-              <label className="flex items-center gap-2"><input type="checkbox" checked={prefs.marketing} onChange={(e) => setPrefs({ ...prefs, marketing: e.target.checked })} /> Marketing</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={prefs.marketing} onChange={(e) => setPrefs({ ...prefs, marketing: e.target.checked })} disabled={!MARKETING_AVAILABLE} /> Marketing{MARKETING_AVAILABLE ? "" : " (aucun service utilisé)"}</label>
             </div>
           )}
         </div>
@@ -56,7 +59,7 @@ export function CookieBanner({ analyticsAvailable }: { analyticsAvailable: boole
           ) : (
             <button type="button" className="btn-ghost" onClick={() => setCustom(true)}>Personnaliser</button>
           )}
-          <button type="button" className="btn-primary" onClick={() => commit({ analytics: analyticsAvailable, marketing: true })}>Tout accepter</button>
+          <button type="button" className="btn-primary" onClick={() => commit({ analytics: analyticsAvailable, marketing: MARKETING_AVAILABLE })}>Tout accepter</button>
         </div>
       </div>
     </div>

@@ -55,7 +55,28 @@ export const accessorySchema = z.object({
   promotionCode: z.string().trim().max(30).optional(),
 });
 
-export const configurationInputSchema = z.discriminatedUnion("kind", [pergolaStandardSchema, pergolaCustomSchema, awningSchema, accessorySchema]);
+/** Système à la cote (catalogue HELIOSTORES) : les règles de la famille valident les valeurs côté moteur. */
+export const systemSchema = z.object({
+  kind: z.literal("system"),
+  familySlug: z.string().min(1).max(60),
+  widthMm: z.number().int(),
+  depthMm: z.number().int().optional(),
+  heightMm: z.number().int().optional(),
+  mounting: z.enum(["wall", "freestanding", "niche", "facade", "ceiling", "rafter", "roof", "frame", "reveal"]),
+  finishCode: z.string().min(1).max(40),
+  fabricCode: z.string().max(40).optional(),
+  controlCode: z.string().max(40).optional(),
+  packCode: z.string().max(40).optional(),
+  sizeCode: z.string().max(40).optional(),
+  options: z.array(z.object({ code: z.string().min(1).max(40), qty: z.number().int().min(1).max(20).optional(), value: z.string().max(40).optional() })).max(16).default([]),
+  sides: z.partialRecord(z.enum(["front", "back", "left", "right"]), z.string().max(60).nullable()).default({}),
+  multiModule: z.boolean().optional(),
+  installation: z.enum(["self", "professional"]),
+  delivery,
+  notes: z.string().max(2000).optional(),
+});
+
+export const configurationInputSchema = z.discriminatedUnion("kind", [pergolaStandardSchema, pergolaCustomSchema, awningSchema, accessorySchema, systemSchema]);
 export type ConfigurationInputParsed = z.infer<typeof configurationInputSchema>;
 
 export const quoteFormSchema = z.object({

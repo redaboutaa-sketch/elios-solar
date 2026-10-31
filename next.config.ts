@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { legacyProductRedirects } from "./src/server/catalog/legacy-slugs";
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -11,8 +12,12 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     qualities: [60, 75, 90],
   },
+  // anciennes fiches et anciens configurateurs (références fournisseur) → noms commerciaux HELIOSTORES (308)
+  async redirects() {
+    return legacyProductRedirects();
+  },
+  // X-Robots-Tag : posé à l'exécution par src/proxy.ts (headers() est figé au build, pour tous les environnements)
   async headers() {
-    const preprod = process.env.SITE_INDEXABLE !== "true";
     const common = [
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "X-Frame-Options", value: "DENY" },
@@ -22,7 +27,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/:path*",
-        headers: preprod ? [...common, { key: "X-Robots-Tag", value: "noindex, nofollow" }] : common,
+        headers: common,
       },
     ];
   },

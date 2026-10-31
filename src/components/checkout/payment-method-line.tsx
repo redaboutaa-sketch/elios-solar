@@ -5,7 +5,8 @@ const PLAN_FR: Record<string, string> = { stripe_klarna: "Klarna (via Stripe)", 
 /** Libellé du moyen de paiement d'une tentative (client et administration). */
 export function paymentMethodLabel(p: Pick<Payment, "method" | "installments" | "planProvider" | "provider">): string {
   if (p.method === "installments") return `Paiement en ${p.installments ?? "?"} fois via ${PLAN_FR[p.planProvider ?? ""] ?? p.planProvider ?? "prestataire"}`;
-  return p.provider === "DEMO" ? "Carte / paiement en une fois (simulé)" : "Carte / paiement en une fois";
+  if (p.method === "bank_transfer") return "Virement bancaire";
+  return p.provider === "DEMO" ? "Carte / paiement en une fois (simulé)" : "Paiement en ligne en une fois (carte ou moyen proposé par le prestataire)";
 }
 
 export function PaymentMethodLine({ payment }: { payment: Pick<Payment, "method" | "installments" | "planProvider" | "provider" | "feesCents"> }) {

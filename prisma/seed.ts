@@ -3,20 +3,22 @@
  * DÉMONSTRATION, paramètres du site, pages de contenu avec champs manquants.
  * Relançable sans doublon (upsert par clés naturelles).
  */
+import { createHash } from "node:crypto";
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import {
   CLOSURE_COMPAT, DEMO_PRICE_GRID, DIMENSIONS, FAMILIES, FAMILY_CONTENT, FINISHES, INSTALLATION_RATES, OPTION_COMPAT, PROMOTIONS, SHIPPING_RULES, buildVariants,
 } from "../src/server/catalog/demo-data";
-import { CONTENT_PAGES } from "../src/server/content/default-pages";
+import { CONTENT_PAGES, PREVIOUS_DEFAULT_BODY_SHA256 } from "../src/server/content/default-pages";
 import { seedDemoRenders } from "../src/server/media/demo-renders";
 import { seedReferenceValidations } from "../src/server/validation/seed";
+import { seedHeliostores, setLegacyCatalogue } from "../src/server/catalog/heliostores-seed";
 
 const up = (s: string) => s.toUpperCase();
 
 export async function runSeed(prisma: PrismaClient) {
-  await prisma.siteSettings.upsert({ where: { id: 1 }, update: {}, create: { id: 1, brandName: process.env.NEXT_PUBLIC_BRAND_NAME ?? "ELIOS SOLAR" } });
+  await prisma.siteSettings.upsert({ where: { id: 1 }, update: {}, create: { id: 1, brandName: process.env.NEXT_PUBLIC_BRAND_NAME ?? "HELIOSTORES" } });
   await prisma.customPergolaSettings.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
 
   for (const [i, f] of FINISHES.entries()) {
@@ -107,7 +109,12 @@ export async function runSeed(prisma: PrismaClient) {
     await prisma.promotion.upsert({ where: { code: p.code }, update: {}, create: { code: p.code, label: p.label, familySlugs: p.familySlugs === "*" ? [] : p.familySlugs, allFamilies: p.familySlugs === "*", percentBps: p.percentBps, active: p.active } });
   }
   for (const page of CONTENT_PAGES) {
-    await prisma.contentPage.upsert({ where: { slug: page.slug }, update: {}, create: page });
+    const existing = await prisma.contentPage.findUnique({ where: { slug: page.slug } });
+    if (!existing) await prisma.contentPage.create({ data: page });
+    else if (PREVIOUS_DEFAULT_BODY_SHA256[page.slug]?.includes(createHash("sha256").update(existing.body).digest("hex"))) {
+      // texte par défaut jamais modifié : remplacé par la version courante (statut conservé)
+      await prisma.contentPage.update({ where: { slug: page.slug }, data: { body: page.body, missingFields: [...page.missingFields] } });
+    }
   }
   // Réalisations / showroom : structure de démonstration, non publiée
   if ((await prisma.realisation.count()) === 0) {
@@ -135,8 +142,15 @@ export async function runSeed(prisma: PrismaClient) {
     });
   }
 
-  // Rendus originaux (scènes procédurales) et document de démonstration : idempotent ; désactivable (SEED_SKIP_RENDERS=1)
-  if (process.env.SEED_SKIP_RENDERS !== "1") {
+  // Catalogue HELIOSTORES (sources publiables) ; l'ancien catalogue de démonstration est archivé pour l'historique,
+  // sauf SEED_LEGACY_DEMO=active (jeu d'essai des tests d'intégration du panier, des commandes et du paiement simulé).
+  const legacyMode = process.env.SEED_LEGACY_DEMO === "active" ? "active" : "archived";
+  const helio = await seedHeliostores(prisma);
+  const legacy = await setLegacyCatalogue(prisma, FAMILIES.map((f) => f.slug), legacyMode);
+  console.log(`HELIOSTORES : ${helio.families} familles, ${helio.specs} données sourcées, ${helio.documents} document(s) fabricant retiré(s) du site ; ancien catalogue (${legacy} familles) : ${legacyMode === "active" ? "jeu d'essai actif" : "archivé"}`);
+
+  // Rendus originaux (scènes procédurales) de l'ancien catalogue : seulement comme jeu d'essai (SEED_SKIP_RENDERS=1 pour les ignorer)
+  if (process.env.SEED_SKIP_RENDERS !== "1" && legacyMode === "active") {
     const r = await seedDemoRenders(prisma);
     console.log(`Rendus : ${r.created} créés, ${r.skipped} existants, ${r.linked} associations, ${r.documents} document(s) démo`);
   }
@@ -150,5 +164,13 @@ export async function runSeed(prisma: PrismaClient) {
 
 if (process.argv[1] && /seed\.ts$/.test(process.argv[1])) {
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }) });
-  runSeed(prisma).catch((e) => { console.error(e); process.exit(1); }).finally(() => prisma.$disconnect());
+  runSeed(prisma)
+    // grilles de l'écran Tarifs depuis l'import existant du classeur (idempotent ; sans import : rien)
+    .then(async () => {
+      const { initTariffGrids } = await import("../src/server/tariffs/init");
+      const r = await initTariffGrids();
+      console.log(`Tarifs : ${r.status === "created" ? `${r.result!.created.length} grille(s) initialisée(s)` : r.status === "done" ? "grilles déjà initialisées" : "aucun import du classeur"}`);
+    })
+    .catch((e) => { console.error(e); process.exit(1); })
+    .finally(() => prisma.$disconnect());
 }

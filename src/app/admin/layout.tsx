@@ -15,10 +15,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   await touchPresence(session.user.id).catch(() => undefined);
   return (
     <div className="flex min-h-dvh flex-col bg-sand-50 text-ink">
-      <div role="note" className="bg-anthracite px-4 py-1.5 text-center text-xs tracking-wide text-sand-50">Administration — préproduction · version <span data-testid="build-commit">{buildInfo().shortCommit}</span></div>
+      <div role="note" className="bg-anthracite px-4 py-1.5 text-center text-xs tracking-wide text-sand-50">Administration — {process.env.SITE_INDEXABLE === "true" ? "production" : "préproduction"} · version <span data-testid="build-commit">{buildInfo().shortCommit}</span></div>
       <header className="border-b border-sand-200 bg-white">
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 lg:px-6">
-          <Link href="/admin" className="font-display text-lg">ELIOS SOLAR · Administration</Link>
+          <Link href="/admin" className="font-display text-lg">HELIOSTORES · Administration</Link>
           <div className="flex items-center gap-4 text-sm">
             <span className="hidden sm:inline text-stone-700">{session.user.name || "Compte"} · {ROLE_FR[role] ?? role}</span>
             <Link href="/" className="underline">Retour à la boutique</Link>

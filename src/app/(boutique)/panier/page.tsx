@@ -6,14 +6,19 @@ import { DemoBadge } from "@/components/ui/demo-badge";
 import { IssueList, Notice } from "@/components/ui/alert";
 import { getSession } from "@/lib/session";
 import { getGuestKey } from "@/server/guest";
-import { evaluateCart, findActiveCart } from "@/server/cart/service";
+import { evaluateCart, findActiveCart, SYSTEM_DELIVERY_LABEL } from "@/server/cart/service";
+import { formatSystemPrice } from "@/domain/system-pricing";
 import { removeLineAction, setDeliveryAction, updateQtyAction } from "@/server/actions/cart";
 import { summarizeStandard } from "@/domain/helpers";
 import { loadCatalog } from "@/server/catalog/load";
 import { estimateCartDelivery } from "@/server/stock/delivery";
 import { DeliveryEstimateBlock } from "@/components/catalog/delivery-estimate";
+import { ONLINE_SALES_CLOSED, onlineSalesEnabled } from "@/server/payment/mode";
 
 export const metadata: Metadata = { title: "Panier", robots: { index: false } };
+
+/** Choix du système repris sous la ligne du panier (le reste figure dans le libellé). */
+const SYSTEM_RECAP = new Set(["Teinte de structure", "Toile", "Commande"]);
 
 export default async function CartPage() {
   const [session, guestKey, catalog] = await Promise.all([getSession(), getGuestKey(), loadCatalog()]);
@@ -25,7 +30,7 @@ export default async function CartPage() {
       <Breadcrumbs items={[{ label: "Panier" }]} />
       <h1 className="mt-4 font-display text-4xl">Votre panier</h1>
       {!ev ? (
-        <div className="mt-8 card p-10 text-center"><p className="font-display text-2xl">Votre panier est vide.</p><p className="mt-2 text-stone-700">Composez votre pergola ou choisissez un accessoire compatible.</p><div className="mt-4 flex justify-center gap-2"><Link href="/configurateur" className="btn-accent">Configurer une pergola</Link><Link href="/accessoires" className="btn-secondary">Accessoires</Link></div></div>
+        <div className="mt-8 card p-10 text-center"><p className="font-display text-2xl">Votre panier est vide.</p><p className="mt-2 text-stone-700">Configurez une pergola, un screen ou un store banne à vos cotes.</p><div className="mt-4 flex justify-center gap-2"><Link href="/configurateur" className="btn-accent">Configurer</Link><Link href="/devis" className="btn-secondary">Demander un devis</Link></div></div>
       ) : (
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
           <ul className="space-y-4" data-testid="cart-lines">
@@ -34,16 +39,25 @@ export default async function CartPage() {
                 <div className="flex flex-wrap justify-between gap-3">
                   <div>
                     <p className="font-display text-lg">{input.kind === "pergola_standard" ? summarizeStandard(catalog, input) : result.lines[0]?.label}</p>
-                    <ul className="mt-2 text-sm text-stone-800 space-y-0.5">{result.lines.filter((l) => l.kind !== "base" && l.kind !== "shipping").map((l) => <li key={l.code + (l.path ?? "")}>· {l.label}{l.qty > 1 && ` × ${l.qty}`} — {l.included ? "inclus" : <Price cents={l.totalGrossCents} />}</li>)}</ul>
+                    {input.kind === "system" ? (
+                      <ul className="mt-2 text-sm text-stone-800 space-y-0.5" data-testid="cart-system-recap">
+                        {(result.recap ?? []).filter((r) => SYSTEM_RECAP.has(r.label)).map((r) => <li key={r.label}>· {r.label} : {r.value}</li>)}
+                        <li className="text-stone-700">· Structure seule : livraison et pose non comprises</li>
+                      </ul>
+                    ) : (
+                      <ul className="mt-2 text-sm text-stone-800 space-y-0.5">{result.lines.filter((l) => l.kind !== "base" && l.kind !== "shipping").map((l) => <li key={l.code + (l.path ?? "")}>· {l.label}{l.qty > 1 && ` × ${l.qty}`} — {l.included ? "inclus" : <Price cents={l.totalGrossCents} />}</li>)}</ul>
+                    )}
                     {result.containsDemoData && <DemoBadge className="mt-2" />}
                     <IssueList issues={result.issues.filter((i) => i.severity !== "info")} className="mt-2" />
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-semibold"><Price cents={lineTotalCents} /></p>
+                    <p className="text-xl font-semibold"><Price cents={lineTotalCents} />{input.kind === "system" && <span className="text-sm font-normal"> TTC</span>}</p>
+                    {input.kind === "system" && result.systemPrice && <p className="text-xs text-stone-700" data-testid="cart-line-ht">soit {formatSystemPrice(result.systemPrice.amountMinor * line.qty, result.systemPrice.currency, result.systemPrice.taxBasis)}</p>}
                     <form action={updateQtyAction} className="mt-2 flex items-center justify-end gap-2"><input type="hidden" name="lineId" value={line.id} /><label className="text-sm" htmlFor={`qty-${line.id}`}>Qté</label><input id={`qty-${line.id}`} name="qty" type="number" min={1} max={10} defaultValue={line.qty} className="input w-20 py-1" /><button className="btn-secondary py-1.5" type="submit">Mettre à jour</button></form>
                     <form action={removeLineAction} className="mt-2"><input type="hidden" name="lineId" value={line.id} /><button className="text-sm underline text-stone-700" type="submit">Retirer</button></form>
                     {input.kind === "pergola_standard" && <Link href={`/configurateur?ligne=${line.id}`} className="block mt-2 text-sm underline">Modifier la configuration</Link>}
                     {input.kind === "awning" && <Link href={`/configurateur/store-banne?ligne=${line.id}`} className="block mt-2 text-sm underline">Modifier le store</Link>}
+                    {input.kind === "system" && <Link href={`/configurateur/${input.familySlug}?ligne=${line.id}`} className="block mt-2 text-sm underline">Modifier la configuration</Link>}
                     {input.kind === "accessory" && <Link href={`/accessoires/${input.familySlug}`} className="block mt-2 text-sm underline">Voir l'accessoire</Link>}
                   </div>
                 </div>
@@ -52,23 +66,30 @@ export default async function CartPage() {
           </ul>
           <aside className="card p-6 self-start lg:sticky lg:top-24">
             <h2 className="font-display text-2xl">Récapitulatif</h2>
-            <form action={setDeliveryAction} className="mt-4 grid gap-3">
+            {!ev.systemOnly && <form action={setDeliveryAction} className="mt-4 grid gap-3">
               <div><label className="label" htmlFor="postalCode">Code postal de livraison</label><input id="postalCode" name="postalCode" className="input" inputMode="numeric" defaultValue={ev.delivery.postalCode ?? ""} placeholder="ex. 69000" /></div>
               <div><label className="label" htmlFor="promotionCode">Code promotionnel</label><input id="promotionCode" name="promotionCode" className="input" defaultValue={cart?.promotionCode ?? ""} /></div>
               <button className="btn-secondary" type="submit">Mettre à jour</button>
-            </form>
+            </form>}
             <dl className="mt-5 space-y-1 text-sm">
               <div className="flex justify-between"><dt>Produits</dt><dd><Price cents={ev.goodsCents} /></dd></div>
               {ev.installationCents > 0 && <div className="flex justify-between"><dt>Montage</dt><dd><Price cents={ev.installationCents} /></dd></div>}
               {ev.discountCents > 0 && <div className="flex justify-between text-success"><dt>Remise</dt><dd>− <Price cents={ev.discountCents} /></dd></div>}
-              <div className="flex justify-between"><dt>Livraison{ev.shippingLabel ? ` — ${ev.shippingLabel}` : ""}</dt><dd>{ev.shippingCents === null ? (ev.shippingStatus === "quote" ? "sur devis" : "code postal requis") : <Price cents={ev.shippingCents} />}</dd></div>
+              {ev.shippingStatus === "not_included" ? (
+                <div className="flex justify-between gap-3" data-testid="cart-delivery-not-included"><dt>Livraison et pose</dt><dd className="text-right">non comprises</dd></div>
+              ) : (
+                <div className="flex justify-between"><dt>Livraison{ev.shippingLabel ? ` — ${ev.shippingLabel}` : ""}</dt><dd>{ev.shippingCents === null ? (ev.shippingStatus === "quote" ? "sur devis" : "code postal requis") : <Price cents={ev.shippingCents} />}</dd></div>
+              )}
               <div className="flex justify-between border-t border-sand-200 pt-2 text-lg font-semibold"><dt>Total TTC {ev.isFinal ? "" : "(estimé)"}</dt><dd><Price cents={ev.totalCents} /></dd></div>
-              <div className="flex justify-between text-xs text-stone-700"><dt>dont TVA</dt><dd><Price cents={ev.taxCents} showCents /></dd></div>
+              <div className="flex justify-between text-xs text-stone-700"><dt>dont TVA{ev.systemOnly ? ` (${catalog.taxRateBps / 100} %)` : ""}</dt><dd><Price cents={ev.taxCents} showCents /></dd></div>
             </dl>
-            {estimate && <DeliveryEstimateBlock estimate={estimate} demo={catalog.variants.some((v) => v.leadSource === "demo")} />}
+            {ev.systemOnly ? (
+              <p className="mt-4 text-sm text-stone-700" data-testid="cart-system-note">Prix de la structure selon la grille, hors taxes, TVA ajoutée au total. {SYSTEM_DELIVERY_LABEL}, avec le délai de fabrication.</p>
+            ) : estimate && <DeliveryEstimateBlock estimate={estimate} demo={catalog.variants.some((v) => v.leadSource === "demo")} />}
             {!ev.purchasable && <div className="mt-3"><Notice tone="warn">Une ligne nécessite une validation : modifiez-la ou demandez un devis.</Notice></div>}
             {ev.shippingStatus === "quote" && <div className="mt-3"><Notice tone="warn">Livraison sur devis pour cette zone : <Link href="/devis" className="underline">demander un devis</Link>.</Notice></div>}
-            <Link href="/commande" aria-disabled={!ev.purchasable || ev.shippingStatus !== "ok"} className={`btn-accent w-full mt-5 ${!ev.purchasable || ev.shippingStatus !== "ok" ? "pointer-events-none opacity-50" : ""}`}>Passer la commande</Link>
+            {!onlineSalesEnabled() && <div className="mt-3"><Notice tone="warn">{ONLINE_SALES_CLOSED}</Notice></div>}
+            {(() => { const ready = onlineSalesEnabled() && ev.purchasable && (ev.shippingStatus === "ok" || ev.shippingStatus === "not_included"); return <Link href="/commande" aria-disabled={!ready} className={`btn-accent w-full mt-5 ${!ready ? "pointer-events-none opacity-50" : ""}`}>Passer la commande</Link>; })()}
             <p className="mt-2 text-xs text-stone-700">Le total est recalculé côté serveur à chaque étape ; aucun montant n'est repris du navigateur.</p>
           </aside>
         </div>

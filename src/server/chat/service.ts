@@ -31,7 +31,11 @@ export type ChatMessageMeta = {
   /** note interne : visible uniquement par les conseillers */
   internal?: boolean;
   /** événement système : handover (transmission à un conseiller), link (pièce jointe), status… */
-  kind?: "handover" | "link" | "status" | "assistant_error";
+  kind?: "handover" | "link" | "status" | "assistant_error" | "guide";
+  /** aide immédiate : liens vers les pages du site citées dans la réponse */
+  links?: Array<{ href: string; label: string }>;
+  /** aide immédiate : thème reconnu */
+  topic?: string;
   /** l'assistant a demandé une transmission à un conseiller */
   handover?: boolean;
   configurationId?: string;
@@ -98,7 +102,7 @@ export async function advisorsOnline(now = new Date()): Promise<boolean> {
 
 export async function chatSettings() {
   const s = await prisma.siteSettings.findUnique({ where: { id: 1 }, select: { chatEnabled: true, chatOfflineMessage: true } });
-  return { enabled: s?.chatEnabled ?? true, offlineMessage: s?.chatOfflineMessage?.trim() || "Nos conseillers ne sont pas connectés : laissez un message, nous vous répondrons par e-mail." };
+  return { enabled: s?.chatEnabled ?? true, offlineMessage: s?.chatOfflineMessage?.trim() || "Aucun conseiller n'est connecté pour le moment. Consultez l'aide immédiate ou laissez votre message avec votre adresse e-mail : l'équipe HELIOSTORES vous recontacte." };
 }
 
 /* ------------------------------------------------------------------ */

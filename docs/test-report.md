@@ -1,3 +1,104 @@
+# Noms HELIO, logo, chat, configurateur, préparation SELT — 2026-10-31
+
+- Code déployé **`8434cfb`** (CI verte, push et PR) : unitaires 291/291, intégration 110/110, tsc sans erreur, eslint
+  0 erreur (2 avertissements antérieurs). Recette navigateur complète en développement (`playwright test`, sans
+  relance) : 81 réussis, 0 échec, 4 ignorés par conception (projet ordinateur/mobile).
+- Nouveaux tests : `17-bandeau-logo` (390/768/1440 : logo centré à ±1 px, agrandi, proportions, aucun chevauchement,
+  aucun décalage du contenu), `18-chat-aide` (thèmes non enregistrés, réponse utile avec liens, transmission,
+  administration, séparation des conversations, Échap), `19-configurateur-visuel` (teintes au clavier, fermetures
+  par côté, changements rapides, adossée, projet restauré, aperçu mobile), `chat-guide`, `chat-assistant`
+  (fournisseur factice : réponse, indisponibilité, réponse écartée, plafond, coordonnées masquées),
+  `supplier-prices-normalized`, `selt-pricing` (import idempotent, natures distinctes, remise → achat → vente,
+  publication, retour arrière, montant du navigateur ignoré), `colours`, transcodification (`nomenclature`).
+- Copie de la production (sauvegarde du jour, PostgreSQL jetable sur réseau interne, supprimé ensuite) : migration,
+  `catalogue-sync` (10 familles, dont la FAQ obsolète de deux fiches retirées), `media-names-sync` (66 médias),
+  seconds passages sans changement ; tarifs, devis et statuts inchangés ; nouvelle application : 36 pages en 200,
+  aucun ancien nom ni référence fournisseur dans le HTML.
+- Production : sauvegardes `db_/media_20261031_094621` et `_095232`, environnement copié ; déploiement par le script
+  (sonde : 115 requêtes, toutes en 200) ; synchronisations appliquées puis idempotentes ; 37 pages (sitemap +
+  configurateurs + accessoires) sans ancien nom ni référence ; logo centré à 390/768/1024/1280/1440 px ; chat :
+  statut « Aucun conseiller connecté : votre message est enregistré pour l'équipe », thème d'aide fonctionnel (aucune
+  conversation créée par le contrôle) ; configurateur : pastilles et fermetures distinctes ; robots, sitemap 200,
+  www 301 (GET), pages privées noindex, préproduction 401.
+- Captures avant/après (1440 et 390 px, pages complètes) : mêmes dimensions sauf Accessoires (HelioSlide ALU ajouté),
+  Pergolas et Screens (+24 px : avis « caractéristiques en cours de confirmation » de HelioLux et HelioRoof).
+- Non vérifié : envoi d'un message de chat en production (fait en développement et en recette) ; assistant LLM réel
+  (aucun fournisseur configuré) ; catalogues SELT (aucun reçu).
+
+# Carrousel de l'accueil et légendes des photos fournisseur — 2026-10-27
+
+- Code `02d4cce` (CI verte, push et PR) : unitaires 280/280, intégration 101/101, tsc et eslint sans erreur.
+- Copie de la production (sauvegarde du jour restaurée dans un PostgreSQL jetable, réseau interne, copie du volume des
+  médias, supprimés ensuite) : import des visuels idempotent (2ᵉ passage : métadonnées seulement), correctif des
+  légendes conditionnel (0 restante).
+- Carrousel à 390 (DPR 3), 768 (DPR 2) et 1440 px, en production après déploiement : quatre vues « Pergolas /
+  Screens / Stores bannes / Moustiquaires · Visualisation », AVIF 1672 px servi (WebP en repli, 12 + 12 variantes en
+  200, cache immuable), cadrage mobile 72 / 28 / 50 / 60 %, aucun débordement horizontal, fondu sans vide ; au
+  chargement : première vue prioritaire et vue suivante seulement ; anciens visuels du carrousel non demandés.
+- Lisibilité (blanc sur image, 95ᵉ centile de luminance sous le texte) : titre ≥ 3,7:1, légende ≥ 10,9:1.
+- Captures avant / après de l'accueil complet : seule la section « La précision dans le détail » raccourcit (légendes
+  plus courtes) ; fiches produit inchangées (même visuel principal).
+- 34 URL du sitemap en 200 : « visuel du fabricant » 0 occurrence (26 avant) ; conservés : pied de page « Visuels non
+  contractuels. », mentions légales, mentions des visualisations de devis, titres des documents officiels.
+- Déploiement par le relais : 290 requêtes de sonde pendant la bascule, toutes en 200. Préproduction 401.
+- Non vérifié : navigateur sans AVIF (repli WebP vérifié par les URL seulement) ; recette e2e complète non rejouée.
+
+# Vérification de la mission SEO/GEO — 2026-10-26 (soir)
+
+Commit déployé en production : **`1f311ba`**. Détail, conditions et limites : `docs/seo/changes-and-validation.md` § 3.
+Unitaires 274/274, intégration 100/100, CI verte (push et PR), crawl des 34 URL du sitemap sans anomalie ni doublon,
+captures avant/après 1440 et 390 px aux dimensions identiques, parcours fiche → configurateur → demande et
+administration (suivi par origine) vérifiés sur une copie de la production. Recette navigateur complète
+(`scripts/e2e-docker.sh`) **non rejouée** pour cette mission.
+
+# Rapport de vérification — 2026-10-26 (préparation de la production)
+
+Commit vérifié et déployé : **`e2afbed`** (préproduction et production ; `GET /api/health`). CI GitHub Actions verte
+(push et pull request) sur ce commit.
+
+| Contrôle | Environnement | Résultat |
+|---|---|---|
+| TypeScript, lint | local | ✅ 0 erreur (2 avertissements existants dans `guide-view.tsx`) |
+| Unitaires | `pnpm test:unit` | ✅ 263/263 (dont mode d'encaissement, en-tête robots, SEO, demande d'étude) |
+| Intégration (base dédiée) | `pnpm test:integration` | ✅ 99/99 (dont panier/commande/paiement de devis refusés quand l'encaissement est fermé) |
+| Recette navigateur **HTTPS derrière Traefik** (pile équivalente à la production, identifiant de revue), 1440 et 390 px, une campagne, `retries: 0` | `scripts/e2e-docker.sh .env.prod` | ✅ **69 réussis, 0 échec, 4 ignorés** (10,5 min) |
+| Recette navigateur sur build de production local (base de dev) | `pnpm build` + Playwright | 65 réussis, 4 échecs, 4 ignorés au premier passage ; les 4 échecs venaient d'une aide de test (grilles des modèles retirés comptées comme prix publics) ; specs rejouées après correction : 7/7 |
+| Anti-force brute derrière le proxy | spec 13 (desktop + mobile) | ✅ 6/6 : verrou par compte avec essais espacés de plus de 10 s ; limite par IP vérifiée, X-Forwarded-For forgé sans effet (429 maintenu) ; comptes dédiés supprimés après le test |
+| Production locale (127.0.0.1:3402) | curl | ✅ 200 ; `index, follow` ; canoniques `https://heliostores.com` ; sitemap 31 URL ; robots `Allow` hors pages privées ; `X-Robots-Tag` seulement sur les pages privées ; 0 « € » ; routes de paiement 404 ; aucun lien vers la démo ; aucun compte |
+| Préproduction | curl externe | ✅ 401 sans identifiant ; `noindex` (en-tête et robots `Disallow: /`) |
+| Autres sites du VPS | curl externe des hôtes routés par Traefik | ✅ réponses inchangées |
+| Sauvegarde / restauration | PostgreSQL jetable sans réseau | ✅ sommes de contrôle OK ; 31 familles, 196 médias, 15 migrations restaurés ; conteneur supprimé |
+| Captures 390 / 768 / 1440 px de la production locale | Playwright | ✅ 24 captures (hors dépôt) |
+
+## Tests ignorés (motif et couverture)
+
+| Test | Projet ignoré | Motif | Couverture effective |
+|---|---|---|---|
+| 14 — modifier une cellule, comparer, simuler, rejeter | mobile | parcours d'écriture exécuté une seule fois par campagne | exécuté et réussi en desktop |
+| 14 — grille de test incomplète refusée, complète publiée puis désactivée | mobile | idem | exécuté et réussi en desktop |
+| 16 — navigation latérale | mobile | la navigation latérale n'existe qu'à partir de 1024 px | exécutée en desktop ; le menu mobile est testé en mobile |
+| 16 — menu mobile | desktop | le menu mobile n'existe que sous 1024 px | exécuté en mobile |
+
+## Incidents de recette expliqués
+
+- Une campagne HTTPS intermédiaire a été **interrompue et invalidée** : la création du réseau Docker de la production
+  pendant son exécution a provoqué `net::ERR_NETWORK_CHANGED` dans Chromium. Aucune infrastructure n'a été modifiée
+  pendant la campagne finale.
+- Le premier essai du test anti-force brute derrière le proxy échouait au 4ᵉ essai : better-auth ne remet le compteur
+  par IP à zéro qu'après 10 s **sans requête**. Les essais sont maintenant espacés en conséquence ; aucune limite n'a été
+  relevée et aucun en-tête n'a été rendu de confiance.
+
+## Non testé (raison)
+
+- **Stripe en sandbox** : aucune clé de test disponible (aucun débit, aucun appel réseau Stripe).
+- **Réception réelle d'un e-mail** (accusé de devis, notification) : aucun SMTP fourni ; `MAIL_PROVIDER=hold` en
+  production. La création de la demande et sa consultation dans l'administration sont couvertes.
+- **Production publique** (HTTPS, certificat, en-têtes vus de l'extérieur) : le DNS de heliostores.com pointe encore
+  vers GoDaddy.
+- Performances terrain (Core Web Vitals) : mesures de laboratoire seulement (`docs/seo-geo-plan-90-days.md` § 2).
+
+---
+
 # Rapport de vérification — 2026-10-19 (itération 3)
 
 ## Itération 3 — résultats
@@ -98,3 +199,87 @@ image de production), quotas par IP partagés entre parcours, éclairage non chi
 
 Non exécuté : paiements réels (Stripe, Alma, Klarna), SMTP réel, assistant IA réel, flux de stock fournisseur réel — intégrations
 simulées ou désactivées.
+
+## 2026-10-26 — contrôles de la bascule publique (commit `7a70796`)
+
+Contrôles ciblés (changements : identité, pages légales, confirmation de devis, routeur public), sans relance de la
+recette complète. Depuis le serveur avec résolution forcée vers `76.13.44.177` / `2a02:4780:7:f4ca::1`, puis sondes
+externes :
+
+- Unitaires 265/265, intégration 99/99, typage et lint sans erreur ; CI verte sur `7a70796`.
+- HTTPS : certificats Let's Encrypt valides pour `heliostores.com` et `www.heliostores.com` ; HTTP → HTTPS (301) ;
+  `www` → `https://heliostores.com` en 301 avec chemin et paramètres ; HSTS ; aucune authentification de revue ;
+  IPv6 : 200 (certificats validés par Let's Encrypt, qui privilégie l'IPv6).
+- SEO : 17 pages publiques en `index, follow`, sans `X-Robots-Tag`, canoniques sur `https://heliostores.com` ;
+  configurateur et CGV en `noindex` ; `/compte` en `X-Robots-Tag: noindex, nofollow` ; sitemap de 33 URL
+  (pages légales publiées incluses, aucune page privée) ; robots.txt ; 404 réelle ; JSON-LD Organization (marque
+  HELIOSTORES, `legalName` THYSENS) sans offre ni prix 0.
+- Parcours fiche Marbella → configurateur → demande : référence affichée **après** l'enregistrement en base, recours
+  téléphone (`tel:`) et e-mail (`mailto:`), visualisation 3D jointe, aucun ajout au panier ni paiement simulé ;
+  accusé de réception en file (`PENDING`, non envoyé). Demande, e-mail, visuel et consentements de test supprimés.
+- Accès privés : `/admin*` → connexion ; visuels et PDF de devis, `/api/media/quotes/…`, `/paiement-demo`,
+  webhooks : 404 sans session. Consultation administrative non testée avec un compte : aucun administrateur de
+  production (création d'un compte temporaire non autorisée pendant la bascule).
+- Captures 1440 et 390 px (hors dépôt). Préproduction : 401 ; autres sites du serveur : réponses inchangées.
+- Externe IPv4 (check-host.net, 8 sondes) : **7 sur GoDaddy**, 1 sur notre serveur → DNS à corriger.
+
+## 2026-10-26 — clôture après correction du DNS (commit applicatif `a8172e5`)
+
+- DNS : ns55 et ns56 (série 2026102602), 1.1.1.1, 8.8.8.8 et 9.9.9.9 renvoient uniquement `76.13.44.177`,
+  `2a02:4780:7:f4ca::1` et `www` → `heliostores.com` (OpenDNS ne répond pas depuis ce serveur).
+- Externe : 11 sondes HTTPS sur 12 → 200 depuis ce serveur (12e : erreur interne de la sonde) ; `http://www` → 301 sur
+  10 sondes ; IPv6 joignable sur 443 (ready.chair6.net). Un premier passage pendant le redéploiement a reçu des 404
+  (Traefik ne route que les conteneurs « healthy ») : redéployer hors affluence.
+- Par le DNS réel, en IPv4 et en IPv6 : 200 sur l'accueil, HTTP → HTTPS et `www` → apex en 301 avec chemin et
+  paramètres, certificats Let's Encrypt vérifiés (code 0), HSTS, aucune authentification de revue, `/api/health` =
+  `a8172e5`.
+- Demande de devis de bout en bout (Marbella) par le DNS public : `DEV-202610-HGSLP3` enregistrée (NEW) avant la
+  confirmation ; accusé de réception et notification administrateur en file (PENDING, non envoyés) ; aucun panier ni
+  paiement. Demande conservée pour le contrôle de la consultation administrative, puis à supprimer.
+- robots.txt, sitemap (33 URL, aucune page privée), mentions légales, confidentialité, cookies : 200.
+- Tâches planifiées installées et exécutées une fois (purge : 0 ; sauvegarde valide).
+- Consultation depuis l'administration : **non vérifiée** (aucun administrateur de production).
+
+## 2026-10-26 — exploitation commerciale (image `0886bb3`, compose `5e1df9c`)
+
+- Contrôles statiques et tests : typage et lint sans erreur ; unitaires 269/269 ; intégration 100/100, dont le seuil
+  `MAIL_SEND_AFTER` et la mention de délai figée dans le devis ; CI verte (push et PR) sur `0886bb3`, `b0bad38` et `5e1df9c`.
+- Administrateur créé par `pnpm admin:bootstrap` (mot de passe aléatoire passé par variable d'environnement, jamais
+  affiché). Connexion par le vrai formulaire (`/compte/connexion`), arrivée sur `/admin` (« Tableau de bord »).
+- Consultation administrative de `DEV-202610-HGSLP3` puis d'une nouvelle demande `DEV-202610-WXEV95` :
+  - liste et coordonnées ;
+  - origine (« entrée /pergolas/marbella ») ;
+  - récapitulatif du produit et de la configuration ;
+  - visualisation affichée (1 600 px) ;
+  - visuel et PDF en 200 pour l'administrateur (`private, no-store`), 404 sans session ;
+  - passage « En étude » et notes enregistrées ;
+  - file des e-mails (4 en attente, fournisseur `hold`, mention du suivi manuel).
+- Défauts relevés en administration et corrigés :
+  - bandeau « préproduction » en production ;
+  - mention « (préproduction) » incrustée dans la visualisation exportée ;
+  - promesse d'e-mail au passage « Envoyé » sans SMTP ;
+  - heures affichées en UTC (désormais heure de Paris) ;
+  - message « e-mail de réinitialisation envoyé » sans SMTP.
+- Coordonnées, contrôlées par le DNS public :
+  - accueil, Contact, fiches et Livraison : aucun lien `tel:`, ni numéro, ni rue, ni THYSENS visible, ni adresse
+    personnelle ; `contact@heliostores.com` présent ;
+  - mentions légales et confidentialité : identité juridique conservée, téléphone en texte simple ;
+  - PDF du devis : « HELIOSTORES - 59650 Villeneuve-d'Ascq, France - contact@heliostores.com ».
+- Délai :
+  - présent sur la fiche, dans le récapitulatif, la confirmation, l'e-mail en file et le PDF du nouveau devis ;
+  - absent du PDF du devis antérieur (pas de modification rétroactive).
+- Déploiement par relais, sous sonde publique toutes les 0,1 s :
+  - 1re version du script : une 502 au retrait du relais ;
+  - changement de labels : 49 × 404 (conflit de routeur Traefik), désormais détecté ;
+  - version finale : 3 déploiements consécutifs, 1 001 requêtes, 0 erreur.
+- SEO :
+  - 34 URL du sitemap (dont `/livraison-installation`) : 200, sans `noindex` ni `X-Robots-Tag`, canonique exacte,
+    Open Graph, aucun lien de préproduction ;
+  - JSON-LD Organization : `name` HELIOSTORES, `legalName` THYSENS, e-mail et localité, sans téléphone ni rue ;
+    aucune offre, aucun avis, aucun stock ;
+  - balises de vérification Google et Bing lues à l'exécution (conteneur isolé, jetons fictifs) ;
+  - préproduction : 401.
+- Sauvegardes et purge : tâches actives à l'heure de Paris, sans doublon ; restauration isolée de
+  `db_20261026_132425.dump` réussie.
+- Nettoyage : demandes `HGSLP3` et `WXEV95`, leurs 2 visuels et leurs 4 notifications supprimés (trace `AuditLog`) ;
+  les 7 consentements anonymes sont conservés (site public : origine non distinguable).

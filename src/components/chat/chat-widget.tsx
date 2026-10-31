@@ -3,7 +3,8 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, useTransition
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MessageCircle, Paperclip, Send, X } from "lucide-react";
-import { attachProjectAction, closeChatAction, handoverAction, loadChatAction, sendChatMessageAction } from "@/server/actions/chat";
+import { attachProjectAction, closeChatAction, guideTopicAction, handoverAction, loadChatAction, sendChatMessageAction } from "@/server/actions/chat";
+import { GUIDE_AUTHOR_LABEL, GUIDE_DISCLAIMER, GUIDE_TOPICS, type GuideAnswer, type GuideTopicId } from "@/domain/chat-guide";
 import type { ChatMessageDto, ChatPollResponse, ChatState } from "./types";
 
 const POLL_MS = 6000;
@@ -30,6 +31,8 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
   const [name, setName] = useState("");
   const [consent, setConsent] = useState(false);
   const [attach, setAttach] = useState<string>("");
+  /** réponses de l'aide immédiate consultées avant tout message (non enregistrées) */
+  const [quick, setQuick] = useState<Array<{ id: string; label: string; answer: GuideAnswer }>>([]);
   const [busy, start] = useTransition();
   const pathname = usePathname();
   const titleId = useId();
@@ -60,8 +63,15 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
 
   useEffect(() => { if (open && !state) load(); }, [open, state, load]);
   useEffect(() => { if (open) closeRef.current?.focus(); else openerRef.current?.focus({ preventScroll: true }); }, [open]);
+  // Échap ferme le panneau même si le focus l'a quitté (ex. après un envoi)
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !e.defaultPrevented) setOpen(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
   useEffect(() => { lastAtRef.current = messages[messages.length - 1]?.createdAt ?? null; }, [messages]);
-  useEffect(() => { const el = listRef.current; if (el) el.scrollTop = el.scrollHeight; }, [messages.length, open]);
+  useEffect(() => { const el = listRef.current; if (el) el.scrollTop = el.scrollHeight; }, [messages.length, open, quick]);
 
   // Rafraîchissement par polling toutes les 6 s tant que le panneau est ouvert.
   useEffect(() => {
@@ -70,6 +80,7 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
     const tick = async () => {
       const last = lastAtRef.current;
       const qs = new URLSearchParams({ conversationId, read: "1", ...(last ? { after: last } : {}) });
+      if (document.hidden) return; // onglet masqué : pas de rafraîchissement
       try {
         const res = await fetch(`/api/chat/messages?${qs}`, { cache: "no-store" });
         if (!res.ok || cancelled) return;
@@ -92,7 +103,7 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
     const body = draft.trim();
     if (!body) return;
     if (needsConsent && !consent) { setError("Merci d'accepter la politique de confidentialité avant d'envoyer."); return; }
-    if (needsEmail && !email.trim()) { setError("Indiquez votre adresse e-mail pour recevoir la réponse."); return; }
+    if (needsEmail && !email.trim()) { setError("Indiquez votre adresse e-mail pour que l'équipe puisse vous recontacter."); return; }
     setError(null);
     start(async () => {
       const r = await sendChatMessageAction({
@@ -131,6 +142,15 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
     });
   };
 
+  const askTopic = (topic: GuideTopicId, label: string) => {
+    start(async () => {
+      const r = await guideTopicAction({ topic });
+      if (!r.ok) { setError(r.error); return; }
+      setError(null);
+      setQuick((q) => [...q.filter((x) => x.id !== topic), { id: topic, label, answer: r.data }]);
+    });
+  };
+
   const closeConversation = () => {
     if (!conversation) return;
     start(async () => {
@@ -150,11 +170,12 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
     <>
       <button
         ref={openerRef}
+        data-chat-launcher
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-controls={open ? `${titleId}-panel` : undefined}
-        aria-label={open ? "Fermer le chat" : "Ouvrir le chat avec un conseiller"}
+        aria-label={open ? "Fermer le chat" : "Ouvrir l'aide et le chat"}
         className="fixed right-4 bottom-[5.5rem] z-40 inline-flex h-14 w-14 items-center justify-center rounded-full bg-anthracite text-sand-50 shadow-soft hover:bg-ink lg:right-6 lg:bottom-6"
       >
         {open ? <X className="size-6" aria-hidden="true" /> : <MessageCircle className="size-6" aria-hidden="true" />}
@@ -174,10 +195,10 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
         >
           <header className="flex items-start justify-between gap-2 border-b border-sand-200 bg-sand-50 px-4 py-3">
             <div>
-              <h2 id={titleId} className="font-display text-lg leading-tight">Discuter avec un conseiller</h2>
-              <p id={descId} className="mt-0.5 flex items-center gap-1.5 text-xs text-stone-700">
+              <h2 id={titleId} className="font-display text-lg leading-tight">{online ? "Discuter avec un conseiller" : "Aide et demande"}</h2>
+              <p id={descId} className="mt-0.5 flex items-center gap-1.5 text-xs text-stone-700" data-testid="chat-status">
                 <span className={`inline-block h-2 w-2 rounded-full ${online ? "bg-success" : "bg-stone-700"}`} aria-hidden="true" />
-                {online ? "Un conseiller est disponible" : "Nos conseillers ne sont pas connectés : laissez un message, réponse par e-mail"}
+                {online ? "Un conseiller est connecté" : state?.mailDelivery ? "Aucun conseiller connecté : laissez un message, réponse par e-mail" : "Aucun conseiller connecté : votre message est enregistré pour l'équipe"}
               </p>
             </div>
             <button ref={closeRef} type="button" onClick={() => setOpen(false)} className="btn-ghost min-h-0 px-2 py-2" aria-label="Fermer le chat"><X className="size-5" aria-hidden="true" /></button>
@@ -186,14 +207,23 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
           <div ref={listRef} className="min-h-40 flex-1 space-y-2 overflow-y-auto px-4 py-3 text-sm" aria-live="polite" aria-relevant="additions" aria-label="Messages">
             {!state && <p className="text-stone-700">Chargement…</p>}
             {state && !online && !conversation && <p className="rounded-lg bg-sand-100 p-3 text-stone-800">{state.offlineMessage}</p>}
-            {state && messages.length === 0 && online && <p className="text-stone-700">Posez votre question : dimensions, finitions, options, livraison… Nous vous répondons dans ce fil.</p>}
+            {state && messages.length === 0 && online && <p className="text-stone-700">Posez votre question : dimensions, finitions, options, livraison… Un conseiller vous répond dans ce fil.</p>}
+            {state && messages.length === 0 && (
+              <div data-testid="chat-quick-help">
+                <p className="text-xs font-medium text-stone-800">Aide immédiate</p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {GUIDE_TOPICS.map((t) => <button key={t.id} type="button" onClick={() => askTopic(t.id, t.label)} disabled={busy} aria-pressed={quick.some((q) => q.id === t.id)} className="rounded-full border border-sand-300 bg-white px-3 py-1 text-xs text-ink hover:border-anthracite focus-visible:outline-2 aria-pressed:border-anthracite aria-pressed:bg-sand-100">{t.label}</button>)}
+                </div>
+                {quick.map((q) => <GuideBubble key={q.id} title={q.label} text={q.answer.text} links={q.answer.links} />)}
+              </div>
+            )}
             {messages.map((m) => <Message key={m.id} m={m} />)}
             {conversation?.status === "CLOSED" && <p className="text-center text-xs text-stone-700">Conversation terminée. Envoyez un message pour en ouvrir une nouvelle.</p>}
           </div>
 
-          {state?.assistant && conversation && lastAssistant && !handedOver && (
+          {conversation && lastAssistant && !handedOver && (
             <div className="border-t border-sand-200 px-4 py-2">
-              <button type="button" onClick={handover} disabled={busy} className="btn-secondary min-h-0 w-full py-2 text-xs">Parler à un conseiller</button>
+              <button type="button" onClick={handover} disabled={busy} className="btn-secondary min-h-0 w-full py-2 text-xs">{online ? "Parler à un conseiller" : "Transmettre ma demande à l'équipe"}</button>
             </div>
           )}
 
@@ -252,6 +282,8 @@ function Message({ m }: { m: ChatMessageDto }) {
     );
   }
   const mine = m.author === "CUSTOMER";
+  const guide = m.author === "ASSISTANT" && m.meta?.kind === "guide";
+  if (guide) return <GuideBubble title={`${GUIDE_AUTHOR_LABEL} · ${fmtTime(m.createdAt)}`} text={m.body} links={m.meta?.links ?? []} />;
   const label = mine ? "Vous" : m.author === "ASSISTANT" ? "Assistant automatique" : "Conseiller";
   return (
     <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
@@ -259,6 +291,20 @@ function Message({ m }: { m: ChatMessageDto }) {
         <p className={`text-[11px] ${mine ? "text-sand-200" : "text-stone-700"}`}>{label} · {fmtTime(m.createdAt)}</p>
         <p className="whitespace-pre-wrap break-words">{m.body}</p>
         {m.author === "ASSISTANT" && <p className="mt-1 text-[11px] italic text-stone-700">Assistant automatique — réponse indicative, à confirmer par un conseiller</p>}
+      </div>
+    </div>
+  );
+}
+
+/** Réponse de l'aide immédiate : texte validé et liens vers les pages du site (jamais présentée comme un conseiller). */
+function GuideBubble({ title, text, links }: { title: string; text: string; links: Array<{ href: string; label: string }> }) {
+  return (
+    <div className="mt-2 flex justify-start" data-testid="chat-guide-answer">
+      <div className="max-w-[90%] rounded-xl border border-sand-300 bg-sand-50 px-3 py-2 text-ink">
+        <p className="text-[11px] text-stone-700">{title}</p>
+        <p className="whitespace-pre-wrap break-words">{text}</p>
+        {links.length > 0 && <ul className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs">{links.map((l) => <li key={l.href}><Link href={l.href} className="underline underline-offset-2">{l.label}</Link></li>)}</ul>}
+        <p className="mt-1 text-[11px] italic text-stone-700">{GUIDE_DISCLAIMER}</p>
       </div>
     </div>
   );

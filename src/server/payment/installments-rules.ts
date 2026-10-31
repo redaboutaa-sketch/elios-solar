@@ -42,17 +42,22 @@ export interface ProviderBounds {
   /** Utilisable en production ? Le simulateur ne l'est jamais. */
   productionCapable: boolean;
   docsUrl: string | null;
+  /** réservé aux particuliers (aucun achat professionnel) */
+  b2cOnly?: boolean;
+  /** client et marchand dans le même pays uniquement */
+  domesticOnly?: boolean;
 }
 
 /**
  * Bornes connues des prestataires (documentation Stripe consultée le 2026-10-19) :
  * - Klarna, clients FR : paiement en 3 fois sans intérêts de 1 € à 3 000 € (100–300 000 c). https://docs.stripe.com/payments/klarna
- * - Alma : 2/3/4 fois de 50 € à 5 000 € (5 000–500 000 c), clients FR/IT/ES/NL/BE/LU. https://docs.stripe.com/payments/alma
+ * - Alma : 2/3/4 fois de 50 € à 5 000 € (5 000–500 000 c), clients FR/IT/ES/NL/BE/LU, B2C uniquement, couverture
+ *   domestique seulement (« ✗ Crossborder ») — revérifié le 2026-10-25. https://docs.stripe.com/payments/alma
  */
 export const PROVIDER_BOUNDS: Record<InstallmentProviderKey, ProviderBounds> = {
   none: { key: "none", label: "Aucun", stripePaymentMethod: null, minCents: null, maxCents: null, counts: [], countries: [], productionCapable: false, docsUrl: null },
   stripe_klarna: { key: "stripe_klarna", label: "Klarna (via Stripe)", stripePaymentMethod: "klarna", minCents: 100, maxCents: 300_000, counts: [3], countries: ["FR"], productionCapable: true, docsUrl: "https://docs.stripe.com/payments/klarna" },
-  stripe_alma: { key: "stripe_alma", label: "Alma (via Stripe)", stripePaymentMethod: "alma", minCents: 5_000, maxCents: 500_000, counts: [2, 3, 4], countries: ["FR", "IT", "ES", "NL", "BE", "LU"], productionCapable: true, docsUrl: "https://docs.stripe.com/payments/alma" },
+  stripe_alma: { key: "stripe_alma", label: "Alma (via Stripe)", stripePaymentMethod: "alma", minCents: 5_000, maxCents: 500_000, counts: [2, 3, 4], countries: ["FR", "IT", "ES", "NL", "BE", "LU"], productionCapable: true, docsUrl: "https://docs.stripe.com/payments/alma", b2cOnly: true, domesticOnly: true },
   simulator: { key: "simulator", label: "Simulateur (test uniquement)", stripePaymentMethod: null, minCents: null, maxCents: null, counts: [2, 3, 4, 5, 6, 10, 12], countries: ["FR", "BE", "LU", "CH", "IT", "ES", "NL", "DE"], productionCapable: false, docsUrl: null },
 };
 
@@ -112,6 +117,10 @@ export interface EligibilityInput {
   settings: InstallmentRules;
   env: PaymentEnv;
   currency?: string;
+  /** particulier (B2C) ou professionnel (B2B) ; inconnu = non éligible aux prestataires réservés aux particuliers */
+  customerType?: "B2C" | "B2B" | null;
+  /** pays du marchand (prestataires sans couverture transfrontalière) */
+  merchantCountry?: string;
 }
 
 export interface EligibilityResult {
@@ -146,6 +155,9 @@ export function installmentEligibility(input: EligibilityInput): EligibilityResu
   if (currency !== "EUR" || settings.currency.toUpperCase() !== "EUR") reasons.push("devise non prise en charge (EUR uniquement)");
   if (!settings.countries.map((c) => c.toUpperCase()).includes(countryCode)) reasons.push(`pays de livraison ${countryCode} non couvert par les réglages`);
   if (provider.key !== "none" && provider.countries.length && !provider.countries.includes(countryCode)) reasons.push(`pays ${countryCode} non accepté par ${provider.label}`);
+  // Alma (documentation Stripe consultée le 2026-10-25) : particuliers seulement, paiement domestique (pas transfrontalier)
+  if (provider.b2cOnly && input.customerType !== "B2C") reasons.push(`${provider.label} est réservé aux particuliers`);
+  if (provider.domesticOnly && input.merchantCountry && input.merchantCountry.toUpperCase() !== countryCode) reasons.push(`${provider.label} ne couvre pas les paiements transfrontaliers (client ${countryCode}, marchand ${input.merchantCountry.toUpperCase()})`);
 
   const minCents = Math.max(settings.minCents, provider.minCents ?? 0);
   const maxCents = Math.min(settings.maxCents, provider.maxCents ?? Number.MAX_SAFE_INTEGER);

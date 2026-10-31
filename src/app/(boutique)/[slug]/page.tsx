@@ -8,10 +8,21 @@ import { getSession } from "@/lib/session";
 
 const SLUGS = ["mentions-legales", "cgv", "confidentialite", "cookies", "livraison-installation", "aide"];
 
+/** Descriptions propres à chaque page de contenu (sinon la description générique du site serait reprise partout). */
+const DESCRIPTIONS: Record<string, string> = {
+  aide: "Questions fréquentes avant une demande de devis HELIOSTORES : mesures, pose adossée ou autoportée, autorisation d'urbanisme, étapes après la demande.",
+  "livraison-installation": "Livraison et pose HELIOSTORES : délai de livraison entre 4 et 7 semaines selon le lieu de livraison, modalités et pose professionnelle précisées dans le devis.",
+  "mentions-legales": "Mentions légales du site heliostores.com : éditeur, directeur de la publication, hébergement, contenus et visuels.",
+  confidentialite: "Politique de confidentialité HELIOSTORES : données collectées par les demandes de devis et de contact, finalités, durées de conservation et exercice de vos droits.",
+  cookies: "Cookies et stockage strictement nécessaires utilisés sur heliostores.com, sans mesure d'audience ni publicité : rôle et durée de chacun.",
+  cgv: "Conditions générales de vente HELIOSTORES.",
+};
+
 export async function generateMetadata(props: PageProps<"/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
   const page = SLUGS.includes(slug) ? await prisma.contentPage.findUnique({ where: { slug } }) : null;
-  return page ? { title: page.title, alternates: { canonical: `/${slug}` } } : {};
+  // document provisoire (non publié) : consultable, jamais indexé ni dans le sitemap
+  return page ? { title: page.title, ...(DESCRIPTIONS[slug] ? { description: DESCRIPTIONS[slug] } : {}), alternates: { canonical: `/${slug}` }, ...(page.status !== "PUBLISHED" ? { robots: { index: false, follow: true } } : {}) } : {};
 }
 
 export default async function ContentPage(props: PageProps<"/[slug]">) {
@@ -20,7 +31,7 @@ export default async function ContentPage(props: PageProps<"/[slug]">) {
   const [page, settings, session] = await Promise.all([prisma.contentPage.findUnique({ where: { slug } }), prisma.siteSettings.findUnique({ where: { id: 1 } }), getSession()]);
   if (!page) notFound();
   const role = (session?.user as { role?: string } | undefined)?.role;
-  const vars = { legalName: settings?.legalName, legalForm: settings?.legalForm, addressLine1: settings?.addressLine1, postalCode: settings?.postalCode, city: settings?.city, siret: settings?.siret, vatNumber: settings?.vatNumber, contactEmail: settings?.contactEmail, phone: settings?.phone };
+  const vars = { legalName: settings?.legalName, legalForm: settings?.legalForm, addressLine1: settings?.addressLine1, postalCode: settings?.postalCode, city: settings?.city, siret: settings?.siret, vatNumber: settings?.vatNumber, shareCapital: settings?.shareCapital, rcsCity: settings?.rcsCity, contactEmail: settings?.contactEmail, phone: settings?.phone, phoneHref: settings?.phone?.replace(/\s+/g, "") };
   const missing = (page.missingFields as string[]).filter((k) => !vars[k as keyof typeof vars]);
   return (
     <div className="container-x py-8 max-w-3xl">

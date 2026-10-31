@@ -4,8 +4,9 @@
  */
 import { VISUAL_DISCLAIMER, type SceneModel } from "@/domain/scene-model";
 
-export const EXPORT_FILENAME = "projet-elios-solar.png";
-export const EXPORT_FOOTER = `${VISUAL_DISCLAIMER} — ELIOS SOLAR (démonstration)`;
+export const EXPORT_FILENAME = "projet-heliostores.png";
+/** Mention incrustée dans l'image exportée (identique en préproduction et en production : le code client ne connaît pas l'environnement). */
+export const EXPORT_FOOTER = `${VISUAL_DISCLAIMER} — HELIOSTORES`;
 
 export interface ImageCaption {
   title: string; // nom de la gamme
@@ -82,5 +83,5 @@ export async function toUploadJpeg(dataUrl: string, maxWidth = 1600, quality = 0
 }
 
 export function captionOf(model: SceneModel): ImageCaption {
-  return { title: model.familyName, dimension: model.dimensionLabel, finish: model.finishLabel, extra: model.kind === "pergola" ? (model.mounting === "wall" ? "adossée" : "autoportée") : undefined };
+  return { title: model.familyName, dimension: model.dimensionLabel, finish: model.finishLabel, extra: model.kind === "pergola" ? (model.mounting === "wall" ? "adossée" : "autoportante") : undefined };
 }

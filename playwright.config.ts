@@ -16,6 +16,8 @@ export default defineConfig({
   outputDir: "test-results",
   use: {
     baseURL,
+    // préproduction protégée par identifiant (recette HTTPS) : identifiants de revue lus dans l'environnement, jamais affichés
+    httpCredentials: process.env.E2E_HTTP_USER && process.env.E2E_HTTP_PASSWORD ? { username: process.env.E2E_HTTP_USER, password: process.env.E2E_HTTP_PASSWORD } : undefined,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     locale: "fr-FR",

@@ -31,8 +31,8 @@ export default async function SettingsPage(props: PageProps<"/admin/reglages">) 
       <form action={updateSettingsAction} className="space-y-6">
         <Section title="Marque">
           <div className="grid gap-4 md:grid-cols-2">
-            <Field name="brandName" label="Nom de marque" value={s?.brandName ?? "ELIOS SOLAR"} />
-            <label className="flex items-center gap-2 self-end pb-3 text-sm"><input type="checkbox" name="brandNameProvisional" className="h-4 w-4" defaultChecked={s?.brandNameProvisional ?? true} /> Nom provisoire (à confirmer)</label>
+            <Field name="brandName" label="Nom de marque" value={s?.brandName ?? "HELIOSTORES"} />
+            <label className="flex items-center gap-2 self-end pb-3 text-sm"><input type="checkbox" name="brandNameProvisional" className="h-4 w-4" defaultChecked={s?.brandNameProvisional ?? true} /> Marque à confirmer (identité juridique non validée)</label>
           </div>
         </Section>
         <Section title="Identité légale">
@@ -54,7 +54,7 @@ export default async function SettingsPage(props: PageProps<"/admin/reglages">) 
             <Field name="countryCode" label="Pays (code ISO)" value={s?.countryCode ?? "FR"} />
             <Field name="phone" label="Téléphone" value={s?.phone} type="tel" missing={isMissing("phone")} />
             <Field name="contactEmail" label="E-mail de contact" value={s?.contactEmail} type="email" missing={isMissing("contactEmail")} />
-            <Field name="domain" label="Nom de domaine" value={s?.domain} missing={isMissing("domain")} hint="sans https://, ex. elios-solar.fr" />
+            <Field name="domain" label="Nom de domaine" value={s?.domain} missing={isMissing("domain")} hint="sans https://, ex. exemple.fr" />
           </div>
         </Section>
         <Section title="Fiscalité, indexation et mesure d'audience">

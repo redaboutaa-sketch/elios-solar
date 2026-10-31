@@ -1,55 +1,55 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { PergolaConfigurator } from "@/components/configurator/pergola-configurator";
-import { ensureCatalogSnapshot } from "@/server/catalog/public-snapshot";
-import { getSession } from "@/lib/session";
-import { getGuestKey } from "@/server/guest";
+import { Notice } from "@/components/ui/alert";
+import { CATEGORIES, configuratorHref, productHref } from "@/domain/categories";
 import { prisma } from "@/lib/prisma";
-import { isOwner } from "@/server/configuration/service";
-import { getLineForOwner } from "@/server/cart/service";
-import type { PergolaStandardInput } from "@/domain/types";
+import { FamilySketch } from "@/components/illustrations/sketches";
+import { ArrowRight } from "lucide-react";
 
-export const metadata: Metadata = { title: "Configurateur de pergola", description: "Composez votre pergola bioclimatique : gamme, implantation, dimension, finition, fermetures latérales et options, avec prix calculé." };
+export const metadata: Metadata = { title: "Configurateurs", description: "Configurez une pergola, un screen, un store banne ou une moustiquaire HELIOSTORES à vos cotes, avec visualisation indicative, puis demandez votre devis.", robots: { index: false, follow: true } };
 
-export default async function ConfiguratorPage(props: PageProps<"/configurateur">) {
+/**
+ * Choix du configurateur. Les liens de l'ancien configurateur (`?gamme=`, `?projet=`, `?ligne=`) ne sont jamais
+ * convertis automatiquement vers un nouveau modèle : un projet de l'ancien catalogue reste consultable dans le compte,
+ * et le visiteur recommence explicitement une configuration.
+ */
+export default async function ConfiguratorIndex(props: PageProps<"/configurateur">) {
   const sp = await props.searchParams;
-  const catalog = await ensureCatalogSnapshot();
-  const families = catalog.families.filter((f) => f.kind === "pergola_standard" && f.status === "published");
-  const first = families[0]!;
-  let initial: PergolaStandardInput = {
-    kind: "pergola_standard",
-    familySlug: families.some((f) => f.slug === sp.gamme) ? String(sp.gamme) : first.slug,
-    mounting: sp.implantation === "adossee" ? "wall" : "freestanding",
-    dimensionCode: typeof sp.dimension === "string" && catalog.dimensions.some((d) => d.code === sp.dimension) ? sp.dimension : "3x4",
-    finishCode: typeof sp.finition === "string" && catalog.finishes.some((f) => f.code === sp.finition) ? sp.finition : "ANTHRACITE",
-    segments: {},
-    options: [],
-    installation: "self",
-    delivery: { countryCode: "FR" },
-  };
-  const fam = families.find((f) => f.slug === initial.familySlug)!;
-  if (!fam.finishCodes?.includes(initial.finishCode)) initial.finishCode = fam.finishCodes?.[0] ?? initial.finishCode;
-  let existing: { id: string; token: string; title: string | null } | null = null;
-  let replaceLineId: string | null = null;
-  if (typeof sp.ligne === "string") {
-    const [session, guestKey] = await Promise.all([getSession(), getGuestKey()]);
-    const line = await getLineForOwner({ userId: session?.user.id, guestKey }, sp.ligne);
-    const li = line?.input as PergolaStandardInput | undefined;
-    if (li?.kind === "pergola_standard") { initial = li; replaceLineId = line!.id; }
-  } else if (typeof sp.projet === "string") {
-    const [session, guestKey] = await Promise.all([getSession(), getGuestKey()]);
-    const c = await prisma.configuration.findFirst({ where: { OR: [{ id: sp.projet }, { shareToken: sp.projet }] } });
-    if (c && c.kind === "pergola_standard" && (!c.shareRevoked || isOwner(c, { userId: session?.user.id, guestKey }))) {
-      initial = c.input as unknown as PergolaStandardInput;
-      if (isOwner(c, { userId: session?.user.id, guestKey })) existing = { id: c.id, token: c.shareToken, title: c.title };
-    }
-  }
+  const families = await prisma.productFamily.findMany({ where: { category: { not: null }, legacy: false, status: { in: ["PUBLISHED", "QUOTE_ONLY"] } }, select: { slug: true, name: true, shortDescription: true, category: true }, orderBy: { sortOrder: "asc" } });
+  if (typeof sp.gamme === "string" && families.some((f) => f.slug === sp.gamme)) redirect(configuratorHref(sp.gamme));
+  const legacy = typeof sp.projet === "string" || typeof sp.ligne === "string" || typeof sp.gamme === "string";
   return (
     <div className="container-x py-8">
-      <Breadcrumbs items={[{ label: "Configurateur" }]} />
-      <h1 className="mt-4 font-display text-4xl">{replaceLineId ? "Modifier votre configuration" : "Configurer votre pergola"}</h1>
-      <p className="mt-2 text-stone-700 max-w-2xl">Huit étapes, un prix recalculé à chaque choix et confirmé par le serveur. Les points non confirmés par le fournisseur sont signalés et orientés vers un devis.</p>
-      <div className="mt-8"><PergolaConfigurator catalog={catalog} initial={initial} existing={existing} replaceLineId={replaceLineId} /></div>
+      <Breadcrumbs items={[{ label: "Configurateurs" }]} />
+      <h1 className="mt-4 font-display text-display font-semibold">Configurer votre projet</h1>
+      <p className="mt-2 max-w-2xl text-stone-700">Choisissez un modèle : dimensions, pose, teinte et équipements, vue 3D indicative, prix selon vos dimensions et demande de devis.</p>
+      {legacy && <div className="mt-6" data-testid="legacy-notice"><Notice tone="warn">Ce lien concerne un produit de l&apos;ancien catalogue de démonstration, qui n&apos;est plus proposé. Vos projets et devis existants restent consultables dans votre compte ; pour poursuivre, recommencez une configuration avec l&apos;un des modèles ci-dessous.</Notice></div>}
+      <div className="mt-8 divide-y divide-sand-200 border-t border-sand-200">
+        {CATEGORIES.map((c) => {
+          const items = families.filter((f) => f.category === c.key);
+          return (
+            <section key={c.key} aria-labelledby={`cat-${c.key}`} className="grid gap-4 py-8 md:grid-cols-[12rem_1fr] md:gap-8">
+              <div>
+                <FamilySketch kind={c.key} sun={false} animated={false} className="w-40 md:w-full" />
+                <h2 id={`cat-${c.key}`} className="mt-1 font-display text-2xl font-semibold">{c.label}</h2>
+              </div>
+              {items.length === 0 ? <p className="mt-2 text-sm text-stone-700">Modèles en cours d&apos;intégration.</p> : (
+                <ul className="grid content-start gap-4 lg:grid-cols-2">
+                  {items.map((f) => (
+                    <li key={f.slug} className="rounded-2xl border border-sand-200 bg-white p-5 transition-colors duration-150 hover:border-brand-700/50">
+                      <p className="font-display text-lg font-semibold">{f.name}</p>
+                      <p className="mt-1 text-sm text-stone-700">{f.shortDescription}</p>
+                      <div className="mt-3 flex flex-wrap gap-2"><Link href={configuratorHref(f.slug)} className="btn-accent">Configurer <ArrowRight className="size-4" aria-hidden="true" /></Link><Link href={productHref(c.key, f.slug)} className="btn-ghost">Fiche produit</Link></div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

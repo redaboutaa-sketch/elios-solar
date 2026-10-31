@@ -14,9 +14,9 @@ export function latestPerGroup<T extends VersionedDoc>(docs: readonly T[]): T[] 
   return [...best.values()];
 }
 
-export const DOCUMENT_KINDS = ["notice", "fiche_technique", "certificat", "garantie", "guide", "autre"] as const;
+export const DOCUMENT_KINDS = ["notice", "notice_montage", "fiche_technique", "guide_mesure", "video", "certificat", "garantie", "guide", "autre"] as const;
 export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
-export const DOCUMENT_KIND_FR: Record<string, string> = { notice: "Notice", fiche_technique: "Fiche technique", certificat: "Certificat", garantie: "Garantie", guide: "Guide", autre: "Autre" };
+export const DOCUMENT_KIND_FR: Record<string, string> = { notice: "Notice", notice_montage: "Notice de montage (PDF)", guide_mesure: "Guide de mesure", video: "Vidéo", fiche_technique: "Fiche technique", certificat: "Certificat", garantie: "Garantie", guide: "Guide", declaration_performance: "Déclaration des performances (fabricant)", brochure: "Brochure (fabricant)", autre: "Autre" };
 export const DOCUMENT_STATUS_FR: Record<string, string> = { DRAFT: "Brouillon", REVIEW: "En relecture", PUBLISHED: "Publié", ARCHIVED: "Archivé" };
 export const DOCUMENT_AUDIENCE_FR: Record<string, string> = { PUBLIC: "Public", CUSTOMER: "Clients", INTERNAL: "Interne" };
 

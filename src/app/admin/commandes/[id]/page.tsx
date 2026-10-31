@@ -42,6 +42,8 @@ export default async function OrderAdminPage(props: PageProps<"/admin/commandes/
   const delivery = order.delivery as { postalCode?: string; shippingLabel?: string } | null;
   return (
     <div className="space-y-6">
+      {order.paymentReview && <p className="rounded-lg border border-danger/40 bg-danger/5 px-4 py-3 text-sm text-danger" data-testid="payment-review">À examiner : {order.paymentReview}</p>}
+      {order.quoteId && <p className="text-sm text-stone-700">Commande issue du devis : <a className="link-brand" href={`/admin/devis/${order.quoteId}`}>voir le devis</a>.</p>}
       <PageTitle title={`Commande ${order.number}`} backHref="/admin/commandes" backLabel="Commandes">
         <div className="flex flex-wrap gap-2 text-sm"><span className="badge bg-sand-100 border border-sand-300">{ORDER_STATUS_FR[order.status] ?? order.status}</span><span className="badge bg-sand-100 border border-sand-300">{FULFILLMENT_FR[order.fulfillmentStatus]}</span>{(order.isDemo || order.containsDemoData) && <DemoBadge label="Démonstration" />}</div>
       </PageTitle>
@@ -58,7 +60,7 @@ export default async function OrderAdminPage(props: PageProps<"/admin/commandes/
           <dl className="mt-4 grid max-w-sm grid-cols-2 gap-y-1 text-sm">
             <dt>Produits</dt><dd className="text-right"><Price cents={order.goodsCents} showCents /></dd>
             <dt>Montage</dt><dd className="text-right"><Price cents={order.installationCents} showCents /></dd>
-            <dt>Livraison</dt><dd className="text-right"><Price cents={order.shippingCents} showCents /></dd>
+            <dt>Livraison</dt><dd className="text-right">{(order.delivery as { shippingIncluded?: boolean } | null)?.shippingIncluded === false ? "non comprise (à organiser)" : <Price cents={order.shippingCents} showCents />}</dd>
             <dt>Remise</dt><dd className="text-right">− <Price cents={order.discountCents} showCents /></dd>
             <dt className="font-semibold">Total TTC</dt><dd className="text-right font-semibold"><Price cents={order.totalCents} showCents /></dd>
             <dt className="text-stone-700">dont TVA</dt><dd className="text-right text-stone-700"><Price cents={order.taxCents} showCents /></dd>
@@ -111,6 +113,8 @@ export default async function OrderAdminPage(props: PageProps<"/admin/commandes/
               <div key={p.id} className="rounded-lg border border-sand-200 p-4">
                 <p className="text-sm"><strong>{p.provider}</strong> · <span data-testid="admin-payment-method">{paymentMethodLabel(p)}</span>{p.feesCents > 0 && <> · frais <Price cents={p.feesCents} showCents /></>} · {p.status} · <Price cents={p.amountCents} showCents /> · réf. <span className="font-mono text-xs">{p.providerRef ?? "—"}</span> · {fmtDate(p.createdAt)}</p>
                 {p.failureReason && <p className="text-sm text-danger">{p.failureReason}</p>}
+                {p.awaitingFundsSince && <p className="text-sm text-warning" data-testid="admin-awaiting-funds">Virement annoncé le {fmtDate(p.awaitingFundsSince)} : fonds attendus{p.amountReceivedCents ? <> (déjà reçu : <Price cents={p.amountReceivedCents} showCents />)</> : null}. La commande n'est payée qu'à confirmation du prestataire.</p>}
+                {(p.providerAccount || p.livemode != null) && <p className="text-xs text-stone-700">Compte prestataire {p.providerAccount ?? "—"} · {p.livemode ? "PRODUCTION" : "test"}</p>}
                 {p.refunds.length > 0 && <ul className="mt-2 text-sm">{p.refunds.map((r) => <li key={r.id} className={r.status === "FAILED" ? "text-danger font-medium" : undefined}>Remboursement <Price cents={r.amountCents} showCents /> — {r.status === "FAILED" ? "ÉCHEC signalé par le prestataire : à traiter" : r.status}{r.reason && ` (${r.reason})`} — {fmtDate(r.createdAt)}</li>)}</ul>}
                 <h3 className="mt-3 text-sm font-medium">Événements</h3>
                 <Table caption="Événements de paiement">
