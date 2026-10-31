@@ -89,6 +89,48 @@ const SystemScene3D = dynamic(() => import("./viewer-3d").then((m) => m.SystemSc
 type ProjectMode = "drawing" | "3d";
 
 /**
+ * Modèle du dessin d'un système, depuis la configuration (source unique) : utilisé par la colonne visuelle et par
+ * l'aperçu mobile. Une cote invalide pendant la saisie garde le dessin sur la valeur admissible la plus proche.
+ */
+export function useSystemDrawing(catalog: CatalogSnapshot, input: SystemInput, result: EvaluationResult) {
+  const family = catalog.families.find((f) => f.slug === input.familySlug);
+  const rules = family?.systemRules;
+  // cote invalide pendant la saisie : le dessin reste affiché sur la valeur admissible la plus proche (signalé)
+  const model = useMemo<SceneModel | null>(() => {
+    const m = buildSceneModel(catalog, input, result);
+    if (m || !rules || input.sizeCode === "custom") return m;
+    const d = rules.dims;
+    const near = (r: typeof d.width | undefined, v: number | undefined) => (r && v != null && Number.isFinite(v) ? nearestAllowed(r, v) : v);
+    const depthMm = near(d.depth, input.depthMm);
+    const minW = rules.depthWidthMin?.find((c) => c.depthMm === depthMm)?.widthMinMm ?? 0;
+    return buildSceneModel(catalog, { ...input, widthMm: Math.max(minW, near(d.width, input.widthMm) ?? d.width.maxMm), depthMm, heightMm: near(d.height, input.heightMm) }, null);
+  }, [catalog, input, result, rules]);
+  return { model, rules };
+}
+
+export function drawingEnvelope(model: SceneModel | null, rules: { dims: { width: { maxMm: number }; depth?: { maxMm: number }; height?: { maxMm: number } } } | undefined | null) {
+  return model && rules ? envelopeOf(model, { widthMm: rules.dims.width.maxMm, depthMm: rules.dims.depth?.maxMm, heightMm: rules.dims.height?.maxMm }) : null;
+}
+
+/**
+ * Aperçu mobile (sous `lg`) : panneau flottant au-dessus de la barre du configurateur, qui suit chaque choix sans masquer
+ * les champs (il se ferme d'un geste et se rouvre depuis la barre). Même modèle que le dessin principal.
+ */
+export function SystemDrawingPeek({ catalog, input, result, onClose }: { catalog: CatalogSnapshot; input: SystemInput; result: EvaluationResult; onClose: () => void }) {
+  const { model, rules } = useSystemDrawing(catalog, input, result);
+  const envelope = drawingEnvelope(model, rules);
+  return (
+    <div role="region" aria-label="Aperçu de mon projet" data-testid="drawing-peek" className="fixed left-2 bottom-[4.75rem] z-30 w-[min(20rem,62vw)] overflow-hidden rounded-lg border border-sand-300 bg-white shadow-soft lg:hidden">
+      <div className="flex items-center justify-between border-b border-sand-200 px-2 py-1 text-xs text-stone-700">
+        <span>Aperçu indicatif</span>
+        <button type="button" onClick={onClose} className="min-h-8 px-2 underline" aria-label="Fermer l'aperçu">Fermer</button>
+      </div>
+      {model && envelope ? <ProjectDrawing model={model} view="three_quarter" deployment={1} bladeAngle={25} envelope={envelope} idPrefix="peek" /> : <p className="p-3 text-xs text-stone-700">Saisissez des cotes valides pour afficher l'aperçu.</p>}
+    </div>
+  );
+}
+
+/**
  * Colonne visuelle d'un système HELIOSTORES. Deux rubriques distinctes :
  * - « Visualisation de mon projet » : dessin paramétrique 2D (par défaut, sans WebGL) ou vue 3D chargée à la demande,
  *   tous deux construits depuis la même entrée que l'évaluation serveur et le devis ;
@@ -111,18 +153,7 @@ export function SystemVisuals({ catalog, input, result, art, onImage, onCaptureR
   const [deployment, setDeployment] = useState(100);
   const [bladeAngle, setBladeAngle] = useState(25);
   const [exportState, setExportState] = useState<"idle" | "busy" | "done" | "error">("idle");
-  const family = catalog.families.find((f) => f.slug === input.familySlug);
-  const rules = family?.systemRules;
-  // cote invalide pendant la saisie : le dessin reste affiché sur la valeur admissible la plus proche (signalé)
-  const model = useMemo<SceneModel | null>(() => {
-    const m = buildSceneModel(catalog, input, result);
-    if (m || !rules || input.sizeCode === "custom") return m;
-    const d = rules.dims;
-    const near = (r: typeof d.width | undefined, v: number | undefined) => (r && v != null && Number.isFinite(v) ? nearestAllowed(r, v) : v);
-    const depthMm = near(d.depth, input.depthMm);
-    const minW = rules.depthWidthMin?.find((c) => c.depthMm === depthMm)?.widthMinMm ?? 0;
-    return buildSceneModel(catalog, { ...input, widthMm: Math.max(minW, near(d.width, input.widthMm) ?? d.width.maxMm), depthMm, heightMm: near(d.height, input.heightMm) }, null);
-  }, [catalog, input, result, rules]);
+  const { model, rules } = useSystemDrawing(catalog, input, result);
   const blocker = rules ? systemSceneBlocker(rules, input) : "Système inconnu.";
   const svgRef = useRef<SVGSVGElement | null>(null);
   useEffect(() => {
@@ -130,7 +161,7 @@ export function SystemVisuals({ catalog, input, result, art, onImage, onCaptureR
     return () => onDrawingReady?.(null);
   }, [onDrawingReady]);
   const can3d = !!model && has3D(model);
-  const envelope = model && rules ? envelopeOf(model, { widthMm: rules.dims.width.maxMm, depthMm: rules.dims.depth?.maxMm, heightMm: rules.dims.height?.maxMm }) : null;
+  const envelope = drawingEnvelope(model, rules);
   const movable = model ? (model.kind === "pergola" ? (model.roof === "fabric" ? null : "blades") : model.kind === "insect" && model.opening === "fixed" || model.kind === "insect" && model.opening === "hinged" ? null : "fabric") : null;
   const exportDrawing = async () => {
     if (!svgRef.current || !model) return;

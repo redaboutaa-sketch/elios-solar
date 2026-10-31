@@ -153,7 +153,7 @@ test("configurateur : largeur, avancée, teinte et toile modifient réellement l
   await expect(page.getByRole("button", { name: /Intérieur|Ambiance nuit/ })).toHaveCount(0);
   await goStep(page, "pose");
   const colorBefore = await drawingAttr(page, "structure-color");
-  await page.getByLabel("Teinte de structure").selectOption({ label: "RAL 8014" });
+  await page.getByTestId("finish-swatches").getByRole("radio", { name: /RAL 8014\b/ }).check();
   await expect(drawing).not.toHaveAttribute("data-structure-color", colorBefore!);
   await expect(drawing).toHaveAttribute("data-structure-color", /^#[0-9a-f]{6}$/i);
   // l'onglet « Photos » ne suit pas la configuration (indiqué)
@@ -221,7 +221,7 @@ test("HelioLux : pergola à toiture toile, sans lames ; moustiquaire et screen d
   await expect(drawing.locator('[data-part="blade"]')).toHaveCount(0);
   await goStep(page, "pose");
   // adossée seulement
-  await expect(page.getByTestId("step-pose").getByRole("radio")).toHaveCount(1);
+  await expect(page.getByTestId("step-pose").getByRole("group", { name: "Pose", exact: true }).getByRole("radio")).toHaveCount(1);
   await expect(page.getByRole("radio", { name: /Adossée/ })).toBeChecked();
   const fabric = await drawingAttr(page, "fabric-color");
   await page.locator("#fabric").selectOption({ label: "Toile Serge 600" });

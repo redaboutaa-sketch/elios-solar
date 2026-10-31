@@ -63,7 +63,7 @@ test("store banne HelioSun : avancées et largeurs documentées, commande élect
   await expect(page.getByTestId("step-dims")).not.toContainText("Impossible");
   await goStep(page, "pose");
   await page.getByRole("radio", { name: "Sur chevrons" }).check();
-  await page.getByLabel("Teinte de structure").selectOption({ label: "RAL 8014" });
+  await page.getByTestId("finish-swatches").getByRole("radio", { name: /RAL 8014\b/ }).check();
   // manivelle : télécommande et automatisme indisponibles (prérequis : motorisation)
   await goStep(page, "equip");
   await expect(page.getByTestId("prereq-remote_control")).toContainText("Indisponible avec la commande choisie");

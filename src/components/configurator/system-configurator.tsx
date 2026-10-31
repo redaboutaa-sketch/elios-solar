@@ -9,7 +9,8 @@
 import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, Save, Share2, ShoppingCart } from "lucide-react";
+import { Check, ChevronDown, Eye, ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, Save, Share2, ShoppingCart } from "lucide-react";
+import { colourInfo, colourLabel } from "@/domain/colours";
 import { DELIVERY_LEAD_TIME, DELIVERY_TERMS_IN_QUOTE } from "@/domain/delivery";
 import { addToCartAction, saveConfigurationAction } from "@/server/actions/configurator";
 import { evaluate } from "@/domain/engine";
@@ -18,7 +19,7 @@ import type { CatalogSnapshot, EvaluationResult, SideKey } from "@/domain/types"
 import { formatSystemPrice } from "@/domain/system-pricing";
 import { IssueList, Notice } from "@/components/ui/alert";
 import { QuoteForm } from "./quote-form";
-import { SystemVisuals } from "./scene-3d/visuals";
+import { SystemDrawingPeek, SystemVisuals } from "./scene-3d/visuals";
 import { useQuoteVisual } from "./quote-visual";
 
 /** Prix de la grille publique pour la cote saisie, ou renvoi au devis (cote hors grille, blocage). */
@@ -170,6 +171,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
   const rules = family.systemRules as SystemRules;
   const defaults = useMemo(() => defaultSystemInput(familySlug, rules), [familySlug, rules]);
   const [input, setInput] = useState<SystemInput>(() => ({ ...defaults, ...initial, kind: "system", familySlug }));
+  const [peek, setPeek] = useState(false);
   const [step, setStep] = useState(0);
   const [restored, setRestored] = useState(false);
   const fromLink = !!initial || !!existing || !!cartLineId;
@@ -331,16 +333,27 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
                 ))}
               </div>
             </fieldset>
-            <div className="mt-4">
-              <label className="label" htmlFor="finish">Teinte de structure</label>
-              <div className="flex items-center gap-3">
-                <span aria-hidden="true" className="size-8 shrink-0 rounded-full border border-sand-300" style={{ background: finish?.swatch ?? "repeating-linear-gradient(45deg,#ddd,#ddd 4px,#fff 4px,#fff 8px)" }} />
-                <select id="finish" className="input" value={input.finishCode} onChange={(e) => set({ finishCode: e.target.value })}>
-                  {finishes.map((f) => <option key={f.code} value={f.code}>{f.label}{f.status === "to_confirm" ? " — à confirmer" : ""}</option>)}
-                </select>
+            <fieldset className="mt-4" data-testid="finish-swatches">
+              <legend className="label">Teinte de structure</legend>
+              <div role="radiogroup" aria-label="Teinte de structure" className="grid grid-cols-2 gap-2 2xl:grid-cols-3">
+                {finishes.map((f) => {
+                  const c = colourInfo(f.label);
+                  const checked = input.finishCode === f.code;
+                  return (
+                    <label key={f.code} className={`relative flex cursor-pointer items-center gap-2.5 rounded-lg border bg-white p-2 pr-7 text-left text-sm transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-700 ${checked ? "border-anthracite ring-1 ring-anthracite" : "border-sand-300 hover:border-stone-700"}`} data-finish={f.code} data-selected={checked || undefined}>
+                      <input type="radio" name="finish" value={f.code} checked={checked} onChange={() => set({ finishCode: f.code })} className="absolute inset-0 z-10 m-0 cursor-pointer appearance-none opacity-0" aria-label={`${colourLabel(f.label)}${f.status === "to_confirm" ? " — à confirmer" : ""}`} />
+                      <span aria-hidden="true" className="size-8 shrink-0 rounded-full border border-black/15 shadow-inner" style={{ background: f.swatch ?? "repeating-linear-gradient(45deg,#ddd,#ddd 4px,#fff 4px,#fff 8px)" }} />
+                      <span className="min-w-0 leading-tight">
+                        <span className="block font-medium [overflow-wrap:anywhere]">{c.name ?? c.code ?? f.label}</span>
+                        <span className="block text-xs text-stone-700">{[c.name ? c.code : null, c.finish].filter(Boolean).join(" · ")}{f.status === "to_confirm" ? (c.code || c.finish ? " · " : "") + "à confirmer" : ""}</span>
+                      </span>
+                      {checked && <Check aria-hidden="true" className="absolute top-1.5 right-1.5 size-4 text-anthracite" />}
+                    </label>
+                  );
+                })}
               </div>
-              <p className="mt-1 text-xs text-stone-700">Pastille d'aperçu indicative : la teinte réelle se vérifie sur nuancier.</p>
-            </div>
+              <p className="mt-1 text-xs text-stone-700">Teinte choisie : <strong data-testid="finish-selected">{finish ? colourLabel(finish.label) : "—"}</strong>. Aperçu écran indicatif : la teinte réelle se vérifie sur nuancier.{finish?.note ? ` ${finish.note}` : ""}</p>
+            </fieldset>
             {rules.fabrics?.length ? (
               <div className="mt-4">
                 <label className="label" htmlFor="fabric">{rules.type === "insect_screen" ? "Toile moustiquaire" : "Toile"}</label>
@@ -411,6 +424,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
             {rules.type === "pergola" && rules.closureWishes?.length ? (
               <div className="mt-4" data-testid="side-closures">
                 <h3 className="text-sm font-medium">Fermetures latérales souhaitées (étude au devis)</h3>
+                <p className="mt-0.5 text-xs text-stone-700">Chaque fermeture choisie apparaît aussitôt sur le dessin, du côté indiqué (avant = côté opposé au mur). Compatibilité, dimensions et fixations sont confirmées sur devis.</p>
                 <div className="mt-2 grid gap-3 sm:grid-cols-2">
                   {SIDES.filter(([k]) => !(input.mounting === "wall" && k === "back")).map(([k, label]) => (
                     <div key={k}><label className="label" htmlFor={`side-${k}`}>{label}</label>
@@ -418,6 +432,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
                         <option value="">Ouvert</option>
                         {rules.closureWishes!.map((w) => <option key={w.familySlug} value={w.familySlug}>{w.label} (à étudier)</option>)}
                       </select>
+                      {input.sides?.[k] ? <p className="mt-1 text-xs text-stone-700" data-testid={`side-status-${k}`}>Représenté sur le dessin · compatibilité à confirmer sur devis</p> : null}
                     </div>
                   ))}
                 </div>
@@ -466,8 +481,10 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
       {/* barre mobile compacte : prix et action prioritaire ; masquée pendant la saisie (clavier virtuel), voir globals.css */}
       <div className="cfg-bar fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-sand-300 bg-white/95 px-3 py-2 backdrop-blur lg:hidden" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }} data-testid="config-price-bar">
         <a href="#recap" onClick={() => setRecapOpen(true)} className="min-w-0"><span className="block text-xs text-stone-700">{STEPS[step]![1]} · étape {step + 1}/{STEPS.length}</span><span className="block truncate text-sm font-semibold tabular-nums">{result.systemPrice ? formatSystemPrice(result.systemPrice.amountMinor, result.systemPrice.currency, result.systemPrice.taxBasis) : "Prix sur devis"}</span></a>
+        <button type="button" className="btn-secondary shrink-0 px-3" aria-pressed={peek} onClick={() => setPeek((v) => !v)} data-testid="drawing-peek-toggle"><Eye className="size-4" aria-hidden="true" /> Aperçu</button>
         {step < STEPS.length - 1 ? <button type="button" className="btn-accent shrink-0" onClick={() => goStep(step + 1)}>Suivant</button> : <a href={result.onlineOrder?.ok ? "#order-title" : "#quote-title"} className="btn-accent shrink-0">{result.onlineOrder?.ok ? "Commander" : "Demander le devis"}</a>}
       </div>
+      {peek && <SystemDrawingPeek catalog={catalog} input={input} result={result} onClose={() => setPeek(false)} />}
       <div className="h-16 lg:hidden" aria-hidden="true" />
     </div>
   );

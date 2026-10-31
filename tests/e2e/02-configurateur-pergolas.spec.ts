@@ -28,7 +28,7 @@ test("HelioMax : règles de cotes, options, fermeture souhaitée, 3D, projet enr
   // 2. pose et teinte
   await page.getByTestId("step-next").click();
   await page.getByRole("radio", { name: "Autoportante" }).check();
-  await page.getByLabel("Teinte de structure").selectOption({ label: "RAL 7016 mat" });
+  await page.getByTestId("finish-swatches").getByRole("radio", { name: /RAL 7016\b/ }).check();
 
   // 3. équipements : éclairage (cumul non documenté), capteurs à confirmer, fermeture vitrée souhaitée
   await page.getByTestId("step-next").click();
@@ -37,7 +37,7 @@ test("HelioMax : règles de cotes, options, fermeture souhaitée, 3D, projet enr
   await page.getByTestId("option-weather_sensors").getByRole("checkbox").check();
   await page.getByTestId("option-heating").getByRole("checkbox").check();
   await expect(page.getByTestId("wind-behaviour")).toContainText("ouvrir les lames à 90°");
-  await page.locator("#side-front").selectOption({ label: "Fermetures latérales coulissantes (vitrage) (à étudier)" });
+  await page.locator("#side-front").selectOption({ label: "HelioSlide VERRE — fermeture vitrée coulissante (à étudier)" });
 
   // 4. récapitulatif : points à confirmer, prix de la grille (aucune grille HelioMax : sur devis)
   await page.getByTestId("step-next").click();
@@ -45,7 +45,7 @@ test("HelioMax : règles de cotes, options, fermeture souhaitée, 3D, projet enr
   await expect(issues).toContainText("Hauteur supérieure à 2,81 m");
   // spots + LED linéaire dans les lames : cumul déclaré « à confirmer » par la fiche du modèle
   await expect(issues, "cumul spots LED + LED linéaire signalé").toContainText("cumul non documenté");
-  await expect(issues).toContainText("Fermetures latérales coulissantes (vitrage) côté avant");
+  await expect(issues).toContainText("HelioSlide VERRE — fermeture vitrée coulissante côté avant");
   await expect(issues).toContainText("Chauffage : souhait noté pour le devis");
   const recap = page.getByTestId("system-recap");
   await expect(recap).toContainText("HelioMax");

@@ -20,7 +20,7 @@ export const DRAWING_VIEWS: Array<{ id: DrawingView; label: string }> = [
 
 type V3 = readonly [number, number, number];
 interface Prim { d: string; fill: string; stroke?: string; sw?: number; opacity?: number; depth: number; dash?: string; glow?: boolean; key?: string }
-interface Label { x: number; y: number; text: string; anchor?: "start" | "middle" | "end" }
+interface Label { x: number; y: number; text: string; anchor?: "start" | "middle" | "end"; part?: string }
 
 const W_BOX = 800, H_BOX = 520, PAD = 28;
 const INK = "#1a201c", WALL = "#e7ebe6", WALL_LINE = "#b9c2ba", GLASS = "#cfe3ee", LED = "#f6b73c", GROUND = "#eef1ec";
@@ -44,12 +44,17 @@ interface Envelope { w: number; d: number; h: number }
 class Canvas {
   prims: Prim[] = [];
   labels: Label[] = [];
+  /** vue trois quarts depuis l'avant gauche : symétrie x → L − x (structure symétrique) */
+  mirrorL: number | null = null;
   constructor(private view: DrawingView) {}
-  poly(pts: readonly V3[], fill: string, o: Partial<Prim> = {}) {
+  private mp(p: V3): V3 { return this.mirrorL == null ? p : [this.mirrorL - p[0], p[1], p[2]]; }
+  poly(raw: readonly V3[], fill: string, o: Partial<Prim> = {}) {
+    const pts = raw.map((p) => this.mp(p));
     const c = pts.reduce((a, p) => [a[0] + p[0] / pts.length, a[1] + p[1] / pts.length, a[2] + p[2] / pts.length] as [number, number, number], [0, 0, 0]);
     this.prims.push({ d: pts.map((p) => rawProject(this.view, p).join(",")).join(" "), fill, stroke: INK, sw: 1.1, depth: depthOf(this.view, c), ...o });
   }
-  line(a: V3, b: V3, stroke: string, o: Partial<Prim> = {}) {
+  line(ra: V3, rb: V3, stroke: string, o: Partial<Prim> = {}) {
+    const a = this.mp(ra), b = this.mp(rb);
     const c: V3 = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
     this.prims.push({ d: [a, b].map((p) => rawProject(this.view, p).join(",")).join(" "), fill: "none", stroke, sw: 1.2, depth: depthOf(this.view, c), ...o });
   }
@@ -59,11 +64,11 @@ class Canvas {
     f([[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]], 0.12); // dessus
     f([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], 0); // devant
     f([[x1, y0, z0], [x1, y0, z1], [x1, y1, z1], [x1, y1, z0]], -0.12); // côté droit
-    if (this.view !== "three_quarter") f([[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]], -0.12);
+    if (this.view !== "three_quarter" || this.mirrorL != null) f([[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]], -0.12);
   }
-  label(p: V3, text: string, anchor: Label["anchor"] = "middle") {
-    const [x, y] = rawProject(this.view, p);
-    this.labels.push({ x, y, text, anchor });
+  label(p: V3, text: string, anchor: Label["anchor"] = "middle", part = "dimension") {
+    const [x, y] = rawProject(this.view, this.mp(p));
+    this.labels.push({ x, y, text, anchor, part });
   }
 }
 
@@ -103,19 +108,44 @@ function drawPergola(c: Canvas, s: Extract<SceneModel, { kind: "pergola" }>, vie
     const x0 = Math.min(Math.max(x - post / 2, 0), L - post), z0 = Math.min(Math.max(z - post / 2, 0), D - post);
     c.box(x0, x0 + post, 0, H, z0, z0 + post, col);
   }
-  // fermetures latérales (souhaits représentés)
+  // fermetures latérales (souhaits représentés) : matériau lisible — verre translucide à montants, panneaux
+  // aluminium opaques à joints verticaux, toile de screen semi-opaque sous son coffre. Contour en tirets : compatibilité
+  // et fixations à confirmer au devis (jamais présenté comme un assemblage garanti).
   for (const cl of s.closures) {
     const a: V3 = [m(cl.from.xMm), 0.02, m(cl.from.zMm)], b: V3 = [m(cl.to.xMm), 0.02, m(cl.to.zMm)];
     const top = H - beamH;
-    const glass = cl.type === "glass";
-    c.poly([a, b, [b[0], top, b[2]], [a[0], top, a[2]]], glass ? GLASS : s.roofFabricColor ?? "#8d8f8c", { opacity: glass ? 0.55 : 0.78, stroke: shadeHex(col, 0.2), sw: 0.8 });
-    if (glass) {
-      const n = Math.max(2, Math.round(Math.hypot(b[0] - a[0], b[2] - a[2]) / 0.9));
-      for (let i = 1; i < n; i += 1) {
-        const t = i / n;
-        c.line([a[0] + (b[0] - a[0]) * t, 0.02, a[2] + (b[2] - a[2]) * t], [a[0] + (b[0] - a[0]) * t, top, a[2] + (b[2] - a[2]) * t], shadeHex(col, 0.35), { sw: 0.8 });
-      }
+    const dash = cl.assembly?.toConfirm ? "6 4" : undefined;
+    const at = (t: number, y: number): V3 => [a[0] + (b[0] - a[0]) * t, y, a[2] + (b[2] - a[2]) * t];
+    const len = Math.hypot(b[0] - a[0], b[2] - a[2]);
+    if (cl.type === "glass") {
+      c.poly([a, b, [b[0], top, b[2]], [a[0], top, a[2]]], GLASS, { opacity: 0.5, stroke: shadeHex(col, 0.2), sw: 0.9, dash, key: "closure-glass" });
+      const n = Math.max(2, Math.round(len / 0.9));
+      for (let i = 1; i < n; i += 1) c.line(at(i / n, 0.02), at(i / n, top), shadeHex(col, 0.35), { sw: 0.8 });
+      // reflet : le verre se lit comme une surface transparente
+      c.line(at(0.12, top * 0.35), at(0.3, top * 0.75), "#ffffff", { sw: 2, opacity: 0.8 });
+    } else if (cl.type === "slats") {
+      c.poly([a, b, [b[0], top, b[2]], [a[0], top, a[2]]], shadeHex(col, 0.08), { opacity: 0.96, stroke: shadeHex(col, -0.25), sw: 1, dash, key: "closure-alu" });
+      const n = Math.max(2, Math.round(len / 1));
+      for (let i = 1; i < n; i += 1) c.line(at(i / n, 0.02), at(i / n, top), shadeHex(col, -0.3), { sw: 1.1 });
+      for (let y = 0.25; y < top; y += 0.25) c.line(at(0.02, y), at(0.98, y), shadeHex(col, 0.25), { sw: 0.5, opacity: 0.7 });
+    } else {
+      const fabric = s.roofFabricColor ?? "#5c6166";
+      c.poly([a, b, [b[0], top, b[2]], [a[0], top, a[2]]], fabric, { opacity: 0.62, stroke: shadeHex(fabric, -0.25), sw: 0.9, dash, key: "closure-screen" });
+      c.line(at(0, top - 0.04), at(1, top - 0.04), shadeHex(col, -0.15), { sw: 4 }); // coffre sous la poutre
+      c.line(at(0, 0.05), at(1, 0.05), shadeHex(col, -0.15), { sw: 2.5 }); // barre de charge
     }
+  }
+  // repères des côtés (avant = côté opposé au mur ; vue de face = depuis l'avant)
+  if (view !== "front") {
+    // trois quarts : au-dessus de la poutre de chaque côté (les cotes occupent le sol) ; dessus : au-delà du bord
+    const y = H + 0.3, o = view === "top" ? 0.5 : 0;
+    c.label([L / 2, y, D + o], "Avant", "middle", "side-label");
+    c.label([L / 2, y, -o], s.wall ? "Arrière (mur)" : "Arrière", "middle", "side-label");
+    c.label([-o, y, D / 2], "Gauche", view === "top" ? "end" : "middle", "side-label");
+    c.label([L + o, y, D / 2], "Droite", view === "top" ? "start" : "middle", "side-label");
+  } else {
+    c.label([-0.25, 0.1, D], "Gauche", "end", "side-label");
+    c.label([L + 0.25, 0.1, D], "Droite", "start", "side-label");
   }
   // poutres périphériques ; toiture toile : rails inclinés du mur (haut) vers la poutre avant (pente indicative 10°)
   const fabricRoof = s.roof === "fabric";
@@ -325,11 +355,17 @@ export interface ProjectDrawingProps {
   bladeAngle: number;
   envelope: Envelope;
   caption?: ReactNode;
+  /** second dessin sur la page (aperçu mobile) : identifiants SVG distincts */
+  idPrefix?: string;
 }
 
 /** Dessin SVG du projet. `ref` donne accès au SVG (export, image jointe au devis). */
-export const ProjectDrawing = forwardRef<SVGSVGElement, ProjectDrawingProps>(function ProjectDrawing({ model, view, deployment, bladeAngle, envelope }, ref) {
+export const ProjectDrawing = forwardRef<SVGSVGElement, ProjectDrawingProps>(function ProjectDrawing({ model, view, deployment, bladeAngle, envelope, idPrefix }, ref) {
+  const ids = { title: idPrefix ? `${idPrefix}-drawing-title` : "project-drawing-title", glow: idPrefix ? `${idPrefix}-glow` : "pd-glow" };
   const c = new Canvas(view);
+  // fermeture à gauche seulement : la vue trois quarts se place côté gauche pour la montrer
+  const mirrored = view === "three_quarter" && model.kind === "pergola" && model.closures.some((x) => x.side === "left") && !model.closures.some((x) => x.side === "right");
+  if (mirrored && model.kind === "pergola") c.mirrorL = m(model.lengthMm);
   if (model.kind === "pergola") drawPergola(c, model, view, bladeAngle);
   else if (model.kind === "screen") drawScreen(c, model, view, deployment);
   else if (model.kind === "awning") drawAwning(c, model, view, deployment);
@@ -338,7 +374,7 @@ export const ProjectDrawing = forwardRef<SVGSVGElement, ProjectDrawingProps>(fun
 
   // échelle fixe : enveloppe documentée du produit (marges pour les cotes)
   const env = new Canvas(view);
-  env.box(-0.45, envelope.w + 0.5, -0.3, envelope.h + 0.4, -0.1, envelope.d + 0.5, "#000");
+  env.box(-0.45, envelope.w + 0.5, -0.3, envelope.h + (model.kind === "pergola" ? 0.8 : 0.4), -0.1, envelope.d + 0.5, "#000");
   const pts = env.prims.flatMap((p) => p.d.split(" ").map((xy) => xy.split(",").map(Number) as [number, number]));
   const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
   const ex0 = Math.min(...xs), ex1 = Math.max(...xs), ey0 = Math.min(...ys), ey1 = Math.max(...ys);
@@ -359,8 +395,8 @@ export const ProjectDrawing = forwardRef<SVGSVGElement, ProjectDrawingProps>(fun
       viewBox={`0 0 ${W_BOX} ${H_BOX}`}
       xmlns="http://www.w3.org/2000/svg"
       role="img"
-      aria-labelledby="project-drawing-title"
-      data-testid="project-drawing"
+      aria-labelledby={ids.title}
+      data-testid={idPrefix ? `project-drawing-${idPrefix}` : "project-drawing"}
       data-kind={model.kind}
       data-view={view}
       data-width-mm={model.kind === "pergola" ? model.lengthMm : model.widthMm}
@@ -369,20 +405,22 @@ export const ProjectDrawing = forwardRef<SVGSVGElement, ProjectDrawingProps>(fun
       data-structure-color={structureColor}
       data-fabric-color={fabricColor}
       data-led={c.prims.some((p) => p.key === "led" || p.key === "spot") ? "on" : "off"}
+      data-mirrored={mirrored || undefined}
+      data-closures={model.kind === "pergola" ? [...new Map(model.closures.map((x) => [x.side, `${x.side}:${x.type}`])).values()].sort().join(",") : undefined}
       className="block h-auto w-full bg-white"
     >
-      <title id="project-drawing-title">{`Dessin indicatif : ${model.familyName}, ${model.dimensionLabel}`}</title>
+      <title id={ids.title}>{`Dessin indicatif : ${model.familyName}, ${model.dimensionLabel}`}</title>
       <defs>
-        <filter id="pd-glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        <filter id={ids.glow} x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
       </defs>
       <rect x="0" y="0" width={W_BOX} height={H_BOX} fill="#fbfcfa" />
       {sorted.map((p, i) => (
         p.fill === "none"
-          ? <polyline key={i} points={toPts(p.d)} fill="none" stroke={p.stroke} strokeWidth={p.sw} strokeLinecap="round" strokeDasharray={p.dash} opacity={p.opacity} filter={p.glow ? "url(#pd-glow)" : undefined} data-part={p.key} />
-          : <polygon key={i} points={toPts(p.d)} fill={p.fill} fillOpacity={p.opacity} stroke={p.stroke === "none" ? undefined : p.stroke} strokeWidth={p.sw} strokeLinejoin="round" strokeDasharray={p.dash} filter={p.glow ? "url(#pd-glow)" : undefined} data-part={p.key} />
+          ? <polyline key={i} points={toPts(p.d)} fill="none" stroke={p.stroke} strokeWidth={p.sw} strokeLinecap="round" strokeDasharray={p.dash} opacity={p.opacity} filter={p.glow ? `url(#${ids.glow})` : undefined} data-part={p.key} />
+          : <polygon key={i} points={toPts(p.d)} fill={p.fill} fillOpacity={p.opacity} stroke={p.stroke === "none" ? undefined : p.stroke} strokeWidth={p.sw} strokeLinejoin="round" strokeDasharray={p.dash} filter={p.glow ? `url(#${ids.glow})` : undefined} data-part={p.key} />
       ))}
       {c.labels.map((l, i) => (
-        <text key={`l${i}`} x={tx(l.x)} y={ty(l.y) - 6} textAnchor={l.anchor} fontSize="15" fontFamily="system-ui, sans-serif" fill="#2c5a4f" paintOrder="stroke" stroke="#fbfcfa" strokeWidth="4" data-part="dimension">{l.text}</text>
+        <text key={`l${i}`} x={tx(l.x)} y={ty(l.y) - 6} textAnchor={l.anchor} fontSize="15" fontFamily="system-ui, sans-serif" fill={l.part === "side-label" ? "#5b625d" : "#2c5a4f"} fontWeight={l.part === "side-label" ? 600 : undefined} paintOrder="stroke" stroke="#fbfcfa" strokeWidth="4" data-part={l.part ?? "dimension"}>{l.text}</text>
       ))}
     </svg>
   );

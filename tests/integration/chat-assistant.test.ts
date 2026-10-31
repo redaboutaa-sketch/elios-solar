@@ -53,11 +53,11 @@ const last = (id: string) => prisma.chatMessage.findFirst({ where: { conversatio
 
 describe("configuration du fournisseur", () => {
   it("désactivé par défaut ; openai_compatible exige clé, modèle et URL https (ou locale)", () => {
-    expect(getAssistant({} as NodeJS.ProcessEnv)).toBeNull();
-    expect(getAssistant({ AI_PROVIDER: "openai_compatible", AI_API_KEY: "k", AI_MODEL: "m" } as NodeJS.ProcessEnv)).toBeNull();
-    expect(getAssistant({ AI_PROVIDER: "openai_compatible", AI_API_KEY: "k", AI_MODEL: "m", AI_BASE_URL: "http://exemple.test" } as NodeJS.ProcessEnv)).toBeNull();
-    expect(getAssistant({ AI_PROVIDER: "openai_compatible", AI_API_KEY: "k", AI_MODEL: "m", AI_BASE_URL: "https://api.deepseek.com" } as NodeJS.ProcessEnv)?.name).toBe("openai_compatible");
-    expect(getAssistant({ AI_PROVIDER: "anthropic", ANTHROPIC_API_KEY: "k" } as NodeJS.ProcessEnv)?.name).toBe("anthropic");
+    expect(getAssistant({} as unknown as NodeJS.ProcessEnv)).toBeNull();
+    expect(getAssistant({ AI_PROVIDER: "openai_compatible", AI_API_KEY: "k", AI_MODEL: "m" } as unknown as NodeJS.ProcessEnv)).toBeNull();
+    expect(getAssistant({ AI_PROVIDER: "openai_compatible", AI_API_KEY: "k", AI_MODEL: "m", AI_BASE_URL: "http://exemple.test" } as unknown as NodeJS.ProcessEnv)).toBeNull();
+    expect(getAssistant({ AI_PROVIDER: "openai_compatible", AI_API_KEY: "k", AI_MODEL: "m", AI_BASE_URL: "https://api.deepseek.com" } as unknown as NodeJS.ProcessEnv)?.name).toBe("openai_compatible");
+    expect(getAssistant({ AI_PROVIDER: "anthropic", ANTHROPIC_API_KEY: "k" } as unknown as NodeJS.ProcessEnv)?.name).toBe("anthropic");
   });
 
   it("coordonnées masquées avant envoi ; réponse écartée si montant, référence fournisseur ou ancien nom", () => {
