@@ -3,7 +3,7 @@
 ## Lancement (2026-10-26)
 
 - **Production heliostores.com publique, sur devis** (2026-10-26) : pile `heliostores-prod`, image applicative
-  **`02d4cce`** (2026-10-27 : carrousel de l'accueil en visualisations générées, WebP/AVIF, cadrage par écran, légende
+  **`8434cfb`** (2026-10-31 : noms HELIO, logo, chat, configurateur, préparation SELT — section ci-dessous ; auparavant `02d4cce`, 2026-10-27 : carrousel de l'accueil en visualisations générées, WebP/AVIF, cadrage par écran, légende
   « Visualisation » ; mention « visuel du fabricant, non contractuel » retirée des légendes des photos fournisseur —
   runbook § 6 ter ; auparavant `1f311ba`, mission SEO/GEO — `docs/seo/changes-and-validation.md`), compose et script de déploiement `5e1df9c`
   (relais sans interruption, `TZ=Europe/Paris`).
@@ -20,7 +20,7 @@
   SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
 
-## Livraison du 2026-10-31 (noms HELIO, logo, chat, configurateur, préparation SELT)
+## Livraison du 2026-10-31 (noms HELIO, logo, chat, configurateur, préparation SELT) — production `8434cfb`
 
 - **Noms HELIO** (transcodification validée par le client) appliqués : HelioSky, HelioMax, HelioLux, HelioRoof, HelioSun,
   HelioShade, HelioPro, HelioSquare (HelioScreen, moustiquaires inchangés), HelioSlide VERRE / ALU (souhaits de

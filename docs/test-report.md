@@ -1,3 +1,30 @@
+# Noms HELIO, logo, chat, configurateur, préparation SELT — 2026-10-31
+
+- Code déployé **`8434cfb`** (CI verte, push et PR) : unitaires 291/291, intégration 110/110, tsc sans erreur, eslint
+  0 erreur (2 avertissements antérieurs). Recette navigateur complète en développement (`playwright test`, sans
+  relance) : 81 réussis, 0 échec, 4 ignorés par conception (projet ordinateur/mobile).
+- Nouveaux tests : `17-bandeau-logo` (390/768/1440 : logo centré à ±1 px, agrandi, proportions, aucun chevauchement,
+  aucun décalage du contenu), `18-chat-aide` (thèmes non enregistrés, réponse utile avec liens, transmission,
+  administration, séparation des conversations, Échap), `19-configurateur-visuel` (teintes au clavier, fermetures
+  par côté, changements rapides, adossée, projet restauré, aperçu mobile), `chat-guide`, `chat-assistant`
+  (fournisseur factice : réponse, indisponibilité, réponse écartée, plafond, coordonnées masquées),
+  `supplier-prices-normalized`, `selt-pricing` (import idempotent, natures distinctes, remise → achat → vente,
+  publication, retour arrière, montant du navigateur ignoré), `colours`, transcodification (`nomenclature`).
+- Copie de la production (sauvegarde du jour, PostgreSQL jetable sur réseau interne, supprimé ensuite) : migration,
+  `catalogue-sync` (10 familles, dont la FAQ obsolète de deux fiches retirées), `media-names-sync` (66 médias),
+  seconds passages sans changement ; tarifs, devis et statuts inchangés ; nouvelle application : 36 pages en 200,
+  aucun ancien nom ni référence fournisseur dans le HTML.
+- Production : sauvegardes `db_/media_20261031_094621` et `_095232`, environnement copié ; déploiement par le script
+  (sonde : 115 requêtes, toutes en 200) ; synchronisations appliquées puis idempotentes ; 37 pages (sitemap +
+  configurateurs + accessoires) sans ancien nom ni référence ; logo centré à 390/768/1024/1280/1440 px ; chat :
+  statut « Aucun conseiller connecté : votre message est enregistré pour l'équipe », thème d'aide fonctionnel (aucune
+  conversation créée par le contrôle) ; configurateur : pastilles et fermetures distinctes ; robots, sitemap 200,
+  www 301 (GET), pages privées noindex, préproduction 401.
+- Captures avant/après (1440 et 390 px, pages complètes) : mêmes dimensions sauf Accessoires (HelioSlide ALU ajouté),
+  Pergolas et Screens (+24 px : avis « caractéristiques en cours de confirmation » de HelioLux et HelioRoof).
+- Non vérifié : envoi d'un message de chat en production (fait en développement et en recette) ; assistant LLM réel
+  (aucun fournisseur configuré) ; catalogues SELT (aucun reçu).
+
 # Carrousel de l'accueil et légendes des photos fournisseur — 2026-10-27
 
 - Code `02d4cce` (CI verte, push et PR) : unitaires 280/280, intégration 101/101, tsc et eslint sans erreur.
