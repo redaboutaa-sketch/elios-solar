@@ -2,8 +2,9 @@
 
 ## Lancement (2026-10-26)
 
-- **Production heliostores.com publique, sur devis** (2026-10-26) : pile `heliostores-prod`, image applicative
-  **`8434cfb`** (2026-10-31 : noms HELIO, logo, chat, configurateur, préparation SELT — section ci-dessous ; auparavant `02d4cce`, 2026-10-27 : carrousel de l'accueil en visualisations générées, WebP/AVIF, cadrage par écran, légende
+- **Production heliostores.com publique** : pile `heliostores-prod`, image applicative **`8a0465b`** (2026-11-02 :
+  dix retours client, catalogue de prix 09.2026 importé et prix affichés pour 7 produits — sections ci-dessous ;
+  sauvegarde `db_/media_20261102_102908` avant déploiement ; auparavant `8434cfb`, 2026-10-31 : noms HELIO, logo, chat, configurateur, préparation SELT — section ci-dessous ; auparavant `02d4cce`, 2026-10-27 : carrousel de l'accueil en visualisations générées, WebP/AVIF, cadrage par écran, légende
   « Visualisation » ; mention « visuel du fabricant, non contractuel » retirée des légendes des photos fournisseur —
   runbook § 6 ter ; auparavant `1f311ba`, mission SEO/GEO — `docs/seo/changes-and-validation.md`), compose et script de déploiement `5e1df9c`
   (relais sans interruption, `TZ=Europe/Paris`).

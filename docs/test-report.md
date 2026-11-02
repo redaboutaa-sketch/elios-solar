@@ -283,3 +283,18 @@ externes :
   `db_20261026_132425.dump` réussie.
 - Nettoyage : demandes `HGSLP3` et `WXEV95`, leurs 2 visuels et leurs 4 notifications supprimés (trace `AuditLog`) ;
   les 7 consentements anonymes sont conservés (site public : origine non distinguable).
+
+
+## 2026-11-02 — dix retours client et catalogue de prix 09.2026 (production `8a0465b`)
+
+- Typage ✅, lint 0 erreur ; unitaires 318/318 ; intégration 116/116 (dont circuit catalogue → vente → publication →
+  devis figé, import répété sans doublon, modification administrateur conservée, aucune donnée privée publique).
+- Recette navigateur complète (base de développement avec les vraies grilles publiées) : 98 réussis, 0 échec, 5
+  ignorés par conception ; CI verte sur `8a0465b` (vérification + recette Docker sur base neuve, sans grille).
+- Défaut trouvé par la CI et corrigé : refuser les cookies ramenait le configurateur à l'étape 1 (reproduit 5/5,
+  corrigé 5/5 desktop et mobile, test de non-régression).
+- Copie isolée de la production (réseau interne, supprimée) puis production : migration, synchronisation (14
+  familles, 3 moustiquaires ouvertes, 0 au second passage), import (1 282 lignes, 16 grilles catalogue, 8 grilles de
+  vente publiées, 3 préparées), contrôle moteur ↔ fichier : 1 233 cellules, 0 anomalie ; second import : rien de créé.
+- Déploiement : 47 requêtes sondées pendant la bascule, toutes en 200 ; 28 pages publiques sans référence fournisseur ;
+  langues en 404 (non activées) ; préproduction 401.
