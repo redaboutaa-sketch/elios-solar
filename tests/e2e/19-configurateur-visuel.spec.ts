@@ -19,7 +19,7 @@ test("HelioMax : teintes, fermetures par côté, dimensions et restauration du p
   await goStep(page, "pose");
   await page.getByRole("radio", { name: "Autoportante" }).check();
   const swatches = page.getByTestId("finish-swatches");
-  const anthracite = swatches.getByRole("radio", { name: /Gris anthracite · RAL 7016/ });
+  const anthracite = swatches.getByRole("radio", { name: /Gris anthracite · RAL 7016 · mat/ });
   await anthracite.check();
   await expect(anthracite).toBeChecked();
   await expect(page.getByTestId("finish-selected")).toHaveText(/Gris anthracite · RAL 7016/);

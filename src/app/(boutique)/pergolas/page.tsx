@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import { SystemCollection } from "@/components/catalog/system-collection";
 import { listSystemFamilies } from "@/server/catalog/systems";
 import { DEFAULT_OG_IMAGE, OG_BASE } from "@/server/seo/og";
+import { getT } from "@/i18n/server";
 
-const DESCRIPTION = "Pergolas à lames orientables HelioSky et HelioMax, pergola à toiture en toile HelioLux : autoportantes ou adossées, sur mesure ou en tailles définies, sur devis.";
-export const metadata: Metadata = { title: "Pergolas bioclimatiques et pergolas à toiture en toile", description: DESCRIPTION, alternates: { canonical: "/pergolas" }, openGraph: { ...OG_BASE, title: "Pergolas bioclimatiques et pergolas à toiture en toile", description: DESCRIPTION, url: "/pergolas", images: [DEFAULT_OG_IMAGE] } };
+export async function generateMetadata(): Promise<Metadata> {
+  const { title, description } = (await getT("catalog")).meta.PERGOLAS;
+  return { title, description, alternates: { canonical: "/pergolas" }, openGraph: { ...OG_BASE, title, description, url: "/pergolas", images: [DEFAULT_OG_IMAGE] } };
+}
 
 export default async function CollectionPage() {
   return <SystemCollection category="PERGOLAS" items={await listSystemFamilies("PERGOLAS")} />;

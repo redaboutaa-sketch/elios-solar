@@ -28,7 +28,7 @@ test("HelioMax : règles de cotes, options, fermeture souhaitée, 3D, projet enr
   // 2. pose et teinte
   await page.getByTestId("step-next").click();
   await page.getByRole("radio", { name: "Autoportante" }).check();
-  await page.getByTestId("finish-swatches").getByRole("radio", { name: /RAL 7016\b/ }).check();
+  await page.getByTestId("finish-swatches").getByRole("radio", { name: /RAL 7016 · mat/ }).check();
 
   // 3. équipements : éclairage (cumul non documenté), capteurs à confirmer, fermeture vitrée souhaitée
   await page.getByTestId("step-next").click();

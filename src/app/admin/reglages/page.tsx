@@ -5,6 +5,7 @@ import { missingSettings } from "@/server/admin/launch";
 import { Notice } from "@/components/ui/alert";
 import { Flash, PageTitle, Section } from "@/components/admin/ui";
 import { updateSettingsAction } from "@/server/actions/admin/settings";
+import { SEASONAL_THEMES, activeSeasonalTheme } from "@/domain/seasonal";
 
 export const metadata: Metadata = { title: "Réglages" };
 
@@ -16,6 +17,12 @@ function Field({ name, label, value, type = "text", hint, missing }: { name: str
       {hint && <p id={`${name}-hint`} className="mt-1 text-xs text-stone-700">{hint}</p>}
     </div>
   );
+}
+
+/** Date locale du serveur (AAAA-MM-JJ) : les bornes sont enregistrées à minuit et 23:59 heure du serveur. */
+function localDate(d: Date | null | undefined): string {
+  if (!d) return "";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export default async function SettingsPage(props: PageProps<"/admin/reglages">) {
@@ -78,6 +85,15 @@ export default async function SettingsPage(props: PageProps<"/admin/reglages">) 
               <p id="chatOfflineMessage-hint" className="mt-1 text-xs text-stone-700">Affiché quand aucun conseiller n'est connecté depuis 5 minutes (vide = texte par défaut).</p>
             </div>
           </div>
+        </Section>
+        <Section title="Habillage saisonnier">
+          <p className="mb-3 text-sm text-stone-700">Décor léger (bande sous l'en-tête et guirlande au-dessus du pied de page), sans animation lourde ni fenêtre, qui ne recouvre aucun contenu. Il ne s'affiche que pendant la période indiquée ; hors période, il est inactif.</p>
+          <div className="grid gap-4 md:grid-cols-3">
+            <label className="block text-sm"><span className="label">Thème</span><select name="seasonalTheme" className="input" defaultValue={s?.seasonalTheme ?? ""}><option value="">Aucun (désactivé)</option>{Object.entries(SEASONAL_THEMES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+            <Field name="seasonalStartsAt" label="Début (inclus)" type="date" value={localDate(s?.seasonalStartsAt)} />
+            <Field name="seasonalEndsAt" label="Fin (incluse)" type="date" value={localDate(s?.seasonalEndsAt)} />
+          </div>
+          <p className="mt-3 text-xs text-stone-700" data-testid="seasonal-status">État actuel : {activeSeasonalTheme(s) ? `actif (${SEASONAL_THEMES[activeSeasonalTheme(s)!]})` : "inactif"}.</p>
         </Section>
         <button className="btn-primary" type="submit">Enregistrer les réglages</button>
       </form>

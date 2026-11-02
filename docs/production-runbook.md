@@ -78,6 +78,21 @@ Règles : statut des familles jamais réécrit ; textes commerciaux modifiés da
 historisé (`nameHistory`) ; un texte de média retouché dans l'administration est conservé (signalé). Aucune donnée
 tarifaire touchée. Le cache du site se renouvelle en 10 s.
 
+Exception explicite (2026-11-01) : `--apply --open-study-requests` passe en « sur devis » les seules familles en
+brouillon en base que le code définit en demande d'étude (QUOTE_ONLY + `studyOnly` : MoskiUp, MoskiSlide, MoskiFix) ;
+tout autre statut choisi dans l'administration est conservé (AuditLog `family.status` par famille). Retour arrière :
+repasser la famille en brouillon dans l'administration.
+
+## 2 quater. Langues (aperçus de traduction)
+
+Variables du fichier d'environnement (lues à l'exécution, sans reconstruction) : `SITE_LOCALES` (langues servies,
+défaut `fr`) et `SITE_LOCALES_PUBLISHED` (langues relues et validées, défaut `fr`). Production : non renseignées →
+français seul, `/es`, `/nl`, `/de`, `/en` en 404. Préproduction / recette : `SITE_LOCALES=fr,es,nl,de,en` → aperçus
+noindex (en-tête et balise), hors sitemap et hreflang, bandeau « traduction en préparation ». Publier une langue
+(l'ajouter à `SITE_LOCALES_PUBLISHED`) suppose : relecture native, traductions des contenus du catalogue et des
+documents juridiques validées, canoniques par langue sur chaque page, décisions du marché (`src/i18n/markets.ts`) —
+voir `docs/client-feedback-followup.md` § 1.
+
 ## 3. Première mise en place de la production
 
 1. Sauvegarde de la préproduction (source des données de catalogue) :

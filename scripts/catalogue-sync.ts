@@ -6,6 +6,12 @@
  *
  *   node_modules/.bin/tsx scripts/catalogue-sync.ts            # aperçu des différences (champ par champ)
  *   node_modules/.bin/tsx scripts/catalogue-sync.ts --apply    # applique (idempotent, trace AuditLog)
+ *   … --apply --open-study-requests                            # en plus : brouillons devenus « demande d'étude » dans
+ *                                                                 le code (statut QUOTE_ONLY + studyOnly) → sur devis
+ *
+ * `--open-study-requests` (retour client du 2026-11-01, moustiquaires manquantes) ne change QUE les familles en
+ * brouillon (DRAFT) en base que le code définit en demande d'étude sur devis ; tout autre statut choisi en
+ * administration est conservé. Trace AuditLog par famille.
  */
 import "dotenv/config";
 
@@ -30,8 +36,17 @@ async function main() {
     if (diff.length) changes[f.slug] = diff;
   }
   for (const [slug, d] of Object.entries(changes)) console.log(`~ ${slug} : ${d.join(", ")}`);
+  const study = HELIOSTORES_FAMILIES.filter((f) => f.status === "QUOTE_ONLY" && f.rules.studyOnly && (rows.get(f.slug) as { status?: string } | undefined)?.status === "DRAFT").map((f) => f.slug);
+  if (study.length) console.log(`statut : ${study.join(", ")} — brouillon en base, demande d'étude dans le code${process.argv.includes("--open-study-requests") ? " → sur devis" : " (--open-study-requests pour ouvrir)"}`);
   if (!apply) { console.log(`Aperçu : ${Object.keys(changes).length} famille(s) à synchroniser sur ${HELIOSTORES_FAMILIES.length}`); await prisma.$disconnect(); return; }
   const r = await seedHeliostores(prisma);
+  if (process.argv.includes("--open-study-requests")) {
+    for (const slug of study) {
+      await prisma.productFamily.update({ where: { slug }, data: { status: "QUOTE_ONLY" } });
+      await prisma.auditLog.create({ data: { action: "family.status", entity: "ProductFamily", entityId: slug, before: { status: "DRAFT" } as never, after: { status: "QUOTE_ONLY", reason: "demande d'étude (retour client du 2026-11-01)" } as never } });
+    }
+    if (study.length) console.log(`Statut : ${study.length} demande(s) d'étude ouverte(s) sur devis`);
+  }
   await prisma.auditLog.create({ data: { action: "catalogue.sync", entity: "ProductFamily", entityId: "heliostores", after: { families: Object.keys(changes), specs: r.specs } as never } });
   console.log(`Appliqué : ${Object.keys(changes).length} famille(s) synchronisée(s), ${r.specs} caractéristique(s) semée(s)`);
   await prisma.$disconnect();

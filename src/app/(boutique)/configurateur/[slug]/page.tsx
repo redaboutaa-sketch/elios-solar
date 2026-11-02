@@ -14,6 +14,8 @@ import type { SystemInput } from "@/domain/system";
 import { RetiredProduct } from "@/components/catalog/retired-product";
 import { getRetiredFamily } from "@/server/catalog/systems";
 import { configuratorHref } from "@/domain/categories";
+import { getT } from "@/i18n/server";
+import { fmt } from "@/i18n/format";
 
 const SYSTEM_KINDS = new Set(["pergola_system", "screen_system", "awning_system", "roof_blind_system", "insect_screen_system"]);
 
@@ -27,8 +29,9 @@ export async function generateMetadata(props: PageProps<"/configurateur/[slug]">
   const { slug } = await props.params;
   const s = await systemFamily(slug);
   if (!s) return {};
+  const t = (await getT("configurator")).page;
   // outil interactif (paramètres d'URL, brouillons) : exploré mais non indexé ; la fiche produit est la page de référence
-  return { title: `Configurer ${s.family.name}`, description: `Configurez ${s.family.name} à vos cotes : dimensions, pose, teinte et équipements, avec visualisation indicative, puis demandez votre devis.`, alternates: { canonical: `/configurateur/${slug}` }, robots: { index: false, follow: true } };
+  return { title: fmt(t.metaTitle, { name: s.family.name }), description: fmt(t.metaDescription, { name: s.family.name }), alternates: { canonical: `/configurateur/${slug}` }, robots: { index: false, follow: true } };
 }
 
 export default async function SystemConfiguratorPage(props: PageProps<"/configurateur/[slug]">) {
@@ -43,6 +46,8 @@ export default async function SystemConfiguratorPage(props: PageProps<"/configur
   }
   const { catalog, family } = s;
   const cat = categoryByKey(family.category)!;
+  const t = (await getT("configurator")).page;
+  const catLabel = (await getT("layout")).categories[cat.key] ?? cat.label;
   const media = await publishedMediaFor(family.slug);
   const hero = media.find((m) => m.role === "hero") ?? media[0];
   let initial: Partial<SystemInput> | undefined;
@@ -66,16 +71,16 @@ export default async function SystemConfiguratorPage(props: PageProps<"/configur
   const nav = {
     productHref: productHref(cat.key, family.slug),
     familyHref: cat.href,
-    familyLabel: cat.label,
+    familyLabel: catLabel,
     siblings: catalog.families.filter((f) => f.category === family.category && f.slug !== family.slug && !f.legacy && (f.status === "published" || f.status === "quote_only") && f.systemRules).map((f) => ({ slug: f.slug, name: f.name, href: configuratorHref(f.slug) })),
   };
   // eslint-disable-next-line @next/next/no-img-element -- média de la médiathèque
-  const art = hero ? <img src={hero.path} alt={hero.alt} className="aspect-[4/3] w-full bg-white object-contain" /> : <div className="grid aspect-[4/3] place-items-center text-sm text-stone-700">Visuel à venir</div>;
+  const art = hero ? <img src={hero.path} alt={hero.alt} className="aspect-[4/3] w-full bg-white object-contain" /> : <div className="grid aspect-[4/3] place-items-center text-sm text-stone-700">{t.noVisual}</div>;
   return (
     <div className="container-x py-8">
-      <Breadcrumbs items={[{ href: cat.href, label: cat.label }, { href: productHref(cat.key, family.slug), label: family.name }, { label: "Configurer" }]} />
-      <h1 className="mt-3 font-display text-2xl font-semibold sm:mt-4 sm:text-display">Configurer {family.name}</h1>
-      <p className="mt-2 hidden max-w-3xl text-stone-700 text-pretty sm:block">Suivez les étapes : la visualisation de votre projet évolue avec vos choix. Le prix s'affiche lorsque vos dimensions figurent dans la grille tarifaire publiée ; sinon, et pour les options, la pose et la livraison, un conseiller établit votre devis.</p>
+      <Breadcrumbs items={[{ href: cat.href, label: catLabel }, { href: productHref(cat.key, family.slug), label: family.name }, { label: t.breadcrumb }]} />
+      <h1 className="mt-3 font-display text-2xl font-semibold sm:mt-4 sm:text-display">{fmt(t.title, { name: family.name })}</h1>
+      <p className="mt-2 hidden max-w-3xl text-stone-700 text-pretty sm:block">{t.intro}</p>
       <div className="mt-6"><SystemConfigurator catalog={catalog} familySlug={family.slug} art={art} initial={initial} existing={existing} cartLineId={cartLineId} nav={nav} /></div>
     </div>
   );

@@ -7,7 +7,9 @@
  * dans le carrousel, indicateur de la vue active, fondu court (supprimé avec la réduction des animations).
  */
 import { useEffect, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
-import Link from "next/link";
+import Link from "@/i18n/link";
+import { useT } from "@/i18n/client";
+import { fmt } from "@/i18n/format";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { mediaSrcSet, smallPathOf } from "@/components/ui/media-image";
 
@@ -34,6 +36,7 @@ function HeroImage({ media: m, priority, onLoad }: { media: HeroSlide["media"]; 
 }
 
 export function HeroSlider({ slides, children }: { slides: HeroSlide[]; children: ReactNode }) {
+  const t = useT("home").hero;
   const [i, setI] = useState(0);
   const [seen, setSeen] = useState<Set<number>>(() => new Set([0]));
   // vue suivante préchargée quand l'image active est affichée et que le navigateur est inactif
@@ -50,9 +53,9 @@ export function HeroSlider({ slides, children }: { slides: HeroSlide[]; children
   const onKey = (e: KeyboardEvent) => { if (e.key === "ArrowRight") { e.preventDefault(); go(i + 1); } else if (e.key === "ArrowLeft") { e.preventDefault(); go(i - 1); } };
   const cur = slides[i];
   return (
-    <section className="relative isolate h-[min(88svh,56rem)] min-h-[34rem] overflow-hidden bg-night text-white" aria-roledescription="carrousel" aria-label="Nos produits en situation" onKeyDown={onKey} data-testid="home-hero">
+    <section className="relative isolate h-[min(88svh,56rem)] min-h-[34rem] overflow-hidden bg-night text-white" aria-roledescription={t.roleCarousel} aria-label={t.carouselAria} onKeyDown={onKey} data-testid="home-hero">
       {slides.map((s, k) => (
-        <div key={s.id} className={`absolute inset-0 transition-opacity duration-700 motion-reduce:transition-none ${k === i ? "opacity-100" : "opacity-0"}`} aria-hidden={k !== i} role="group" aria-roledescription="vue" aria-label={`${k + 1} sur ${slides.length} : ${s.label}`}>
+        <div key={s.id} className={`absolute inset-0 transition-opacity duration-700 motion-reduce:transition-none ${k === i ? "opacity-100" : "opacity-0"}`} aria-hidden={k !== i} role="group" aria-roledescription={t.roleSlide} aria-label={fmt(t.slideAria, { n: k + 1, total: slides.length, label: s.label })}>
           {seen.has(k) && <HeroImage media={s.media} priority={k === 0 || k === i} onLoad={k === i ? () => preloadNext(k) : undefined} />}
         </div>
       ))}
@@ -67,13 +70,13 @@ export function HeroSlider({ slides, children }: { slides: HeroSlide[]; children
             {cur && <p className="text-xs text-sand-100/90"><Link href={cur.href} className="font-semibold text-white underline-offset-4 hover:underline">{cur.label}</Link> · {cur.nature}</p>}
             {slides.length > 1 && (
               <div className="flex items-center gap-3">
-                <ol className="flex items-center gap-2" aria-label="Choisir une vue">
+                <ol className="flex items-center gap-2" aria-label={t.chooseView}>
                   {slides.map((s, k) => (
-                    <li key={s.id}><button type="button" onClick={() => go(k)} aria-current={k === i ? "true" : undefined} aria-label={`Vue ${k + 1} : ${s.label}`} className="group grid h-8 w-10 place-items-center"><span className={`block h-0.5 w-full transition-colors ${k === i ? "bg-white" : "bg-white/40 group-hover:bg-white/70"}`} /></button></li>
+                    <li key={s.id}><button type="button" onClick={() => go(k)} aria-current={k === i ? "true" : undefined} aria-label={fmt(t.viewAria, { n: k + 1, label: s.label })} className="group grid h-8 w-10 place-items-center"><span className={`block h-0.5 w-full transition-colors ${k === i ? "bg-white" : "bg-white/40 group-hover:bg-white/70"}`} /></button></li>
                   ))}
                 </ol>
-                <button type="button" onClick={() => go(i - 1)} aria-label="Vue précédente" className="grid size-10 place-items-center border border-white/40 hover:bg-white/10"><ChevronLeft className="size-5" aria-hidden="true" /></button>
-                <button type="button" onClick={() => go(i + 1)} aria-label="Vue suivante" className="grid size-10 place-items-center border border-white/40 hover:bg-white/10"><ChevronRight className="size-5" aria-hidden="true" /></button>
+                <button type="button" onClick={() => go(i - 1)} aria-label={t.prev} className="grid size-10 place-items-center border border-white/40 hover:bg-white/10"><ChevronLeft className="size-5" aria-hidden="true" /></button>
+                <button type="button" onClick={() => go(i + 1)} aria-label={t.next} className="grid size-10 place-items-center border border-white/40 hover:bg-white/10"><ChevronRight className="size-5" aria-hidden="true" /></button>
               </div>
             )}
           </div>

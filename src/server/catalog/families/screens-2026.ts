@@ -8,7 +8,7 @@
 import type { SourceRef } from "@/domain/system";
 import type { HelioFamily } from "../heliostores-data";
 import { src } from "./shared";
-import { SELT_FINISHES } from "./palette";
+import { SELT_FINISHES, VZIIIP_STANDARD } from "./palette";
 
 export const ROOF_SOURCES = {
   page: src("aluprof-veranda", "Page fabricant « Veranda »", "https://aluprof.com/en/product/veranda"),
@@ -47,12 +47,17 @@ const helioroof: HelioFamily = {
       { code: "ceiling", label: "Sous la toiture (suspendu)", status: "to_confirm", sources: [at(S.page, "Ceiling installation"), at(S.supp, "p. 220 — sur demande expresse du client")], note: "pose suspendue sur demande, étudiée au devis" },
       { code: "facade", label: "Verticale", status: "established", sources: [at(S.page, "Vertical installation"), at(S.dte, "p. 7")] },
     ],
-    finishes: SELT_FINISHES([at(S.page, "palette de 33 teintes")]),
+    // transcodification du 2026-10-31 : HelioRoof = VERANDA V ZiiiP ; 5 teintes standard (Supplément SCREENS p. 230),
+    // les autres teintes de la palette sont des options avec supplément (page VERANDA V ZiiiP « * Option avec supplément »)
+    finishes: SELT_FINISHES([at(S.page, "palette des éléments laqués"), at(S.supp, "p. 230 — couleur du cadre")]).map((f) => (VZIIIP_STANDARD.has(f.label) ? { ...f, tier: "standard" as const } : { ...f, tier: "special" as const, status: "to_confirm" as const, note: "teinte avec supplément : disponibilité et conditions confirmées au devis" })),
+    palette: { edition: "nuancier du fabricant, supplément technique Screens (état 2026.08.03)", component: "structure et coffre", sources: [at(S.supp, "p. 230")], note: "teintes standard et teintes avec supplément d'après le système correspondant, en cours de confirmation" },
     customFinish: { code: "RAL_CUSTOM", label: "Autre teinte RAL (option)", status: "to_confirm", sources: [at(S.page, "toute teinte RAL en option"), at(S.supp, "p. 220")], note: "teinte hors palette : conditions et délai confirmés au devis" },
     fabrics: [
-      { code: "soltis_92", label: "Soltis 92 (laisse passer la lumière)", status: "established", swatch: "#b5b0a3", sources: [at(S.page, "onglet Tissus — Soltis 92")] },
-      { code: "acrylic", label: "Toile acrylique (environ 70 coloris)", status: "established", swatch: "#c9bfa9", sources: [at(S.page, "onglet Tissus — acryliques")] },
-      { code: "waterproof", label: "Toile imperméable (10 coloris)", status: "established", swatch: "#7f8180", sources: [at(S.page, "onglet Tissus — Waterproof")] },
+      { code: "soltis_92", label: "Soltis 92 (laisse passer la lumière)", status: "to_confirm", note: "disponibilité sur ce modèle confirmée au devis (caractéristiques en cours de confirmation)", swatch: "#b5b0a3", sources: [at(S.page, "onglet Tissus — Soltis 92")] },
+      { code: "acrylic", label: "Toile acrylique (environ 70 coloris)", status: "to_confirm", note: "disponibilité sur ce modèle confirmée au devis (caractéristiques en cours de confirmation)", swatch: "#c9bfa9", sources: [at(S.page, "onglet Tissus — acryliques")] },
+      { code: "waterproof", label: "Toile imperméable (10 coloris)", status: "to_confirm", note: "disponibilité sur ce modèle confirmée au devis (caractéristiques en cours de confirmation)", swatch: "#7f8180", sources: [at(S.page, "onglet Tissus — Waterproof")] },
+      { code: "serge_1", label: "Toile screen Serge 1 %", status: "to_confirm", swatch: "#8a8c8b", sources: [at(S.supp, "p. 230 — VERANDA V ZiiiP")], note: "toile en cours de confirmation pour ce modèle" },
+      { code: "serge_600", label: "Toile screen Serge 600", status: "to_confirm", swatch: "#6f716f", sources: [at(S.supp, "p. 230 — VERANDA V ZiiiP")], note: "toile en cours de confirmation pour ce modèle" },
     ],
     controls: [{ code: "electric", label: "Motorisation électrique (un moteur)", kind: "electric", status: "to_confirm", sources: [at(S.dte, "p. 7 — moteur 40 Nm"), at(S.supp, "p. 220 — commandé exclusivement par électricité")], note: "modèle de moteur établi au devis" }],
     included: [

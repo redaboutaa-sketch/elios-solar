@@ -213,3 +213,13 @@ body:has(nav[aria-label="Navigation mobile"]) [data-chat-launcher] { display: no
 .site-sidebar { width: 15rem; border-right: 1px solid var(--color-sand-200); background: var(--color-sand-50); }
 .site-sidebar[data-collapsed] { width: 3.5rem; }
 @media (min-width: 1024px) { .site-frame .container-x { max-width: min(80rem, 100%); } }
+
+/* Habillage saisonnier (désactivé par défaut, réglages → Habillage saisonnier) : décor seulement, jamais interactif. */
+.seasonal-accent { height: 3px; pointer-events: none; background: repeating-linear-gradient(90deg, #c2410c 0 18px, #1f1a24 18px 30px); }
+.seasonal-garland { display: flex; justify-content: space-around; align-items: flex-end; height: 28px; padding: 0 1rem; overflow: hidden; pointer-events: none; }
+.seasonal-garland-item { display: inline-flex; transform-origin: top center; animation: seasonal-sway 3.2s ease-in-out infinite alternate; }
+@keyframes seasonal-sway { from { rotate: -4deg; } to { rotate: 4deg; } }
+@media (prefers-reduced-motion: reduce) { .seasonal-garland-item { animation: none; } }
+
+/* Bandeau sombre : contour de focus clair et contrasté (logo, sélecteur de langue, boutons). */
+.site-header .header-bar :focus-visible { outline: 2px solid var(--color-sage-300); outline-offset: 3px; }

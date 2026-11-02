@@ -6,7 +6,7 @@
 const RAL_CLASSIC_FR: Readonly<Record<string, string>> = {
   "1013": "Blanc perlé", "1015": "Ivoire clair",
   "7001": "Gris argent", "7012": "Gris basalte", "7015": "Gris ardoise", "7016": "Gris anthracite", "7021": "Gris noir", "7022": "Gris terre d'ombre",
-  "7024": "Gris graphite", "7035": "Gris clair", "7037": "Gris poussière", "7039": "Gris quartz", "7043": "Gris signalisation B",
+  "7024": "Gris graphite", "7035": "Gris clair", "7037": "Gris poussière", "7038": "Gris agate", "7039": "Gris quartz", "7043": "Gris signalisation B", "7048": "Gris souris nacré",
   "8003": "Brun argile", "8014": "Brun sépia", "8016": "Brun acajou",
   "9001": "Blanc crème", "9005": "Noir foncé", "9006": "Aluminium blanc", "9007": "Aluminium gris", "9010": "Blanc pur", "9016": "Blanc signalisation",
 };

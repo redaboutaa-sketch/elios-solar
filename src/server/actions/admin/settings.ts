@@ -4,7 +4,8 @@ import { assertRole } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/server/audit";
 import { invalidateCatalogCache } from "@/server/catalog/load";
-import { actorOf, back, fields, firstError, zBool, zOpt, zReq, zText } from "@/server/admin/form";
+import { actorOf, back, fields, firstError, zBool, zOpt, zOptDate, zOptDateEnd, zReq, zText } from "@/server/admin/form";
+import { isSeasonalTheme } from "@/domain/seasonal";
 
 const PATH = "/admin/reglages";
 const schema = z.object({
@@ -31,6 +32,9 @@ const schema = z.object({
   analyticsScriptUrl: zOpt(500).refine((v) => v === null || /^https:\/\/[^\s"'<>]+$/.test(v), "URL https:// attendue"),
   chatEnabled: zBool,
   chatOfflineMessage: zText(500),
+  seasonalTheme: zText(40).refine((v) => v === "" || isSeasonalTheme(v), "Thème saisonnier inconnu"),
+  seasonalStartsAt: zOptDate,
+  seasonalEndsAt: zOptDateEnd,
 });
 
 export async function updateSettingsAction(formData: FormData) {
@@ -38,6 +42,8 @@ export async function updateSettingsAction(formData: FormData) {
   const parsed = schema.safeParse(fields(formData));
   if (!parsed.success) back(PATH, firstError(parsed.error), "err");
   const { taxRate, ...rest } = parsed.data;
+  if (rest.seasonalTheme && (!rest.seasonalStartsAt || !rest.seasonalEndsAt)) back(PATH, "Habillage saisonnier : indiquez une date de début et une date de fin.", "err");
+  if (rest.seasonalStartsAt && rest.seasonalEndsAt && rest.seasonalStartsAt > rest.seasonalEndsAt) back(PATH, "Habillage saisonnier : la date de fin précède la date de début.", "err");
   if (rest.analyticsEnabled && !rest.analyticsScriptUrl) back(PATH, "Indiquez l'URL du script de mesure d'audience pour l'activer.", "err");
   const data = { ...rest, defaultTaxRateBps: taxRate };
   const before = await prisma.siteSettings.findUnique({ where: { id: 1 } });

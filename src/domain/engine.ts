@@ -723,7 +723,7 @@ function evaluateSystem(catalog: CatalogSnapshot, input: SystemInput): Evaluatio
     const net = systemPrice.amountMinor;
     const taxRateBps = systemPrice.vatRateBps ?? catalog.taxRateBps;
     const gross = systemPrice.taxBasis === "TTC" ? net : net + applyBps(net, taxRateBps);
-    const dims = [fmtM(input.widthMm), input.depthMm != null && rules.dims.depth ? fmtM(input.depthMm) : input.heightMm != null && rules.dims.height ? fmtM(input.heightMm) : null].filter(Boolean).join(" × ");
+    const dims = [fmtM(input.widthMm), input.depthMm != null && rules.dims.depth ? fmtM(input.depthMm) : null].filter(Boolean).join(" × ") + (input.heightMm != null && rules.dims.height ? `, ${rules.dims.height.label.toLowerCase()} ${fmtM(input.heightMm)}` : "");
     b.line({ kind: "base", code: `base:${family.slug}:grid:v${systemPrice.listVersion}`, label: `${family.name} — ${dims}, pose ${MOUNTING_FR[input.mounting]}`, qty: 1, unitGrossCents: gross, taxRateBps, dataStatus: family.dataStatus });
   }
   const issues = orderable ? b.issues.filter((i) => i.code !== "system_quote_only") : b.issues;
@@ -738,6 +738,7 @@ function evaluateSystem(catalog: CatalogSnapshot, input: SystemInput): Evaluatio
     recap: ev.recap,
     systemPrice,
     pricedSizes: lookup && !lookup.ok && lookup.reason === "out_of_grid" ? pricedSizes(family.systemPrices, rules, input) : null,
+    priceStatus: rules.studyOnly ? "custom" : lookup ? (lookup.ok ? "priced" : lookup.reason) : blocked ? "blocked" : "custom",
     onlineOrder: { ok: orderable, reasons },
   };
 }

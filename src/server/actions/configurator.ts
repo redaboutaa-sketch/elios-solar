@@ -12,6 +12,7 @@ import { rateLimit } from "@/server/rate-limit";
 import { ensureCatalogSnapshot } from "@/server/catalog/public-snapshot";
 import { mailDeliveryReal } from "@/server/mail/transport";
 import { getSiteSettings } from "@/server/catalog/queries";
+import { getT } from "@/i18n/server";
 
 export type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string; issues?: EvaluationResult["issues"] };
 
@@ -65,14 +66,18 @@ export async function addToCartAndGo(raw: unknown, configurationId: string | nul
 }
 
 export async function requestQuoteAction(raw: unknown, form: unknown, kind: "configuration" | "custom" | "accessory" | "general" | "system", configurationId: string | null, visual: unknown = null, attribution: unknown = null): Promise<ActionResult<{ id: string; number: string; visual: "SCENE_3D" | "PLAN_2D" | "NONE"; mailed: boolean; contact: { email: string | null } }>> {
+  const t = (await getT("forms")).quoteErrors;
   const f = quoteFormSchema.safeParse(form);
-  if (!f.success) return { ok: false, error: f.error.issues[0]?.message ?? "Formulaire incomplet." };
-  if (!(await rateLimit("quote", 10, 600))) return { ok: false, error: "Trop de demandes, réessayez plus tard." };
+  if (!f.success) {
+    const issue = f.error.issues[0];
+    return { ok: false, error: issue?.path[0] === "consent" ? t.consent : issue?.message ?? t.incomplete };
+  }
+  if (!(await rateLimit("quote", 10, 600))) return { ok: false, error: t.rateLimited };
   let input: ConfigurationInput | null = null;
   let result: EvaluationResult | null = null;
   if (raw) {
     const parsed = configurationInputSchema.safeParse(raw);
-    if (!parsed.success) return { ok: false, error: "Configuration invalide." };
+    if (!parsed.success) return { ok: false, error: t.invalidConfiguration };
     input = parsed.data as ConfigurationInput;
     result = await evaluateInput(input);
   }

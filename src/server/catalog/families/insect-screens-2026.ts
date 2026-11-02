@@ -4,8 +4,8 @@
  * Aucune source ne relie un nom Moski* à un code fabricant : la correspondance proposée (systèmes ALUPROF MPH HARMONY,
  * MPH DUAL, MZN, MRP, MRS) repose sur le principe d'ouverture documenté et l'unicité du système dans la gamme — confiance
  * moyenne, À CONFIRMER PAR LE CLIENT (private/heliostores/research/moustiquaires.md). Les caractéristiques ne sont jamais
- * déduites du nom commercial. Les modèles sans dimensions maximales documentées restent en brouillon (pas de configurateur,
- * pas de limite inventée) ; les autres sont sur devis. ALUPROF fournit un système à des fabricants : le contenu du kit
+ * déduites du nom commercial. Les cinq modèles sont présentés en demande d'étude sur devis (cotes transmises comme souhait,
+ * aucune limite inventée, aucune photo du système candidat). ALUPROF fournit un système à des fabricants : le contenu du kit
  * livré au client final n'est documenté pour aucun modèle.
  */
 import type { SourceRef } from "@/domain/system";
@@ -27,7 +27,7 @@ const S = INSECT_SOURCES;
 const at = (s: SourceRef, loc: string): SourceRef => ({ ...s, loc });
 
 /** Teintes de profilés publiées pour les plissés (codes du fabricant) ; aperçus indicatifs. */
-const PROFILE_COLOURS: Array<[string, string, string]> = [["01", "Argent", "#b9bcbd"], ["02", "Blanc", "#f2f2ee"], ["08", "Brun foncé", "#3f2c22"], ["09", "Brun", "#6a4a35"], ["15", "Blanc cassé", "#ebe6d8"], ["20", "Noir", "#151515"], ["23", "Gris anthracite", "#3a3e41"]];
+const PROFILE_COLOURS: Array<[string, string, string]> = [["00", "Non peint", "#c9cbcc"], ["01", "Argent", "#b9bcbd"], ["02", "Blanc", "#f2f2ee"], ["08", "Brun foncé", "#3f2c22"], ["09", "Brun", "#6a4a35"], ["15", "Blanc cassé", "#ebe6d8"], ["20", "Noir", "#151515"], ["23", "Gris anthracite", "#3a3e41"]];
 const profileFinishes = (sources: SourceRef[], status: "established" | "to_confirm" = "established") => PROFILE_COLOURS.map(([c, label, swatch]) => ({ code: `P${c}`, label: `${label} (teinte ${c})`, status, swatch, sources }));
 const STUDY_ONLY = "la correspondance de ce modèle avec le système du fabricant est en cours de confirmation ; dimensions, poses et teintes sont précisées à l'étude.";
 const WOOD = (sources: SourceRef[]) => ({ code: "WOOD_DECOR", label: "Décor bois (option)", status: "to_confirm" as const, sources, note: "décors R26, R28, R30, R52 avec supplément : conditions au devis" });
@@ -126,33 +126,57 @@ const moskifold2: HelioFamily = {
   openQuestions: [CORRESPONDENCE("MPH DUAL"), { field: "Dimensions", question: "Hauteur maximale 2,7 m ou 3,2 m ; dimensions minimales ; largeur par vantail.", sources: ["aluprof-mph-dual", "brochure-moskitiery-pl p. 5"], blocks: "au-delà de 2,7 m (devis)" }, KIT],
 };
 
-/** Modèles en brouillon : dimensions maximales non documentées → aucun configurateur, aucune borne inventée. */
-function draft(slug: string, name: string, sortOrder: number, supplierRef: string, opening: NonNullable<HelioFamily["rules"]["insect"]>["opening"], short: string, description: string, sources: SourceRef[], system: string): HelioFamily {
+/**
+ * Demandes d'étude (retour client : moustiquaires manquantes, 2026-11-01) : MoskiUp, MoskiSlide, MoskiFix présentés
+ * sur devis comme MoskiFold, avec leurs seules caractéristiques de principe (type d'ouverture) ; aucune dimension, pose,
+ * teinte ni photo du système candidat n'est publiée tant que la correspondance et les dimensions ne sont pas confirmées.
+ * Aucun configurateur validé : les cotes sont transmises comme souhait (studyOnly).
+ */
+function studyRequest(slug: string, name: string, sortOrder: number, supplierRef: string, opening: NonNullable<HelioFamily["rules"]["insect"]>["opening"], short: string, description: string, sources: SourceRef[], system: string, mountings: Array<{ code: "reveal" | "frame" | "facade" | "niche"; label: string }>, faq: HelioFamily["faq"], seoTitle: string): HelioFamily {
   return {
-    slug, name, category: "MOUSTIQUAIRES", kind: "INSECT_SCREEN_SYSTEM", status: "DRAFT", sortOrder,
+    slug, name, category: "MOUSTIQUAIRES", kind: "INSECT_SCREEN_SYSTEM", status: "QUOTE_ONLY", sortOrder,
     brand: "Aluprof", manufacturer: "ALUPROF SA", supplierRef,
-    shortDescription: short, description, seoTitle: `Moustiquaire ${name}`, seoDescription: short,
+    shortDescription: short, description, seoTitle, seoDescription: `${short} Transmettez vos mesures pour une étude sur mesure et un devis.`,
     rules: {
       type: "insect_screen",
       insect: { opening, leaves: 1, sources },
       dims: {
-        width: { label: "Largeur", minMm: null, maxMm: 0, sources: sources.map((x) => ({ ...x, loc: "dimensions non documentées" })), note: "Dimensions non documentées : modèle en préparation." },
-        height: { label: "Hauteur", minMm: null, maxMm: 0, sources: sources.map((x) => ({ ...x, loc: "dimensions non documentées" })), note: "Dimensions non documentées : modèle en préparation." },
+        width: { label: "Largeur", minMm: null, maxMm: 0, sources: sources.map((x) => ({ ...x, loc: "dimensions non documentées" })), note: "Dimension souhaitée, étudiée au devis." },
+        height: { label: "Hauteur", minMm: null, maxMm: 0, sources: sources.map((x) => ({ ...x, loc: "dimensions non documentées" })), note: "Dimension souhaitée, étudiée au devis." },
       },
-      mountings: [{ code: "reveal", label: "À préciser", status: "to_confirm", sources }],
-      finishes: [{ code: "TO_CONFIRM", label: "Teinte à préciser", status: "to_confirm", sources }],
+      studyOnly: STUDY_ONLY,
+      mountings: mountings.map((m) => ({ code: m.code, label: m.label, status: "to_confirm" as const, sources, note: "type de pose confirmé à l'étude" })),
+      finishes: [{ code: "TO_CONFIRM", label: "Teinte précisée à l'étude", status: "to_confirm", swatch: "#b9bcbd", sources, note: "teintes de profilés confirmées au devis" }],
       included: [],
       options: [],
-      notices: ["Modèle en préparation : dimensions maximales non documentées par le fabricant. Demandez un devis avec vos mesures."],
+      notices: ["Dimensions minimales et maximales, poses et teintes non confirmées pour ce modèle : elles sont établies à l'étude de votre projet, à partir de vos mesures."],
     },
     specs: [{ key: "opening", label: "Ouverture", valueText: opening === "roller_vertical" ? "enroulable verticale" : opening === "sliding" ? "coulissante à cadre" : "cadre fixe", source: "MANUFACTURER_WEBSITE", sourceRef: sources.map((s) => s.label).join(" ; ") }],
-    faq: [],
-    openQuestions: [CORRESPONDENCE(system), { field: "Dimensions", question: "Dimensions minimales et maximales (non documentées) : bloquant pour un configurateur.", sources: [], blocks: "configurateur, publication" }, KIT],
+    faq,
+    openQuestions: [CORRESPONDENCE(system), { field: "Dimensions", question: "Dimensions minimales et maximales (non documentées) : bloquant pour un configurateur validé ; la page reste une demande d'étude.", sources: [], blocks: "configurateur validé, photos" }, { field: "Teintes et toiles", question: "Teintes de profilés et toiles proposées pour ce modèle.", sources: ["private/heliostores/research/moustiquaires.md"], blocks: "choix de teinte en ligne" }, KIT],
   };
 }
 
-const moskiup = draft("moskiup", "MoskiUp", 62, "MZN (correspondance proposée, à confirmer ; alternative MZH)", "roller_vertical", "Moustiquaire enroulable verticale pour fenêtres et portes, coffre compact.", "MoskiUp est une moustiquaire enroulable : la toile remonte dans un petit coffre en partie haute et se guide dans des coulisses latérales. Modèle en préparation.", [at(S.pageMzn, "description"), at(S.brochure, "p. 8")], "MZN (alternative : MZH)");
-const moskislide = draft("moskislide", "MoskiSlide", 63, "MRP (correspondance proposée, à confirmer ; alternative MZP)", "sliding", "Moustiquaire à cadres coulissants pour grandes baies, terrasses et vérandas.", "MoskiSlide est une moustiquaire à vantaux coulissants entre un rail haut et un rail bas, pour les grandes baies vitrées. Modèle en préparation.", [at(S.pageMrp, "description"), at(S.brochure, "p. 10")], "MRP (alternative : MZP)");
-const moskifix = draft("moskifix", "MoskiFix", 64, "MRS (correspondance proposée, à confirmer ; alternative MRSZ)", "fixed", "Moustiquaire à cadre fixe pour fenêtres, amovible par crochets.", "MoskiFix est une moustiquaire à cadre fixe, accrochée au dormant de la fenêtre et amovible. Modèle en préparation.", [at(S.pageMrs, "description"), at(S.brochure, "p. 12")], "MRS (alternative : MRSZ)");
+const moskiup = studyRequest("moskiup", "MoskiUp", 62, "MZN (correspondance proposée, à confirmer ; alternative MZH)", "roller_vertical",
+  "Moustiquaire enroulable verticale pour fenêtres et portes : présentation et demande d'étude sur mesure.",
+  "MoskiUp est une moustiquaire enroulable : la toile remonte dans un coffre en partie haute et se guide dans des coulisses latérales. Sa fiche technique est en cours de confirmation : les dimensions possibles, la pose et les teintes sont établies lors de l'étude de votre projet, à partir de vos mesures.",
+  [at(S.pageMzn, "description"), at(S.brochure, "p. 8")], "MZN (alternative : MZH)",
+  [{ code: "reveal", label: "Dans l'embrasure" }, { code: "frame", label: "En applique" }],
+  [{ q: "Pour quelles ouvertures ?", a: "Fenêtres et portes. La pose (dans l'embrasure ou en applique) et les dimensions réalisables sont confirmées à l'étude de votre projet." }],
+  "Moustiquaire enroulable MoskiUp pour fenêtre et porte");
+const moskislide = studyRequest("moskislide", "MoskiSlide", 63, "MRP (correspondance proposée, à confirmer ; alternative MZP)", "sliding",
+  "Moustiquaire à cadres coulissants pour grandes baies et portes de terrasse : présentation et demande d'étude sur mesure.",
+  "MoskiSlide est une moustiquaire à vantaux coulissants entre un rail haut et un rail bas, pensée pour les grandes baies vitrées et les portes de terrasse. Sa fiche technique est en cours de confirmation : les dimensions possibles, le nombre de vantaux, la pose et les teintes sont établis lors de l'étude de votre projet.",
+  [at(S.pageMrp, "description"), at(S.brochure, "p. 10")], "MRP (alternative : MZP)",
+  [{ code: "frame", label: "En applique (rails haut et bas)" }],
+  [{ q: "Pour quelles ouvertures ?", a: "Grandes baies vitrées et portes de terrasse. Les dimensions réalisables et le nombre de vantaux sont confirmés à l'étude de votre projet." }],
+  "Moustiquaire coulissante MoskiSlide pour baie vitrée");
+const moskifix = studyRequest("moskifix", "MoskiFix", 64, "MRS (correspondance proposée, à confirmer ; alternative MRSZ)", "fixed",
+  "Moustiquaire à cadre fixe pour fenêtres, amovible : présentation et demande d'étude sur mesure.",
+  "MoskiFix est une moustiquaire à cadre fixe qui se pose sur la fenêtre et se retire pour l'hiver ou l'entretien. Sa fiche technique est en cours de confirmation : les dimensions possibles, le mode de fixation et les teintes sont établis lors de l'étude de votre projet.",
+  [at(S.pageMrs, "description"), at(S.brochure, "p. 12")], "MRS (alternative : MRSZ)",
+  [{ code: "frame", label: "En applique sur le dormant" }],
+  [{ q: "Pour quelles ouvertures ?", a: "Fenêtres qui ne servent pas de passage. Le mode de fixation et les dimensions réalisables sont confirmés à l'étude de votre projet." }],
+  "Moustiquaire fixe MoskiFix pour fenêtre");
 
 export const INSECT_SCREENS_2026: HelioFamily[] = [moskifold, moskifold2, moskiup, moskislide, moskifix];

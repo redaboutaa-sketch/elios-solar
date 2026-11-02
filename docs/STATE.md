@@ -20,6 +20,16 @@
   SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
 
+## Itération du 2026-11-01 (dix retours client) — `docs/client-feedback-followup.md`
+
+- Langues fr / es / nl / de / en préparées (préfixes, dictionnaires, sélecteur, aperçus noindex) — **non activées en
+  production** (`SITE_LOCALES`, runbook § 2 quater) ; marchés distincts des langues, tous « à valider » sauf la France.
+- Habillage saisonnier réglable, inactif hors période (Réglages) ; moustiquaires MoskiUp / MoskiSlide / MoskiFix en
+  demande d'étude ; coloris audités par modèle (standard / avec supplément, nuancier cité) ; accueil rééquilibré
+  (un détail par famille) ; motif du « prix sur devis » ; étape du configurateur dans l'adresse et brouillon par projet ;
+  hauteur de pose (souhait) des stores bannes et d'HelioRoof ; logo 44 px « — Accueil ».
+- Migration `20261101090000_habillage_saisonnier`.
+
 ## Livraison du 2026-10-31 (noms HELIO, logo, chat, configurateur, préparation SELT) — production `8434cfb`
 
 - **Noms HELIO** (transcodification validée par le client) appliqués : HelioSky, HelioMax, HelioLux, HelioRoof, HelioSun,

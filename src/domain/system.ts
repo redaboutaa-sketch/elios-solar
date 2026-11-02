@@ -48,6 +48,8 @@ export interface Choice {
   description?: string;
   /** désignation du fournisseur (modèle, référence) : interne, retirée des données publiques */
   supplierRef?: string;
+  /** teintes : « standard » (sans supplément selon la source) ou « special » (option avec supplément, au devis) */
+  tier?: "standard" | "special";
 }
 
 export interface MountingChoice extends Choice {
@@ -153,6 +155,11 @@ export interface SystemRules {
   finishes: Choice[];
   /** teinte hors standard (ex. RAL au choix) : toujours à confirmer au devis */
   customFinish?: Choice;
+  /**
+   * nuancier de référence des teintes de CE modèle : édition affichée (sans nom de fabricant), sources internes
+   * (retirées des données publiques) ; `component` = éléments laqués concernés
+   */
+  palette?: { edition: string; component: string; sources: SourceRef[]; note?: string };
   fabrics?: Choice[];
   controls?: ControlChoice[];
   included: Array<{ label: string; sources: SourceRef[]; status?: "established" | "to_confirm"; description?: string; supplierRef?: string }>;
@@ -205,6 +212,11 @@ export interface SystemInput {
   depthMm?: number;
   /** hauteur de passage (pergola) ou hauteur de la baie (screen) */
   heightMm?: number;
+  /**
+   * store banne, toiture HelioRoof : hauteur de pose souhaitée (sous le coffre), sans plage documentée — souhait
+   * transmis pour l'étude, jamais une cote fabricable ; sans effet sur le prix de la grille
+   */
+  installHeightMm?: number;
   mounting: SystemMounting;
   finishCode: string;
   fabricCode?: string;
@@ -313,6 +325,16 @@ export interface SystemEvaluation {
  * Évalue une configuration de système. Ne chiffre rien : produit les blocages, points à confirmer
  * et le récapitulatif — la même entrée alimente la 3D, le devis et le PDF.
  */
+/**
+ * Hauteur de pose : collectée comme souhait pour les modèles posés en hauteur sans cote de hauteur dans leurs règles
+ * (stores bannes, toiture HelioRoof). Bornes de saisie seulement (contrôle d'erreur de frappe mm / cm / m), pas une
+ * plage technique.
+ */
+export const INSTALL_HEIGHT_SANE = { minMm: 1000, maxMm: 6000 } as const;
+export function installHeightApplies(rules: SystemRules): boolean {
+  return !rules.dims.height && (rules.type === "awning" || rules.type === "roof_blind");
+}
+
 export function evaluateSystemRules(rules: SystemRules, input: SystemInput, familyName: string): SystemEvaluation {
   const issues: Issue[] = [];
   const recap: RecapItem[] = [];
@@ -373,6 +395,12 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
     if (rules.dims.height) checkDim(rules.dims.height, input.heightMm, "heightMm", rules.type === "screen" || rules.type === "insect_screen");
   }
 
+  if (input.installHeightMm != null) {
+    if (!installHeightApplies(rules)) add({ code: "install_height_unavailable", severity: "blocking", message: "Hauteur de pose : non applicable à ce modèle.", path: "installHeightMm" });
+    else if (!Number.isInteger(input.installHeightMm) || input.installHeightMm < INSTALL_HEIGHT_SANE.minMm || input.installHeightMm > INSTALL_HEIGHT_SANE.maxMm) add({ code: "dimension_invalid", severity: "blocking", message: `Hauteur de pose : saisissez une valeur en millimètres (${fmtM(INSTALL_HEIGHT_SANE.minMm)} à ${fmtM(INSTALL_HEIGHT_SANE.maxMm)}).`, path: "installHeightMm" });
+    else add({ code: "install_height_wish", severity: "review", message: `Hauteur de pose souhaitée ${fmtM(input.installHeightMm)} : aucune plage documentée pour ce modèle, faisabilité vérifiée au devis.`, path: "installHeightMm", quoteSuggested: true });
+  }
+
   if (rules.depthWidthMin && input.depthMm != null) {
     const c = rules.depthWidthMin.find((x) => x.depthMm === input.depthMm);
     if (c && input.widthMm < c.widthMinMm) {
@@ -385,13 +413,13 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
   else if (mounting.status === "to_confirm") add({ code: "mounting_to_confirm", severity: "review", message: `Pose ${MOUNTING_FR[mounting.code]} : ${mounting.note ?? "à confirmer"}.`, path: "mounting", quoteSuggested: true });
 
   const finish = rules.finishes.find((f) => f.code === input.finishCode) ?? (rules.customFinish?.code === input.finishCode ? rules.customFinish : undefined);
-  if (!finish) add({ code: "finish_unavailable", severity: "blocking", message: "Teinte non proposée pour ce système.", path: "finishCode" });
+  if (!finish) add({ code: "finish_unavailable", severity: "blocking", message: input.finishCode ? `La teinte enregistrée (${input.finishCode}) n'est plus proposée pour ce modèle : choisissez une nouvelle teinte. Votre ancienne configuration reste consultable telle qu'enregistrée.` : "Choisissez une teinte.", path: "finishCode" });
   else if (finish.status === "to_confirm" || finish === rules.customFinish) add({ code: "finish_to_confirm", severity: "review", message: `${finish.label} : ${finish.note ?? "conditions et délai confirmés au devis"}.`, path: "finishCode", quoteSuggested: true });
 
   let fabric: Choice | undefined;
   if (rules.fabrics?.length) {
     fabric = rules.fabrics.find((f) => f.code === input.fabricCode);
-    if (!fabric) add({ code: "fabric_unavailable", severity: "blocking", message: "Toile non proposée pour ce système.", path: "fabricCode" });
+    if (!fabric) add({ code: "fabric_unavailable", severity: "blocking", message: input.fabricCode ? `La toile enregistrée (${input.fabricCode}) n'est plus proposée pour ce modèle : choisissez une nouvelle toile.` : "Choisissez une toile.", path: "fabricCode" });
     else if (fabric.status === "to_confirm") add({ code: "fabric_to_confirm", severity: "review", message: `Toile ${fabric.label} : ${fabric.note ?? "disponibilité à confirmer"}.`, path: "fabricCode", quoteSuggested: true });
   }
 
@@ -479,6 +507,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
   recap.push({ label: d.width.label, value: Number.isInteger(input.widthMm) ? fmtM(input.widthMm) : "—" });
   if (d.depth) recap.push({ label: d.depth.label, value: input.depthMm != null ? fmtM(input.depthMm) : "—" });
   if (d.height) recap.push({ label: d.height.label, value: input.heightMm != null ? fmtM(input.heightMm) : "à préciser", status: input.heightMm == null ? "to_confirm" : undefined });
+  if (installHeightApplies(rules)) recap.push({ label: "Hauteur de pose (souhait)", value: input.installHeightMm != null ? `${fmtM(input.installHeightMm)} (étude au devis)` : "à préciser au devis", status: "to_confirm" });
   if (mounting) recap.push({ label: "Pose", value: MOUNTING_FR[mounting.code], status: mounting.status === "to_confirm" ? "to_confirm" : undefined });
   if (finish) recap.push({ label: "Teinte de structure", value: finish.label, status: finish.status === "to_confirm" || finish === rules.customFinish ? "to_confirm" : undefined });
   if (fabric) recap.push({ label: "Toile", value: fabric.label, status: fabric.status === "to_confirm" ? "to_confirm" : undefined });

@@ -483,6 +483,12 @@ export interface EvaluationResult {
   systemPrice?: SystemPrice | null;
   /** cote absente de la grille : dimensions tarifées en ligne pour la variante choisie (lecture exacte) */
   pricedSizes?: { dimLabel: string; dims: number[]; widths: { min: number; max: number }[]; roundUp: boolean } | null;
+  /**
+   * système : état du prix de la structure — priced (grille de vente publiée), no_table (aucune grille publiée pour ce
+   * modèle), incomplete (cote de la grille non saisie ou pose sans grille), out_of_grid (cote hors grille), blocked
+   * (configuration à corriger), custom (demande hors gamme ou d'étude)
+   */
+  priceStatus?: "priced" | "no_table" | "incomplete" | "out_of_grid" | "blocked" | "custom";
   /** système : commande en ligne possible (configuration entièrement tarifée) ou motifs du passage au devis */
   onlineOrder?: { ok: boolean; reasons: string[] };
   /** récapitulatif lisible de la configuration (devis sans prix, PDF, administration) */

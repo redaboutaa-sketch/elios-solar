@@ -16,7 +16,7 @@
 import type { SourceRef, SystemRules } from "@/domain/system";
 import type { CategoryKey } from "@/domain/categories";
 import { PERGOLAS_2026 } from "./families/pergolas-2026";
-import { AWNINGS_2026 } from "./families/awnings-2026";
+import { AWNINGS_2026, AWNING_SOURCES } from "./families/awnings-2026";
 import { INSECT_SCREENS_2026 } from "./families/insect-screens-2026";
 import { SCREENS_2026 } from "./families/screens-2026";
 
@@ -117,6 +117,8 @@ const SWATCH: Record<string, string> = {
   "RAL 9001": "#e9e0d2",
   "RAL 7015": "#4f5358",
   "RAL 7021": "#2f3234",
+  "RAL 7038": "#b5b8b1",
+  "RAL 7048": "#7e7b73",
   "RAL 7012": "#4e5754",
   "RAL 7039": "#6b665e",
   "RAL 7043": "#4e5452",
@@ -443,7 +445,9 @@ const refleksol: HelioFamily = {
       { code: "facade", label: "En façade", status: "established", sources: [T("p. 67 — « cassette dedicated for niche and facade installation »")] },
       { code: "niche", label: "En niche", status: "established", sources: [T("p. 67")] },
     ],
-    finishes: SELT_PALETTE.map((c) => finish(`${c}`, [T("p. 66 et 150 — couleurs de la palette SELT")], c.startsWith("VSR") ? "aperçu non disponible" : undefined)),
+    // palette SELT (26 teintes, THYSENS p. 150) + teintes de la page R 120 ZiiiP absentes de la palette (sans supplément)
+    finishes: [...SELT_PALETTE, "RAL 7038", "RAL 7048", "RAL 7016 STR", "RAL 7021 STR", "RAL 9005 STR", "RAL 9010 STR", "RAL 8003 STR"].map((c) => ({ ...finish(`${c}`, SELT_PALETTE.includes(c) ? [T("p. 66 et 150 — couleurs de la palette SELT")] : [at(SOURCES.aluprofRefleksol, "onglet Couleurs (sans supplément)")], c.startsWith("VSR") ? "aperçu non disponible" : undefined), swatch: SWATCH[c.replace(/ (MAT|SATIN|mat|STR)$/i, "")], tier: "standard" as const })),
+    palette: { edition: "nuancier du fabricant (palette des éléments laqués, page produit consultée le 2026-10-25)", component: "coffre et coulisses", sources: [T("p. 150"), at(SOURCES.aluprofRefleksol, "onglet Couleurs")] },
     customFinish: { code: "RAL_CUSTOM", label: "Autre teinte RAL (option)", status: "to_confirm", sources: [T("p. 67 — « any colour from RAL palette (optional) »")], note: "teinte hors palette : conditions et délai confirmés au devis" },
     fabrics: [
       { code: "serge_1", label: "Serge 1 % (8 coloris)", status: "established", description: "Toile microperforée très occultante (facteur d'ouverture 1 %).", swatch: "#6f706b", sources: [at(SOURCES.aluprofRefleksol, "onglet Tissus — Serge 1 %")] },
@@ -537,7 +541,11 @@ const casablanca: HelioFamily = {
       { code: "ceiling", label: "Au plafond", status: "established", sources: [T("p. 114–115 — ceiling installation")] },
       { code: "rafter", label: "Sur chevrons", status: "established", sources: [T("p. 114–115 — roof rafter installation")] },
     ],
-    finishes: ["RAL 9010", "RAL 1015", "RAL 8014", "RAL 9006", "FSM 71319"].map((c) => finish(c, [at(casaSheet, "Couleurs disponibles"), T("p. 114 — couleurs standard")])),
+    // brochure « Nos stores bannes » (10.2026) p. 9 : RAL 7016 et RAL 9005 structurés ajoutés aux coloris standard
+    finishes: [...["RAL 9010", "RAL 1015", "RAL 8014", "RAL 9006", "FSM 71319"].map((c) => ({ ...finish(c, [at(casaSheet, "Couleurs disponibles"), T("p. 114 — couleurs standard"), at(AWNING_SOURCES.brochure, "p. 9 — coloris standard")]), tier: "standard" as const })),
+      ...["RAL 7016 STR", "RAL 9005 STR"].map((c) => ({ ...finish(c, [at(AWNING_SOURCES.brochure, "p. 9 — coloris standard")]), swatch: SWATCH[c.replace(/ STR$/, "")], tier: "standard" as const }))],
+    customFinish: { code: "RAL_CUSTOM", label: "Autre teinte du nuancier (option avec supplément)", status: "to_confirm", tier: "special", sources: [at(AWNING_SOURCES.brochure, "p. 9")], note: "teinte avec supplément : disponibilité, conditions et délai confirmés au devis" },
+    palette: { edition: "nuancier du fabricant, brochure stores bannes (10.2026)", component: "coffre et bras", sources: [at(AWNING_SOURCES.brochure, "p. 9"), at(casaSheet, "Couleurs disponibles")] },
     fabrics: [{ code: "acrylic_collection", label: "Toile acrylique — coloris à choisir parmi la collection (150 références)", status: "established", sources: [T("p. 114 — « 150 patterns » ; p. 155 toiles acryliques")], note: "coloris choisi au devis sur nuancier" }],
     controls: [
       { code: "crank_1500", label: "Manuelle — manivelle 150 cm", kind: "manual", status: "established", sources: [at(casaSheet, "Commande manuelle")] },

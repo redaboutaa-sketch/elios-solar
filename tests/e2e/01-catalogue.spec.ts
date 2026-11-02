@@ -19,7 +19,7 @@ const FAMILIES: Array<[string, string[], boolean]> = [
   ["/pergolas", ["HelioSky", "HelioMax", "HelioLux"], false],
   ["/screens", ["HelioScreen", "HelioRoof"], true],
   ["/stores-bannes", ["HelioSun", "HelioShade", "HelioPro", "HelioSquare"], true],
-  ["/moustiquaires", ["MoskiFold", "MoskiFold 2"], false],
+  ["/moustiquaires", ["MoskiFold", "MoskiFold 2", "MoskiUp", "MoskiSlide", "MoskiFix"], false],
 ];
 
 test("catalogue HELIOSTORES : quatre familles, fiches sans référence fabricant/fournisseur, prix de la grille, modèles retirés et renommés", async ({ page }) => {
@@ -100,8 +100,8 @@ test("catalogue HELIOSTORES : quatre familles, fiches sans référence fabricant
     expect(r.status(), from).toBe(308);
     expect(new URL(r.headers()["location"]!, "http://x").pathname, from).toBe(to);
   }
-  // brouillons et ancien catalogue : jamais publics
-  for (const path of ["/moustiquaires/moskiup", "/configurateur/moskiup", "/pergolas/pergola-solis", "/stores-bannes/store-banne-ombra"]) {
+  // ancien catalogue : jamais public
+  for (const path of ["/pergolas/pergola-solis", "/stores-bannes/store-banne-ombra"]) {
     expect((await page.request.get(path)).status(), path).toBe(404);
   }
   await page.goto("/comparer");

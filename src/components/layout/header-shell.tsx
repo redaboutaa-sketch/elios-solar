@@ -6,13 +6,13 @@
  * Seuls deux attributs `data-*` changent (pas de calcul de mise en page en JavaScript).
  */
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useBarePathname } from "@/i18n/client";
 
 /** Pages dont le premier bloc est un grand visuel sombre (en-tête superposé). */
 const OVERLAY_PATHS: ReadonlySet<string> = new Set<string>();
 
 export function HeaderShell({ children }: { children: React.ReactNode }) {
-  const overlay = OVERLAY_PATHS.has(usePathname());
+  const overlay = OVERLAY_PATHS.has(useBarePathname());
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     let raf = 0;

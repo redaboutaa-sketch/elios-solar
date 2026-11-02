@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { ArrowRight } from "lucide-react";
 import { CATEGORIES, configuratorHref, productHref, type CategoryKey } from "@/domain/categories";
 import { dimRangeText } from "@/domain/system";
@@ -18,21 +18,22 @@ import { organizationJsonLd } from "@/server/seo/structured-data";
 import { getSiteSettings } from "@/server/catalog/queries";
 import { BRAND } from "@/config/brand";
 import { DEFAULT_OG_IMAGE, OG_BASE } from "@/server/seo/og";
+import { LOCALE_DEFS } from "@/i18n/config";
+import { fmt } from "@/i18n/format";
+import { getLocale, getT } from "@/i18n/server";
 
-export const metadata: Metadata = {
-  description: "Pergolas, screens, stores bannes et moustiquaires HELIOSTORES : comparez les modèles, configurez vos dimensions et demandez votre devis.",
-  alternates: { canonical: "/" },
-  openGraph: { ...OG_BASE, type: "website", url: "/", title: `${BRAND.name} — ${BRAND.tagline}`, description: "Pergolas, screens, stores bannes et moustiquaires : configurez vos dimensions et demandez votre devis.", images: [DEFAULT_OG_IMAGE] },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  const [t, lt] = await Promise.all([getT("home"), getT("layout")]);
+  return {
+    description: t.meta.description,
+    alternates: { canonical: "/" },
+    openGraph: { ...OG_BASE, ...(locale === "fr" ? {} : { locale: LOCALE_DEFS[locale].og }), type: "website", url: "/", title: `${BRAND.name} — ${locale === "fr" ? BRAND.tagline : lt.tagline}`, description: t.meta.ogDescription, images: [DEFAULT_OG_IMAGE] },
+  };
+}
 
-const NATURE: Record<string, string> = { PHOTO: "Photographie", RENDER: "Rendu", ILLUSTRATION: "Schéma" };
-
-const STEPS = [
-  ["Choisir", "Pergola, screen, store banne ou moustiquaire : comparez les modèles et leurs caractéristiques.", "/#solutions"],
-  ["Configurer", "Saisissez vos cotes, la pose, la teinte et les équipements ; la visualisation suit vos choix.", "/configurateur"],
-  ["Demander un devis", "Votre configuration et sa visualisation sont jointes à la demande ; options, pose et livraison sont établies par devis.", "/devis"],
-  ["Échanger avec un conseiller", "Un conseiller vérifie la faisabilité, les fixations et les points à confirmer.", "/contact"],
-] as const;
+/** Étapes du parcours : liens ici, textes dans les messages (même ordre). */
+const STEPS = ["/guides", "/configurateur", "/devis", "/contact"] as const;
 
 type Family = Awaited<ReturnType<typeof listSystemFamilies>>[number];
 
@@ -40,6 +41,9 @@ type Family = Awaited<ReturnType<typeof listSystemFamilies>>[number];
 const productShot = (items: PublishedMedia[]) => items.find((m) => m.role === "gallery" && m.nature === "RENDER" && (m.width ?? 0) >= 600) ?? items.find((m) => m.role === "gallery") ?? items[0] ?? null;
 
 export default async function HomePage() {
+  const locale = await getLocale();
+  const [t, lt] = await Promise.all([getT("home"), getT("layout")]);
+  const NATURE: Record<string, string> = t.nature;
   const families = await Promise.all(CATEGORIES.map(async (c) => ({ c, items: await listSystemFamilies(c.key) })));
   const all = families.flatMap(({ c, items }) => items.map((f) => ({ c, f })));
   const media = new Map(await Promise.all(all.map(async ({ f }) => [f.slug, await publishedMediaFor(f.slug)] as const)));
@@ -52,7 +56,7 @@ export default async function HomePage() {
   const slides: HeroSlide[] = families.flatMap(({ c, items }) => {
     // composant client : seuls chemins, texte alternatif, dimensions et cadrage partent au navigateur (jamais la provenance)
     const v = home.get(c.key);
-    if (v) return [{ id: `accueil-${c.key.toLowerCase()}`, media: { path: v.path, alt: v.alt, width: v.width, height: v.height, smallPath: v.smallPath, mediumPath: v.mediumPath, avif: v.avif, focus: v.focus }, label: c.label, href: c.href, nature: "Visualisation" }];
+    if (v) return [{ id: `accueil-${c.key.toLowerCase()}`, media: { path: v.path, alt: v.alt, width: v.width, height: v.height, smallPath: v.smallPath, mediumPath: v.mediumPath, avif: v.avif, focus: v.focus }, label: lt.categories[c.key], href: c.href, nature: t.nature.VISUALISATION }];
     const f = items[0]; const h = heroOf(f);
     return f && h ? [{ id: f.slug, media: { path: h.path, alt: h.alt, width: h.width, height: h.height, smallPath: smallPathOf(h), mediumPath: mediumPathOf(h) }, label: f.name, href: productHref(c.key, f.slug), nature: NATURE[h.nature] ?? h.nature }] : [];
   });
@@ -66,20 +70,27 @@ export default async function HomePage() {
 
   // composition éditoriale : détails techniques (rôle « detail »), jamais présentés comme des réalisations
   const settings = await getSiteSettings();
-  const details = all.flatMap(({ f }) => (media.get(f.slug) ?? []).filter((m) => m.role === "detail" && (m.width ?? 0) >= 800).slice(0, 2).map((m) => ({ ...m, model: f.name }))).slice(0, 4);
+  // retour client (2026-11-01) : diversité des familles — un détail par famille, pris à tour de rôle dans chaque famille
+  // (pergola, screen, store banne, moustiquaire) avant un second détail d'une même famille ; jamais de système candidat
+  // (demande d'étude)
+  const detailPools = families.map(({ items }) => items.filter((f) => !f.rules.studyOnly).map((f) => (media.get(f.slug) ?? []).filter((m) => m.role === "detail" && (m.width ?? 0) >= 800).slice(0, 1).map((m) => ({ ...m, model: f.name, family: f.slug }))).flat());
+  const details: Array<PublishedMedia & { model: string; family: string }> = [];
+  for (let round = 0; details.length < 4 && detailPools.some((p) => p.length > round); round++) {
+    for (const pool of detailPools) if (pool[round] && details.length < 4) details.push(pool[round]!);
+  }
 
   return (
     <>
-      <JsonLd data={[organizationJsonLd({ name: BRAND.name, siteUrl: BRAND.siteUrl, logoPath: BRAND.logo.src, legalName: settings?.legalName, email: settings?.contactEmail, address: settings ? { postalCode: settings.postalCode, city: settings.city, countryCode: settings.countryCode } : null }), { "@context": "https://schema.org", "@type": "WebSite", name: BRAND.name, url: BRAND.siteUrl, inLanguage: "fr-FR", publisher: { "@id": `${BRAND.siteUrl.replace(/\/$/, "")}/#organisation` } }]} />
+      <JsonLd data={[organizationJsonLd({ name: BRAND.name, siteUrl: BRAND.siteUrl, logoPath: BRAND.logo.src, legalName: settings?.legalName, email: settings?.contactEmail, address: settings ? { postalCode: settings.postalCode, city: settings.city, countryCode: settings.countryCode } : null }), { "@context": "https://schema.org", "@type": "WebSite", name: BRAND.name, url: BRAND.siteUrl, inLanguage: locale === "fr" ? "fr-FR" : LOCALE_DEFS[locale].htmlLang, publisher: { "@id": `${BRAND.siteUrl.replace(/\/$/, "")}/#organisation` } }]} />
       {/* Entrée principale (retour client du 2026-10-21) : choisir une famille par son dessin, dès le premier écran.
           Les visuels en situation suivent juste en dessous ; les photographies restent dans les fiches produit. */}
       <section id="solutions" className="home-entry scroll-mt-16 pb-6 pt-5 sm:pt-7" aria-labelledby="solutions-titre">
         <div className="container-x flex flex-wrap items-end justify-between gap-x-8 gap-y-1">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">HELIOSTORES · Protection solaire sur mesure</p>
-            <h1 id="solutions-titre" className="mt-1.5 font-display text-[clamp(1.5rem,1.05rem+1.9vw,2.6rem)] font-semibold leading-tight text-balance">Donnez une nouvelle dimension à vos extérieurs.</h1>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">{t.entry.eyebrow}</p>
+            <h1 id="solutions-titre" className="mt-1.5 font-display text-[clamp(1.5rem,1.05rem+1.9vw,2.6rem)] font-semibold leading-tight text-balance">{t.entry.title}</h1>
           </div>
-          <p className="hidden max-w-md text-sm text-stone-700 sm:block sm:text-base">Choisissez votre famille : chaque modèle se configure à vos cotes.</p>
+          <p className="hidden max-w-md text-sm text-stone-700 sm:block sm:text-base">{t.entry.lead}</p>
         </div>
         <ul className="solution-panels mx-auto mt-4 flex max-w-[110rem] flex-col gap-2 px-4 sm:mt-6 lg:flex-row lg:gap-1" data-testid="family-picker">
           {panels.map(({ c, items }) => {
@@ -91,11 +102,11 @@ export default async function HomePage() {
                   <FamilySketch kind={c.key} showWall={false} className="panel-sketch size-full max-w-[38rem]" />
                 </div>
                 <div className="flex min-w-0 flex-col justify-center p-4 pl-1 sm:p-6 lg:justify-start lg:p-8 lg:pt-0">
-                  <h2 className="font-display text-xl font-semibold sm:text-2xl lg:text-3xl"><Link href={c.href} className="stretched">{c.label}</Link></h2>
-                  <p className="mt-1 text-xs text-stone-800 sm:text-sm">{items.map((f) => f.name).join(" · ") || "Modèles en cours d'intégration"}</p>
-                  {min && <p className="mt-1 text-xs text-stone-800 sm:text-sm">À partir de <span className="font-semibold tabular-nums text-brand-700">{formatSystemPrice(min.amountMinor, min.currency, min.taxBasis)}</span></p>}
-                  <span className="mt-2 text-xs font-semibold text-brand-700 sm:hidden" aria-hidden="true">Voir les modèles →</span>
-                  <span className="panel-cta mt-3 hidden w-fit items-center gap-2 border border-brand-700 px-3 py-1.5 text-xs sm:inline-flex font-semibold uppercase tracking-[0.12em] text-brand-700 group-hover:bg-brand-700 group-hover:text-white group-focus-within:bg-brand-700 group-focus-within:text-white sm:px-4 sm:py-2 sm:text-sm lg:mt-5" aria-hidden="true">Découvrir la gamme <ArrowRight className="size-4" /></span>
+                  <h2 className="font-display text-xl font-semibold sm:text-2xl lg:text-3xl"><Link href={c.href} className="stretched">{lt.categories[c.key]}</Link></h2>
+                  <p className="mt-1 text-xs text-stone-800 sm:text-sm">{items.map((f) => f.name).join(" · ") || t.entry.modelsPending}</p>
+                  {min && <p className="mt-1 text-xs text-stone-800 sm:text-sm">{t.entry.fromPrice} <span className="font-semibold tabular-nums text-brand-700">{formatSystemPrice(min.amountMinor, min.currency, min.taxBasis)}</span></p>}
+                  <span className="mt-2 text-xs font-semibold text-brand-700 sm:hidden" aria-hidden="true">{t.entry.seeModels}</span>
+                  <span className="panel-cta mt-3 hidden w-fit items-center gap-2 border border-brand-700 px-3 py-1.5 text-xs sm:inline-flex font-semibold uppercase tracking-[0.12em] text-brand-700 group-hover:bg-brand-700 group-hover:text-white group-focus-within:bg-brand-700 group-focus-within:text-white sm:px-4 sm:py-2 sm:text-sm lg:mt-5" aria-hidden="true">{t.entry.discoverRange} <ArrowRight className="size-4" /></span>
                 </div>
               </li>
             );
@@ -106,33 +117,34 @@ export default async function HomePage() {
       {/* Visuels en situation : visualisations générées (légende « Visualisation »), jamais présentées comme des
           photographies du fabricant ni comme des réalisations */}
       <HeroSlider slides={slides}>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/90">En situation</p>
-        <h2 className="mt-4 max-w-3xl font-display text-display font-semibold text-balance">Pergolas, screens, stores bannes et moustiquaires configurés à vos cotes.</h2>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/90">{t.hero.eyebrow}</p>
+        <h2 className="mt-4 max-w-3xl font-display text-display font-semibold text-balance">{t.hero.title}</h2>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link href="/configurateur" className="btn-cta px-6 text-base">Configurer mon projet <ArrowRight className="size-4" aria-hidden="true" /></Link>
-          <Link href="/devis" className="btn bg-white px-6 text-base text-ink hover:bg-sand-100">Demander un devis</Link>
+          <Link href="/configurateur" className="btn-cta px-6 text-base">{t.hero.configure} <ArrowRight className="size-4" aria-hidden="true" /></Link>
+          <Link href="/devis" className="btn bg-white px-6 text-base text-ink hover:bg-sand-100">{t.hero.quote}</Link>
         </div>
       </HeroSlider>
 
       {/* A. Nos modèles, par famille */}
       <section className="section-y" aria-labelledby="modeles">
         <div className="container-x">
-          <h2 id="modeles" className="font-display text-display"><span className="font-normal">Nos</span> <span className="font-semibold">modèles</span></h2>
+          <h2 id="modeles" className="font-display text-display"><span className="font-normal">{t.models.titleA}</span> <span className="font-semibold">{t.models.titleB}</span></h2>
           <div className="mt-8">
             <ModelTabs tabs={families.map(({ c, items }) => ({
-              key: c.key, label: c.label, content: (
+              key: c.key, label: lt.categories[c.key], content: (
                 <ul className={`grid grid-cols-1 gap-px border border-sand-200 bg-sand-200 ${items.length > 1 ? "md:grid-cols-2" : ""}`}>
                   {items.map((f) => {
-                    const shot = productShot(media.get(f.slug) ?? []);
+                    // demande d'étude : aucun visuel du système candidat (même règle que la fiche), dessin de la famille
+                    const shot = f.rules.studyOnly ? null : productShot(media.get(f.slug) ?? []);
                     return (
                       <li key={f.slug} className={`card-link group grid min-w-0 grid-cols-1 bg-white ${items.length > 1 ? "grid-rows-[auto_1fr]" : "md:grid-cols-2"}`}>
-                        <div className="relative aspect-[16/10] min-w-0 overflow-hidden bg-white">{shot ? <MediaImage media={shot} sizes="(min-width: 768px) 45vw, 92vw" className="absolute inset-0 size-full object-contain p-6 transition-transform duration-500 group-hover:scale-[1.03]" /> : <span className="grid size-full place-items-center text-sm text-stone-700">Visuel à venir</span>}</div>
+                        <div className="relative aspect-[16/10] min-w-0 overflow-hidden bg-white">{shot ? <MediaImage media={shot} sizes="(min-width: 768px) 45vw, 92vw" className="absolute inset-0 size-full object-contain p-6 transition-transform duration-500 group-hover:scale-[1.03]" /> : f.rules.studyOnly ? <span className="grid size-full place-items-center p-8"><FamilySketch kind={c.key} showWall={false} className="w-2/3" /></span> : <span className="grid size-full place-items-center text-sm text-stone-700">{t.models.visualPending}</span>}</div>
                         <div className={`border-t border-sand-200 p-6 md:p-8 ${items.length > 1 ? "" : "md:border-l md:border-t-0 md:self-center"}`}>
                           <h3 className="font-display text-2xl font-semibold"><Link href={productHref(c.key, f.slug)} className="stretched">{f.name}</Link></h3>
                           <p className="mt-2 text-stone-800">{f.shortDescription}</p>
                           <p className="mt-3 text-sm text-stone-700">{f.rules.dims.width.label} {dimRangeText(f.rules.dims.width)}{f.rules.dims.depth ? ` · ${f.rules.dims.depth.label.toLowerCase()} ${dimRangeText(f.rules.dims.depth)}` : ""}</p>
-                          <p className="mt-4">{f.fromPrice ? <>À partir de <span className="font-semibold tabular-nums">{formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis)}</span></> : "Prix sur devis"}</p>
-                          <div className="relative z-10 mt-5 flex flex-wrap gap-2"><Link href={productHref(c.key, f.slug)} className="btn-secondary">Découvrir</Link><Link href={configuratorHref(f.slug)} className="btn-accent">Configurer</Link></div>
+                          <p className="mt-4">{f.fromPrice ? <>{t.models.fromPrice} <span className="font-semibold tabular-nums">{formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis)}</span></> : t.models.priceOnQuote}</p>
+                          <div className="relative z-10 mt-5 flex flex-wrap gap-2"><Link href={productHref(c.key, f.slug)} className="btn-secondary">{t.models.discover}</Link><Link href={configuratorHref(f.slug)} className="btn-accent">{t.models.configure}</Link></div>
                         </div>
                       </li>
                     );
@@ -149,12 +161,12 @@ export default async function HomePage() {
         <section className="section-y bg-sand-100" aria-labelledby="composer">
           <div className="container-x grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
             <div>
-              <p className="eyebrow">Configurateur</p>
-              <h2 id="composer" className="mt-2 font-display text-display font-semibold">Composez votre projet</h2>
-              <p className="mt-4 text-stone-800">Dimensions, pose, teinte et équipements : la visualisation reprend vos cotes et vos choix, puis votre demande de devis les transmet au conseiller. La visualisation est indicative ; un conseiller vérifie la faisabilité.</p>
-              <div className="mt-6 flex flex-wrap gap-3"><Link href={configuratorHref(p0.slug)} className="btn-accent">Configurer la {p0.name} <ArrowRight className="size-4" aria-hidden="true" /></Link><Link href="/configurateur" className="btn-secondary">Tous les configurateurs</Link></div>
+              <p className="eyebrow">{t.scene.eyebrow}</p>
+              <h2 id="composer" className="mt-2 font-display text-display font-semibold">{t.scene.title}</h2>
+              <p className="mt-4 text-stone-800">{t.scene.text}</p>
+              <div className="mt-6 flex flex-wrap gap-3"><Link href={configuratorHref(p0.slug)} className="btn-accent">{fmt(t.scene.configureModel, { model: p0.name })} <ArrowRight className="size-4" aria-hidden="true" /></Link><Link href="/configurateur" className="btn-secondary">{t.scene.allConfigurators}</Link></div>
             </div>
-            <ScenePreview model={sceneModel} poster={sceneShot ? <div className="relative aspect-[16/10]"><MediaImage media={sceneShot} sizes="(min-width: 1024px) 55vw, 92vw" className="absolute inset-0 size-full object-contain p-6" alt={`${sceneShot.alt} (image fixe)`} /></div> : <div className="aspect-[16/10]" />} />
+            <ScenePreview model={sceneModel} poster={sceneShot ? <div className="relative aspect-[16/10]"><MediaImage media={sceneShot} sizes="(min-width: 1024px) 55vw, 92vw" className="absolute inset-0 size-full object-contain p-6" alt={fmt(t.scene.stillImage, { alt: sceneShot.alt })} /></div> : <div className="aspect-[16/10]" />} />
           </div>
         </section>
       )}
@@ -163,8 +175,8 @@ export default async function HomePage() {
       {details.length >= 2 && (
         <section className="section-y" aria-labelledby="details">
           <div className="container-x">
-            <h2 id="details" className="max-w-3xl font-display text-display"><span className="font-normal">La précision</span> <span className="font-semibold">dans le détail</span></h2>
-            <p className="mt-3 max-w-2xl text-stone-700">Lames, coffres, coulisses et bras : rendus issus de la documentation des produits. Ce ne sont pas des réalisations HELIOSTORES.</p>
+            <h2 id="details" className="max-w-3xl font-display text-display"><span className="font-normal">{t.details.titleA}</span> <span className="font-semibold">{t.details.titleB}</span></h2>
+            <p className="mt-3 max-w-2xl text-stone-700">{t.details.text}</p>
             <ul className="mt-10 grid gap-px border border-sand-200 bg-sand-200 sm:grid-cols-2 lg:grid-cols-4">
               {details.map((m) => (
                 <li key={m.id} className="reveal bg-white">
@@ -182,13 +194,13 @@ export default async function HomePage() {
       {/* D. Accompagnement */}
       <section className="section-y border-t border-sand-200 bg-white" aria-labelledby="parcours">
         <div className="container-x">
-          <h2 id="parcours" className="font-display text-display"><span className="font-normal">Votre projet</span> <span className="font-semibold">étape par étape</span></h2>
+          <h2 id="parcours" className="font-display text-display"><span className="font-normal">{t.stepsTitle.a}</span> <span className="font-semibold">{t.stepsTitle.b}</span></h2>
           <ol className="mt-10 grid gap-px border border-sand-200 bg-sand-200 sm:grid-cols-2 lg:grid-cols-4">
-            {STEPS.map(([t, d, href], i) => (
-              <li key={t} className="bg-white p-6">
+            {STEPS.map((href, i) => ({ href, ...t.steps[i]! })).map(({ title, text, href }, i) => (
+              <li key={title} className="bg-white p-6">
                 <span className="font-display text-4xl font-semibold text-sage-700 tabular-nums" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
-                <h3 className="mt-3 font-display text-lg font-semibold"><Link href={href} className="hover:text-brand-700"><span className="sr-only">{i + 1}. </span>{t}</Link></h3>
-                <p className="mt-2 text-sm text-stone-700">{d}</p>
+                <h3 className="mt-3 font-display text-lg font-semibold"><Link href={href} className="hover:text-brand-700"><span className="sr-only">{i + 1}. </span>{title}</Link></h3>
+                <p className="mt-2 text-sm text-stone-700">{text}</p>
               </li>
             ))}
           </ol>
@@ -199,12 +211,12 @@ export default async function HomePage() {
       <section className="surface-night" aria-labelledby="cta-final">
         <div className="container-x flex flex-col items-start gap-6 py-14 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 id="cta-final" className="font-display text-display font-semibold">Un projet en tête ?</h2>
-            <p className="mt-2 max-w-xl text-sand-200">Configurez votre produit à vos cotes, ou décrivez votre projet : un conseiller vous répond.</p>
+            <h2 id="cta-final" className="font-display text-display font-semibold">{t.cta.title}</h2>
+            <p className="mt-2 max-w-xl text-sand-200">{t.cta.text}</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link href="/configurateur" className="btn-cta px-6 text-base">Configurer mon projet <ArrowRight className="size-4" aria-hidden="true" /></Link>
-            <Link href="/contact" className="btn border border-white/40 px-6 text-base text-sand-50 hover:bg-white/10">Nous contacter</Link>
+            <Link href="/configurateur" className="btn-cta px-6 text-base">{t.cta.configure} <ArrowRight className="size-4" aria-hidden="true" /></Link>
+            <Link href="/contact" className="btn border border-white/40 px-6 text-base text-sand-50 hover:bg-white/10">{t.cta.contact}</Link>
           </div>
         </div>
       </section>

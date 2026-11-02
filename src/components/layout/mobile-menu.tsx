@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
-import Link from "next/link";
+import Link from "@/i18n/link";
+import { useT } from "@/i18n/client";
+import { LocaleLinks } from "./locale-switcher";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { FamilySketch } from "@/components/illustrations/sketches";
 import type { CategoryKey } from "@/domain/categories";
@@ -13,6 +15,7 @@ interface MobileCategory { key: string; label: string; href: string; items: Read
  * remplacent (`replace`) pour que Retour ramène ensuite à la page d'origine.
  */
 export function MobileMenu({ categories = [], services = [] }: { categories?: ReadonlyArray<MobileCategory>; services?: ReadonlyArray<{ href: string; label: string }> }) {
+  const t = useT("layout");
   const [open, setOpen] = useState(false);
   const id = useId();
   const toggle = useRef<HTMLButtonElement>(null);
@@ -37,13 +40,13 @@ export function MobileMenu({ categories = [], services = [] }: { categories?: Re
   const close = () => setOpen(false);
   return (
     <div className="lg:hidden">
-      <button ref={toggle} type="button" className="btn px-2 text-sand-50 hover:bg-white/10" aria-expanded={open} aria-controls={id} aria-label={open ? "Fermer le menu" : "Ouvrir le menu"} onClick={() => (open ? dismiss() : setOpen(true))}>
+      <button ref={toggle} type="button" className="btn px-2 text-sand-50 hover:bg-white/10" aria-expanded={open} aria-controls={id} aria-label={open ? t.menuClose : t.menuOpen} onClick={() => (open ? dismiss() : setOpen(true))}>
         {open ? <X className="size-6" aria-hidden="true" /> : <Menu className="size-6" aria-hidden="true" />}
       </button>
       {open && (
         <div id={id} ref={panel} className="absolute inset-x-0 top-full z-50 h-[calc(100dvh-var(--header-h))] overflow-y-auto overscroll-contain border-t border-sand-200 bg-sand-50 text-ink animate-sheet-in">
-          <nav aria-label="Navigation mobile" className="container-x flex flex-col py-5 pb-24">
-            <p className="eyebrow">Choisir une famille</p>
+          <nav aria-label={t.mobileNav} className="container-x flex flex-col py-5 pb-24">
+            <p className="eyebrow">{t.chooseFamily}</p>
             <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {categories.map((c) => (
                 <li key={c.key}>
@@ -67,7 +70,8 @@ export function MobileMenu({ categories = [], services = [] }: { categories?: Re
             {services.map((n) => (
               <Link key={n.href} href={n.href} onClick={close} className="flex min-h-12 items-center border-b border-sand-200 text-lg">{n.label}</Link>
             ))}
-            <Link replace href="/configurateur" onClick={close} className="btn-accent mt-6 w-full text-base">Configurer mon projet <ArrowRight className="size-4" aria-hidden="true" /></Link>
+            <Link replace href="/configurateur" onClick={close} className="btn-accent mt-6 w-full text-base">{t.configure} <ArrowRight className="size-4" aria-hidden="true" /></Link>
+            <LocaleLinks />
           </nav>
         </div>
       )}

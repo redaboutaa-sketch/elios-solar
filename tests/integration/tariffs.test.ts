@@ -127,6 +127,16 @@ describe("grilles depuis un import", () => {
     for (const a of AMOUNTS) expect(snap).not.toContain(String(Math.round(a * 100)));
   });
 
+  it("grille publiée dans une autre devise que l'euro : jamais chargée par la boutique (aucune conversion)", async () => {
+    await prisma.supplierPriceList.update({ where: { id: saleId }, data: { currency: "MAD" } });
+    try {
+      expect((await loadPublicSystemPrices()).tables.get("marbella")?.variants?.[VARIANT]).toBeUndefined();
+    } finally {
+      await prisma.supplierPriceList.update({ where: { id: saleId }, data: { currency: "EUR" } });
+    }
+    expect((await loadPublicSystemPrices()).tables.get("marbella")?.variants?.[VARIANT]).toMatchObject({ currency: "EUR" });
+  });
+
   it("brouillon obsolète refusé ; publication programmée sans effet avant sa date ; chevauchement refusé ; désactivation", async () => {
     const a = await restoreAsDraft(saleId, ACTOR);
     const b = await restoreAsDraft(saleId, ACTOR);

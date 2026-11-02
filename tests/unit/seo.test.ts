@@ -96,10 +96,10 @@ describe("guides", () => {
 describe("contenus éditoriaux publics", () => {
   it("ni fabricant, ni délai, ni prix, ni zone desservie inventés", async () => {
     const { readFileSync } = await import("node:fs");
-    const files = ["src/components/catalog/family-guide.tsx", "src/components/guides/guide-page.tsx", "src/components/layout/not-found-content.tsx", ...["choisir-sa-pergola", "choisir-son-screen-exterieur", "choisir-sa-moustiquaire", "comparer-protections-solaires"].map((s) => `src/app/(boutique)/guides/${s}/page.tsx`)];
+    const files = ["src/components/catalog/family-guide.tsx", ...["layout", "home", "catalog", "configurator", "forms", "chat"].map((a) => `src/i18n/messages/${a}.ts`), "src/components/guides/guide-page.tsx", "src/components/layout/not-found-content.tsx", ...["choisir-sa-pergola", "choisir-son-screen-exterieur", "choisir-sa-moustiquaire", "comparer-protections-solaires"].map((s) => `src/app/(boutique)/guides/${s}/page.tsx`)];
     for (const f of files) {
       const t = readFileSync(f, "utf8");
-      expect(t, f).not.toMatch(/aluprof|thysens|cortinadecor|sous \d+ ?(h|heures|jours)|\d+ ?€|garantie (\d|décennale|commerciale)|ans de garantie|livraison gratuite|partout en|intervenons|nos équipes|showroom/i);
+      expect(t, f).not.toMatch(/aluprof|thysens|cortinadecor|sous \d+ ?(h|heures|jours)|\d+ ?€|garantie (\d|décennale|commerciale)|ans de garantie|livraison gratuite|partout en|intervenons|nos équipes|showroom|envío gratuito|gratis verzending|kostenlose lieferung|free delivery|wir liefern|we deliver/i);
     }
   });
 });

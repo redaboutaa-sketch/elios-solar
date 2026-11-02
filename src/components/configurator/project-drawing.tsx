@@ -18,6 +18,22 @@ export const DRAWING_VIEWS: Array<{ id: DrawingView; label: string }> = [
   { id: "top", label: "Dessus" },
 ];
 
+/** Libellés du dessin (français par défaut ; traduits par l'appelant). */
+export interface DrawingLabels {
+  front: string; back: string; backWall: string; left: string; right: string;
+  width: string; projection: string; advance: string; height: string; indicative: string; sensor: string;
+  /** « {family} », « {dims} » */
+  title: string;
+  /** format des nombres (ex. « fr-FR ») */
+  intl: string;
+}
+export const DRAWING_LABELS_FR: DrawingLabels = {
+  front: "Avant", back: "Arrière", backWall: "Arrière (mur)", left: "Gauche", right: "Droite",
+  width: "largeur", projection: "projection", advance: "avancée", height: "hauteur", indicative: " (indicative)", sensor: "capteur",
+  title: "Dessin indicatif : {family}, {dims}",
+  intl: "fr-FR",
+};
+
 type V3 = readonly [number, number, number];
 interface Prim { d: string; fill: string; stroke?: string; sw?: number; opacity?: number; depth: number; dash?: string; glow?: boolean; key?: string }
 interface Label { x: number; y: number; text: string; anchor?: "start" | "middle" | "end"; part?: string }
@@ -46,6 +62,7 @@ class Canvas {
   labels: Label[] = [];
   /** vue trois quarts depuis l'avant gauche : symétrie x → L − x (structure symétrique) */
   mirrorL: number | null = null;
+  t: DrawingLabels = DRAWING_LABELS_FR;
   constructor(private view: DrawingView) {}
   private mp(p: V3): V3 { return this.mirrorL == null ? p : [this.mirrorL - p[0], p[1], p[2]]; }
   poly(raw: readonly V3[], fill: string, o: Partial<Prim> = {}) {
@@ -81,7 +98,9 @@ function shadeHex(hex: string, k: number): string {
 }
 
 const m = (mm: number) => mm / 1000;
-const fmt = (mm: number) => `${(mm / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} m`;
+const fmt = (c: Canvas, mm: number) => `${(mm / 1000).toLocaleString(c.t.intl, { maximumFractionDigits: 2 })} m`;
+/** cote de hauteur : libellé du modèle (« hauteur des poteaux avant », « hauteur libre »…), sinon « hauteur » */
+const heightText = (c: Canvas, label?: string) => (label ? label.charAt(0).toLowerCase() + label.slice(1) : c.t.height);
 
 /** Cote : trait d'attache + valeur. */
 function dimension(c: Canvas, a: V3, b: V3, off: V3, text: string) {
@@ -139,13 +158,13 @@ function drawPergola(c: Canvas, s: Extract<SceneModel, { kind: "pergola" }>, vie
   if (view !== "front") {
     // trois quarts : au-dessus de la poutre de chaque côté (les cotes occupent le sol) ; dessus : au-delà du bord
     const y = H + 0.75, o = view === "top" ? 0.5 : 0;
-    c.label([L / 2, y, D + o], "Avant", "middle", "side-label");
-    c.label([L / 2, y, -o], s.wall ? "Arrière (mur)" : "Arrière", "middle", "side-label");
-    c.label([-o, y, D / 2], "Gauche", view === "top" ? "end" : "middle", "side-label");
-    c.label([L + o, y, D / 2], "Droite", view === "top" ? "start" : "middle", "side-label");
+    c.label([L / 2, y, D + o], c.t.front, "middle", "side-label");
+    c.label([L / 2, y, -o], s.wall ? c.t.backWall : c.t.back, "middle", "side-label");
+    c.label([-o, y, D / 2], c.t.left, view === "top" ? "end" : "middle", "side-label");
+    c.label([L + o, y, D / 2], c.t.right, view === "top" ? "start" : "middle", "side-label");
   } else {
-    c.label([-0.25, 0.1, D], "Gauche", "end", "side-label");
-    c.label([L + 0.25, 0.1, D], "Droite", "start", "side-label");
+    c.label([-0.25, 0.1, D], c.t.left, "end", "side-label");
+    c.label([L + 0.25, 0.1, D], c.t.right, "start", "side-label");
   }
   // poutres périphériques ; toiture toile : rails inclinés du mur (haut) vers la poutre avant (pente indicative 10°)
   const fabricRoof = s.roof === "fabric";
@@ -188,10 +207,10 @@ function drawPergola(c: Canvas, s: Extract<SceneModel, { kind: "pergola" }>, vie
     }
   }
   // cotes : largeur devant, projection sur le côté gauche, hauteur au poteau avant droit (pas de chevauchement)
-  if (view !== "top") dimension(c, [0, 0, D], [L, 0, D], [0, 0, 0.5], `largeur ${fmt(s.lengthMm)}`);
-  else dimension(c, [0, H, D], [L, H, D], [0, 0, 0.45], `largeur ${fmt(s.lengthMm)}`);
-  if (view !== "front") dimension(c, [0, view === "top" ? H : 0, 0], [0, view === "top" ? H : 0, D], [-0.5, 0, 0], `projection ${fmt(s.widthMm)}`);
-  if (view !== "top") dimension(c, [L, 0, D], [L, H, D], [0.45, 0, 0.45], `hauteur ${fmt(s.heightMm)}`);
+  if (view !== "top") dimension(c, [0, 0, D], [L, 0, D], [0, 0, 0.5], `${c.t.width} ${fmt(c, s.lengthMm)}`);
+  else dimension(c, [0, H, D], [L, H, D], [0, 0, 0.45], `${c.t.width} ${fmt(c, s.lengthMm)}`);
+  if (view !== "front") dimension(c, [0, view === "top" ? H : 0, 0], [0, view === "top" ? H : 0, D], [-0.5, 0, 0], `${c.t.projection} ${fmt(c, s.widthMm)}`);
+  if (view !== "top") dimension(c, [L, 0, D], [L, H, D], [0.45, 0, 0.45], `${heightText(c, s.heightLabel)} ${fmt(c, s.heightMm)}${s.indicative.heightMm ? c.t.indicative : ""}`);
 }
 
 function drawScreen(c: Canvas, s: Extract<SceneModel, { kind: "screen" }>, view: DrawingView, deploy: number) {
@@ -209,8 +228,8 @@ function drawScreen(c: Canvas, s: Extract<SceneModel, { kind: "screen" }>, view:
   c.box(0, rail, 0, H, z0, z1 * 0.6, s.guides.color);
   c.box(Wd - rail, Wd, 0, H, z0, z1 * 0.6, s.guides.color);
   c.box(0, Wd, H, H + cas, z0, z1, s.cassette.color);
-  dimension(c, [0, 0, z1], [Wd, 0, z1], [0, -0.3, view === "top" ? 0.3 : 0], `largeur ${fmt(s.widthMm)}`);
-  if (view !== "top") dimension(c, [Wd, 0, z1], [Wd, H + cas, z1], [0.35, 0, 0], `hauteur ${fmt(s.heightMm)}`);
+  dimension(c, [0, 0, z1], [Wd, 0, z1], [0, -0.3, view === "top" ? 0.3 : 0], `${c.t.width} ${fmt(c, s.widthMm)}`);
+  if (view !== "top") dimension(c, [Wd, 0, z1], [Wd, H + cas, z1], [0.35, 0, 0], `${heightText(c, s.heightLabel)} ${fmt(c, s.heightMm)}`);
 }
 
 function drawAwning(c: Canvas, s: Extract<SceneModel, { kind: "awning" }>, view: DrawingView, deploy: number) {
@@ -241,10 +260,10 @@ function drawAwning(c: Canvas, s: Extract<SceneModel, { kind: "awning" }>, view:
   if (s.led) c.line([0.1, H - cabH - 0.01, cabD * 0.8], [Wd - 0.1, H - cabH - 0.01, cabD * 0.8], LED, { sw: 3, glow: true, key: "led", depth: 1e5 });
   if (s.anemometer) {
     c.box(Wd + 0.15, Wd + 0.3, H + 0.15, H + 0.3, 0, 0.12, "#5b5f63", { key: "sensor" } as Partial<Prim>);
-    c.label([Wd + 0.22, H + 0.42, 0.06], "capteur", "middle");
+    c.label([Wd + 0.22, H + 0.42, 0.06], c.t.sensor, "middle");
   }
-  dimension(c, [0, H, cabD], [Wd, H, cabD], [0, 0.35, 0], `largeur ${fmt(s.widthMm)}`);
-  if (view !== "front") dimension(c, [Wd, endY, 0], [Wd, endY, endZ], [0.4, 0, 0], `avancée ${fmt(s.projectionMm)}`);
+  dimension(c, [0, H, cabD], [Wd, H, cabD], [0, 0.35, 0], `${c.t.width} ${fmt(c, s.widthMm)}`);
+  if (view !== "front") dimension(c, [Wd, endY, 0], [Wd, endY, endZ], [0.4, 0, 0], `${c.t.advance} ${fmt(c, s.projectionMm)}`);
 }
 
 function drawRoof(c: Canvas, s: Extract<SceneModel, { kind: "roof_screen" }>, view: DrawingView, deploy: number) {
@@ -260,8 +279,8 @@ function drawRoof(c: Canvas, s: Extract<SceneModel, { kind: "roof_screen" }>, vi
   for (const x0 of [0, Wd - 0.06]) c.poly([[x0, H + rise + lift, 0], [x0 + 0.06, H + rise + lift, 0], [x0 + 0.06, H + lift, P], [x0, H + lift, P]], s.frameColor, { sw: 0.8 });
   c.box(0, Wd, H + rise + lift - 0.06, H + rise + lift + 0.12, 0, 0.18, s.frameColor);
   c.box(0.06, Wd - 0.06, H + rise + lift - d * Math.tan(t) - 0.03, H + rise + lift - d * Math.tan(t) + 0.03, d - 0.03, d + 0.03, s.frameColor);
-  dimension(c, [0, H + lift, P], [Wd, H + lift, P], [0, 0, 0.4], `largeur ${fmt(s.widthMm)}`);
-  if (view !== "front") dimension(c, [Wd, H + rise + lift, 0], [Wd, H + lift, P], [0.4, 0, 0], `projection ${fmt(s.projectionMm)}`);
+  dimension(c, [0, H + lift, P], [Wd, H + lift, P], [0, 0, 0.4], `${c.t.width} ${fmt(c, s.widthMm)}`);
+  if (view !== "front") dimension(c, [Wd, H + rise + lift, 0], [Wd, H + lift, P], [0.4, 0, 0], `${c.t.projection} ${fmt(c, s.projectionMm)}`);
 }
 
 function drawInsect(c: Canvas, s: InsectSceneModel, view: DrawingView, deploy: number) {
@@ -333,8 +352,8 @@ function drawInsect(c: Canvas, s: InsectSceneModel, view: DrawingView, deploy: n
       frame(0, Wd, 0, H);
       mesh(f, Wd - f, f, H - f);
   }
-  dimension(c, [0, 0, 0.05], [Wd, 0, 0.05], [0, -0.25, view === "top" ? 0.25 : 0], `largeur ${fmt(s.widthMm)}`);
-  if (view !== "top") dimension(c, [Wd, 0, 0.05], [Wd, H, 0.05], [0.3, 0, 0], `hauteur ${fmt(s.heightMm)}`);
+  dimension(c, [0, 0, 0.05], [Wd, 0, 0.05], [0, -0.25, view === "top" ? 0.25 : 0], `${c.t.width} ${fmt(c, s.widthMm)}`);
+  if (view !== "top") dimension(c, [Wd, 0, 0.05], [Wd, H, 0.05], [0.3, 0, 0], `${heightText(c, s.heightLabel)} ${fmt(c, s.heightMm)}`);
 }
 
 /** Enveloppe de l'échelle : un produit garde la même échelle quelle que soit la cote saisie. */
@@ -357,12 +376,15 @@ export interface ProjectDrawingProps {
   caption?: ReactNode;
   /** second dessin sur la page (aperçu mobile) : identifiants SVG distincts */
   idPrefix?: string;
+  /** libellés traduits (français par défaut) */
+  labels?: DrawingLabels;
 }
 
 /** Dessin SVG du projet. `ref` donne accès au SVG (export, image jointe au devis). */
-export const ProjectDrawing = forwardRef<SVGSVGElement, ProjectDrawingProps>(function ProjectDrawing({ model, view, deployment, bladeAngle, envelope, idPrefix }, ref) {
+export const ProjectDrawing = forwardRef<SVGSVGElement, ProjectDrawingProps>(function ProjectDrawing({ model, view, deployment, bladeAngle, envelope, idPrefix, labels = DRAWING_LABELS_FR }, ref) {
   const ids = { title: idPrefix ? `${idPrefix}-drawing-title` : "project-drawing-title", glow: idPrefix ? `${idPrefix}-glow` : "pd-glow" };
   const c = new Canvas(view);
+  c.t = labels;
   // fermeture à gauche seulement : la vue trois quarts se place côté gauche pour la montrer
   const mirrored = view === "three_quarter" && model.kind === "pergola" && model.closures.some((x) => x.side === "left") && !model.closures.some((x) => x.side === "right");
   if (mirrored && model.kind === "pergola") c.mirrorL = m(model.lengthMm);
@@ -409,7 +431,7 @@ export const ProjectDrawing = forwardRef<SVGSVGElement, ProjectDrawingProps>(fun
       data-closures={model.kind === "pergola" ? [...new Map(model.closures.map((x) => [x.side, `${x.side}:${x.type}`])).values()].sort().join(",") : undefined}
       className="block h-auto w-full bg-white"
     >
-      <title id={ids.title}>{`Dessin indicatif : ${model.familyName}, ${model.dimensionLabel}`}</title>
+      <title id={ids.title}>{labels.title.replace("{family}", () => model.familyName).replace("{dims}", () => model.dimensionLabel)}</title>
       <defs>
         <filter id={ids.glow} x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
       </defs>

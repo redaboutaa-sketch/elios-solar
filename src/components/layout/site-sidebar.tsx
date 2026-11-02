@@ -6,16 +6,19 @@
  * courante est dépliée. Repliable pour laisser la place au configurateur (préférence conservée localement).
  */
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "@/i18n/link";
+import { useBarePathname, useT } from "@/i18n/client";
 import { ChevronDown, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type { HeaderCategory } from "./header";
 import { SIDEBAR_LINKS } from "@/config/brand";
 
 const PREF = "heliostores:sidebar";
 
-export function SiteSidebar({ categories }: { categories: HeaderCategory[] }) {
-  const path = usePathname() ?? "/";
+export function SiteSidebar({ categories: raw }: { categories: HeaderCategory[] }) {
+  const t = useT("layout");
+  const path = useBarePathname();
+  const categories = raw.map((c) => ({ ...c, label: (t.categories as Record<string, string>)[c.key] ?? c.label }));
+  const linkLabel = (href: string, fallback: string) => (t.links as Record<string, string>)[href] ?? fallback;
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => {
     const t = window.setTimeout(() => { try { setCollapsed(window.localStorage.getItem(PREF) === "collapsed"); } catch { /* préférence indisponible */ } }, 0);
@@ -35,19 +38,19 @@ export function SiteSidebar({ categories }: { categories: HeaderCategory[] }) {
 
   if (collapsed) {
     return (
-      <aside className="site-sidebar hidden lg:block" data-collapsed="true" aria-label="Navigation du catalogue">
+      <aside className="site-sidebar hidden lg:block" data-collapsed="true" aria-label={t.catalogNav}>
         <div className="sticky top-[calc(var(--header-h)+1rem)] px-2">
-          <button type="button" onClick={toggle} className="btn-ghost size-10 p-0" aria-label="Déplier la navigation du catalogue" aria-expanded={false}><PanelLeftOpen className="size-5" aria-hidden="true" /></button>
+          <button type="button" onClick={toggle} className="btn-ghost size-10 p-0" aria-label={t.sidebarExpand} aria-expanded={false}><PanelLeftOpen className="size-5" aria-hidden="true" /></button>
         </div>
       </aside>
     );
   }
   return (
-    <aside className="site-sidebar hidden lg:block" aria-label="Navigation du catalogue" data-testid="site-sidebar">
+    <aside className="site-sidebar hidden lg:block" aria-label={t.catalogNav} data-testid="site-sidebar">
       <nav className="sticky top-[calc(var(--header-h)+1rem)] max-h-[calc(100dvh-var(--header-h)-2rem)] overflow-y-auto overscroll-contain py-2 pl-4 pr-3 text-sm">
         <div className="mb-2 flex items-center justify-between">
-          <p className="eyebrow">Catalogue</p>
-          <button type="button" onClick={toggle} className="btn-ghost size-9 p-0" aria-label="Replier la navigation du catalogue" aria-expanded={true}><PanelLeftClose className="size-4" aria-hidden="true" /></button>
+          <p className="eyebrow">{t.catalog}</p>
+          <button type="button" onClick={toggle} className="btn-ghost size-9 p-0" aria-label={t.sidebarCollapse} aria-expanded={true}><PanelLeftClose className="size-4" aria-hidden="true" /></button>
         </div>
         <ul className="space-y-0.5">
           {categories.map((c) => {
@@ -57,7 +60,7 @@ export function SiteSidebar({ categories }: { categories: HeaderCategory[] }) {
               <li key={c.key}>
                 <div className="flex items-center">
                   <Link href={c.href} aria-current={path === c.href ? "page" : undefined} className={`side-link grow font-semibold ${famActive ? "text-brand-800" : ""}`} data-active={path === c.href || undefined}>{c.label}</Link>
-                  <button type="button" className="btn-ghost size-8 shrink-0 p-0" aria-expanded={open} aria-label={`${open ? "Masquer" : "Afficher"} les modèles ${c.label}`} onClick={() => setOpenKeys((o) => ({ ...o, [c.key]: !open }))}><ChevronDown className={`size-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`} aria-hidden="true" /></button>
+                  <button type="button" className="btn-ghost size-8 shrink-0 p-0" aria-expanded={open} aria-label={(open ? t.modelsHide : t.modelsShow).replace("{family}", c.label)} onClick={() => setOpenKeys((o) => ({ ...o, [c.key]: !open }))}><ChevronDown className={`size-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`} aria-hidden="true" /></button>
                 </div>
                 {open && c.items.length > 0 && (
                   <ul className="mb-1 ml-2 border-l border-sand-200 pl-2">
@@ -72,9 +75,9 @@ export function SiteSidebar({ categories }: { categories: HeaderCategory[] }) {
           })}
         </ul>
         <ul className="mt-3 space-y-0.5 border-t border-sand-200 pt-3">
-          {SIDEBAR_LINKS.map((l) => <li key={l.href}><Link href={l.href} aria-current={isActive(l.href) ? "page" : undefined} data-active={isActive(l.href) || undefined} className="side-link">{l.label}</Link></li>)}
+          {SIDEBAR_LINKS.map((l) => <li key={l.href}><Link href={l.href} aria-current={isActive(l.href) ? "page" : undefined} data-active={isActive(l.href) || undefined} className="side-link">{linkLabel(l.href, l.label)}</Link></li>)}
         </ul>
-        <Link href="/devis" className="btn-cta mt-4 w-full text-sm">Demander un devis</Link>
+        <Link href="/devis" className="btn-cta mt-4 w-full text-sm">{t.quote}</Link>
       </nav>
     </aside>
   );

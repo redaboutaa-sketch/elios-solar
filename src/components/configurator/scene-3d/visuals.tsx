@@ -6,25 +6,39 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { Box, Download, Image as ImageIcon, Map as MapIcon } from "lucide-react";
-import { buildSceneModel, customSceneBlocker, has3D, representedItems, SCENE_DISCLAIMER, type SceneModel } from "@/domain/scene-model";
-import { DRAWING_VIEWS, ProjectDrawing, drawingToPng, envelopeOf, type DrawingView } from "../project-drawing";
+import { buildSceneModel, customSceneBlocker, has3D, representedItems, type SceneModel } from "@/domain/scene-model";
+import { DRAWING_VIEWS, ProjectDrawing, drawingToPng, envelopeOf, type DrawingLabels, type DrawingView } from "../project-drawing";
 import type { AwningInput, CatalogSnapshot, EvaluationResult, PergolaCustomInput, PergolaStandardInput } from "@/domain/types";
 import { nearestAllowed, systemSceneBlocker, type SystemInput } from "@/domain/system";
+import { useIntl, useT } from "@/i18n/client";
+import { fmt } from "@/i18n/format";
 
-const loading = () => <p className="grid aspect-[4/3] sm:aspect-[16/10] place-items-center rounded-lg bg-sand-100 text-sm text-stone-700">Chargement de la vue 3D…</p>;
+function Loading3D() {
+  const t = useT("configurator").visuals;
+  return <p className="grid aspect-[4/3] sm:aspect-[16/10] place-items-center rounded-lg bg-sand-100 text-sm text-stone-700">{t.loading3d}</p>;
+}
+const loading = () => <Loading3D />;
+
+/** Libellés traduits du dessin du projet. */
+function useDrawingLabels(): DrawingLabels {
+  const t = useT("configurator").drawing;
+  const intl = useIntl();
+  return useMemo(() => ({ ...t, intl }), [t, intl]);
+}
 const PergolaScene3D = dynamic(() => import("./viewer-3d").then((m) => m.PergolaScene3D), { ssr: false, loading });
 const AwningScene3D = dynamic(() => import("./viewer-3d").then((m) => m.AwningScene3D), { ssr: false, loading });
 
 type Mode = "illustration" | "plan" | "3d";
 
 function ModeSwitch({ mode, onChange, withPlan }: { mode: Mode; onChange: (m: Mode) => void; withPlan: boolean }) {
+  const t = useT("configurator").visuals;
   const items: Array<{ id: Mode; label: string; icon: ReactNode }> = [
-    { id: "illustration", label: "Illustration", icon: <ImageIcon className="size-4" aria-hidden="true" /> },
-    ...(withPlan ? [{ id: "plan" as const, label: "Plan 2D", icon: <MapIcon className="size-4" aria-hidden="true" /> }] : []),
-    { id: "3d", label: "Vue 3D", icon: <Box className="size-4" aria-hidden="true" /> },
+    { id: "illustration", label: t.illustration, icon: <ImageIcon className="size-4" aria-hidden="true" /> },
+    ...(withPlan ? [{ id: "plan" as const, label: t.plan, icon: <MapIcon className="size-4" aria-hidden="true" /> }] : []),
+    { id: "3d", label: t.view3d, icon: <Box className="size-4" aria-hidden="true" /> },
   ];
   return (
-    <div role="group" aria-label="Mode de visualisation" className="inline-flex rounded-[3px] border border-sand-300 bg-white p-1">
+    <div role="group" aria-label={t.modeGroup} className="inline-flex rounded-[3px] border border-sand-300 bg-white p-1">
       {items.map((it) => (
         <button key={it.id} type="button" aria-pressed={mode === it.id} data-testid={it.id === "3d" ? "view-3d-toggle" : undefined} onClick={() => onChange(it.id)} className={`inline-flex items-center gap-1.5 rounded-[2px] px-3 py-1.5 text-sm min-h-9 ${mode === it.id ? "bg-anthracite text-sand-50" : "text-stone-800"}`}>
           {it.icon}{it.label}
@@ -48,6 +62,7 @@ export function PergolaVisuals({ catalog, input, result, art, plan, selectedSegm
   onImage?: (dataUrl: string) => void;
   onCaptureReady?: (capture: (() => Promise<string>) | null) => void;
 }) {
+  const t = useT("configurator").visuals;
   const [mode, setMode] = useState<Mode>("illustration");
   const model = useMemo(() => {
     if (mode !== "3d") return null;
@@ -60,7 +75,7 @@ export function PergolaVisuals({ catalog, input, result, art, plan, selectedSegm
       {mode === "illustration" && <div className="card overflow-hidden">{art}</div>}
       {mode === "3d" && (
         <div className="card p-3">
-          {model ? <PergolaScene3D model={model} selected={selectedSegment} onSelect={onSelectSegment} onImage={onImage} onCaptureReady={onCaptureReady} fallback={<div className="overflow-hidden rounded-lg">{art}</div>} /> : <p data-testid="scene-3d-blocked" role="status" className="text-sm text-stone-700">{(input.kind === "pergola_custom" && customSceneBlocker(catalog, input)) || "Vue 3D indisponible pour cette configuration (dimension ou gamme inconnue)."}</p>}
+          {model ? <PergolaScene3D model={model} selected={selectedSegment} onSelect={onSelectSegment} onImage={onImage} onCaptureReady={onCaptureReady} fallback={<div className="overflow-hidden rounded-lg">{art}</div>} /> : <p data-testid="scene-3d-blocked" role="status" className="text-sm text-stone-700">{(input.kind === "pergola_custom" && customSceneBlocker(catalog, input)) || t.unavailable3d}</p>}
         </div>
       )}
       {plan && <div className="card p-3">{plan}</div>}
@@ -117,15 +132,17 @@ export function drawingEnvelope(model: SceneModel | null, rules: { dims: { width
  * les champs (il se ferme d'un geste et se rouvre depuis la barre). Même modèle que le dessin principal.
  */
 export function SystemDrawingPeek({ catalog, input, result, onClose }: { catalog: CatalogSnapshot; input: SystemInput; result: EvaluationResult; onClose: () => void }) {
+  const t = useT("configurator").visuals;
+  const labels = useDrawingLabels();
   const { model, rules } = useSystemDrawing(catalog, input, result);
   const envelope = drawingEnvelope(model, rules);
   return (
-    <div role="region" aria-label="Aperçu de mon projet" data-testid="drawing-peek" className="fixed left-2 bottom-[4.75rem] z-30 w-[min(20rem,62vw)] overflow-hidden rounded-lg border border-sand-300 bg-white shadow-soft lg:hidden">
+    <div role="region" aria-label={t.peekRegion} data-testid="drawing-peek" className="fixed left-2 bottom-[4.75rem] z-30 w-[min(20rem,62vw)] overflow-hidden rounded-lg border border-sand-300 bg-white shadow-soft lg:hidden">
       <div className="flex items-center justify-between border-b border-sand-200 px-2 py-1 text-xs text-stone-700">
-        <span>Aperçu indicatif</span>
-        <button type="button" onClick={onClose} className="min-h-8 px-2 underline" aria-label="Fermer l'aperçu">Fermer</button>
+        <span>{t.peekTitle}</span>
+        <button type="button" onClick={onClose} className="min-h-8 px-2 underline" aria-label={t.closeAria}>{t.close}</button>
       </div>
-      {model && envelope ? <ProjectDrawing model={model} view="three_quarter" deployment={1} bladeAngle={25} envelope={envelope} idPrefix="peek" /> : <p className="p-3 text-xs text-stone-700">Saisissez des cotes valides pour afficher l'aperçu.</p>}
+      {model && envelope ? <ProjectDrawing model={model} view="three_quarter" deployment={1} bladeAngle={25} envelope={envelope} idPrefix="peek" labels={labels} /> : <p className="p-3 text-xs text-stone-700">{t.peekEmpty}</p>}
     </div>
   );
 }
@@ -147,6 +164,8 @@ export function SystemVisuals({ catalog, input, result, art, onImage, onCaptureR
   /** expose le dessin SVG courant (image jointe au devis, export) */
   onDrawingReady?: (get: (() => SVGSVGElement | null) | null) => void;
 }) {
+  const t = useT("configurator").visuals;
+  const labels = useDrawingLabels();
   const [tab, setTab] = useState<"project" | "photos">("project");
   const [mode, setMode] = useState<ProjectMode>("drawing");
   const [view, setView] = useState<DrawingView>("three_quarter");
@@ -154,7 +173,7 @@ export function SystemVisuals({ catalog, input, result, art, onImage, onCaptureR
   const [bladeAngle, setBladeAngle] = useState(25);
   const [exportState, setExportState] = useState<"idle" | "busy" | "done" | "error">("idle");
   const { model, rules } = useSystemDrawing(catalog, input, result);
-  const blocker = rules ? systemSceneBlocker(rules, input) : "Système inconnu.";
+  const blocker = rules ? systemSceneBlocker(rules, input) : t.unknownSystem;
   const svgRef = useRef<SVGSVGElement | null>(null);
   useEffect(() => {
     onDrawingReady?.(() => svgRef.current);
@@ -181,36 +200,36 @@ export function SystemVisuals({ catalog, input, result, art, onImage, onCaptureR
   );
   return (
     <div className="space-y-3" data-testid="system-visuals">
-      <div role="tablist" aria-label="Visuels" className="flex gap-1 border-b border-sand-200">
-        {tabBtn("project", "Visualisation de mon projet")}
-        {tabBtn("photos", "Photos")}
+      <div role="tablist" aria-label={t.tablist} className="flex gap-1 border-b border-sand-200">
+        {tabBtn("project", t.tabProject)}
+        {tabBtn("photos", t.tabPhotos)}
       </div>
       <div role="tabpanel" id="vis-panel-project" aria-labelledby="vis-tab-project" hidden={tab !== "project"} className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <div role="group" aria-label="Rendu" className="inline-flex rounded-[3px] border border-sand-300 bg-white p-1">
-            <button type="button" aria-pressed={mode === "drawing"} onClick={() => setMode("drawing")} className={`inline-flex min-h-9 items-center gap-1.5 rounded-[2px] px-3 text-sm ${mode === "drawing" ? "bg-anthracite text-sand-50" : "text-stone-800"}`} data-testid="view-drawing-toggle"><MapIcon className="size-4" aria-hidden="true" />Dessin</button>
-            <button type="button" aria-pressed={mode === "3d"} disabled={!can3d} title={can3d ? undefined : "Vue 3D non disponible pour ce produit : le dessin reste à jour."} onClick={() => setMode("3d")} className={`inline-flex min-h-9 items-center gap-1.5 rounded-[2px] px-3 text-sm disabled:opacity-50 ${mode === "3d" ? "bg-anthracite text-sand-50" : "text-stone-800"}`} data-testid="view-3d-toggle"><Box className="size-4" aria-hidden="true" />Vue 3D</button>
+          <div role="group" aria-label={t.render} className="inline-flex rounded-[3px] border border-sand-300 bg-white p-1">
+            <button type="button" aria-pressed={mode === "drawing"} onClick={() => setMode("drawing")} className={`inline-flex min-h-9 items-center gap-1.5 rounded-[2px] px-3 text-sm ${mode === "drawing" ? "bg-anthracite text-sand-50" : "text-stone-800"}`} data-testid="view-drawing-toggle"><MapIcon className="size-4" aria-hidden="true" />{t.drawing}</button>
+            <button type="button" aria-pressed={mode === "3d"} disabled={!can3d} title={can3d ? undefined : t.no3d} onClick={() => setMode("3d")} className={`inline-flex min-h-9 items-center gap-1.5 rounded-[2px] px-3 text-sm disabled:opacity-50 ${mode === "3d" ? "bg-anthracite text-sand-50" : "text-stone-800"}`} data-testid="view-3d-toggle"><Box className="size-4" aria-hidden="true" />{t.view3d}</button>
           </div>
           {mode === "drawing" && (
-            <div role="group" aria-label="Vues du dessin" className="flex flex-wrap gap-1">
-              {DRAWING_VIEWS.map((v) => <button key={v.id} type="button" aria-pressed={view === v.id} onClick={() => setView(v.id)} className={`min-h-9 rounded-[2px] border px-3 text-xs ${view === v.id ? "border-ink bg-anthracite text-sand-50" : "border-sand-300 bg-white"}`}>{v.label}</button>)}
+            <div role="group" aria-label={t.viewsGroup} className="flex flex-wrap gap-1">
+              {DRAWING_VIEWS.map((v) => <button key={v.id} type="button" aria-pressed={view === v.id} onClick={() => setView(v.id)} className={`min-h-9 rounded-[2px] border px-3 text-xs ${view === v.id ? "border-ink bg-anthracite text-sand-50" : "border-sand-300 bg-white"}`}>{t.views[v.id]}</button>)}
             </div>
           )}
         </div>
-        {blocker && <p role="status" data-testid="scene-3d-blocked" className="rounded-lg border border-warning/40 bg-white p-2 text-xs text-stone-800">{blocker.replace("Vue 3D indisponible", "Visualisation figée sur la dernière cote valide")}</p>}
+        {blocker && <p role="status" data-testid="scene-3d-blocked" className="rounded-lg border border-warning/40 bg-white p-2 text-xs text-stone-800">{blocker.replace("Vue 3D indisponible", t.frozen)}</p>}
         <div className={mode === "drawing" ? "card overflow-hidden" : "hidden"}>
-          {model && envelope ? <ProjectDrawing ref={svgRef} model={model} view={view} deployment={deployment / 100} bladeAngle={bladeAngle} envelope={envelope} /> : <p className="grid aspect-[16/10] place-items-center p-4 text-sm text-stone-700">Saisissez des cotes dans la plage proposée pour afficher votre projet.</p>}
+          {model && envelope ? <ProjectDrawing ref={svgRef} model={model} view={view} deployment={deployment / 100} bladeAngle={bladeAngle} envelope={envelope} labels={labels} /> : <p className="grid aspect-[16/10] place-items-center p-4 text-sm text-stone-700">{t.empty}</p>}
         </div>
         {mode === "drawing" && model && (
           <>
             {movable === "blades" ? (
-              <label className="flex items-center gap-3 text-xs text-stone-800"><span className="whitespace-nowrap">Ouverture des lames</span><input type="range" min={0} max={model.kind === "pergola" ? model.blades.maxAngleDeg ?? 90 : 90} value={bladeAngle} onChange={(e) => setBladeAngle(Number(e.target.value))} className="flex-1 accent-brand-600" aria-valuetext={`${bladeAngle} degrés`} /><span className="w-10 text-right tabular-nums">{bladeAngle}°</span></label>
+              <label className="flex items-center gap-3 text-xs text-stone-800"><span className="whitespace-nowrap">{t.blades}</span><input type="range" min={0} max={model.kind === "pergola" ? model.blades.maxAngleDeg ?? 90 : 90} value={bladeAngle} onChange={(e) => setBladeAngle(Number(e.target.value))} className="flex-1 accent-brand-600" aria-valuetext={fmt(t.degrees, { n: bladeAngle })} /><span className="w-10 text-right tabular-nums">{bladeAngle}°</span></label>
             ) : movable ? (
-              <label className="flex items-center gap-3 text-xs text-stone-800"><span className="whitespace-nowrap">{model.kind === "insect" ? "Position de la toile" : model.kind === "awning" ? "Déploiement de la toile" : "Descente de la toile"}</span><input type="range" min={0} max={100} value={deployment} onChange={(e) => setDeployment(Number(e.target.value))} className="flex-1 accent-brand-600" aria-valuetext={`${deployment} %`} /><span className="w-10 text-right tabular-nums">{deployment} %</span></label>
+              <label className="flex items-center gap-3 text-xs text-stone-800"><span className="whitespace-nowrap">{model.kind === "insect" ? t.insectPosition : model.kind === "awning" ? t.awningDeploy : t.screenDrop}</span><input type="range" min={0} max={100} value={deployment} onChange={(e) => setDeployment(Number(e.target.value))} className="flex-1 accent-brand-600" aria-valuetext={`${deployment} %`} /><span className="w-10 text-right tabular-nums">{deployment} %</span></label>
             ) : null}
             <div className="flex flex-wrap items-center gap-3">
-              <button type="button" className="btn-secondary py-1.5 text-sm" onClick={exportDrawing} disabled={exportState === "busy"} data-testid="export-drawing"><Download className="size-4" aria-hidden="true" /> Exporter l'image du projet</button>
-              <span aria-live="polite" className="text-xs text-stone-700">{exportState === "done" ? "Image exportée." : exportState === "error" ? "Export impossible sur ce navigateur." : ""}</span>
+              <button type="button" className="btn-secondary py-1.5 text-sm" onClick={exportDrawing} disabled={exportState === "busy"} data-testid="export-drawing"><Download className="size-4" aria-hidden="true" /> {t.export}</button>
+              <span aria-live="polite" className="text-xs text-stone-700">{exportState === "done" ? t.exported : exportState === "error" ? t.exportError : ""}</span>
             </div>
             <ul className="list-disc pl-5 text-xs text-stone-700" data-testid="represented-items">{representedItems(catalog, model).map((t) => <li key={t}>{t}</li>)}</ul>
           </>
@@ -218,11 +237,11 @@ export function SystemVisuals({ catalog, input, result, art, onImage, onCaptureR
         {mode === "3d" && can3d && model && has3D(model) && (
           <div className="card p-3"><SystemScene3D model={model} onImage={onImage} onCaptureReady={onCaptureReady} fallback={null} /></div>
         )}
-        <p className="text-xs text-stone-700">{SCENE_DISCLAIMER} : proportions selon vos cotes, sections et teintes indicatives. Les réglages d'affichage ne modifient ni la configuration ni le prix.</p>
+        <p className="text-xs text-stone-700">{t.disclaimer}</p>
       </div>
       <div role="tabpanel" id="vis-panel-photos" aria-labelledby="vis-tab-photos" hidden={tab !== "photos"} className="space-y-2">
         <div className="card overflow-hidden">{art}</div>
-        <p className="text-xs text-stone-700" data-testid="photos-note">Photos d'illustration du produit : elles ne changent pas avec vos choix. Votre configuration est représentée dans « Visualisation de mon projet ».</p>
+        <p className="text-xs text-stone-700" data-testid="photos-note">{t.photosNote}</p>
       </div>
     </div>
   );

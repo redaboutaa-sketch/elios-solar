@@ -8,16 +8,21 @@ export { PUBLIC_PRICE_SOURCE_KEY };
 
 /** Clientèles servies par la boutique (aucun compte professionnel) ; une grille « particuliers » prime sur « toutes ». */
 const SHOP_CLIENTELES = ["PARTICULIER", "ALL"] as const;
+/**
+ * Devise de la boutique : panier, commande et PDF sont libellés en euros (src/lib/money.ts). Une grille dans une autre
+ * devise n'alimente jamais le site (aucune conversion) : elle reste chiffrée au devis.
+ */
+export const SHOP_CURRENCY = "EUR";
 
 /**
  * Grilles publiques par famille : versions de grille (administration → Tarifs) publiées, de nature VENTE, avec devise
- * et base fiscale, en vigueur à `now`. Coûts d'achat, brouillons et grilles professionnelles ne sont jamais chargés.
+ * en euros et base fiscale établie, en vigueur à `now`. Coûts d'achat, brouillons et grilles professionnelles ne sont jamais chargés.
  * Sans grille en vigueur, les systèmes restent chiffrés au devis.
  */
 export async function loadPublicSystemPrices(now: Date = new Date()): Promise<{ version: string; tables: Map<string, SystemPriceTable> }> {
   const lists = await prisma.supplierPriceList.findMany({
     where: {
-      scope: "GRID", status: "ACTIVE", nature: "SALE", clientele: { in: [...SHOP_CLIENTELES] }, currency: { not: null }, taxBasis: { not: "UNKNOWN" }, familySlug: { not: null },
+      scope: "GRID", status: "ACTIVE", nature: "SALE", clientele: { in: [...SHOP_CLIENTELES] }, currency: SHOP_CURRENCY, taxBasis: { not: "UNKNOWN" }, familySlug: { not: null },
       AND: [{ OR: [{ validFrom: null }, { validFrom: { lte: now } }] }, { OR: [{ validTo: null }, { validTo: { gt: now } }] }],
     },
     orderBy: [{ publishedAt: "desc" }, { version: "desc" }],

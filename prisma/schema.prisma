@@ -139,6 +139,10 @@ model SiteSettings {
   shipmentPolicy       String   @default("GROUPED")
   chatEnabled          Boolean  @default(true)
   chatOfflineMessage   String   @default("")
+  /// habillage saisonnier léger (src/domain/seasonal.ts) : actif seulement si un thème est choisi ET dans la période
+  seasonalTheme        String   @default("")
+  seasonalStartsAt     DateTime?
+  seasonalEndsAt       DateTime?
   updatedAt            DateTime @updatedAt
 }
 

@@ -62,6 +62,7 @@ export const systemSchema = z.object({
   widthMm: z.number().int(),
   depthMm: z.number().int().optional(),
   heightMm: z.number().int().optional(),
+  installHeightMm: z.number().int().min(1).max(20000).optional(),
   mounting: z.enum(["wall", "freestanding", "niche", "facade", "ceiling", "rafter", "roof", "frame", "reveal"]),
   finishCode: z.string().min(1).max(40),
   fabricCode: z.string().max(40).optional(),

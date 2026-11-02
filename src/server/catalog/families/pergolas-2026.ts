@@ -16,8 +16,8 @@ export const PERGOLA_SOURCES = {
   pageSB350: src("aluprof-sb-350", "Page fabricant « SB 350 Pergola – ready-made product »", "https://aluprof.com/en/product/pergola-sb-350"),
   dteSB350: src("dte-sb350-fr-2025", "Documentation technique et d'utilisation Pergola SB350, DT-E 5.13 (éd. 4, janvier 2025, FR)"),
   dopSB350: src("dop-sb350-25", "Déclarations des performances P/SB350/25 et PD/SB350/25 (2025-12-05)"),
-  suppPergolas: src("supp-pergolas", "Supplément technique PERGOLAS (FR)"),
-  brochurePergolas: src("brochure-pergolas-fr", "Brochure « Pergolas » (FR)"),
+  suppPergolas: src("supp-pergolas", "Supplément technique PERGOLAS (FR, état 2026.05.12)"),
+  brochurePergolas: src("brochure-pergolas-fr", "Brochure « Pergolas » (FR, 04.2026)"),
   catalogueClient: src("catalogue-thysens", "Catalogue THYSENS (collection SELT, 161 p.)"),
   pageSB450: src("aluprof-sb-450", "Page fabricant « SB 450 »", "https://aluprof.com/fr/produit/sb-450"),
   iuikSB450: src("iuik-sb450-fr", "Notice d'utilisation et d'entretien SB 450 (FR, état au 2026-05-12)"),
@@ -67,7 +67,8 @@ const malaga: HelioFamily = {
     },
     fixedSizes: MALAGA_DEPTHS.map((d) => ({ code: `3500x${d}`, label: `3,50 m × ${(d / 1000).toLocaleString("fr-FR")} m (avancée), hauteur libre 2,50 m`, widthMm: 3500, depthMm: d, heightMm: 2500, sources: [at(S.dteSB350, "p. 8")] })),
     mountings: [{ code: "freestanding", label: "Autoportante (quatre poteaux)", status: "established", sources: [at(S.pageSB350, "« free-standing version only »"), at(S.dteSB350, "p. 5"), at(S.catalogueClient, "p. 15")], note: "Un supplément technique évoque une version murale, contredite par toutes les autres sources : non proposée." }],
-    finishes: [finishOf("RAL 9016 mat", [at(S.pageSB350, "couleurs"), at(S.brochurePergolas, "p. 6")]), finishOf("RAL 7016 mat", [at(S.pageSB350, "couleurs"), at(S.brochurePergolas, "p. 6")])],
+    finishes: [finishOf("RAL 9016 mat", [at(S.pageSB350, "couleurs"), at(S.brochurePergolas, "p. 6")]), finishOf("RAL 7016 mat", [at(S.pageSB350, "couleurs"), at(S.brochurePergolas, "p. 6")])].map((f) => ({ ...f, tier: "standard" as const })),
+    palette: { edition: "nuancier du fabricant, brochure Pergolas (04.2026) : deux teintes standard, aucune autre teinte possible", component: "structure et lames", sources: [at(S.brochurePergolas, "p. 6"), at(S.pageSB350, "couleurs")] },
     included: [
       { label: "Toiture à lames aluminium plates, orientables de 0 à 120°", sources: [at(S.suppPergolas, "p. 109"), at(S.brochurePergolas, "p. 6")] },
       { label: "Moteur 24 V et électronique de commande préinstallés", sources: [at(S.dteSB350, "p. 8, 34")] },
@@ -139,7 +140,11 @@ const marbella: HelioFamily = {
       { code: "freestanding", label: "Autoportante", status: "established", sources: [at(S.iuikSB450, "p. 7–10"), at(S.brochurePergolas, "p. 4")] },
       { code: "wall", label: "Adossée (un ou deux murs)", status: "established", sources: [at(S.iuikSB450, "p. 7–10 — types de mur 1 à 4"), at(S.suppPergolas, "p. 59")], note: "type de mur (1 à 4) établi à l'étude du projet" },
     ],
-    finishes: SB450_RAL.map((c) => finishOf(`${c} mat`, [at(S.pageSB450, "palette de teintes")])),
+    // page SB 450 : 33 teintes sans supplément (seuls les décors bois sont « * Option avec supplément ») ; la brochure
+    // (p. 17) précise que la disponibilité dépend du produit et de son tarif → teintes ajoutées le 2026-11-01 à confirmer
+    finishes: [...SB450_RAL.map((c) => ({ ...finishOf(`${c} mat`, [at(S.pageSB450, "palette de teintes")]), tier: "standard" as const })),
+      ...["FSM 71319 mat", "VSR 240 satin", "VSR 780 mat", "DB 703 mat", "RAL 7038 mat", "RAL 7048 mat", "RAL 7016 STR", "RAL 7021 STR", "RAL 9005 STR", "RAL 9010 STR", "RAL 8003 STR"].map((c) => ({ ...finishOf(c, [at(S.pageSB450, "palette de teintes"), at(S.brochurePergolas, "p. 17 — couleurs standard de la structure")]), tier: "standard" as const, status: "to_confirm" as const, note: "teinte de la palette du modèle, disponibilité confirmée au devis" }))],
+    palette: { edition: "nuancier du fabricant, brochure Pergolas (04.2026) et page produit consultée le 2026-10-20", component: "structure et lames", sources: [at(S.pageSB450, "palette de teintes"), at(S.brochurePergolas, "p. 17")], note: "la disponibilité d'une teinte dépend du produit : confirmée au devis" },
     customFinish: { code: "WOOD_DECOR", label: "Décor bois (option)", status: "to_confirm", sources: [at(S.pageSB450, "« * Option avec supplément » : R26, R27, R28, R30, R49, R52")], note: "décor bois en supplément : conditions et délai confirmés au devis" },
     included: [
       { label: "Toiture à lames orientables, motorisée (moteur dissimulé)", sources: [at(S.iuikSB450, "p. 6, 10"), at(S.pageSB450, "description")] },
@@ -220,7 +225,11 @@ const sevilla: HelioFamily = {
       height: { label: "Hauteur des poteaux avant", minMm: null, maxMm: 2450, confirmAboveMm: 2400, confirmNote: "la documentation technique indique 2 450 mm, la page web et la brochure 2,4 m", sources: [at(S.dteVZiiiP, "p. 9"), at(S.brochurePergolas, "p. 8")] },
     },
     mountings: [{ code: "wall", label: "Adossée (deux poteaux avant)", status: "established", sources: [at(S.brochurePergolas, "p. 8 — autoportée NON / adossée OUI"), at(S.dteVZiiiP, "p. 12")] }],
-    finishes: ["RAL 9010 mat", "RAL 7016 mat", "RAL 9006 mat", "FSM 71319", "RAL 9005 mat"].map((c) => finishOf(c, [at(S.pageVZiiiP, "teintes sans supplément")])),
+    // HelioLux = SOLID (transcodification du 2026-10-31) : SOLID n'a pas de liste de teintes publiée (« large choix de
+    // couleurs issues du nuancier RAL », Supplément PERGOLAS p. 123, brochure p. 7 et p. 17) ; les cinq teintes ci-dessous
+    // sont celles du modèle précédent de la fiche → à confirmer
+    finishes: ["RAL 9010 mat", "RAL 7016 mat", "RAL 9006 mat", "FSM 71319", "RAL 9005 mat"].map((c) => ({ ...finishOf(c, [at(S.pageVZiiiP, "teintes sans supplément"), at(S.suppPergolas, "p. 123"), at(S.brochurePergolas, "p. 7")]), status: "to_confirm" as const, note: "teinte en cours de confirmation pour ce modèle" })),
+    palette: { edition: "nuancier RAL du fabricant (liste du modèle en cours de confirmation)", component: "structure", sources: [at(S.suppPergolas, "p. 123"), at(S.brochurePergolas, "p. 7, p. 17")] },
     customFinish: { code: "RAL_CUSTOM", label: "Autre teinte RAL (option)", status: "to_confirm", sources: [at(S.pageVZiiiP, "« * Option avec supplément »")], note: "disponibilité confirmée par le fabricant, au devis" },
     fabrics: [
       { code: "serge_100", label: "Toile Serge 100 (facteur d'ouverture 1 %)", status: "established", description: "Toile microperforée très occultante.", swatch: "#8b8a84", sources: [at(S.dteVZiiiP, "p. 9"), at(S.brochurePergolas, "p. 8")] },

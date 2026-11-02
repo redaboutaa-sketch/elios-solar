@@ -13,7 +13,7 @@
  */
 import { layoutForFamily } from "./layout";
 import type { AwningInput, CatalogSnapshot, ConfigurationInput, EvaluationResult, Family, Layout, Mounting, PergolaCustomInput, PergolaStandardInput, SideKey } from "./types";
-import { MOUNTING_FR, evaluateSystemRules, supportsFor, systemSceneBlocker, type SystemInput, type SystemRules } from "./system";
+import { INSTALL_HEIGHT_SANE, MOUNTING_FR, evaluateSystemRules, supportsFor, systemSceneBlocker, type SystemInput, type SystemRules } from "./system";
 
 export const SCENE_DISCLAIMER = "Visualisation indicative — ne constitue pas un plan d'exécution";
 /** Mention portée par toute image jointe à un devis (image, PDF, compte, administration). */
@@ -102,6 +102,8 @@ export interface PergolaSceneModel {
   widthMm: number;
   lengthMm: number;
   heightMm: number;
+  /** libellé de la hauteur dans les règles du modèle (ex. « Hauteur des poteaux avant ») : cote du dessin */
+  heightLabel?: string;
   mounting: Mounting;
   /** mur de la maison le long du côté arrière */
   wall: boolean;
@@ -186,6 +188,8 @@ export interface ScreenSceneModel {
   finishLabel: string;
   widthMm: number;
   heightMm: number;
+  /** libellé de la hauteur dans les règles du modèle (ex. « Hauteur des poteaux avant ») : cote du dessin */
+  heightLabel?: string;
   mounting: "niche" | "facade";
   cassette: { widthMm: number; heightMm: number; color: string };
   /** coulisses latérales (guidage zip) */
@@ -226,6 +230,8 @@ export interface InsectSceneModel {
   finishLabel: string;
   widthMm: number;
   heightMm: number;
+  /** libellé de la hauteur dans les règles du modèle (ex. « Hauteur des poteaux avant ») : cote du dessin */
+  heightLabel?: string;
   opening: "roller_vertical" | "roller_lateral" | "pleated" | "sliding" | "fixed" | "hinged";
   leaves: 1 | 2;
   mounting: string;
@@ -575,6 +581,12 @@ function finishOf(rules: SystemRules, code: string) {
  * coupes du catalogue quand elles existent ; la teinte de toile, la position des accessoires et le nombre de
  * supports restent indicatifs. Retourne null si les cotes ne sont pas valides ou si le système n'est pas représentable.
  */
+/** hauteur de pose souhaitée (store banne, toiture) représentée si elle est dans les bornes de saisie ; sinon hauteur indicative */
+function saneInstallHeight(input: SystemInput): number | null {
+  const v = input.installHeightMm;
+  return v != null && Number.isInteger(v) && v >= INSTALL_HEIGHT_SANE.minMm && v <= INSTALL_HEIGHT_SANE.maxMm ? v : null;
+}
+
 export function buildSystemSceneModel(catalog: CatalogSnapshot, input: SystemInput, layout?: Layout | null): SceneModel | null {
   const family = catalog.families.find((f) => f.slug === input.familySlug);
   const rules = family?.systemRules;
@@ -597,6 +609,7 @@ export function buildSystemSceneModel(catalog: CatalogSnapshot, input: SystemInp
       finishLabel,
       widthMm: input.widthMm,
       heightMm: input.heightMm ?? 0,
+      heightLabel: rules.dims.height?.label,
       mounting: input.mounting === "niche" ? "niche" : "facade",
       cassette: { widthMm: rules.structure3d?.cassetteMm?.[0] ?? 120, heightMm: rules.structure3d?.cassetteMm?.[1] ?? 120, color },
       guides: { kind: "zip", color },
@@ -622,7 +635,7 @@ export function buildSystemSceneModel(catalog: CatalogSnapshot, input: SystemInp
       finishLabel: `coffre ${finishLabel}, toile ${fabric?.label ?? "(teinte indicative)"}`,
       widthMm: input.widthMm,
       projectionMm: input.depthMm ?? 0,
-      heightMm: INDICATIVE_AWNING_HEIGHT_MM,
+      heightMm: saneInstallHeight(input) ?? INDICATIVE_AWNING_HEIGHT_MM,
       bracketMount: input.mounting === "ceiling" ? "ceiling" : input.mounting === "rafter" ? "rafter" : "wall",
       bracketCount: supports ?? 2,
       cabinet: { code: input.finishCode, color, heightMm: rules.structure3d?.cassetteMm?.[1] ?? 245, depthMm: rules.structure3d?.cassetteMm?.[0] ?? 300 },
@@ -649,7 +662,7 @@ export function buildSystemSceneModel(catalog: CatalogSnapshot, input: SystemInp
       widthMm: input.widthMm,
       projectionMm: input.depthMm ?? 0,
       tiltDeg: rules.structure3d?.tiltDeg ? Math.max(rules.structure3d.tiltDeg[0], Math.min(rules.structure3d.tiltDeg[1], 10)) : 8,
-      heightMm: 2400,
+      heightMm: saneInstallHeight(input) ?? 2400,
       frameColor: color,
       fabric: { code: input.fabricCode ?? "", label: fabric?.label ?? "toile", color: fabric?.swatch ?? NEUTRAL_FABRIC },
       control: control?.label ?? "motorisée",
@@ -667,6 +680,7 @@ export function buildSystemSceneModel(catalog: CatalogSnapshot, input: SystemInp
       finishLabel,
       widthMm: input.widthMm,
       heightMm: input.heightMm ?? 0,
+      heightLabel: rules.dims.height?.label,
       opening: rules.insect?.opening ?? "fixed",
       leaves: rules.insect?.leaves ?? 1,
       mounting: MOUNTING_FR[input.mounting],
@@ -744,6 +758,7 @@ function pergolaSystemScene(family: Family, rules: SystemRules, input: SystemInp
     heaters: { count: 0 },
     lanterns: { count: 0 },
     sections: s3.postMm && s3.beamMm && s3.bladeMm ? { postAlongMm: s3.postMm[0], postAcrossMm: s3.postMm[1], beamHeightMm: s3.beamMm[0], beamWidthMm: s3.beamMm[1], bladeWidthMm: s3.bladeMm[0], bladeThicknessMm: s3.bladeMm[1] } : undefined,
+    heightLabel: rules.dims.height?.label,
     indicative: { heightMm: input.heightMm == null, sections: true, bladeCount: true, accessoryPlacement: true },
     toConfirm,
     disclaimer: `${SCENE_DISCLAIMER}. ${CUSTOM_FEASIBILITY_NOTE}`,

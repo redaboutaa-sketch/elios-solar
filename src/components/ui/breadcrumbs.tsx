@@ -1,12 +1,14 @@
-import Link from "next/link";
+import Link from "@/i18n/link";
+import { getT } from "@/i18n/server";
 
 /** Fil d'Ariane discret. `tone="light"` : sur photographie (bandeaux de famille). */
-export function Breadcrumbs({ items, tone = "default" }: { items: Array<{ href?: string; label: string }>; tone?: "default" | "light" }) {
+export async function Breadcrumbs({ items, tone = "default" }: { items: Array<{ href?: string; label: string }>; tone?: "default" | "light" }) {
+  const t = (await getT("catalog")).breadcrumbs;
   const light = tone === "light";
   return (
-    <nav aria-label="Fil d'Ariane" className={`text-sm ${light ? "text-sand-200" : "text-stone-700"}`}>
+    <nav aria-label={t.aria} className={`text-sm ${light ? "text-sand-200" : "text-stone-700"}`}>
       <ol className="flex flex-wrap items-center gap-1.5">
-        <li><Link href="/" className="hover:underline">Accueil</Link></li>
+        <li><Link href="/" className="hover:underline">{t.home}</Link></li>
         {items.map((it, i) => (
           <li key={i} className="flex items-center gap-1.5">
             <span aria-hidden="true">/</span>

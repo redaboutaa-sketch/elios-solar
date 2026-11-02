@@ -76,7 +76,10 @@ const corsica: HelioFamily = {
       { code: "ceiling", label: "Au plafond", status: "established", sources: [at(S.supp, "p. 55")] },
       { code: "rafter", label: "Sur chevrons", status: "established", sources: [at(S.supp, "p. 55")] },
     ],
-    finishes: ["RAL 9010 mat", "RAL 9006 mat", "RAL 8014 mat", "RAL 1015 mat", "FSM 71319", "RAL 9005", "RAL 8003", "RAL 7016"].map((c) => finishOf(c, [at(S.brochure, "p. 13 — coloris standard"), at(S.pageCorsica, "couleurs")])).concat([{ ...finishOf("VSR 240", [at(S.brochure, "p. 13")]), swatch: "#5a5550" }]),
+    // coloris standard de la brochure (10.2026) : 7016, 9005 et 8003 en finition structurée (codes conservés : mêmes teintes)
+    finishes: ["RAL 9010 mat", "RAL 9006 mat", "RAL 8014 mat", "RAL 1015 mat", "FSM 71319", "RAL 9005", "RAL 8003", "RAL 7016"].map((c) => ({ ...finishOf(/^RAL (9005|8003|7016)$/.test(c) ? `${c} STR` : c, [at(S.brochure, "p. 13 — coloris standard"), at(S.pageCorsica, "couleurs")]), code: c.replace(/\s+/g, "_").toUpperCase(), tier: "standard" as const })).concat([{ ...finishOf("VSR 240 satin", [at(S.brochure, "p. 13")]), code: "VSR_240", swatch: "#5a5550", tier: "standard" as const }]),
+    customFinish: { code: "RAL_CUSTOM", label: "Autre teinte du nuancier (option avec supplément)", status: "to_confirm" as const, tier: "special" as const, sources: [at(S.pageCorsica, "couleurs — « * Option avec supplément »")], note: "teinte avec supplément : disponibilité, conditions et délai confirmés au devis" },
+    palette: { edition: "nuancier du fabricant, brochure stores bannes (10.2026)", component: "coffre et bras", sources: [at(S.brochure, "p. 13"), at(S.pageCorsica, "couleurs — « * Option avec supplément »")] },
     fabrics: FABRIC_COLLECTION([at(S.supp, "p. 51"), at(S.dteCorsica, "p. 6")]),
     controls: [{ code: "electric", label: "Motorisation électrique", kind: "electric", status: "to_confirm", sources: [at(S.brochure, "p. 13 — « proposé exclusivement avec une motorisation électrique »"), at(S.dteCorsica, "p. 6")], note: "modèle de moteur établi au devis" }],
     included: [
@@ -146,7 +149,9 @@ const jamaica: HelioFamily = {
       { code: "ceiling", label: "Au plafond (sans auvent)", status: "established", sources: [at(S.supp, "p. 20, 23 — l'auvent ne s'utilise pas avec les supports de plafond")] },
       { code: "rafter", label: "Sur chevrons", status: "established", sources: [at(S.supp, "p. 23")] },
     ],
-    finishes: ["RAL 9010 mat", "RAL 9006 mat", "RAL 8014 mat", "RAL 1015 mat", "FSM 71319", "RAL 9005", "RAL 7016"].map((c) => finishOf(c, [at(S.brochure, "p. 15 — coloris standard"), at(S.pageJamaica, "couleurs")])),
+    finishes: ["RAL 9010 mat", "RAL 9006 mat", "RAL 8014 mat", "RAL 1015 mat", "FSM 71319", "RAL 9005", "RAL 7016"].map((c) => ({ ...finishOf(/^RAL (9005|7016)$/.test(c) ? `${c} STR` : c, [at(S.brochure, "p. 15 — coloris standard"), at(S.pageJamaica, "couleurs")]), code: c.replace(/\s+/g, "_").toUpperCase(), tier: "standard" as const })),
+    customFinish: { code: "RAL_CUSTOM", label: "Autre teinte du nuancier (option avec supplément)", status: "to_confirm" as const, tier: "special" as const, sources: [at(S.pageJamaica, "couleurs — « * Option avec supplément »")], note: "teinte avec supplément : disponibilité, conditions et délai confirmés au devis" },
+    palette: { edition: "nuancier du fabricant, brochure stores bannes (10.2026)", component: "coffre et bras", sources: [at(S.brochure, "p. 15"), at(S.pageJamaica, "couleurs")] },
     fabrics: FABRIC_COLLECTION([at(S.supp, "p. 17")]),
     controls: [
       { code: "crank_1500", label: "Manuelle — manivelle 150 cm", kind: "manual", status: "established", sources: [at(S.dteJamaica, "p. 6")] },
@@ -215,7 +220,9 @@ const madera: HelioFamily = {
     },
     depthWidthMin: minWidth([[1600, 2050], [2100, 2550], [2600, 3050], [3100, 3550], [3600, 4100]], [at(S.supp, "p. 4")]),
     mountings: [{ code: "wall", label: "Murale", status: "established", sources: [at(S.supp, "p. 9 — montage mural"), at(S.imMadeira, "§ 6.2")], note: "seule pose documentée" }],
-    finishes: ["RAL 9010 mat", "RAL 9006 mat", "RAL 8014 mat", "RAL 1015 mat", "FSM 71319", "RAL 9005", "RAL 7016"].map((c) => finishOf(c, [at(S.brochure, "p. 5 — coloris standard"), at(S.pageMadeira, "couleurs")])),
+    finishes: ["RAL 9010 mat", "RAL 9006 mat", "RAL 8014 mat", "RAL 1015 mat", "FSM 71319", "RAL 9005", "RAL 7016"].map((c) => ({ ...finishOf(/^RAL (9005|7016)$/.test(c) ? `${c} STR` : c, [at(S.brochure, "p. 5 — coloris standard"), at(S.pageMadeira, "couleurs")]), code: c.replace(/\s+/g, "_").toUpperCase(), tier: "standard" as const })),
+    customFinish: { code: "RAL_CUSTOM", label: "Autre teinte du nuancier (option avec supplément)", status: "to_confirm" as const, tier: "special" as const, sources: [at(S.pageMadeira, "couleurs — « * Option avec supplément »")], note: "teinte avec supplément : disponibilité, conditions et délai confirmés au devis" },
+    palette: { edition: "nuancier du fabricant, brochure stores bannes (10.2026)", component: "coffre et bras", sources: [at(S.brochure, "p. 5"), at(S.pageMadeira, "couleurs")] },
     fabrics: FABRIC_COLLECTION([at(S.supp, "p. 3")]),
     controls: [{ code: "electric", label: "Motorisation électrique (secours manuel possible)", kind: "electric", status: "to_confirm", sources: [at(S.brochure, "p. 5 — « exclusivement avec une motorisation électrique »"), at(S.supp, "p. 3 — manœuvre de secours par manivelle possible")], note: "moteur établi au devis" }],
     included: [

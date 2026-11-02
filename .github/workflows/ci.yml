@@ -34,6 +34,8 @@ jobs:
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3400
       NEXT_PUBLIC_BRAND_NAME: ELIOS SOLAR
       SITE_INDEXABLE: "false"
+      # aperçus de traduction servis en recette (noindex) ; aucune langue publiée en dehors du français
+      SITE_LOCALES: "fr,es,nl,de,en"
       PAYMENT_PROVIDER: demo
       DEMO_PAYMENT_WEBHOOK_SECRET: ci-demo-webhook-secret
       MAIL_PROVIDER: log
@@ -102,6 +104,7 @@ jobs:
             echo "NEXT_PUBLIC_BRAND_NAME=ELIOS SOLAR"
             echo "NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3401"
             echo "SITE_INDEXABLE=false"
+            echo "SITE_LOCALES=fr,es,nl,de,en"
             echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)"
             echo "BETTER_AUTH_URL=http://127.0.0.1:3401"
             echo "MAIL_PROVIDER=log"

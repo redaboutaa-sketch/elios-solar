@@ -32,10 +32,18 @@ describe("catalogue HELIOSTORES : périmètre", () => {
       ["madera", "HelioSquare", "STORES_BANNES"],
       ["moskifold", "MoskiFold", "MOUSTIQUAIRES"],
       ["moskifold-2", "MoskiFold 2", "MOUSTIQUAIRES"],
+      ["moskiup", "MoskiUp", "MOUSTIQUAIRES"],
+      ["moskislide", "MoskiSlide", "MOUSTIQUAIRES"],
+      ["moskifix", "MoskiFix", "MOUSTIQUAIRES"],
     ]);
-    // moustiquaires sans dimensions maximales documentées : brouillons, jamais configurables
-    expect(HELIOSTORES_FAMILIES.filter((f) => f.status === "DRAFT").map((f) => f.slug)).toEqual(["moskiup", "moskislide", "moskifix"]);
-    for (const s of ["moskiup", "moskislide", "moskifix"]) expect(realCodes(s), s).toContain("blocking:family_unavailable");
+    // moustiquaires sans dimensions documentées (retour client du 2026-11-01) : demandes d'étude, jamais un configurateur validé
+    expect(HELIOSTORES_FAMILIES.filter((f) => f.status === "DRAFT").map((f) => f.slug)).toEqual([]);
+    for (const s of ["moskifold", "moskifold-2", "moskiup", "moskislide", "moskifix"]) {
+      const f = HELIOSTORES_FAMILIES.find((x) => x.slug === s)!;
+      expect(f.rules.studyOnly, s).toBeTruthy();
+      expect(f.rules.dims.width.maxMm, s).toBe(0);
+      expect(realCodes(s), s).toContain("review:study_request");
+    }
   });
 
   it("modèles retirés (SB 400, SB 500, VERANDA FTS) : conservés, archivés, jamais configurables ; un choix de gamme est proposé", () => {
