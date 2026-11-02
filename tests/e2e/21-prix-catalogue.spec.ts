@@ -52,9 +52,9 @@ test("administration → modification → simulation → publication → configu
   await page.getByTestId("save-fixed").click();
   await expect(page.getByText(/1 tarif\(s\) fixe\(s\) enregistré\(s\)/)).toBeVisible();
 
-  // simulation du brouillon (2,90 m × 2,90 m → cellule supérieure), teinte RAL : C = 1 000 + 15 % = 1 150 ; D = 1 380
+  // simulation du brouillon (3,00 m × 3,00 m ; une cote sous la seule valeur de la grille serait hors grille), teinte RAL : C = 1 000 + 15 % = 1 150 ; D = 1 380
   const draftId = gridUrl.split("/").pop()!.split("?")[0]!;
-  await page.goto(`/admin/tarifs/simulateur?produit=sevilla&pose=wall&largeur=2900&cote=2900&version=${draftId}&teinte=RAL_CUSTOM`);
+  await page.goto(`/admin/tarifs/simulateur?produit=sevilla&pose=wall&largeur=3000&cote=3000&version=${draftId}&teinte=RAL_CUSTOM`);
   await expect(page.getByTestId("sim-sale-ht")).toHaveText(/1\s?150,00\s?(€|EUR)/);
   await expect(page.getByTestId("sim-sale-ttc")).toHaveText(/1\s?380,00\s?(€|EUR)/);
   await expect(page.getByTestId("sim-natures")).toContainText("remise revendeur non communiquée");
@@ -73,8 +73,12 @@ test("administration → modification → simulation → publication → configu
     await v.goto("/configurateur/sevilla");
     await acceptNecessaryOnly(v);
     await v.locator("[data-testid=system-configurator][data-ready]").waitFor();
-    await v.locator("#dim-width").fill("2900"); await v.locator("#dim-width").blur();
-    await v.locator("#dim-depth").fill("2900"); await v.locator("#dim-depth").blur();
+    // HelioLux (SOLID) : autoportante par défaut ; la grille de test est celle de la pose adossée
+    await v.getByTestId("config-steps").getByRole("button", { name: /Pose et finitions/ }).click();
+    await v.getByRole("radio", { name: /Adossée/ }).check();
+    await v.getByTestId("config-steps").getByRole("button", { name: /Dimensions/ }).click();
+    await v.locator("#dim-width").fill("3000"); await v.locator("#dim-width").blur();
+    await v.locator("#dim-depth").fill("3000"); await v.locator("#dim-depth").blur();
     const price = v.getByTestId("system-price");
     await expect(price).toHaveAttribute("data-priced", "true");
     await expect(v.getByTestId("system-price-amount")).toHaveText(/1\s?000\s?€\s?HT/);
@@ -88,7 +92,7 @@ test("administration → modification → simulation → publication → configu
     await v.locator("#dim-width").fill("3500"); await v.locator("#dim-width").blur();
     await expect(price).toHaveAttribute("data-priced", "false");
     await expect(price).not.toContainText("€");
-    await v.locator("#dim-width").fill("2900"); await v.locator("#dim-width").blur();
+    await v.locator("#dim-width").fill("3000"); await v.locator("#dim-width").blur();
     await expect(price).toHaveAttribute("data-priced", "true");
     // récapitulatif et devis : décomposition figée
     await v.getByTestId("config-steps").getByRole("button", { name: /Récapitulatif et devis/ }).click();
