@@ -7,7 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { CATEGORIES, type CategoryKey } from "@/domain/categories";
 import { applyBps } from "@/domain/money";
 import { defaultSystemInput, type SystemInput, type SystemMounting, type SystemRules } from "@/domain/system";
-import { lookupSystemPrice, type SystemPriceTable } from "@/domain/system-pricing";
+import { lookupSystemPrice, priceBreakdown, type SystemPriceTable } from "@/domain/system-pricing";
+import { supplementOf } from "@/server/pricing/system-prices";
 import { evaluate } from "@/domain/engine";
 import { effectiveState, type Clientele, type EffectiveState } from "@/domain/tariffs";
 import { loadCatalog } from "@/server/catalog/load";
@@ -144,13 +145,19 @@ export interface SimulationInput {
   at: Date;
   /** version précise (brouillon compris) ; sinon celle qui serait en vigueur */
   versionId?: string | null;
+  finishCode?: string | null;
+  controlCode?: string | null;
+  options?: string[];
 }
 
 /** Table de prix d'un produit à une date, pour une clientèle (mêmes règles que la boutique), ou d'une version précise. */
-async function tableFor(familySlug: string, at: Date, clientele: Clientele, versionId?: string | null) {
+async function tableFor(familySlug: string, at: Date, clientele: Clientele, versionId?: string | null, nature: "SALE" | "SUPPLIER_LIST" = "SALE") {
   const where = versionId
     ? { id: versionId, scope: "GRID" as const, familySlug }
-    : { scope: "GRID" as const, status: "ACTIVE" as const, nature: "SALE" as const, familySlug, clientele: { in: clientele === "ALL" ? ["ALL" as const] : [clientele, "ALL" as const] }, AND: [{ OR: [{ validFrom: null }, { validFrom: { lte: at } }] }, { OR: [{ validTo: null }, { validTo: { gt: at } }] }] };
+    : nature === "SUPPLIER_LIST"
+      // prix catalogue fournisseur : dernière version non rejetée par variante (jamais publiée sur le site)
+      ? { scope: "GRID" as const, status: { not: "REJECTED" as const }, nature: "SUPPLIER_LIST" as const, familySlug }
+      : { scope: "GRID" as const, status: "ACTIVE" as const, nature: "SALE" as const, familySlug, clientele: { in: clientele === "ALL" ? ["ALL" as const] : [clientele, "ALL" as const] }, AND: [{ OR: [{ validFrom: null }, { validFrom: { lte: at } }] }, { OR: [{ validTo: null }, { validTo: { gt: at } }] }] };
   const lists = await prisma.supplierPriceList.findMany({ where, orderBy: [{ publishedAt: "desc" }, { version: "desc" }], select: { id: true, version: true, sourceKey: true, variantKey: true, clientele: true, nature: true, status: true, currency: true, taxBasis: true, dimRule: true, vatRateBps: true } });
   const chosen = new Map<string, (typeof lists)[number]>();
   for (const l of [...lists].sort((a, b) => (a.clientele === "ALL" ? 1 : 0) - (b.clientele === "ALL" ? 1 : 0))) if (!chosen.has(l.variantKey)) chosen.set(l.variantKey, l);
@@ -158,10 +165,14 @@ async function tableFor(familySlug: string, at: Date, clientele: Clientele, vers
   if (!used.length) return { table: null, used };
   const table: SystemPriceTable = { currency: used[0]!.currency ?? "", taxBasis: used[0]!.taxBasis === "UNKNOWN" ? null : used[0]!.taxBasis, dimAKey: "projection", listVersion: used[0]!.version, variants: {}, cells: [] };
   for (const l of used) {
-    table.variants![l.variantKey] = { currency: l.currency ?? "", taxBasis: l.taxBasis === "UNKNOWN" ? null : l.taxBasis, dimRule: l.dimRule === "ROUND_UP" ? "round_up" : "exact", vatRateBps: l.vatRateBps, listVersion: l.version, versionId: l.id };
-    const rows = await prisma.supplierPriceRow.findMany({ where: { listId: l.id, kind: "GRID", amountMinor: { not: null } }, select: { dimAKey: true, dimAmm: true, widthMinMm: true, widthMaxMm: true, amountMinor: true } });
+    const fixed = await prisma.supplierPriceRow.findMany({ where: { listId: l.id, kind: "FIXED", status: { not: "REJECTED" } }, select: { code: true, label: true, amountMinor: true, conditions: true }, orderBy: { code: "asc" } });
+    table.variants![l.variantKey] = { currency: l.currency ?? "", taxBasis: l.taxBasis === "UNKNOWN" ? null : l.taxBasis, dimRule: l.dimRule === "ROUND_UP" ? "round_up" : "exact", vatRateBps: l.vatRateBps, listVersion: l.version, versionId: l.id, supplements: fixed.map(supplementOf).filter((x): x is NonNullable<typeof x> => x != null) };
+    const rows = await prisma.supplierPriceRow.findMany({ where: { listId: l.id, kind: "GRID", amountMinor: { not: null } }, select: { dimAKey: true, dimAmm: true, widthMinMm: true, widthMaxMm: true, amountMinor: true, conditions: true } });
     if (rows[0]?.dimAKey === "hauteur") table.dimAKey = "hauteur";
-    for (const r of rows) if (r.dimAmm != null && r.widthMaxMm != null) table.cells.push({ variantKey: l.variantKey, dimAmm: r.dimAmm, widthMinMm: r.widthMinMm ?? r.widthMaxMm, widthMaxMm: r.widthMaxMm, amountMinor: r.amountMinor! });
+    for (const r of rows) {
+      const requirement = (r.conditions as { requirement?: string } | null)?.requirement;
+      if (r.dimAmm != null && r.widthMaxMm != null) table.cells.push({ variantKey: l.variantKey, dimAmm: r.dimAmm, widthMinMm: r.widthMinMm ?? r.widthMaxMm, widthMaxMm: r.widthMaxMm, amountMinor: r.amountMinor!, ...(requirement ? { requirement } : {}) });
+    }
   }
   return { table, used };
 }
@@ -170,7 +181,8 @@ export async function simulate(s: SimulationInput) {
   const fam = await prisma.productFamily.findUnique({ where: { slug: s.familySlug }, select: { slug: true, name: true, status: true, systemRules: true } });
   if (!fam?.systemRules) return { error: "Produit sans règles de configuration." } as const;
   const rules = fam.systemRules as unknown as SystemRules;
-  const input: SystemInput = { ...defaultSystemInput(fam.slug, rules), kind: "system", familySlug: fam.slug, mounting: s.mounting, widthMm: s.widthMm, ...(rules.dims.depth ? { depthMm: s.dimMm } : {}), ...(rules.dims.height && !rules.dims.depth ? { heightMm: s.dimMm } : {}) };
+  const d = defaultSystemInput(fam.slug, rules);
+  const input: SystemInput = { ...d, kind: "system", familySlug: fam.slug, mounting: s.mounting, widthMm: s.widthMm, ...(rules.dims.depth ? { depthMm: s.dimMm } : {}), ...(rules.dims.height && !rules.dims.depth ? { heightMm: s.dimMm } : {}), ...(s.finishCode ? { finishCode: s.finishCode } : {}), ...(s.controlCode ? { controlCode: s.controlCode } : {}), ...(s.options?.length ? { options: s.options.map((code) => ({ code })) } : {}) };
   const { table, used } = await tableFor(fam.slug, s.at, s.clientele, s.versionId);
   const lookup = lookupSystemPrice(table, rules, input);
   const catalog = await loadCatalog();
@@ -181,7 +193,11 @@ export async function simulate(s: SimulationInput) {
   const price = lookup.ok ? lookup.price : null;
   const vat = price ? (price.vatRateBps ?? settingsVat) : null;
   const ttc = price && vat != null ? (price.taxBasis === "TTC" ? price.amountMinor : price.amountMinor + applyBps(price.amountMinor, vat)) : null;
-  return { family: { slug: fam.slug, name: fam.name, status: fam.status }, input, used, lookup, price, vatRateBps: vat, vatFromCatalog: price ? price.vatRateBps == null : false, ttcMinor: ttc, result, table: table ? { dims: [...new Set(table.cells.map((c) => c.dimAmm))].sort((a, b) => a - b), widths: [...new Set(table.cells.map((c) => `${c.widthMinMm}–${c.widthMaxMm}`))] } : null, rules: { dimLabel: rules.dims.depth?.label ?? rules.dims.height?.label ?? "Dimension", mountings: rules.mountings.map((m) => m.code) } } as const;
+  // A. prix catalogue fournisseur de la même configuration (interne, jamais publié) ; B. achat net : remise non établie
+  const supplier = await tableFor(fam.slug, s.at, s.clientele, null, "SUPPLIER_LIST");
+  const supplierLookup = lookupSystemPrice(supplier.table, rules, input);
+  const supplierBreakdown = supplierLookup.ok && supplier.table ? priceBreakdown(supplier.table, rules, input, supplierLookup.price, settingsVat, fam.name) : null;
+  return { family: { slug: fam.slug, name: fam.name, status: fam.status }, input, used, lookup, price, supplierBreakdown, supplierUsed: supplier.used, finishes: [...rules.finishes, ...(rules.customFinish ? [rules.customFinish] : [])].map((f) => ({ code: f.code, label: f.label })), controls: (rules.controls ?? []).map((c) => ({ code: c.code, label: c.label })), options: rules.options.map((o) => ({ code: o.code, label: o.label })), vatRateBps: vat, vatFromCatalog: price ? price.vatRateBps == null : false, ttcMinor: ttc, result, table: table ? { dims: [...new Set(table.cells.map((c) => c.dimAmm))].sort((a, b) => a - b), widths: [...new Set(table.cells.map((c) => `${c.widthMinMm}–${c.widthMaxMm}`))] } : null, rules: { dimLabel: rules.dims.depth?.label ?? rules.dims.height?.label ?? "Dimension", mountings: rules.mountings.map((m) => m.code) } } as const;
 }
 
 export { gridCells, CATEGORIES };

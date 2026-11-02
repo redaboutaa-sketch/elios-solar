@@ -20,6 +20,18 @@
   SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
 
+## Catalogue de prix 09.2026 (2026-11-02) — `docs/pricing/catalogue-2026-09.md`
+
+- « Liste des prix des produits finis » (EUR HT, prix catalogue avant remise revendeur, valable au 15/09/2026)
+  importée en base : 1 282 lignes tracées (page, tableau, ligne, colonne), 16 grilles « prix catalogue fournisseur »
+  (internes) et leurs 24 suppléments ; grilles de vente = catalogue × 1, TVA 20 %, dimension supérieure (décision
+  écrite du client du 2026-11-02, `docs/DECISIONS.md`).
+- Prix affichés : HelioMax, HelioSky, HelioScreen, HelioSun, HelioPro (complets selon les choix) ; HelioShade et
+  HelioSquare en sous-total partiel (moteur obligatoire à chiffrer). Préparés sans publication : HelioLux (SOLID),
+  HelioRoof (VÉRANDA V ZiiiP) — fiches à aligner. Aucune moustiquaire ni SYSTEM SLIDE dans ce catalogue.
+- Moteur : décomposition (structure, suppléments en % ou montant, éléments à chiffrer, HT/TTC), simulateur A/B/C/D,
+  suppléments éditables, réévaluation d'un devis, commande en ligne toujours fermée (paiement non activé).
+
 ## Itération du 2026-11-01 (dix retours client) — `docs/client-feedback-followup.md`
 
 - Langues fr / es / nl / de / en préparées (préfixes, dictionnaires, sélecteur, aperçus noindex) — **non activées en

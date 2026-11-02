@@ -14,9 +14,19 @@ import type { ParsedRow, ParsedSource } from "./types";
 export const NORMALIZED_COLUMNS = [
   "ref_fournisseur", "produit", "variante", "type_ligne", "code", "libelle", "dimension_a", "unite", "dim_a", "largeur_min", "largeur_max",
   "montant", "devise", "base", "nature", "remise_fournisseur_pct", "inclus", "regle", "source_document", "source_localisation", "valide_du", "valide_au",
+  // suppléments (lignes « option ») : mode de calcul, pourcentage, élément de la configuration concerné ; grille : exigence de la cellule
+  "mode", "pourcentage", "applique_a", "exigence", "obligatoire",
 ] as const;
 type Column = (typeof NORMALIZED_COLUMNS)[number];
 export const NORMALIZED_REQUIRED: readonly Column[] = ["ref_fournisseur", "type_ligne", "libelle", "montant", "devise", "base", "nature", "source_document", "source_localisation"];
+
+/**
+ * Mode d'un supplément : montant fixe, pourcentage du prix du système (assiette : cellule de la grille, documentée par
+ * la colonne « regle »), ou élément à chiffrer (connu mais sans prix applicable : le prix affiché devient partiel).
+ */
+export const SUPPLEMENT_MODES = { montant: "fixed", pourcentage: "percent", a_chiffrer: "pending" } as const;
+/** Cible d'un supplément : « finition:<code> », « tier:special », « option:<code> », « commande:<code> », « toile:<code> », « exigence:<code> », « toujours », « non_configurable » ; plusieurs cibles séparées par « | ». */
+export const SUPPLEMENT_TARGET = /^(toujours|non_configurable|(finition|tier|option|commande|toile|exigence):[a-z0-9_-]+)$/i;
 
 /** Nature déclarée → rôle de montant (colonne) ; chaque rôle devient une lignée de grilles distincte. */
 export const NORMALIZED_ROLES = { catalogue_fournisseur: "CATALOGUE_FOURNISSEUR", achat_net: "ACHAT_NET", vente: "VENTE" } as const;
@@ -125,9 +135,15 @@ export function parseNormalizedRows(table: string[][], opts: NormalizedOptions):
     const wMax = toMm(intOf(get("largeur_max")));
     const wMin = toMm(intOf(get("largeur_min"))) ?? wMax;
     const discount = get("remise_fournisseur_pct");
+    const modeKey = norm(get("mode")) as keyof typeof SUPPLEMENT_MODES;
+    const mode = kind === "OPTION" ? (SUPPLEMENT_MODES[modeKey] ?? (get("mode") ? null : "fixed")) : null;
+    const pct = get("pourcentage").replace(",", ".").replace(/\s*%$/, "");
+    const percentBps = pct && /^\d{1,2}(\.\d{1,2})?$/.test(pct) ? Math.round(Number(pct) * 100) : null;
+    const applies = get("applique_a").split("|").map((x) => x.trim()).filter(Boolean);
     const r: ParsedRow = {
       familySlug,
-      variantKey: get("variante") ? variantFromText(get("variante")) || slugify(get("variante")) : "",
+      // code de variante déjà normalisé (« autoportante-lame-z ») : conservé tel quel ; texte libre : reconnu ou réduit en code
+      variantKey: !get("variante") ? "" : /^[a-z0-9]+(-[a-z0-9]+)*$/.test(get("variante")) ? get("variante") : variantFromText(get("variante")) || slugify(get("variante")),
       kind,
       code: get("code") || (kind === "GRID" ? "" : slugify(get("libelle"))),
       label: get("libelle"),
@@ -141,6 +157,8 @@ export function parseNormalizedRows(table: string[][], opts: NormalizedOptions):
         ...(discount ? { supplierDiscountPct: discount } : {}),
         ...(get("inclus") ? { included: get("inclus") } : {}),
         ...(get("regle") ? { rule: get("regle") } : {}),
+        ...(mode ? { mode, ...(percentBps != null ? { percentBps } : {}), applies, mandatory: /^(oui|yes|1|x)$/i.test(get("obligatoire")) } : {}),
+        ...(kind === "GRID" && get("exigence") ? { requirement: norm(get("exigence")) } : {}),
         ...(get("valide_du") ? { validFrom: parseDate(get("valide_du")) } : {}),
         ...(get("valide_au") ? { validTo: parseDate(get("valide_au")) } : {}),
         source: { document: get("source_document"), location: get("source_localisation") },
@@ -155,7 +173,15 @@ export function parseNormalizedRows(table: string[][], opts: NormalizedOptions):
       status: "OK",
       issues: [],
     };
-    for (const c of NORMALIZED_REQUIRED) if (!get(c)) addIssue(r, `ligne ${line} : colonne « ${c} » vide`, c === "montant" ? "TO_CHECK" : "REJECTED");
+    for (const c of NORMALIZED_REQUIRED) if (!get(c) && !(c === "montant" && (mode === "percent" || mode === "pending"))) addIssue(r, `ligne ${line} : colonne « ${c} » vide`, c === "montant" ? "TO_CHECK" : "REJECTED");
+    if (kind === "OPTION") {
+      if (!mode) addIssue(r, `ligne ${line} : mode inconnu (montant, pourcentage ou a_chiffrer)`, "REJECTED");
+      if (mode === "percent" && percentBps == null) addIssue(r, `ligne ${line} : pourcentage illisible (0 à 99,99)`, "REJECTED");
+      if (mode !== "percent" && get("pourcentage")) addIssue(r, `ligne ${line} : pourcentage renseigné pour un supplément qui n'est pas en pourcentage`, "REJECTED");
+      if (mode !== "fixed" && get("montant")) addIssue(r, `ligne ${line} : montant renseigné pour un supplément en pourcentage ou à chiffrer`, "REJECTED");
+      if (!applies.length) addIssue(r, `ligne ${line} : colonne « applique_a » vide (élément de la configuration concerné)`, "TO_CHECK");
+      for (const a of applies) if (!SUPPLEMENT_TARGET.test(a)) addIssue(r, `ligne ${line} : cible « ${a} » inconnue`, "REJECTED");
+    }
     if (!role) addIssue(r, `ligne ${line} : nature inconnue (catalogue_fournisseur, achat_net ou vente)`, "REJECTED");
     if (!["grille", "grid", "option", "fixe"].includes(kindRaw)) addIssue(r, `ligne ${line} : type_ligne inconnu (grille, option ou fixe)`, "REJECTED");
     if (amount === "invalid") addIssue(r, `ligne ${line} : montant illisible (nombre positif, deux décimales au plus)`, "REJECTED");

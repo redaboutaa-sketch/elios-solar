@@ -1,4 +1,6 @@
 import { formatSystemPrice } from "@/domain/system-pricing";
+import { evaluate } from "@/domain/engine";
+import { loadCatalog } from "@/server/catalog/load";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -31,6 +33,14 @@ export default async function QuoteAdminPage(props: PageProps<"/admin/devis/[id]
   const refunded = quoteOrders.flatMap((o) => o.payments.flatMap((p) => p.refunds)).filter((r) => r.status === "SUCCEEDED").reduce((t, r) => t + r.amountCents, 0);
   if (!quote) notFound();
   const snap = quote.snapshot as { input?: ConfigurationInput | null; result?: EvaluationResult | null } | null;
+  // réévaluation explicite au tarif en vigueur : affichée à côté du prix figé, jamais enregistrée dans le devis
+  const reeval = snap?.input?.kind === "system" ? await (async () => {
+    const r = evaluate(await loadCatalog(), snap.input!);
+    const then = snap.result?.priceBreakdown?.totalMinor ?? snap.result?.systemPrice?.amountMinor ?? null;
+    const now = r.priceBreakdown?.totalMinor ?? r.systemPrice?.amountMinor ?? null;
+    const ref = r.priceBreakdown ?? snap.result?.priceBreakdown;
+    return { then, now, currency: ref?.currency ?? r.systemPrice?.currency ?? "EUR", taxBasis: ref?.taxBasis ?? r.systemPrice?.taxBasis ?? "HT" };
+  })() : null;
   const result = snap?.result ?? null;
   const input = snap?.input ?? null;
   return (
@@ -67,6 +77,13 @@ export default async function QuoteAdminPage(props: PageProps<"/admin/devis/[id]
                 <>
                   <dl data-testid="quote-recap" className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[12rem_1fr]">{(result.recap ?? []).map((r, i) => <div key={`${r.label}-${i}`} className="contents"><dt className="text-stone-700">{r.label}</dt><dd>{r.value}{r.status === "to_confirm" ? <span className="badge-warn ml-2">à confirmer</span> : r.status === "included" ? <span className="badge-ok ml-2">inclus</span> : null}</dd></div>)}</dl>
                   <p className="mt-3 text-sm" data-testid="quote-system-price">{result.systemPrice ? <>Prix de la structure affiché au client : <strong>{formatSystemPrice(result.systemPrice.amountMinor, result.systemPrice.currency, result.systemPrice.taxBasis)}</strong> (grille de vente {result.systemPrice.versionId ? <Link className="underline" href={`/admin/tarifs/grilles/${result.systemPrice.versionId}`}>v{result.systemPrice.listVersion}</Link> : `v${result.systemPrice.listVersion}`}, cellule {result.systemPrice.grid.widthMm} × {result.systemPrice.grid.dimMm} mm{result.systemPrice.variantKey ? `, ${result.systemPrice.variantKey}` : ""}, prix figé à l'émission). Options, pose et livraison à chiffrer.</> : <>Prix : <strong>sur devis</strong> (cote absente de la grille ou aucune grille en vigueur).</>} Tarifs : <Link className="underline" href="/admin/tarifs">écran Tarifs</Link> (administrateurs).</p>
+                  {result.priceBreakdown && (
+                    <div className="mt-2 text-sm" data-testid="quote-breakdown">
+                      <p className="font-medium">Décomposition figée à l'émission — {result.priceBreakdown.partial ? "sous-total partiel" : "total"} {formatSystemPrice(result.priceBreakdown.totalMinor, result.priceBreakdown.currency, result.priceBreakdown.taxBasis)}{result.priceBreakdown.totalTtcMinor != null ? ` (${formatSystemPrice(result.priceBreakdown.totalTtcMinor, result.priceBreakdown.currency, "TTC")})` : ""}</p>
+                      <ul className="list-disc pl-5">{result.priceBreakdown.lines.map((l) => <li key={l.code}>{l.label}{l.detail ? ` (${l.detail})` : ""} : {formatSystemPrice(l.amountMinor, result.priceBreakdown!.currency, result.priceBreakdown!.taxBasis)}</li>)}{result.priceBreakdown.pending.map((x) => <li key={x.code}>À chiffrer : {x.label} — {x.reason}</li>)}</ul>
+                    </div>
+                  )}
+                  {reeval && <p className="mt-2 text-sm" data-testid="quote-reevaluation">Réévaluation au tarif en vigueur aujourd'hui (information, le devis émis n'est pas modifié) : {reeval.now != null ? <><strong>{formatSystemPrice(reeval.now, reeval.currency, reeval.taxBasis)}</strong>{reeval.then != null ? <> — écart {reeval.now - reeval.then >= 0 ? "+" : ""}{formatSystemPrice(reeval.now - reeval.then, reeval.currency, reeval.taxBasis)} par rapport au prix figé</> : null}</> : "aucun prix applicable aujourd'hui (devis)"}.</p>}
                   <h3 className="mt-4 text-sm font-medium">Points signalés</h3>
                   {result.issues.length ? <IssueList issues={result.issues} className="mt-2" /> : <p className="text-sm text-stone-700">Aucun.</p>}
                   {result.layout && <div className="mt-4 rounded-lg border border-sand-200 p-2"><PlanPreview layout={result.layout} segments={{}} /></div>}

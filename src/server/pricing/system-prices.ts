@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import type { SystemPriceTable } from "@/domain/system-pricing";
+import type { PriceSupplement, SystemPriceTable } from "@/domain/system-pricing";
+import { PUBLIC_FORBIDDEN_NAMES } from "@/domain/public-sanitize";
 
 import { PUBLIC_PRICE_SOURCE_KEY } from "./source";
 
@@ -38,16 +39,37 @@ export async function loadPublicSystemPrices(now: Date = new Date()): Promise<{ 
   const picked = [...chosen.values()];
   const rows = picked.length ? await prisma.supplierPriceRow.findMany({
     where: { listId: { in: picked.map((l) => l.id) }, kind: "GRID", amountMinor: { not: null }, status: { not: "REJECTED" }, dimAmm: { not: null }, widthMaxMm: { not: null } },
-    select: { listId: true, dimAKey: true, dimAmm: true, widthMinMm: true, widthMaxMm: true, amountMinor: true },
+    select: { listId: true, dimAKey: true, dimAmm: true, widthMinMm: true, widthMaxMm: true, amountMinor: true, conditions: true },
   }) : [];
+  // suppléments versionnés avec chaque grille (lignes FIXED) ; jamais la référence fournisseur ni la source
+  const fixed = picked.length ? await prisma.supplierPriceRow.findMany({ where: { listId: { in: picked.map((l) => l.id) }, kind: "FIXED", status: { not: "REJECTED" } }, select: { listId: true, code: true, label: true, amountMinor: true, conditions: true }, orderBy: { code: "asc" } }) : [];
   for (const l of picked) {
-    const meta = { currency: l.currency!, taxBasis: l.taxBasis === "UNKNOWN" ? null : l.taxBasis, dimRule: l.dimRule === "ROUND_UP" ? "round_up" as const : "exact" as const, vatRateBps: l.vatRateBps, listVersion: l.version, versionId: l.id };
+    const supplements = fixed.filter((f) => f.listId === l.id).map((f) => supplementOf(f)).filter((x): x is PriceSupplement => x != null);
+    const meta = { currency: l.currency!, taxBasis: l.taxBasis === "UNKNOWN" ? null : l.taxBasis, dimRule: l.dimRule === "ROUND_UP" ? "round_up" as const : "exact" as const, vatRateBps: l.vatRateBps, listVersion: l.version, versionId: l.id, supplements };
     const mine = rows.filter((r) => r.listId === l.id);
     if (!mine.length) continue;
     let t = tables.get(l.familySlug!);
     if (!t) tables.set(l.familySlug!, (t = { ...meta, dimAKey: mine[0]!.dimAKey === "hauteur" ? "hauteur" : "projection", variants: {}, cells: [] }));
     t.variants![l.variantKey] = meta;
-    for (const r of mine) t.cells.push({ variantKey: l.variantKey, dimAmm: r.dimAmm!, widthMinMm: r.widthMinMm ?? r.widthMaxMm!, widthMaxMm: r.widthMaxMm!, amountMinor: r.amountMinor! });
+    for (const r of mine) {
+      const requirement = (r.conditions as { requirement?: string } | null)?.requirement;
+      t.cells.push({ variantKey: l.variantKey, dimAmm: r.dimAmm!, widthMinMm: r.widthMinMm ?? r.widthMaxMm!, widthMaxMm: r.widthMaxMm!, amountMinor: r.amountMinor!, ...(requirement ? { requirement } : {}) });
+    }
   }
   return { version: picked.map((l) => `${l.id}@${l.version}:${l.updatedAt.getTime()}`).sort().join(",") || "none", tables };
+}
+
+/**
+ * Ligne FIXED → supplément public : mode (montant, pourcentage, à chiffrer), cibles et règle d'application. Un tarif fixe
+ * saisi sans mode (ancien format) n'est jamais appliqué automatiquement (cible « non_configurable »).
+ */
+export function supplementOf(f: { code: string; label: string; amountMinor: number | null; conditions: unknown }): PriceSupplement | null {
+  const c = (f.conditions ?? {}) as { mode?: string; percentBps?: number; applies?: string[]; mandatory?: boolean; rule?: string };
+  const mode = c.mode === "percent" || c.mode === "pending" ? c.mode : "fixed";
+  if (mode === "fixed" && f.amountMinor == null) return null;
+  if (mode === "percent" && (c.percentBps == null || !Number.isInteger(c.percentBps))) return null;
+  // public : aucune désignation du fabricant (libellé ou règle) ne quitte l'administration
+  const safe = (t: string | undefined) => (t && !PUBLIC_FORBIDDEN_NAMES.test(t) ? t : undefined);
+  const rule = safe(c.rule);
+  return { code: f.code, label: safe(f.label) ?? "Supplément", mode, amountMinor: mode === "fixed" ? f.amountMinor : null, percentBps: mode === "percent" ? c.percentBps! : null, applies: Array.isArray(c.applies) && c.applies.length ? c.applies : ["non_configurable"], mandatory: !!c.mandatory, ...(rule ? { rule } : {}) };
 }

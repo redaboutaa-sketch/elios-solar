@@ -139,29 +139,36 @@ export default async function GridPage(props: PageProps<"/admin/tarifs/grilles/[
         {formulas.length > 0 && <p className="mt-3 text-xs text-stone-700">Règle observée dans le classeur pour cette colonne (valeurs en cache, jamais recalculées ; non validée comme règle commerciale) : {formulas.slice(0, 3).map((f) => <code key={f} className="mr-2">{f}</code>)}</p>}
       </Section>
 
-      <Section title={`Tarifs fixes (${fixed.length})`}>
-        <p className="mb-2 text-xs text-stone-700">Forfaits ou options à prix fixe, versionnés avec la grille. Les options restent chiffrées au devis par le configurateur : un tarif fixe ne rend pas une option commandable en ligne.</p>
+      <Section title={`Suppléments et tarifs fixes (${fixed.length})`}>
+        <p className="mb-2 text-xs text-stone-700">Versionnés avec la grille. Mode : <strong>montant</strong> fixe, <strong>pourcentage</strong> du prix de la structure (cellule de la grille, arrondi au centime, sans cumul), ou <strong>à chiffrer</strong> (élément connu sans prix : le configurateur affiche alors un sous-total partiel). Cible : élément de la configuration concerné — <code>finition:CODE</code>, <code>tier:special</code>, <code>option:CODE</code>, <code>commande:CODE</code>, <code>toile:CODE</code>, <code>exigence:CODE</code>, <code>toujours</code>, <code>non_configurable</code> (jamais appliqué) ; plusieurs cibles séparées par « | ». Obligatoire : sans cet élément aucun prix « à partir de » n'est affiché.</p>
         {editable ? (
           <form action={saveFixedAction} className="space-y-2 text-sm">
             <input type="hidden" name="id" value={g.id} /><input type="hidden" name="revision" value={g.revision} />
-            <Table caption="Tarifs fixes">
-              <thead><tr><th>Code</th><th>Libellé</th><th>Unité</th><th>Montant ({g.currency ?? "?"})</th><th>Origine</th></tr></thead>
+            <Table caption="Suppléments et tarifs fixes">
+              <thead><tr><th>Code</th><th>Libellé</th><th>Mode</th><th>Montant ({g.currency ?? "?"})</th><th>%</th><th>Cible</th><th>Oblig.</th><th>Règle (interne)</th><th>Origine</th></tr></thead>
               <tbody>
-                {[...fixed, null, null].map((r, i) => (
-                  <tr key={r?.id ?? `new-${i}`}>
-                    <td><input name="code" className="input min-h-0 w-32 py-1" defaultValue={r?.code ?? ""} aria-label="Code" /></td>
-                    <td><input name="label" className="input min-h-0 w-64 py-1" defaultValue={r?.label ?? ""} aria-label="Libellé" /></td>
-                    <td><input name="unit" className="input min-h-0 w-28 py-1" defaultValue={(r?.conditions as { unit?: string } | null)?.unit ?? "forfait"} aria-label="Unité" /></td>
-                    <td><input name="value" className="input min-h-0 w-28 py-1" inputMode="decimal" defaultValue={formatAmountInput(r?.amountMinor)} aria-label="Montant" /></td>
-                    <td className="text-xs text-stone-700">{r ? r.sourceRef : "nouveau"}</td>
-                  </tr>
-                ))}
+                {[...fixed, null, null].map((r, i) => {
+                  const c = (r?.conditions ?? {}) as { unit?: string; mode?: string; percentBps?: number; applies?: string[]; mandatory?: boolean; rule?: string };
+                  return (
+                    <tr key={r?.id ?? `new-${i}`} data-testid={r ? `fixed-${r.code}` : undefined}>
+                      <td><input name="code" className="input min-h-0 w-32 py-1" defaultValue={r?.code ?? ""} aria-label="Code" /><input type="hidden" name="unit" defaultValue={c.unit ?? ""} /></td>
+                      <td><input name="label" className="input min-h-0 w-56 py-1" defaultValue={r?.label ?? ""} aria-label="Libellé" /></td>
+                      <td><select name="mode" className="input min-h-0 py-1" defaultValue={c.mode ?? "fixed"} aria-label="Mode"><option value="fixed">montant</option><option value="percent">pourcentage</option><option value="pending">à chiffrer</option></select></td>
+                      <td><input name="value" className="input min-h-0 w-24 py-1" inputMode="decimal" defaultValue={formatAmountInput(r?.amountMinor)} aria-label="Montant" /></td>
+                      <td><input name="percent" className="input min-h-0 w-16 py-1" inputMode="decimal" defaultValue={c.percentBps != null ? String(c.percentBps / 100).replace(".", ",") : ""} aria-label="Pourcentage" /></td>
+                      <td><input name="applies" className="input min-h-0 w-48 py-1" defaultValue={(c.applies ?? []).join("|")} aria-label="Cible" /></td>
+                      <td><select name="mandatory" className="input min-h-0 py-1" defaultValue={c.mandatory ? "1" : "0"} aria-label="Obligatoire"><option value="0">non</option><option value="1">oui</option></select></td>
+                      <td><input name="rule" className="input min-h-0 w-56 py-1" defaultValue={c.rule ?? ""} aria-label="Règle" /></td>
+                      <td className="text-xs text-stone-700">{r ? `${r.sourceRef}${r.editedBy ? ` — modifié par ${r.editedBy}` : ""}` : "nouveau"}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </Table>
-            <button className="btn-secondary" type="submit">Enregistrer les tarifs fixes</button>
+            <button className="btn-secondary" type="submit" data-testid="save-fixed">Enregistrer les suppléments</button>
           </form>
         ) : fixed.length ? (
-          <Table caption="Tarifs fixes"><thead><tr><th>Code</th><th>Libellé</th><th>Unité</th><th>Montant</th></tr></thead><tbody>{fixed.map((r) => <tr key={r.id}><td>{r.code}</td><td>{r.label}</td><td>{(r.conditions as { unit?: string } | null)?.unit ?? "—"}</td><td>{formatAmount(r.amountMinor, g.currency)}</td></tr>)}</tbody></Table>
+          <Table caption="Suppléments et tarifs fixes"><thead><tr><th>Code</th><th>Libellé</th><th>Mode</th><th>Valeur</th><th>Cible</th><th>Oblig.</th><th>Règle</th></tr></thead><tbody>{fixed.map((r) => { const c = (r.conditions ?? {}) as { mode?: string; percentBps?: number; applies?: string[]; mandatory?: boolean; rule?: string }; return <tr key={r.id}><td>{r.code}</td><td>{r.label}</td><td>{c.mode === "percent" ? "pourcentage" : c.mode === "pending" ? "à chiffrer" : "montant"}</td><td>{c.mode === "percent" ? `${(c.percentBps ?? 0) / 100} %` : c.mode === "pending" ? "—" : formatAmount(r.amountMinor, g.currency)}</td><td className="text-xs">{(c.applies ?? []).join(" | ") || "—"}</td><td>{c.mandatory ? "oui" : "non"}</td><td className="text-xs">{c.rule ?? ""}</td></tr>; })}</tbody></Table>
         ) : <p className="text-sm text-stone-700">Aucun.</p>}
       </Section>
 

@@ -20,3 +20,4 @@
 | 2026-10-19 | Prix démo des fermetures et LED recalculés (erreur de facteur 100 détectée à l'audit v2) | Grille cohérente avec les pergolas, toujours `demo` |
 | 2026-10-19 | Éclairage inclus (Pro) : couleur choisie via l'option `bandes-led` marquée `includedInBase`, une seule ligne « inclus » | Comportement observé sur la référence (« Gratuit ») sans refacturation |
 | 2026-10-19 | Rendus SVG originaux (scène de terrasse, vues multiples) en attendant des photographies autorisées ; liste des médias manquants dans gap-analysis-v2.md § F | Aucune image de tiers |
+| 2026-11-02 | Catalogue « Liste des prix des produits finis » (09.2026, € HT) : prix de vente HELIOSTORES HT = prix catalogue HT (coefficient 1) ; TVA du prix public 20 % ; cote intermédiaire lue à la dimension supérieure de la grille | Décision écrite du client (fichier privé `inputs/heliostores/selt-pricing/decisions/2026-11-02-politique-prix.md`) ; remise revendeur, livraison et pose non décidées |

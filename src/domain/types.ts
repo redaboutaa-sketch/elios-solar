@@ -488,6 +488,8 @@ export interface EvaluationResult {
    * modèle), incomplete (cote de la grille non saisie ou pose sans grille), out_of_grid (cote hors grille), blocked
    * (configuration à corriger), custom (demande hors gamme ou d'étude)
    */
+  /** système : décomposition du prix (structure, suppléments, éléments à chiffrer, HT / TTC) */
+  priceBreakdown?: import("./system-pricing").PriceBreakdown | null;
   priceStatus?: "priced" | "no_table" | "incomplete" | "out_of_grid" | "blocked" | "custom";
   /** système : commande en ligne possible (configuration entièrement tarifée) ou motifs du passage au devis */
   onlineOrder?: { ok: boolean; reasons: string[] };

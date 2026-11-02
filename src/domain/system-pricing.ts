@@ -22,6 +22,29 @@ export interface SystemPriceCell {
   widthMaxMm: number;
   /** montant en unités mineures de `currency` */
   amountMinor: number;
+  /** exigence de la cellule dans la source (ex. « moteur_20nm » : cellule turquoise du catalogue) */
+  requirement?: string;
+}
+
+/**
+ * Supplément versionné avec la grille (administration → Tarifs → grille → suppléments) :
+ * - fixed : montant fixe (unités mineures de la devise de la grille) ;
+ * - percent : pourcentage du prix du système, c'est-à-dire de la cellule de la grille (assiette documentée), arrondi
+ *   au centime (demi supérieur), sans cumul entre pourcentages ;
+ * - pending : élément connu sans prix applicable — le prix affiché devient partiel et l'élément est listé « à chiffrer ».
+ * `applies` : cibles dans la configuration (« finition:<code> », « tier:special », « option:<code> », « commande:<code> »,
+ * « toile:<code> », « exigence:<code> », « toujours », « non_configurable » — jamais appliqué automatiquement).
+ */
+export interface PriceSupplement {
+  code: string;
+  label: string;
+  mode: "fixed" | "percent" | "pending";
+  amountMinor?: number | null;
+  percentBps?: number | null;
+  applies: string[];
+  /** élément obligatoire (moteur d'un store exclusivement motorisé…) : sans lui, pas de prix « à partir de » */
+  mandatory?: boolean;
+  rule?: string;
 }
 
 export type SystemDimRule = "exact" | "round_up";
@@ -35,6 +58,7 @@ export interface SystemPriceGridMeta {
   vatRateBps: number | null;
   listVersion: number;
   versionId?: string;
+  supplements?: PriceSupplement[];
 }
 
 export interface SystemPriceTable {
@@ -67,6 +91,8 @@ export interface SystemPrice {
   dimRule?: SystemDimRule;
   /** taux de TVA de la grille ; null = taux du catalogue */
   vatRateBps?: number | null;
+  /** exigence de la cellule retenue (ex. moteur 20 Nm minimum) */
+  requirement?: string;
 }
 
 export type SystemPriceLookup = { ok: true; price: SystemPrice } | { ok: false; reason: "no_table" | "incomplete" | "out_of_grid" };
@@ -98,13 +124,19 @@ export function lookupSystemPrice(table: SystemPriceTable | null | undefined, ru
   const meta = gridMeta(table, variant);
   const cells = table.cells.filter((c) => c.variantKey === variant);
   const dims = [...new Set(cells.map((c) => c.dimAmm))].sort((a, b) => a - b);
-  const widthMins = Math.min(...cells.map((c) => c.widthMinMm));
-  if (!dims.length || dim < dims[0]! || input.widthMm < widthMins) return { ok: false, reason: "out_of_grid" };
-  const gridDim = meta.dimRule === "round_up" ? dims.find((d) => d >= dim) : dims.find((d) => d === dim);
+  const roundUp = meta.dimRule === "round_up";
+  if (!dims.length) return { ok: false, reason: "out_of_grid" };
+  // lecture exacte : la cote doit figurer dans la grille ; dimension supérieure (décision écrite, grille justifiée) :
+  // la cote est lue à la valeur de grille immédiatement supérieure (ou égale), jamais au-delà de la dernière valeur
+  if (!roundUp && (dim < dims[0]! || input.widthMm < Math.min(...cells.map((c) => c.widthMinMm)))) return { ok: false, reason: "out_of_grid" };
+  const gridDim = roundUp ? dims.find((d) => d >= dim) : dims.find((d) => d === dim);
   if (gridDim == null) return { ok: false, reason: "out_of_grid" };
   const row = cells.filter((c) => c.dimAmm === gridDim).sort((a, b) => a.widthMaxMm - b.widthMaxMm);
-  // plage de largeur (store banne) : la cote doit y tomber ; largeur ponctuelle : cote exacte, ou supérieure si la règle l'autorise
-  const cell = meta.dimRule === "round_up" ? row.find((c) => c.widthMaxMm >= input.widthMm) : row.find((c) => c.widthMinMm <= input.widthMm && input.widthMm <= c.widthMaxMm);
+  // plage de largeur (store banne) : la cote doit y tomber ; largeur ponctuelle : cote exacte, ou supérieure si la règle l'autorise.
+  // Une largeur inférieure au début de la première plage d'une ligne n'est pas proposée pour cette cote (largeur minimale
+  // selon l'avancée) : elle n'est jamais « arrondie » vers le haut.
+  let cell = roundUp ? row.find((c) => c.widthMaxMm >= input.widthMm) : row.find((c) => c.widthMinMm <= input.widthMm && input.widthMm <= c.widthMaxMm);
+  if (cell && roundUp && cell === row[0] && cell.widthMinMm < cell.widthMaxMm && input.widthMm < cell.widthMinMm) cell = undefined;
   if (!cell) return { ok: false, reason: "out_of_grid" };
   const dimRule = table.dimAKey === "hauteur" ? rules.dims.height : rules.dims.depth;
   const gridWidth = cell.widthMinMm === cell.widthMaxMm ? cell.widthMaxMm : input.widthMm;
@@ -121,6 +153,7 @@ export function lookupSystemPrice(table: SystemPriceTable | null | undefined, ru
       versionId: meta.versionId,
       dimRule: meta.dimRule,
       vatRateBps: meta.vatRateBps,
+      ...(cell.requirement ? { requirement: cell.requirement } : {}),
     },
   };
 }
@@ -139,8 +172,11 @@ export function pricedSizes(table: SystemPriceTable | null | undefined, rules: S
 
 /** Prix le plus bas de la grille (« à partir de »). */
 export function minSystemPrice(table: SystemPriceTable | null | undefined): { amountMinor: number; currency: string; taxBasis: "HT" | "TTC" | null } | null {
-  if (!table?.cells.length) return null;
-  const min = table.cells.reduce((a, b) => (b.amountMinor < a.amountMinor ? b : a));
+  // seulement des cellules d'une configuration complète : aucune variante dont un élément obligatoire reste à chiffrer
+  // (moteur d'un store exclusivement motorisé…), aucune cellule assortie d'une exigence non chiffrée
+  const cells = table?.cells.filter((c) => fromPriceAllowed(table, c.variantKey) && !c.requirement) ?? [];
+  if (!table || !cells.length) return null;
+  const min = cells.reduce((a, b) => (b.amountMinor < a.amountMinor ? b : a));
   const meta = gridMeta(table, min.variantKey);
   return { amountMinor: min.amountMinor, currency: meta.currency, taxBasis: meta.taxBasis };
 }
@@ -152,4 +188,98 @@ export function formatSystemPrice(amountMinor: number, currency: string, taxBasi
   const showCents = amountMinor % 100 !== 0;
   const n = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: showCents ? 2 : 0, maximumFractionDigits: 2 }).format(amountMinor / 100);
   return `${n}\u00a0${CURRENCY_FR[currency] ?? currency}${taxBasis ? `\u00a0${taxBasis}` : ""}`;
+}
+
+/* ------------------------------------------------------------------ */
+/* Décomposition du prix d'une configuration                            */
+/* ------------------------------------------------------------------ */
+
+export interface PriceBreakdownLine { code: string; label: string; amountMinor: number; detail?: string }
+export interface PriceBreakdownPending { code: string; label: string; reason: string }
+
+/**
+ * Prix d'une configuration à partir de la grille publiée : cellule (structure) + suppléments connus ; les éléments
+ * choisis sans prix applicable sont listés « à chiffrer » (le total est alors un sous-total PARTIEL). Montants entiers en
+ * unités mineures ; pourcentages appliqués à la cellule (assiette « prix du système »), chacun arrondi au centime
+ * (demi supérieur), sans cumul ; TVA ajoutée une fois au total HT (demi supérieur). Pose et livraison : toujours au devis.
+ */
+export interface PriceBreakdown {
+  currency: string;
+  taxBasis: "HT" | "TTC" | null;
+  vatRateBps: number;
+  lines: PriceBreakdownLine[];
+  pending: PriceBreakdownPending[];
+  /** total des lignes (HT si la grille est HT) */
+  totalMinor: number;
+  /** total TTC (null si la base fiscale n'est pas établie) */
+  totalTtcMinor: number | null;
+  partial: boolean;
+  listVersion: number;
+}
+
+/** a × bps / 10 000, arrondi au demi supérieur (entiers positifs). */
+export function applyBpsHalfUp(amountMinor: number, bps: number): number {
+  return Math.floor((amountMinor * bps + 5_000) / 10_000);
+}
+
+function matches(target: string, rules: SystemRules, input: SystemInput, price: SystemPrice): boolean {
+  if (target === "toujours") return true;
+  if (target === "non_configurable") return false;
+  const [kind, code] = target.split(":") as [string, string | undefined];
+  if (!code) return false;
+  switch (kind) {
+    case "finition": return input.finishCode === code;
+    case "tier": {
+      const f = rules.finishes.find((x) => x.code === input.finishCode) ?? (rules.customFinish?.code === input.finishCode ? rules.customFinish : undefined);
+      return (f?.tier ?? (f && f === rules.customFinish ? "special" : "standard")) === code;
+    }
+    case "option": return input.options.some((o) => o.code === code);
+    case "commande": return input.controlCode === code;
+    case "toile": return input.fabricCode === code;
+    case "exigence": return price.requirement === code;
+    default: return false;
+  }
+}
+
+export function priceBreakdown(table: SystemPriceTable, rules: SystemRules, input: SystemInput, price: SystemPrice, catalogVatRateBps: number, familyName: string): PriceBreakdown {
+  const meta = gridMeta(table, price.variantKey);
+  const supplements = meta.supplements ?? [];
+  let matched = supplements.filter((s) => s.applies.some((t) => matches(t, rules, input, price)));
+  // une exigence de la cellule (ex. moteur 20 Nm) remplace les suppléments de même famille (« moteur-… »)
+  const required = matched.filter((s) => s.applies.some((t) => t.startsWith("exigence:")));
+  for (const r of required) {
+    const family = r.code.split("-")[0];
+    matched = matched.filter((s) => s === r || s.code.split("-")[0] !== family);
+  }
+  const lines: PriceBreakdownLine[] = [{ code: "structure", label: `${familyName} — structure (grille v${price.listVersion})`, amountMinor: price.amountMinor }];
+  const pending: PriceBreakdownPending[] = [];
+  for (const s of matched) {
+    if (s.mode === "fixed" && s.amountMinor != null) lines.push({ code: s.code, label: s.label, amountMinor: s.amountMinor });
+    else if (s.mode === "percent" && s.percentBps != null) lines.push({ code: s.code, label: s.label, amountMinor: applyBpsHalfUp(price.amountMinor, s.percentBps), detail: `${(s.percentBps / 100).toLocaleString("fr-FR")} % du prix de la structure` });
+    else pending.push({ code: s.code, label: s.label, reason: s.rule ?? "prix non établi" });
+  }
+  const covered = (kind: string, code?: string) => code != null && matched.some((s) => s.applies.includes(`${kind}:${code}`));
+  // éléments choisis sans supplément applicable : jamais retirés du calcul en silence
+  for (const o of input.options) {
+    const def = rules.options.find((x) => x.code === o.code);
+    if (def && !covered("option", o.code)) pending.push({ code: `option:${o.code}`, label: def.label, reason: def.wish ? "souhait étudié au devis" : "option chiffrée au devis" });
+  }
+  const finish = rules.finishes.find((x) => x.code === input.finishCode) ?? (rules.customFinish?.code === input.finishCode ? rules.customFinish : undefined);
+  const special = finish && ((finish.tier ?? (finish === rules.customFinish ? "special" : "standard")) === "special");
+  if (special && !covered("finition", finish.code) && !covered("tier", "special")) pending.push({ code: `finition:${finish.code}`, label: finish.label, reason: "supplément de teinte à chiffrer" });
+  for (const [side, slug] of Object.entries(input.sides ?? {})) {
+    if (!slug) continue;
+    const wish = rules.closureWishes?.find((w) => w.familySlug === slug);
+    pending.push({ code: `cote:${side}`, label: wish?.label ?? slug, reason: "fermeture souhaitée, étudiée au devis" });
+  }
+  if (input.multiModule) pending.push({ code: "modules", label: "Installation en plusieurs modules", reason: "étudiée au devis" });
+  const totalMinor = lines.reduce((a, l) => a + l.amountMinor, 0);
+  const vatRateBps = price.vatRateBps ?? catalogVatRateBps;
+  const totalTtcMinor = price.taxBasis === "TTC" ? totalMinor : price.taxBasis === "HT" ? totalMinor + applyBpsHalfUp(totalMinor, vatRateBps) : null;
+  return { currency: price.currency, taxBasis: price.taxBasis ?? null, vatRateBps, lines, pending, totalMinor, totalTtcMinor, partial: pending.length > 0, listVersion: price.listVersion };
+}
+
+/** Une configuration de la grille peut-elle être complète sans élément obligatoire à chiffrer ? (prix « à partir de ») */
+export function fromPriceAllowed(table: SystemPriceTable, variantKey: string): boolean {
+  return !(gridMeta(table, variantKey).supplements ?? []).some((s) => s.mandatory);
 }

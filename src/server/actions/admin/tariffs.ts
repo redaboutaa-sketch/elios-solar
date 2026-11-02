@@ -54,8 +54,9 @@ export async function saveFixedAction(formData: FormData) {
   const p = z.object({ id, revision: rev }).safeParse(fields(formData));
   if (!p.success) back(BASE, "Requête invalide", "err");
   const all = (k: string) => formData.getAll(k).map((v) => (typeof v === "string" ? v : ""));
-  const [codes, labels, units, values] = [all("code"), all("label"), all("unit"), all("value")];
-  const items = codes.map((code, i) => ({ code, label: labels[i] ?? "", unit: units[i] ?? "", value: values[i] ?? "" })).filter((x) => x.code.trim() || x.label.trim() || x.value.trim());
+  const [codes, labels, units, values, modes, percents, applies, mandatory, rules] = [all("code"), all("label"), all("unit"), all("value"), all("mode"), all("percent"), all("applies"), all("mandatory"), all("rule")];
+  const mode = (v: string | undefined) => (v === "percent" || v === "pending" ? v : "fixed") as "fixed" | "percent" | "pending";
+  const items = codes.map((code, i) => ({ code, label: labels[i] ?? "", unit: units[i] ?? "", value: values[i] ?? "", mode: mode(modes[i]), percent: percents[i] ?? "", applies: applies[i] ?? "", mandatory: mandatory[i] === "1", rule: rules[i] ?? "" })).filter((x) => x.code.trim() || x.label.trim() || x.value.trim());
   await run(gridPath(p.data.id), () => saveFixedTariffs(p.data.id, p.data.revision, items, actor), () => `${items.length} tarif(s) fixe(s) enregistré(s).`);
 }
 

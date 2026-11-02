@@ -53,7 +53,8 @@ export async function createQuote(req: QuoteRequest, owner: Owner): Promise<Awai
   const system = req.result?.priceMode === "quote";
   const lines = system ? undefined : (req.result?.lines.map((l) => ({ label: l.label, qty: l.qty, totalGrossCents: l.totalGrossCents, included: l.included })) ?? undefined);
   const sp = system ? req.result?.systemPrice : null;
-  const structurePrice = sp ? formatSystemPrice(sp.amountMinor, sp.currency, sp.taxBasis) : undefined;
+  const bd = system ? req.result?.priceBreakdown : null;
+  const structurePrice = bd ? `${formatSystemPrice(bd.totalMinor, bd.currency, bd.taxBasis)}${bd.partial ? ` (sous-total partiel ; reste à chiffrer : ${bd.pending.map((x) => x.label).join(", ")})` : ""}` : sp ? formatSystemPrice(sp.amountMinor, sp.currency, sp.taxBasis) : undefined;
   await enqueueEmail({ to: quote.email, subject: `Votre demande de devis ${number}`, template: "quote-received", payload: { number, firstName: quote.firstName, lines, structurePrice, deliveryNote: DELIVERY_LEAD_TIME, demo: quote.containsDemoData }, dedupeKey: `quote-ack:${quote.id}` });
   const admin = process.env.ADMIN_NOTIFICATION_EMAIL;
   if (admin) await enqueueEmail({ to: admin, subject: `Nouvelle demande de devis ${number}`, template: "quote-admin-notification", payload: { number, quoteId: quote.id, email: quote.email, kind: quote.kind, message: quote.message, demo: quote.containsDemoData }, dedupeKey: `quote-admin:${quote.id}` });

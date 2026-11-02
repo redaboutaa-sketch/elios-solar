@@ -1,7 +1,8 @@
 # Tarifs fondés sur les catalogues SELT — import et validation
 
-> Document publiable : aucun montant, aucun coefficient, aucune remise. État au 2026-10-31 : **aucun catalogue SELT
-> reçu**, aucun accès au portail ; le processus et l'administration sont prêts, aucun prix n'est publié.
+> Document publiable : aucun montant, aucun coefficient, aucune remise. Mise à jour du 2026-11-02 : le catalogue
+> « Liste des prix des produits finis » 09.2026 a été reçu, importé et activé selon la décision écrite du client —
+> voir `docs/pricing/catalogue-2026-09.md` (le présent document décrit le format et le processus génériques).
 
 ## 1. Principe
 

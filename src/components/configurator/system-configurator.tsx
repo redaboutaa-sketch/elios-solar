@@ -42,11 +42,27 @@ function SystemPriceBox({ result }: { result: EvaluationResult }) {
       </div>
     );
   }
+  const b = result.priceBreakdown;
+  const money = (m: number) => formatSystemPrice(m, p.currency, p.taxBasis);
+  const total = b?.totalMinor ?? p.amountMinor;
   return (
-    <div data-testid="system-price" data-priced="true" data-price-status="priced" className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink">
-      <p className="flex flex-wrap items-baseline justify-between gap-2"><span>{t.structure}</span><strong className="font-display text-2xl font-semibold tabular-nums" data-testid="system-price-amount">{formatSystemPrice(p.amountMinor, p.currency, p.taxBasis)}</strong></p>
+    <div data-testid="system-price" data-priced="true" data-price-status="priced" data-partial={b?.partial ? "true" : "false"} className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink">
+      <p className="flex flex-wrap items-baseline justify-between gap-2"><span>{b?.partial ? t.totalPartial : b && b.lines.length > 1 ? t.total : t.structure}</span><strong className="font-display text-2xl font-semibold tabular-nums" data-testid="system-price-amount">{money(total)}</strong></p>
+      {b?.totalTtcMinor != null && p.taxBasis === "HT" && <p className="text-right text-xs text-stone-700 tabular-nums" data-testid="system-price-ttc">{fmt(t.ttcLine, { amount: formatSystemPrice(b.totalTtcMinor, p.currency, null), rate: (b.vatRateBps / 100).toLocaleString(intl) })}</p>}
       <p className="mt-1 text-xs text-stone-700">{fmt(t.tariffFor, { width: fmtM(p.grid.widthMm), dim: fmtM(p.grid.dimMm), dimLabel: p.grid.dimLabel.toLowerCase(), rounded: p.roundedUp ? t.roundedUp : "" })}</p>
-      <p className="mt-1 text-xs text-stone-700" data-testid="system-price-scope">{fmt(t.scope, { tax: p.taxBasis === "TTC" ? t.ttc : t.ht, currency: p.currency === "EUR" ? t.euros : p.currency, version: p.listVersion })}</p>
+      {b && b.lines.length > 1 && (
+        <details className="mt-2 text-xs" data-testid="price-breakdown" open>
+          <summary className="cursor-pointer font-medium">{t.breakdown}</summary>
+          <ul className="mt-1 space-y-0.5">{b.lines.map((l) => <li key={l.code} className="flex justify-between gap-3"><span>{l.label}{l.detail ? ` (${l.detail})` : ""}</span><span className="tabular-nums">{money(l.amountMinor)}</span></li>)}</ul>
+        </details>
+      )}
+      {b?.pending.length ? (
+        <div className="mt-2 text-xs" data-testid="price-pending">
+          <p className="font-medium">{t.pending}</p>
+          <ul className="list-disc pl-4">{b.pending.map((x) => <li key={x.code}>{x.label} — {x.reason}</li>)}</ul>
+        </div>
+      ) : null}
+      <p className="mt-1 text-xs text-stone-700" data-testid="system-price-scope">{fmt(t.scope, { tax: p.taxBasis === "TTC" ? t.ttc : t.ht, currency: p.currency === "EUR" ? t.euros : p.currency, version: p.listVersion })} {t.services}</p>
     </div>
   );
 }
@@ -208,9 +224,11 @@ const cardCls = "scroll-mt-[calc(var(--header-h)+4rem)] rounded-2xl border borde
 const stepTitle = "font-display text-xl font-semibold";
 
 /** Commande en ligne d'une configuration entièrement tarifée, sinon motifs du passage au devis. */
-function OnlineOrder({ result, busy, onAdd, editing }: { result: EvaluationResult; busy: boolean; onAdd: () => void; editing: boolean }) {
+function OnlineOrder({ result, busy, onAdd, editing, salesOpen }: { result: EvaluationResult; busy: boolean; onAdd: () => void; editing: boolean; salesOpen: boolean }) {
   const t = useT("configurator").order;
   const o = result.onlineOrder;
+  // encaissement non ouvert (décision serveur) : jamais de bouton panier, même pour une configuration entièrement tarifée
+  if (!salesOpen) return <div data-testid="online-order" data-orderable="false" data-sales="closed"><p className="mt-2 text-sm text-stone-700">{t.salesClosed}</p></div>;
   if (o?.ok) {
     return (
       <div data-testid="online-order" data-orderable="true">
@@ -227,7 +245,7 @@ function OnlineOrder({ result, busy, onAdd, editing }: { result: EvaluationResul
   );
 }
 
-export function SystemConfigurator({ catalog, familySlug, art, initial, existing = null, cartLineId = null, nav }: { catalog: CatalogSnapshot; familySlug: string; art: ReactNode; initial?: Partial<SystemInput>; existing?: { id: string; token: string; title: string | null } | null; cartLineId?: string | null; nav?: ConfiguratorNav }) {
+export function SystemConfigurator({ catalog, familySlug, art, initial, existing = null, cartLineId = null, nav, salesOpen = false }: { catalog: CatalogSnapshot; familySlug: string; art: ReactNode; initial?: Partial<SystemInput>; existing?: { id: string; token: string; title: string | null } | null; cartLineId?: string | null; nav?: ConfiguratorNav; salesOpen?: boolean }) {
   const t = useT("configurator");
   const intl = useIntl();
   const lp = useLocalePath();
@@ -555,7 +573,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
             </section>
             <section className={cardCls} aria-labelledby="order-title">
               <h2 id="order-title" className={stepTitle}>{t.final.orderTitle}</h2>
-              <OnlineOrder result={result} busy={busy} onAdd={addToCart} editing={!!cartLineId} />
+              <OnlineOrder result={result} busy={busy} onAdd={addToCart} editing={!!cartLineId} salesOpen={salesOpen} />
               {cartError && <div className="mt-3"><Notice tone="error">{cartError}</Notice></div>}
             </section>
             <section className={cardCls} aria-labelledby="quote-title">

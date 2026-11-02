@@ -83,6 +83,22 @@ brouillon en base que le code définit en demande d'étude (QUOTE_ONLY + `studyO
 tout autre statut choisi dans l'administration est conservé (AuditLog `family.status` par famille). Retour arrière :
 repasser la famille en brouillon dans l'administration.
 
+## 2 quinquies. Importer un catalogue de prix et publier les prix de vente
+
+Après sauvegarde (§ 6) et déploiement de la version. Le fichier normalisé PRIVÉ n'est jamais copié dans l'image : il
+est monté en lecture seule le temps de la commande.
+```bash
+DC="docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod"
+CSV="$PWD/inputs/heliostores/selt-pricing/normalises/catalogue-2026-09.csv"
+RUN="$DC run --rm --no-deps -v $CSV:/import/catalogue.csv:ro migrate node_modules/.bin/tsx"
+$RUN scripts/pricing-catalogue.ts --file /import/catalogue.csv                     # aperçu (aucune écriture, aucun montant affiché)
+$RUN scripts/pricing-catalogue.ts --file /import/catalogue.csv --apply             # import tracé + grilles catalogue + brouillons de vente
+$RUN scripts/pricing-catalogue.ts --file /import/catalogue.csv --apply --publish   # + vérification et publication des produits activables
+$DC run --rm --no-deps -v $CSV:/import/catalogue.csv:ro -e NODE_OPTIONS="--require ./scripts/lib/server-only-shim.cjs" migrate node_modules/.bin/tsx scripts/pricing-check.ts --file /import/catalogue.csv
+```
+Idempotent (empreinte du fichier, cellules et suppléments identiques). Retour arrière : Administration → Tarifs →
+grille → « Désactiver cette version » (le produit repasse au devis). Détail : `docs/pricing/catalogue-2026-09.md`.
+
 ## 2 quater. Langues (aperçus de traduction)
 
 Variables du fichier d'environnement (lues à l'exécution, sans reconstruction) : `SITE_LOCALES` (langues servies,

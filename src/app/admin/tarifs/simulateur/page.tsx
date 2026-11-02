@@ -23,7 +23,9 @@ export default async function SimulatorPage(props: PageProps<"/admin/tarifs/simu
   const grids = await prisma.supplierPriceList.findMany({ where: { scope: "GRID", familySlug, nature: "SALE" }, orderBy: [{ sourceKey: "asc" }, { version: "desc" }], select: { id: true, version: true, variantKey: true, status: true } });
   const run = str("largeur") && str("cote");
   const at = str("date") ? new Date(str("date")) : new Date();
-  const sim = run ? await simulate({ familySlug, mounting: (str("pose") || mountings[0] || "wall") as SystemMounting, widthMm: Math.round(Number(str("largeur"))), dimMm: Math.round(Number(str("cote"))), clientele: (str("clientele") || "PARTICULIER") as Clientele, at: Number.isNaN(at.getTime()) ? new Date() : at, versionId: str("version") || null }) : null;
+  const optionCodes = Array.isArray(sp.option) ? (sp.option as string[]) : typeof sp.option === "string" ? [sp.option] : [];
+  const sim = run ? await simulate({ familySlug, mounting: (str("pose") || mountings[0] || "wall") as SystemMounting, widthMm: Math.round(Number(str("largeur"))), dimMm: Math.round(Number(str("cote"))), clientele: (str("clientele") || "PARTICULIER") as Clientele, at: Number.isNaN(at.getTime()) ? new Date() : at, versionId: str("version") || null, finishCode: str("teinte") || null, controlCode: str("commande") || null, options: optionCodes }) : null;
+  const rulesInfo = fam?.systemRules as { finishes?: { code: string; label: string }[]; customFinish?: { code: string; label: string }; controls?: { code: string; label: string }[]; options?: { code: string; label: string }[] } | null;
   return (
     <div className="space-y-6">
       <PageTitle title="Simulateur de prix" backHref="/admin/tarifs" backLabel="Tarifs" />
@@ -36,6 +38,9 @@ export default async function SimulatorPage(props: PageProps<"/admin/tarifs/simu
           <label className="flex flex-col">Projection, avancée ou hauteur (mm)<input name="cote" className="input" inputMode="numeric" required defaultValue={str("cote")} /></label>
           <label className="flex flex-col">Clientèle<select name="clientele" className="input" defaultValue={str("clientele") || "PARTICULIER"}>{Object.entries(CLIENTELE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
           <label className="flex flex-col">Date d'évaluation<input type="datetime-local" name="date" className="input" defaultValue={str("date")} /></label>
+          <label className="flex flex-col">Teinte<select name="teinte" className="input" defaultValue={str("teinte")}><option value="">par défaut</option>{[...(rulesInfo?.finishes ?? []), ...(rulesInfo?.customFinish ? [rulesInfo.customFinish] : [])].map((f) => <option key={f.code} value={f.code}>{f.label}</option>)}</select></label>
+          {rulesInfo?.controls?.length ? <label className="flex flex-col">Commande<select name="commande" className="input" defaultValue={str("commande")}><option value="">par défaut</option>{rulesInfo.controls.map((c) => <option key={c.code} value={c.code}>{c.label}</option>)}</select></label> : null}
+          {rulesInfo?.options?.length ? <fieldset className="md:col-span-4"><legend className="text-sm">Options</legend><div className="flex flex-wrap gap-3">{rulesInfo.options.map((o) => <label key={o.code} className="flex items-center gap-1 text-xs"><input type="checkbox" name="option" value={o.code} defaultChecked={optionCodes.includes(o.code)} /> {o.label}</label>)}</div></fieldset> : null}
           <label className="flex flex-col md:col-span-2">Version (vide = celle qui serait en vigueur ; un brouillon peut être simulé)<select name="version" className="input" defaultValue={str("version")}><option value="">Version en vigueur</option>{grids.map((g) => <option key={g.id} value={g.id}>{variantLabel(g.variantKey)} v{g.version} ({g.status})</option>)}</select></label>
           <div className="md:col-span-4"><button className="btn-primary" type="submit">Simuler</button> <span className="text-xs text-stone-700">Changer de produit : choisissez-le puis « Simuler » pour actualiser les poses.</span></div>
         </form>
@@ -63,6 +68,22 @@ export default async function SimulatorPage(props: PageProps<"/admin/tarifs/simu
               ) : <p className="text-sm">Pas de prix de grille : {REASON_FR[sim.lookup.ok ? "" : sim.lookup.reason] ?? "—"}.</p>}
               {sim.table && <p className="mt-2 text-xs text-stone-700">Cotes tarifées : {sim.rules.dimLabel.toLowerCase()} {sim.table.dims.map(fmtMm).join(", ")} ; largeurs {sim.table.widths.length} colonne(s).</p>}
             </div>
+          </Section>
+          <Section title="Prix A / B / C / D de cette configuration">
+            <Table caption="Natures de prix">
+              <tbody data-testid="sim-natures">
+                <tr><th>A. Prix catalogue fournisseur HT</th><td>{sim.supplierBreakdown ? <><strong>{formatAmount(sim.supplierBreakdown.totalMinor, sim.supplierBreakdown.currency)}</strong>{sim.supplierBreakdown.partial ? " (partiel)" : ""} — interne, jamais publié</> : "aucune grille catalogue pour cette configuration"}</td></tr>
+                <tr><th>B. Prix d'achat net</th><td>non établi : remise revendeur non communiquée (aucune valeur supposée)</td></tr>
+                <tr><th>C. Prix de vente HELIOSTORES HT</th><td>{sim.result.priceBreakdown ? <><strong data-testid="sim-sale-ht">{formatAmount(sim.result.priceBreakdown.totalMinor, sim.result.priceBreakdown.currency)}</strong>{sim.result.priceBreakdown.partial ? " — sous-total partiel" : ""}</> : "pas de grille de vente applicable"}</td></tr>
+                <tr><th>D. Prix public TTC</th><td>{sim.result.priceBreakdown?.totalTtcMinor != null ? <><strong data-testid="sim-sale-ttc">{formatAmount(sim.result.priceBreakdown.totalTtcMinor, sim.result.priceBreakdown.currency)}</strong> (TVA {(sim.result.priceBreakdown.vatRateBps / 100).toLocaleString("fr-FR")} %)</> : "—"}</td></tr>
+              </tbody>
+            </Table>
+            {sim.result.priceBreakdown && (
+              <div className="mt-3 text-sm" data-testid="sim-breakdown">
+                <ul className="space-y-0.5">{sim.result.priceBreakdown.lines.map((l) => <li key={l.code}>{l.label}{l.detail ? ` (${l.detail})` : ""} : {formatAmount(l.amountMinor, sim.result.priceBreakdown!.currency)}</li>)}</ul>
+                {sim.result.priceBreakdown.pending.length > 0 && <ul className="mt-1 list-disc pl-5 text-stone-700">{sim.result.priceBreakdown.pending.map((p) => <li key={p.code}>À chiffrer : {p.label} — {p.reason}</li>)}</ul>}
+              </div>
+            )}
           </Section>
           <Section title="Évaluation par le moteur de la boutique">
             <p className="text-sm" data-testid="sim-orderable">Commande en ligne : {sim.result.onlineOrder?.ok ? <StatusBadge tone="ok">possible</StatusBadge> : <StatusBadge tone="warn">non — devis</StatusBadge>} {sim.result.onlineOrder?.reasons.join(" ; ")}</p>

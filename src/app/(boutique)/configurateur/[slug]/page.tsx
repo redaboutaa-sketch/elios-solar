@@ -1,3 +1,4 @@
+import { onlineSalesEnabled } from "@/server/payment/mode";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -81,7 +82,7 @@ export default async function SystemConfiguratorPage(props: PageProps<"/configur
       <Breadcrumbs items={[{ href: cat.href, label: catLabel }, { href: productHref(cat.key, family.slug), label: family.name }, { label: t.breadcrumb }]} />
       <h1 className="mt-3 font-display text-2xl font-semibold sm:mt-4 sm:text-display">{fmt(t.title, { name: family.name })}</h1>
       <p className="mt-2 hidden max-w-3xl text-stone-700 text-pretty sm:block">{t.intro}</p>
-      <div className="mt-6"><SystemConfigurator catalog={catalog} familySlug={family.slug} art={art} initial={initial} existing={existing} cartLineId={cartLineId} nav={nav} /></div>
+      <div className="mt-6"><SystemConfigurator catalog={catalog} familySlug={family.slug} art={art} initial={initial} existing={existing} cartLineId={cartLineId} nav={nav} salesOpen={onlineSalesEnabled()} /></div>
     </div>
   );
 }
