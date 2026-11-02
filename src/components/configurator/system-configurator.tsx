@@ -262,9 +262,14 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
   // brouillon local : les choix sont conservés pendant la navigation (fiche, autres modèles, retour, actualisation)
   // le brouillon n'est écrit qu'après la lecture du précédent (sinon la première visite se « restaurerait » elle-même)
   const [draftReady, setDraftReady] = useState(false);
+  // une seule reprise par configuration ouverte : un nouveau rendu du serveur (ex. après une action serveur, qui
+  // transmet de nouveaux objets en propriétés) ne doit ni recharger le brouillon ni ramener l'étape lue dans l'adresse
+  const restoredFor = useRef<string | null>(null);
   useEffect(() => {
+    if (restoredFor.current === key) return;
     // lecture différée (après hydratation) : le rendu serveur reste celui des valeurs ouvertes
     const t = window.setTimeout(() => {
+      restoredFor.current = key;
       const d = readDraft(key, familySlug);
       if (d && inputKey({ ...defaults, ...d, kind: "system", familySlug }) !== openedKey) { setInput({ ...defaults, ...d, kind: "system", familySlug }); setRestored(true); }
       setStep(stepFromUrl());
@@ -293,7 +298,9 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
   const top = useRef<HTMLDivElement>(null);
   const goStep = (i: number) => {
     const next = Math.max(0, Math.min(STEPS.length - 1, i));
-    if (next !== step) { try { window.history.pushState(window.history.state, "", stepUrl(next)); } catch { /* adresse inchangée */ } }
+    // état « null » (documentation Next) : l'état interne du routeur n'est jamais recopié, sinon l'adresse n'est pas
+    // synchronisée avec le routeur (un rafraîchissement après une action serveur la réécrirait)
+    if (next !== step) { try { window.history.pushState(null, "", stepUrl(next)); } catch { /* adresse inchangée */ } }
     setStep(next);
     requestAnimationFrame(() => top.current?.scrollIntoView({ block: "start", behavior: "smooth" }));
   };

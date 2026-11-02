@@ -141,3 +141,15 @@ test("langues : aperçus noindex, sélecteur au clavier, page et paramètres con
   // langue inconnue : 404 ; le français n'a pas de préfixe
   expect((await page.request.get("/it/pergolas")).status()).toBe(404);
 });
+
+test("configurateur : l'étape choisie reste affichée après une action serveur (consentement aux cookies)", async ({ page }) => {
+  // non-régression (CI du 2026-11-02) : un nouveau rendu du serveur ne doit ni recharger le brouillon ni ramener l'étape
+  await page.goto("/configurateur/marbella");
+  await page.locator("[data-testid=system-configurator][data-ready]").waitFor();
+  await goStep(page, "equip");
+  await page.locator('[aria-labelledby="consent-title"] .btn-secondary').first().click();
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(500);
+  await expect(page.getByTestId(STEP.equip)).toBeVisible();
+  await expect(page).toHaveURL(/[?&]etape=equipements/);
+});
