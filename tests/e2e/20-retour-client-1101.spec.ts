@@ -23,6 +23,7 @@ test("configurateur : étape dans l'adresse, Retour / Suivant du navigateur et a
   await expect(page.getByTestId(STEP.pose)).toBeVisible();
   // actualisation : même étape, mêmes dimensions (brouillon local)
   await page.reload();
+  await page.locator("[data-testid=system-configurator][data-ready]").waitFor();
   await expect(page.getByTestId(STEP.pose)).toBeVisible();
   await goStep(page, "dims");
   await expect(page.locator("#dim-width")).toHaveValue("3500");
@@ -34,10 +35,12 @@ test("fiche → configurateur → Retour : retour à la fiche, configuration con
   await acceptNecessaryOnly(page);
   await page.locator('main a[href="/configurateur/marbella"]').first().click();
   await expect(page.getByTestId(STEP.dims)).toBeVisible();
+  await page.locator("[data-testid=system-configurator][data-ready]").waitFor();
   await setDim(page, "dim-width", 4000);
   await page.goBack();
   await expect(page).toHaveURL(/\/pergolas\/marbella$/);
   await page.goForward();
+  await page.locator("[data-testid=system-configurator][data-ready]").waitFor();
   await expect(page.locator("#dim-width")).toHaveValue("4000");
 });
 
@@ -56,10 +59,14 @@ test("store banne : hauteur de pose facultative, collectée comme souhait, borne
 
 test("coloris : teintes standard et teintes avec supplément distinguées, nuancier de référence, prix honnête", async ({ page }) => {
   await openConfigurator(page, "corsica");
-  // aucune grille de vente validée : motif explicite, aucun montant
+  // HelioShade : sans grille de vente publiée (CI) → motif explicite, aucun montant ; avec la grille du catalogue →
+  // sous-total partiel, le moteur obligatoire restant à chiffrer (jamais un prix présenté comme complet)
   const price = page.getByTestId("system-price");
-  await expect(price).toHaveAttribute("data-priced", "false");
-  await expect(price).toHaveAttribute("data-price-status", /^(no_table|incomplete|out_of_grid|blocked|custom)$/);
+  await expect(price).toHaveAttribute("data-price-status", /^(priced|no_table|incomplete|out_of_grid|blocked|custom)$/);
+  if ((await price.getAttribute("data-priced")) === "true") {
+    await expect(price).toHaveAttribute("data-partial", "true");
+    await expect(page.getByTestId("price-pending")).toContainText("Moteur");
+  } else await expect(price).not.toContainText("€");
   await goStep(page, "pose");
   const swatches = page.getByTestId("finish-swatches");
   await expect(swatches.getByTestId("finish-tier-standard")).toBeVisible();

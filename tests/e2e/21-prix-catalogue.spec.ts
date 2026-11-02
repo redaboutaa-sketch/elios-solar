@@ -68,6 +68,7 @@ test("administration → modification → simulation → publication → configu
     const v = await ctx.newPage();
     await v.goto("/configurateur/sevilla");
     await acceptNecessaryOnly(v);
+    await v.locator("[data-testid=system-configurator][data-ready]").waitFor();
     await v.locator("#dim-width").fill("2900"); await v.locator("#dim-width").blur();
     await v.locator("#dim-depth").fill("2900"); await v.locator("#dim-depth").blur();
     const price = v.getByTestId("system-price");

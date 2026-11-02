@@ -87,6 +87,8 @@ export async function openConfigurator(page: Page, slug: string) {
   await acceptNecessaryOnly(page);
   await page.getByTestId("project-drawing").waitFor({ state: "visible" });
   await page.getByTestId(STEP.dims).waitFor({ state: "visible" });
+  // configurateur hydraté, brouillon relu et étape lue dans l'adresse : sinon un premier clic peut être perdu
+  await page.locator("[data-testid=system-configurator][data-ready]").waitFor();
 }
 
 /** Points signalés (liste aria-live) de l'étape affichée. */

@@ -28,10 +28,26 @@ export async function publicPricesActive(): Promise<boolean> {
 }
 
 /**
- * Montant de la cellule publiée lue pour une cote (unités mineures), ou null : lecture exacte (dimension de la
- * grille, largeur ponctuelle ou dans une plage), sauf grille publiée avec la règle « dimension supérieure ».
+ * Montant de la cellule publiée lue pour une cote (unités mineures), ou null — même règle que le moteur de la boutique :
+ * lecture exacte (dimension de la grille, largeur ponctuelle ou dans une plage), ou, pour une grille publiée avec la
+ * règle « dimension supérieure », valeurs de grille immédiatement supérieures (largeur sous le début de la première
+ * plage d'une avancée : non proposée).
  */
 export async function publicCell(familySlug: string, variantKey: string, dimMm: number, widthMm: number): Promise<number | null> {
-  const r = await one<{ amountMinor: number }>(`SELECT r."amountMinor" FROM "SupplierPriceRow" r JOIN "SupplierPriceList" l ON l.id = r."listId" WHERE ${IN_FORCE} AND l."dimRule" = 'EXACT' AND r.kind = 'GRID' AND r."familySlug" = $1 AND r."variantKey" = $2 AND r."dimAmm" = $3 AND r."widthMinMm" <= $4 AND r."widthMaxMm" >= $4 AND r."amountMinor" IS NOT NULL AND r.status <> 'REJECTED' ORDER BY l."publishedAt" DESC LIMIT 1`, [familySlug, variantKey, dimMm, widthMm]);
-  return r?.amountMinor ?? null;
+  const list = await one<{ id: string; dimRule: string }>(`SELECT l.id, l."dimRule" FROM "SupplierPriceList" l WHERE ${IN_FORCE} AND l."familySlug" = $1 AND l."variantKey" = $2 ORDER BY l."publishedAt" DESC LIMIT 1`, [familySlug, variantKey]);
+  if (!list) return null;
+  const cells = await many<{ dimAmm: number; widthMinMm: number; widthMaxMm: number; amountMinor: number }>(`SELECT r."dimAmm", COALESCE(r."widthMinMm", r."widthMaxMm") AS "widthMinMm", r."widthMaxMm", r."amountMinor" FROM "SupplierPriceRow" r WHERE r."listId" = $1 AND r.kind = 'GRID' AND r."amountMinor" IS NOT NULL AND r.status <> 'REJECTED'`, [list.id]);
+  if (list.dimRule !== "ROUND_UP") return cells.find((c) => c.dimAmm === dimMm && c.widthMinMm <= widthMm && widthMm <= c.widthMaxMm)?.amountMinor ?? null;
+  const dim = [...new Set(cells.map((c) => c.dimAmm))].sort((a, b) => a - b).find((d) => d >= dimMm);
+  if (dim == null) return null;
+  const row = cells.filter((c) => c.dimAmm === dim).sort((a, b) => a.widthMaxMm - b.widthMaxMm);
+  const cell = row.find((c) => c.widthMaxMm >= widthMm);
+  if (!cell || (cell === row[0] && cell.widthMinMm < cell.widthMaxMm && widthMm < cell.widthMinMm)) return null;
+  return cell.amountMinor;
+}
+
+/** Catégories affichant un prix « à partir de » : un modèle avec une grille en vigueur sans élément obligatoire à chiffrer. */
+export async function fromPriceCategories(): Promise<Set<string>> {
+  const rows = await many<{ category: string }>(`SELECT DISTINCT f.category FROM "SupplierPriceList" l JOIN "ProductFamily" f ON f.slug = l."familySlug" WHERE ${IN_FORCE} AND f.status IN ('PUBLISHED', 'QUOTE_ONLY') AND NOT EXISTS (SELECT 1 FROM "SupplierPriceRow" x WHERE x."listId" = l.id AND x.kind = 'FIXED' AND x.conditions->>'mandatory' = 'true')`);
+  return new Set(rows.map((r) => r.category));
 }

@@ -17,7 +17,7 @@ test("HelioSun structure seule : commande en ligne au prix de la grille, paiemen
     return;
   }
   // cellule de la grille active : avancée fabriquée, largeur de la plage compatible avec la largeur minimale du modèle
-  const cell = await one<{ dimAmm: number; widthMinMm: number; widthMaxMm: number; amountMinor: number }>(`SELECT r."dimAmm", r."widthMinMm", r."widthMaxMm", r."amountMinor" FROM "SupplierPriceRow" r JOIN "SupplierPriceList" l ON l.id = r."listId" WHERE ${IN_FORCE_GRID_SQL} AND l."dimRule" = 'EXACT' AND r.kind = 'GRID' AND r."familySlug" = 'casablanca' AND r."variantKey" = '' AND r.status <> 'REJECTED' AND r."amountMinor" IS NOT NULL AND r."dimAmm" IN (1600, 2100) AND r."widthMaxMm" >= 2000 AND r."widthMinMm" <= 6000 ORDER BY r."dimAmm", r."widthMinMm" LIMIT 1`);
+  const cell = await one<{ dimAmm: number; widthMinMm: number; widthMaxMm: number; amountMinor: number }>(`SELECT r."dimAmm", r."widthMinMm", r."widthMaxMm", r."amountMinor" FROM "SupplierPriceRow" r JOIN "SupplierPriceList" l ON l.id = r."listId" WHERE ${IN_FORCE_GRID_SQL} AND r.kind = 'GRID' AND r."familySlug" = 'casablanca' AND r."variantKey" = '' AND r.status <> 'REJECTED' AND r."amountMinor" IS NOT NULL AND r."dimAmm" IN (1600, 2100) AND r."widthMaxMm" >= 2000 AND r."widthMinMm" <= 6000 ORDER BY r."dimAmm", r."widthMinMm" LIMIT 1`);
   expect(cell).not.toBeNull();
   const width = Math.max(2000, cell!.widthMinMm);
   await setDim(page, "dim-width", width);

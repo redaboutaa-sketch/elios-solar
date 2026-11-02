@@ -62,7 +62,7 @@ export async function SystemProductPage({ family: f, category, media: allMedia, 
           <p>{f.description}</p>
           <h3>{t.usageTitle}</h3>
           <p>{usage[r.type]}</p>
-          <p className="text-sm">{f.fromPrice ? t.priceShown : t.priceQuote} {t.optionPhoto}</p>
+          <p className="text-sm">{f.fromPrice || f.pricedOnline ? t.priceShown : t.priceQuote} {t.optionPhoto}</p>
         </div>
       ),
     },
@@ -139,6 +139,7 @@ export async function SystemProductPage({ family: f, category, media: allMedia, 
           {f.fromPrice ? (
             <p data-testid="from-price" className="mt-5 bg-brand-50 p-4 text-sm"><span className="block text-xs text-stone-700">{t.from}</span><strong className="font-display text-3xl font-semibold tabular-nums">{formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis)}</strong><span className="mt-1 block text-xs text-stone-700">{t.fromPriceNote}</span></p>
           ) : (
+            f.pricedOnline ? <p data-testid="price-configurator" className="mt-5 flex gap-2 bg-brand-50 p-4 text-sm"><Info className="size-4 mt-0.5 shrink-0 text-brand-700" aria-hidden="true" /><span><strong>{t.priceConfigurator}</strong> {t.priceConfiguratorText}</span></p> :
             <p data-testid="price-on-quote" className="mt-5 flex gap-2 bg-brand-50 p-4 text-sm"><Info className="size-4 mt-0.5 shrink-0 text-brand-700" aria-hidden="true" /><span><strong>{t.priceOnQuote}</strong> {t.priceOnQuoteText}</span></p>
           )}
           <Link href={configuratorHref(f.slug)} className="btn-accent w-full mt-5 text-base">{t.configureToSize}</Link>
@@ -161,7 +162,7 @@ export async function SystemProductPage({ family: f, category, media: allMedia, 
               <tr><th scope="row" className="p-3 font-medium text-stone-700">{t.mounting}</th><td className="p-3">{r.mountings.map((m) => `${m.label}${m.status === "to_confirm" ? t.toConfirmParen : ""}`).join(" ; ")}</td></tr>
               {r.controls?.length ? <tr><th scope="row" className="p-3 font-medium text-stone-700">{t.control}</th><td className="p-3">{r.controls.map((c) => `${c.label}${c.status === "to_confirm" ? t.toConfirmParen : ""}`).join(" ; ")}</td></tr> : null}
               {r.wind?.text && <tr><th scope="row" className="p-3 font-medium text-stone-700">{t.wind}</th><td className="p-3">{r.wind.text}{r.wind.status === "to_confirm" ? t.toConfirmParen : ""}</td></tr>}
-              <tr><th scope="row" className="p-3 font-medium text-stone-700">{t.price}</th><td className="p-3">{f.fromPrice ? fmt(t.priceFromStructure, { price: formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis) }) : t.onQuote}</td></tr>
+              <tr><th scope="row" className="p-3 font-medium text-stone-700">{t.price}</th><td className="p-3">{f.fromPrice ? fmt(t.priceFromStructure, { price: formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis) }) : f.pricedOnline ? t.priceConfigurator : t.onQuote}</td></tr>
             </tbody>
           </table>
         </div>
@@ -184,7 +185,7 @@ export async function SystemProductPage({ family: f, category, media: allMedia, 
       <section className="mt-16 grid gap-6 border-t border-sand-200 pt-10 sm:grid-cols-3" aria-labelledby="accompagnement">
         <h2 id="accompagnement" className="sr-only">{t.support.title}</h2>
         {[
-          [Ruler, t.support.configureTitle, f.fromPrice ? t.support.configurePrice : t.support.configureQuote, configuratorHref(f.slug), t.support.configureCta],
+          [Ruler, t.support.configureTitle, f.fromPrice || f.pricedOnline ? t.support.configurePrice : t.support.configureQuote, configuratorHref(f.slug), t.support.configureCta],
           [FileText, t.support.quoteTitle, t.support.quoteText, `/devis?produit=${f.slug}`, t.support.quoteCta],
           [MessageCircle, t.support.advisorTitle, t.support.advisorText, "/contact", t.support.advisorCta],
         ].map(([Icon, title, d, href, cta]) => { const I = Icon as typeof Ruler; return (
@@ -192,7 +193,7 @@ export async function SystemProductPage({ family: f, category, media: allMedia, 
         ); })}
       </section>
       <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 border-t border-sand-300 bg-white/95 backdrop-blur p-3 flex items-center justify-between gap-3" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
-        <div><p className="text-xs text-stone-700">{f.name}</p><p className="text-sm font-semibold">{f.fromPrice ? fmt(t.mobileFrom, { price: formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis) }) : t.mobileOnQuote}</p></div>
+        <div><p className="text-xs text-stone-700">{f.name}</p><p className="text-sm font-semibold">{f.fromPrice ? fmt(t.mobileFrom, { price: formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis) }) : f.pricedOnline ? t.priceConfigurator : t.mobileOnQuote}</p></div>
         <Link href={configuratorHref(f.slug)} className="btn-accent">{t.configure}</Link>
       </div>
       <div className="lg:hidden h-20" aria-hidden="true" />

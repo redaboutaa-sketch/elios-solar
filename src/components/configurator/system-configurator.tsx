@@ -353,7 +353,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-10" data-testid="system-configurator" data-family={familySlug}>
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-10" data-testid="system-configurator" data-family={familySlug} data-ready={draftReady || undefined}>
       <div className="min-w-0 space-y-4 self-start lg:sticky lg:top-24">
         <SystemVisuals catalog={catalog} input={input} result={result} art={art} onImage={visual.onImage} onCaptureReady={visual.onCaptureReady} onDrawingReady={visual.onDrawingReady} />
         <section id="recap" className="scroll-mt-[calc(var(--header-h)+4rem)] rounded-2xl border border-sand-200 bg-white p-5" data-testid="system-recap" aria-live="polite" aria-labelledby="recap-title">

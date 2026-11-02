@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "./fixtures";
 import { acceptNecessaryOnly, shot } from "./helpers";
-import { one, publicPricesActive } from "./db";
+import { fromPriceCategories, IN_FORCE_GRID_SQL, one, publicPricesActive } from "./db";
 import { PUBLIC_FORBIDDEN_NAMES, withoutSellerIdentity } from "../../src/domain/public-sanitize";
 
 // fabricant, fournisseur et références (produits, moteurs) : jamais sur une page publique ni dans ses données
@@ -15,11 +15,11 @@ async function expectNoSupplier(page: Page) {
 }
 
 /** Nomenclature du 2026-10-25 : quatre familles et leurs modèles configurables (brouillons exclus). */
-const FAMILIES: Array<[string, string[], boolean]> = [
-  ["/pergolas", ["HelioSky", "HelioMax", "HelioLux"], false],
-  ["/screens", ["HelioScreen", "HelioRoof"], true],
-  ["/stores-bannes", ["HelioSun", "HelioShade", "HelioPro", "HelioSquare"], true],
-  ["/moustiquaires", ["MoskiFold", "MoskiFold 2", "MoskiUp", "MoskiSlide", "MoskiFix"], false],
+const FAMILIES: Array<[string, string[], string]> = [
+  ["/pergolas", ["HelioSky", "HelioMax", "HelioLux"], "PERGOLAS"],
+  ["/screens", ["HelioScreen", "HelioRoof"], "SCREENS"],
+  ["/stores-bannes", ["HelioSun", "HelioShade", "HelioPro", "HelioSquare"], "STORES_BANNES"],
+  ["/moustiquaires", ["MoskiFold", "MoskiFold 2", "MoskiUp", "MoskiSlide", "MoskiFix"], "MOUSTIQUAIRES"],
 ];
 
 test("catalogue HELIOSTORES : quatre familles, fiches sans référence fabricant/fournisseur, prix de la grille, modèles retirés et renommés", async ({ page }) => {
@@ -37,7 +37,9 @@ test("catalogue HELIOSTORES : quatre familles, fiches sans référence fabricant
   expect(withoutSellerIdentity(await page.locator("footer").innerText())).not.toMatch(FORBIDDEN);
   await shot(page, "accueil");
 
-  for (const [path, names, hasGrid] of FAMILIES) {
+  const withFromPrice = await fromPriceCategories();
+  for (const [path, names, category] of FAMILIES) {
+    const hasGrid = withFromPrice.has(category);
     await page.goto(path);
     const list = page.getByTestId("collection");
     await expect(list.locator(":scope > li")).toHaveCount(names.length);
@@ -54,8 +56,11 @@ test("catalogue HELIOSTORES : quatre familles, fiches sans référence fabricant
   // fiche : galerie sans crédit fabricant, prix « à partir de » (ou sur devis), contradiction signalée sans citer de source
   await page.goto("/screens/helioscreen");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("HelioScreen");
-  if (priced) await expect(page.getByTestId("from-price")).toContainText(/À partir de\s*\d/);
-  else await expect(page.getByTestId("price-on-quote")).toContainText("Prix sur devis");
+  // grille publiée : « à partir de » si une configuration complète existe, sinon prix calculé dans le configurateur
+  // (moteur obligatoire à chiffrer) ; sans grille : sur devis
+  const screenGrid = priced && (await one(`SELECT 1 FROM "SupplierPriceList" l WHERE ${IN_FORCE_GRID_SQL} AND l."familySlug" = 'helioscreen'`)) != null;
+  if (!screenGrid) await expect(page.getByTestId("price-on-quote")).toContainText("Prix sur devis");
+  else await expect(page.getByTestId("from-price").or(page.getByTestId("price-configurator"))).toContainText(/À partir de\s*\d|Prix calculé dans le configurateur/);
   // les visuels fabricant sont des fichiers privés importés par environnement (absents en CI) : on vérifie l'état réel
   const imported = Number((await one<{ n: string }>(`SELECT count(*) AS n FROM "ProductMedia" pm JOIN "ProductFamily" f ON f.id = pm."familyId" JOIN "Media" m ON m.id = pm."mediaId" WHERE f.slug = 'helioscreen' AND m.status = 'PUBLISHED' AND m.provenance IS NOT NULL`))!.n);
   if (imported > 0) {
@@ -76,10 +81,12 @@ test("catalogue HELIOSTORES : quatre familles, fiches sans référence fabricant
   await expectNoSupplier(page);
   await shot(page, "fiche-screen");
 
-  // pergola sur mesure sans grille : prix sur devis, bornes documentées
+  // pergola sur mesure : « à partir de » si une grille de vente est publiée, sinon prix sur devis ; bornes documentées
   await page.goto("/pergolas/marbella");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("HelioMax");
-  await expect(page.getByTestId("price-on-quote")).toContainText("Prix sur devis");
+  const maxGrid = priced && (await one(`SELECT 1 FROM "SupplierPriceList" l WHERE ${IN_FORCE_GRID_SQL} AND l."familySlug" = 'marbella'`)) != null;
+  if (maxGrid) await expect(page.getByTestId("from-price")).toContainText(/À partir de\s*\d/);
+  else await expect(page.getByTestId("price-on-quote")).toContainText("Prix sur devis");
   await expect(page.getByRole("tab", { name: "Points à confirmer" })).toHaveCount(0);
   await expectNoSupplier(page);
   await page.getByRole("tab", { name: "Dimensions et pose" }).click();

@@ -43,7 +43,7 @@ export async function listSystemFamilies(category: CategoryKey) {
   });
   const { tables } = await loadPublicSystemPrices();
   // page publique : ni fabricant, ni marque, ni référence fournisseur, ni règles brutes (sources), ni questions internes
-  return rows.map((f) => ({ ...f, brand: null, manufacturer: null, supplierRef: null, systemRules: null, openQuestions: [], rules: publicSystemRules(f.systemRules as unknown as SystemRules), hero: f.media[0]?.media ?? null, fromPrice: minSystemPrice(tables.get(f.slug)) }));
+  return rows.map((f) => ({ ...f, brand: null, manufacturer: null, supplierRef: null, systemRules: null, openQuestions: [], rules: publicSystemRules(f.systemRules as unknown as SystemRules), hero: f.media[0]?.media ?? null, fromPrice: minSystemPrice(tables.get(f.slug)), pricedOnline: tables.has(f.slug) }));
 }
 
 /** Fiche d'un système publié de la famille publique demandée (null sinon : brouillon, archive, autre famille). */
@@ -64,6 +64,8 @@ export async function getSystemFamily(category: CategoryKey, slug: string) {
     openQuestions: [],
     rules: publicSystemRules(f.systemRules as unknown as SystemRules),
     fromPrice: minSystemPrice(tables.get(f.slug)),
+    /** grille de vente publiée : le configurateur calcule le prix (même sans « à partir de » quand un élément obligatoire reste à chiffrer) */
+    pricedOnline: tables.has(f.slug),
     specValues: specs,
     faqItems: (f.faq as Array<{ q: string; a: string }>) ?? [],
   };

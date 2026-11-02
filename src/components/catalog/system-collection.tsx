@@ -59,7 +59,9 @@ async function EquipmentReading({ items }: { items: Item[] }) {
 
 /** Comparatif des cotes et poses documentées, lorsque la famille compte plusieurs modèles. */
 export async function Comparison({ items }: { items: Item[] }) {
-  const t = (await getT("catalog")).comparison;
+  const all = await getT("catalog");
+  const t = all.comparison;
+  const configuratorPrice = all.collection.priceConfigurator;
   const rows: Array<[string, (f: Item) => string]> = [
     [items[0]!.rules.dims.width.label, (f) => dimRangeText(f.rules.dims.width)],
     ...(items.some((f) => f.rules.dims.depth) ? [[items.find((f) => f.rules.dims.depth)!.rules.dims.depth!.label, (f: Item) => (f.rules.dims.depth ? dimRangeText(f.rules.dims.depth) : "—")] as [string, (f: Item) => string]] : []),
@@ -72,7 +74,7 @@ export async function Comparison({ items }: { items: Item[] }) {
     ...(items.some((f) => f.rules.fixedSizes?.length) ? [[t.manufacture, (f: Item) => (f.rules.fixedSizes?.length ? t.fixedSizes : t.madeToMeasure)] as [string, (f: Item) => string]] : []),
     ...(items.some((f) => f.rules.insect) ? [[t.opening, (f: Item) => (f.rules.insect ? INSECT_OPENING_FR[f.rules.insect.opening] + (f.rules.insect.leaves === 2 ? t.twoLeaves : "") : "—")] as [string, (f: Item) => string]] : []),
     ...(items.some((f) => f.rules.modules) ? [[t.modules, (f: Item) => (f.rules.modules ? (f.rules.modules.multiModule === "documented" ? t.modulesDocumented : t.modulesUndocumented) : "—")] as [string, (f: Item) => string]] : []),
-    [t.structurePrice, (f) => (priceText(f) ? fmt(t.fromPrice, { price: priceText(f)! }) : t.onQuote)],
+    [t.structurePrice, (f) => (priceText(f) ? fmt(t.fromPrice, { price: priceText(f)! }) : f.pricedOnline ? configuratorPrice : t.onQuote)],
   ];
   return (
     <section className="section-y border-t border-sand-200" aria-labelledby="comparatif">
@@ -124,7 +126,7 @@ export async function SystemCollection({ category, items, drafts = [] }: { categ
           <div>
             <Breadcrumbs items={[{ label }]} tone="light" />
             <h1 id="famille-titre" className="mt-5 font-display text-hero font-semibold">{label}</h1>
-            <p className="mt-3 max-w-xl text-lg text-sand-100 text-pretty">{intro} {items.some((f) => f.fromPrice) ? t.priceInGrid : t.priceOnQuoteIntro}</p>
+            <p className="mt-3 max-w-xl text-lg text-sand-100 text-pretty">{intro} {items.some((f) => f.fromPrice || f.pricedOnline) ? t.priceInGrid : t.priceOnQuoteIntro}</p>
             {items.length > 1 && <p className="mt-4 text-sm text-sand-200">{fmt(t.modelsCount, { count: items.length })} · <a href="#comparatif" className="text-white underline underline-offset-4">{t.compare}</a></p>}
           </div>
           <FamilySketch kind={category} tone="light" sun={false} decorative={false} className="sketch-trigger hidden w-56 md:block" />
@@ -149,7 +151,7 @@ export async function SystemCollection({ category, items, drafts = [] }: { categ
                     {f.rules.dims.depth && <><dt className="text-stone-700">{f.rules.dims.depth.label}</dt><dd className="tabular-nums">{dimRangeText(f.rules.dims.depth)}</dd></>}
                     {f.rules.dims.height && <><dt className="text-stone-700">{f.rules.dims.height.label}</dt><dd className="tabular-nums">{dimRangeText(f.rules.dims.height)}</dd></>}
                   </dl>
-                  <p className="mt-5 text-base" data-testid="collection-price">{priceText(f) ? <>{t.from} <span className="font-display text-2xl font-semibold tabular-nums">{priceText(f)}</span></> : t.priceOnQuote}</p>
+                  <p className="mt-5 text-base" data-testid="collection-price">{priceText(f) ? <>{t.from} <span className="font-display text-2xl font-semibold tabular-nums">{priceText(f)}</span></> : f.pricedOnline ? t.priceConfigurator : t.priceOnQuote}</p>
                   <div className="mt-6 flex flex-wrap gap-2">
                     <Link href={productHref(category, f.slug)} className="btn-secondary">{t.discover}</Link>
                     <Link href={configuratorHref(f.slug)} className="btn-accent">{t.configure} <ArrowRight className="size-4" aria-hidden="true" /></Link>
