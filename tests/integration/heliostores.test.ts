@@ -42,7 +42,7 @@ describe("catalogue HELIOSTORES en base", () => {
   it("navigation : les quatre familles et leurs modèles actuels, sans modèle retiré ni brouillon", async () => {
     const nav = await publicNavigation();
     expect(nav.map((c) => c.label)).toEqual(["Pergolas", "Screens", "Stores bannes", "Moustiquaires"]);
-    expect(nav.flatMap((c) => c.items.map((i) => i.slug))).toEqual(["malaga", "marbella", "sevilla", "helioscreen", "helioroof-screen", "casablanca", "corsica", "jamaica", "madera", "moskifold", "moskifold-2"]);
+    expect(nav.flatMap((c) => c.items.map((i) => i.slug))).toEqual(["malaga", "marbella", "sevilla", "helioscreen", "helioroof-screen", "casablanca", "corsica", "jamaica", "madera", "moskifold", "moskifold-2", "moskiup", "moskislide", "moskifix"]);
   });
 
   it("l'ancien catalogue est conservé (historique) mais marqué legacy, hors famille publique", async () => {
