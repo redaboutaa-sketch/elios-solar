@@ -13,6 +13,7 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
 import { audit } from "@/server/audit";
+import { SUPPLEMENT_TARGET as TARGET } from "@/server/supplier-prices/normalized";
 import { checkGrid, clienteleOverlaps, deriveCells, deriveRatio, parseAmountInput, periodsOverlap, roundHalfUp, sameCells, type Clientele, type DeriveMode, type DimRule, type GridCheck, type Nature, type TariffCell, type TaxBasis } from "@/domain/tariffs";
 
 export interface Actor {
@@ -151,7 +152,7 @@ export async function checksFor(g: GridVersion, opts: { publishAt?: Date } = {})
     prisma.siteSettings.findUnique({ where: { id: 1 }, select: { defaultTaxRateBps: true } }),
     gridCells(g.id),
     lastPublished(prisma, g.sourceKey),
-    prisma.supplierPriceRow.findMany({ where: { listId: g.id, kind: "FIXED", amountMinor: null }, select: { conditions: true } }).then((rs) => rs.filter((r) => !["percent", "pending"].includes((r.conditions as { mode?: string } | null)?.mode ?? "")).length),
+    prisma.supplierPriceRow.findMany({ where: { listId: g.id, kind: "FIXED", amountMinor: null }, select: { conditions: true } }).then((rs) => rs.filter((r) => !["percent", "pending", "table"].includes((r.conditions as { mode?: string } | null)?.mode ?? "")).length),
   ]);
   const stale = EDITABLE.has(g.status) && published && published.id !== g.baseActiveId ? { activeVersion: published.version } : null;
   const checks = checkGrid(
@@ -159,7 +160,11 @@ export async function checksFor(g: GridVersion, opts: { publishAt?: Date } = {})
     cells,
   );
   if (fixed) checks.push({ code: "fixed_empty", severity: "blocking", message: `${fixed} tarif(s) fixe(s) sans montant.` });
-  if (EDITABLE.has(g.status)) for (const c of await conflictsFor(prisma, g, opts.publishAt ?? g.validFrom ?? new Date())) checks.push(c);
+  // même début que la publication : jamais avant maintenant (une date de validité passée, ex. celle du catalogue
+  // d'origine, ne crée pas de chevauchement fictif avec la version en vigueur, qui sera remplacée)
+  const now = new Date();
+  const from = [opts.publishAt, g.validFrom].find((d): d is Date => !!d && d > now) ?? now;
+  if (EDITABLE.has(g.status)) for (const c of await conflictsFor(prisma, g, from)) checks.push(c);
   return checks;
 }
 
@@ -237,16 +242,22 @@ export interface FixedTariff {
   /** montant (mode « fixed ») */
   value: string;
   /** fixed (montant), percent (pourcentage du prix de la structure), pending (à chiffrer) ; défaut fixed */
-  mode?: "fixed" | "percent" | "pending";
+  mode?: "fixed" | "percent" | "pending" | "table";
   /** pourcentage « 15 » ou « 7,5 » (mode percent) */
   percent?: string;
   /** cibles séparées par « | » (finition:CODE, tier:special, option:CODE, commande:CODE, toile:CODE, exigence:CODE, toujours, non_configurable) */
   applies?: string;
   mandatory?: boolean;
   rule?: string;
+  /** mode « table » : axe (avancee, largeur, hauteur) et cellules, une par ligne « min;max[;largeur min;largeur max];montant » en mm */
+  axis?: string;
+  cells?: string;
+  /** quantité selon l'option (code) */
+  perOptionQty?: string;
+  /** fourchette documentée « min;max » en euros (élément à chiffrer) */
+  range?: string;
 }
 
-const TARGET = /^(toujours|non_configurable|(finition|tier|option|commande|toile|exigence):[A-Za-z0-9_-]+)$/;
 
 /**
  * Enregistre les tarifs fixes et suppléments d'un brouillon. Une ligne existante garde sa provenance (fichier, page,
@@ -275,9 +286,31 @@ export async function saveFixedTariffs(id: string, revision: number, items: Fixe
       if (!/^\d{1,2}(\.\d{1,2})?$/.test(v) || Number(v) <= 0) throw new TariffError(`${label} : pourcentage attendu entre 0,01 et 99,99.`);
       percentBps = Math.round(Number(v) * 100);
     }
+    let table: { axis: string; cells: Array<{ dimMin: number; dimMax: number; widthMin?: number; widthMax?: number; amountMinor: number }> } | null = null;
+    if (mode === "table") {
+      if (!["avancee", "largeur", "hauteur"].includes(it.axis ?? "")) throw new TariffError(`${label} : axe du tableau attendu (avancee, largeur ou hauteur).`);
+      const cells = (it.cells ?? "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l, k) => {
+        const parts = l.split(";").map((x) => x.trim());
+        if (parts.length !== 3 && parts.length !== 5) throw new TariffError(`${label}, cellule ${k + 1} : « min;max;montant » ou « min;max;largeur min;largeur max;montant » attendu.`);
+        const nums = parts.slice(0, -1).map(Number);
+        if (!nums.every((n) => Number.isInteger(n) && n > 0 && n <= 100_000)) throw new TariffError(`${label}, cellule ${k + 1} : cotes entières en mm attendues.`);
+        const p = parseAmountInput(parts[parts.length - 1]!);
+        if (!p.ok || p.minor == null) throw new TariffError(`${label}, cellule ${k + 1} : ${p.ok ? "montant obligatoire" : p.error}`);
+        const minor = p.minor;
+        return parts.length === 3 ? { dimMin: nums[0]!, dimMax: nums[1]!, amountMinor: minor } : { dimMin: nums[0]!, dimMax: nums[1]!, widthMin: nums[2]!, widthMax: nums[3]!, amountMinor: minor };
+      });
+      if (!cells.length) throw new TariffError(`${label} : tableau sans cellule.`);
+      table = { axis: it.axis!, cells };
+    }
+    let rangeMinor: [number, number] | null = null;
+    if ((it.range ?? "").trim()) {
+      const [a, b] = (it.range ?? "").split(";").map((x) => parseAmountInput(x.trim()));
+      if (!a?.ok || !b?.ok || a.minor == null || b.minor == null) throw new TariffError(`${label} : fourchette « min;max » en euros attendue.`);
+      rangeMinor = [a.minor, b.minor];
+    }
     const applies = (it.applies ?? "").split("|").map((x) => x.trim()).filter(Boolean);
     for (const a of applies) if (!TARGET.test(a)) throw new TariffError(`${label} : cible « ${a} » inconnue.`);
-    return { code, label, unit: it.unit.trim().slice(0, 40) || (mode === "percent" ? "%" : "forfait"), minor, mode, percentBps, applies, mandatory: !!it.mandatory, rule: (it.rule ?? "").trim().slice(0, 500) };
+    return { code, label, unit: it.unit.trim().slice(0, 40) || (mode === "percent" ? "%" : "forfait"), minor, mode, percentBps, applies, mandatory: !!it.mandatory, rule: (it.rule ?? "").trim().slice(0, 500), table, rangeMinor, perOptionQty: (it.perOptionQty ?? "").trim().slice(0, 60) };
   });
   const now = new Date();
   const before = await prisma.supplierPriceRow.findMany({ where: { listId: id, kind: "FIXED" }, select: { code: true, amountMinor: true, sourceRef: true, origin: true, conditions: true } });
@@ -287,8 +320,8 @@ export async function saveFixedTariffs(id: string, revision: number, items: Fixe
     if (rows.length) await tx.supplierPriceRow.createMany({ data: rows.map((r) => {
       const prev = before.find((b) => b.code === r.code);
       const pc = (prev?.conditions ?? {}) as { mode?: string; percentBps?: number; source?: unknown; supplierRef?: string };
-      const same = prev && prev.amountMinor === r.minor && (pc.mode ?? "fixed") === r.mode && (pc.percentBps ?? null) === r.percentBps;
-      const conditions = JSON.parse(JSON.stringify({ ...(prev ? { source: pc.source, supplierRef: pc.supplierRef } : {}), unit: r.unit, mode: r.mode, ...(r.percentBps != null ? { percentBps: r.percentBps } : {}), applies: r.applies, mandatory: r.mandatory, ...(r.rule ? { rule: r.rule } : {}) })) as Prisma.InputJsonValue;
+      const same = prev && prev.amountMinor === r.minor && (pc.mode ?? "fixed") === r.mode && (pc.percentBps ?? null) === r.percentBps && JSON.stringify((pc as { table?: { cells?: unknown[] } }).table?.cells?.map((c) => Object.fromEntries(Object.entries(c as Record<string, unknown>).filter(([k]) => k !== "source"))) ?? null) === JSON.stringify(r.table?.cells ?? null);
+      const conditions = JSON.parse(JSON.stringify({ ...(prev ? { source: pc.source, supplierRef: pc.supplierRef } : {}), unit: r.unit, mode: r.mode, ...(r.percentBps != null ? { percentBps: r.percentBps } : {}), applies: r.applies, mandatory: r.mandatory, ...(r.rule ? { rule: r.rule } : {}), ...(r.table ? { table: r.table } : {}), ...(r.rangeMinor ? { rangeMinor: r.rangeMinor } : {}), ...(r.perOptionQty ? { perOptionQty: r.perOptionQty } : {}) })) as Prisma.InputJsonValue;
       return { listId: id, familySlug: g.familySlug!, variantKey: g.variantKey, kind: "FIXED", code: r.code, label: r.label, conditions, amountMinor: r.minor, currency: g.currency, amountRole: g.amountRole ?? "MANUAL", sourceRef: same && prev ? prev.sourceRef : `Saisie dans l'administration (${actor.actorEmail ?? "?"}, ${now.toISOString().slice(0, 10)})`, status: "OK", origin: same && prev ? prev.origin : "MANUAL", editedBy: same ? null : actor.actorEmail ?? null, editedAt: same ? null : now };
     }) });
   });
@@ -435,6 +468,37 @@ export async function deriveDraft(baseId: string, targetId: string, mode: Derive
   return created;
 }
 
+/**
+ * Cellules d'un supplément « tableau » (une ligne importée par cellule, même code) regroupées en une seule ligne :
+ * conditions.table = { axis, cells } ; provenance de chaque cellule conservée dans la cellule.
+ */
+/** JSON à clés triées (récursif) : la base (jsonb) ne conserve pas l'ordre des clés, la comparaison ne doit pas en dépendre. */
+function canonicalJson(v: unknown): string {
+  const norm = (x: unknown): unknown => (Array.isArray(x) ? x.map(norm) : x && typeof x === "object" ? Object.fromEntries(Object.keys(x as object).sort().map((k) => [k, norm((x as Record<string, unknown>)[k])])) : x);
+  return JSON.stringify(norm(v));
+}
+
+function tableAggregated<T extends { code: string; amountMinor: number | null; conditions: unknown; sourceRef: string }>(rows: T[]): T[] {
+  const out: T[] = [];
+  const tables = new Map<string, T>();
+  for (const r of rows) {
+    const c = (r.conditions ?? {}) as { mode?: string; tableCell?: { axis: string; dimMin: number; dimMax: number; widthMin?: number; widthMax?: number } };
+    if (c.mode !== "table" || !c.tableCell) { out.push(r); continue; }
+    const cell = { dimMin: c.tableCell.dimMin, dimMax: c.tableCell.dimMax, ...(c.tableCell.widthMin != null ? { widthMin: c.tableCell.widthMin, widthMax: c.tableCell.widthMax } : {}), amountMinor: r.amountMinor, source: r.sourceRef };
+    const prev = tables.get(r.code);
+    if (prev) ((prev.conditions as { table: { cells: unknown[] } }).table.cells).push(cell);
+    else {
+      const { tableCell, ...rest } = c;
+      const agg = { ...r, amountMinor: null, sourceRef: r.sourceRef.replace(/ › ligne \d+/, " › tableau"), conditions: { ...rest, table: { axis: tableCell.axis, cells: [cell] } } };
+      tables.set(r.code, agg);
+      out.push(agg);
+    }
+  }
+  // cellules dans l'ordre des cotes (indépendant de l'ordre de lecture des lignes)
+  for (const t of tables.values()) (t.conditions as { table: { cells: Array<{ dimMin: number; widthMin?: number }> } }).table.cells.sort((a, b) => a.dimMin - b.dimMin || (a.widthMin ?? 0) - (b.widthMin ?? 0));
+  return out;
+}
+
 /** Suppléments (lignes FIXED) d'une version, recalculés : montant fixe × règle (arrondi demi supérieur) ; % et « à chiffrer » repris. */
 async function derivedSupplements(baseId: string, mode: DeriveMode, value: string, currency: string | null, amountRole: string): Promise<RowInput[]> {
   const fixed = await prisma.supplierPriceRow.findMany({ where: { listId: baseId, kind: "FIXED" }, orderBy: { code: "asc" } });
@@ -443,7 +507,12 @@ async function derivedSupplements(baseId: string, mode: DeriveMode, value: strin
   return fixed.map((f) => {
     const m = (f.conditions as { mode?: string } | null)?.mode;
     const amount = f.amountMinor == null || m === "percent" || m === "pending" ? f.amountMinor : roundHalfUp(f.amountMinor, ratio.num, ratio.den);
-    return { familySlug: f.familySlug, variantKey: f.variantKey, kind: "FIXED", code: f.code, label: f.label, conditions: { ...(f.conditions as object), derive: { mode, value, baseId } } as Prisma.InputJsonValue, amountMinor: amount, currency, amountRole, sourceRef: amount === f.amountMinor ? f.sourceRef : `Recalcul (${ratio.formula}) de ${f.sourceRef}`, status: f.status, origin: "DERIVED" };
+    const cond = { ...(f.conditions as Record<string, unknown>) };
+    const tbl = cond.table as { axis: string; cells: Array<{ amountMinor: number | null }> } | undefined;
+    if (m === "table" && tbl) cond.table = { ...tbl, cells: tbl.cells.map((c) => ({ ...c, amountMinor: c.amountMinor == null ? null : roundHalfUp(c.amountMinor, ratio.num, ratio.den) })) };
+    const range = cond.rangeMinor as [number, number] | undefined;
+    if (range) cond.rangeMinor = range.map((x) => roundHalfUp(x, ratio.num, ratio.den));
+    return { familySlug: f.familySlug, variantKey: f.variantKey, kind: "FIXED", code: f.code, label: f.label, conditions: { ...cond, derive: { mode, value, baseId } } as Prisma.InputJsonValue, amountMinor: amount, currency, amountRole, sourceRef: amount === f.amountMinor ? f.sourceRef : `Recalcul (${ratio.formula}) de ${f.sourceRef}`, status: f.status, origin: "DERIVED" };
   });
 }
 
@@ -462,9 +531,10 @@ export async function deriveSaleGrid(baseId: string, rule: { mode: DeriveMode; v
   const supplements = await derivedSupplements(base.id, rule.mode, rule.value, base.currency, "VENTE");
   const latest = await prisma.supplierPriceList.findFirst({ where: { sourceKey, status: { not: "REJECTED" } }, orderBy: { version: "desc" }, select: { id: true, version: true } });
   if (latest) {
-    const [cells, fixed] = await Promise.all([gridCells(latest.id), prisma.supplierPriceRow.findMany({ where: { listId: latest.id, kind: "FIXED" }, select: { code: true, amountMinor: true, conditions: true } })]);
-    const key = (x: { code: string; amountMinor: number | null; conditions: unknown }) => `${x.code}|${x.amountMinor}|${JSON.stringify({ ...(x.conditions as object), derive: undefined })}`;
-    const sameFixed = fixed.length === supplements.length && fixed.map(key).sort().join() === supplements.map((x) => key({ code: x.code ?? "", amountMinor: x.amountMinor ?? null, conditions: x.conditions })).sort().join();
+    const [cells, fixed] = await Promise.all([gridCells(latest.id), prisma.supplierPriceRow.findMany({ where: { listId: latest.id, kind: "FIXED" }, select: { code: true, label: true, amountMinor: true, conditions: true } })]);
+    // libellé compris (un libellé corrigé est une nouvelle version) ; clés comparées dans un ordre canonique (jsonb)
+    const key = (x: { code: string; label: string | null; amountMinor: number | null; conditions: unknown }) => `${x.code}|${x.label ?? ""}|${x.amountMinor}|${canonicalJson({ ...(x.conditions as object), derive: undefined })}`;
+    const sameFixed = fixed.length === supplements.length && fixed.map(key).sort().join() === supplements.map((x) => key({ code: x.code ?? "", label: x.label ?? null, amountMinor: x.amountMinor ?? null, conditions: x.conditions })).sort().join();
     if (sameCells(cells, r.cells) && sameFixed) return { id: latest.id, version: latest.version, created: false };
   }
   const baseRows = await prisma.supplierPriceRow.findMany({ where: { listId: base.id, kind: "GRID" }, select: { dimAmm: true, widthMinMm: true, widthMaxMm: true, dimAKey: true, sourceRef: true, conditions: true } });
@@ -550,13 +620,13 @@ export async function deriveGridsFromImport(listId: string, opts: { columns: Rec
   }
   // suppléments (lignes OPTION de l'import) : reportés sur la grille de même produit, variante et colonne
   const optionRows = await prisma.supplierPriceRow.findMany({ where: { listId, kind: "OPTION", status: { not: "REJECTED" } }, orderBy: { code: "asc" } });
-  const optionsFor = (familySlug: string, variantKey: string, role: string): RowInput[] => optionRows
+  const optionsFor = (familySlug: string, variantKey: string, role: string): RowInput[] => tableAggregated(optionRows
     .filter((o) => {
       const m = opts.mapping?.[groupId(o.familySlug, o.variantKey)];
       return (m?.familySlug ?? o.familySlug) === familySlug && (m ? m.variantKey : o.variantKey) === variantKey && o.amountRole === role;
-    })
+    }))
     .map((o) => ({ familySlug, variantKey, kind: "FIXED", code: o.code, label: o.label, conditions: { ...(o.conditions as object), importedAt: list.createdAt.toISOString(), importListId: list.id } as Prisma.InputJsonValue, amountMinor: o.amountMinor, currency: opts.columns[role]?.currency ?? o.currency, amountRole: role, sourceRef: o.sourceRef, status: o.status, issues: o.issues, origin: "IMPORT" }));
-  const fixedKey = (x: { code: string; amountMinor: number | null; conditions: unknown }) => { const c = { ...(x.conditions as Record<string, unknown>) }; delete c.importedAt; delete c.importListId; return `${x.code}|${x.amountMinor}|${JSON.stringify(c)}`; };
+  const fixedKey = (x: { code: string; label: string | null; amountMinor: number | null; conditions: unknown }) => { const c = { ...(x.conditions as Record<string, unknown>) }; delete c.importedAt; delete c.importListId; return `${x.code}|${x.label ?? ""}|${x.amountMinor}|${canonicalJson(c)}`; };
   const importedAt = list.createdAt.toISOString().slice(0, 10);
   for (const [k, grp] of groups) {
     const [familySlug, variantKey, role] = k.split("\u0000") as [string, string, string];
@@ -566,8 +636,8 @@ export async function deriveGridsFromImport(listId: string, opts: { columns: Rec
     const supplements = optionsFor(familySlug, variantKey, role);
     const latest = await prisma.supplierPriceList.findFirst({ where: { sourceKey, status: { not: "REJECTED" } }, orderBy: { version: "desc" }, select: gridSelect });
     if (latest && sameCells(await gridCells(latest.id), cells)) {
-      const fixed = await prisma.supplierPriceRow.findMany({ where: { listId: latest.id, kind: "FIXED" }, select: { code: true, amountMinor: true, conditions: true } });
-      if (fixed.map(fixedKey).sort().join("\n") === supplements.map((x) => fixedKey({ code: x.code ?? "", amountMinor: x.amountMinor ?? null, conditions: x.conditions })).sort().join("\n")) { res.unchanged.push({ sourceKey, version: latest.version }); continue; }
+      const fixed = await prisma.supplierPriceRow.findMany({ where: { listId: latest.id, kind: "FIXED" }, select: { code: true, label: true, amountMinor: true, conditions: true } });
+      if (fixed.map(fixedKey).sort().join("\n") === supplements.map((x) => fixedKey({ code: x.code ?? "", label: x.label ?? null, amountMinor: x.amountMinor ?? null, conditions: x.conditions })).sort().join("\n")) { res.unchanged.push({ sourceKey, version: latest.version }); continue; }
     }
     const drafts = await prisma.supplierPriceList.findMany({ where: { sourceKey, status: { in: ["DRAFT", "VERIFIED"] } }, select: { version: true } });
     res.keptDrafts.push(...drafts.map((d) => ({ sourceKey, version: d.version })));

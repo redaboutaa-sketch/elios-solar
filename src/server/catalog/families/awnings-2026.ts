@@ -5,7 +5,7 @@
  * signalées et validées au devis. Aucun classement « basique / équipé » n'est attribué par le fabricant : la lecture par
  * équipement est construite dans la page de la famille, depuis ces règles. Données publiables : aucun tarif.
  */
-import type { SourceRef } from "@/domain/system";
+import type { ControlChoice, SourceRef } from "@/domain/system";
 import type { HelioFamily } from "../heliostores-data";
 import { finishOf, src } from "./shared";
 
@@ -28,6 +28,26 @@ export const AWNING_SOURCES = {
 
 const S = AWNING_SOURCES;
 const at = (s: SourceRef, loc: string): SourceRef => ({ ...s, loc });
+
+/** Liste de prix des produits finis (09.2026) : source privée (retirée des données publiques). */
+const PRICE_LIST = src("liste-prix-2026-09", "Liste des prix des produits finis (09.2026)");
+
+/**
+ * Modes de commande motorisés des stores bannes (liste de prix p. 100–107 de l'index : moteurs, commandes et matrice
+ * de compatibilité moteur × store). Le client choisit un mode compréhensible ; le moteur dépend du mode, du modèle et
+ * du couple (avancée, largeur, nombre de bras) : un seul moteur documenté → prix ; plusieurs → fourchette au devis.
+ */
+export const AWNING_MODES = {
+  wired: { code: "wired", label: "Motorisée — commande filaire (interrupteur)", kind: "electric", status: "established", description: "Moteur et interrupteur mural.", sources: [at(PRICE_LIST, "p. 100–107")] },
+  radio_dedicated: { code: "radio_dedicated", label: "Motorisée — radio, télécommande dédiée", kind: "electric", status: "established", description: "Moteur radio et sa télécommande ; pas de box smartphone documentée.", sources: [at(PRICE_LIST, "p. 100–107")] },
+  radio_rts: { code: "radio_rts", label: "Motorisée — radio RTS", kind: "electric", status: "established", description: "Moteur radio RTS et télécommande ; compatible box smartphone.", sources: [at(PRICE_LIST, "p. 100–107")] },
+  radio_io: { code: "radio_io", label: "Motorisée — radio io", kind: "electric", status: "established", description: "Moteur radio io et télécommande ; capteurs et box smartphone io.", sources: [at(PRICE_LIST, "p. 100–107")] },
+  radio_io_secours: { code: "radio_io_secours", label: "Motorisée — radio io avec manœuvre de secours", kind: "electric", status: "established", description: "Moteur radio io avec manivelle de secours en cas de panne ; télécommande et box smartphone io.", sources: [at(PRICE_LIST, "p. 100–107")] },
+} as const satisfies Record<string, ControlChoice>;
+export const awningModes = (...codes: Array<keyof typeof AWNING_MODES>): ControlChoice[] => codes.map((c) => ({ ...AWNING_MODES[c] }));
+
+/** Box domotique : moteurs io et RTS (liste de prix p. 103 de l'index). */
+export const AWNING_CONNECT_BOX = { code: "connect_box", label: "Box domotique — commande par smartphone", visual: "box" as const, description: "Box internet qui pilote depuis une application les moteurs radio io et RTS.", group: "control" as const, status: "established" as const, pricing: "validated" as const, requiresControls: ["radio_rts", "radio_io", "radio_io_secours"], prerequisite: "nécessite une motorisation radio RTS ou io", sources: [at(PRICE_LIST, "p. 103 — box (appareils io et RTS)")] };
 const DEPTHS = [1600, 2100, 2600, 3100, 3600];
 
 /** Toiles : collections communes aux quatre modèles (≈ 150 motifs) — coloris choisi sur nuancier. */
@@ -39,7 +59,7 @@ function commandWishes(sources: SourceRef[]) {
     { code: "remote_control", label: "Télécommande radio", description: "Émetteur pour piloter le store motorisé ; modèle défini avec le moteur.", group: "control" as const, status: "to_confirm" as const, requiresControlKind: "electric" as const, prerequisite: "nécessite la motorisation", pricing: "quote" as const, visual: "remote" as const, sources },
     { code: "wind_sensor", label: "Capteur de vent (ou vent-soleil)", description: "Replie le store au-delà du seuil réglé ; ne protège pas contre une rafale qui dépasse ses réglages.", group: "control" as const, status: "to_confirm" as const, wish: true, requiresControlKind: "electric" as const, prerequisite: "nécessite la motorisation ; capteur compatible avec le moteur", pricing: "quote" as const, visual: "wind_sensor" as const, sources },
     { code: "shock_sensor", label: "Capteur de vibrations", description: "Fixé à la barre de charge, il commande le repli en cas d'oscillations.", group: "control" as const, status: "to_confirm" as const, wish: true, requiresControlKind: "electric" as const, prerequisite: "nécessite la motorisation ; capteur compatible avec le moteur", pricing: "quote" as const, sources },
-    { code: "connect_box", label: "Box domotique — commande par smartphone", description: "Pilote depuis une application un moteur radio compatible ; elle ne rend pas connecté un moteur non compatible.", group: "control" as const, status: "to_confirm" as const, wish: true, requiresControlKind: "electric" as const, prerequisite: "nécessite un moteur radio compatible", pricing: "quote" as const, visual: "box" as const, sources },
+    AWNING_CONNECT_BOX,
   ];
 }
 
@@ -81,16 +101,17 @@ const corsica: HelioFamily = {
     customFinish: { code: "RAL_CUSTOM", label: "Autre teinte du nuancier (option avec supplément)", status: "to_confirm" as const, tier: "special" as const, sources: [at(S.pageCorsica, "couleurs — « * Option avec supplément »")], note: "teinte avec supplément : disponibilité, conditions et délai confirmés au devis" },
     palette: { edition: "nuancier du fabricant, brochure stores bannes (10.2026)", component: "coffre et bras", sources: [at(S.brochure, "p. 13"), at(S.pageCorsica, "couleurs — « * Option avec supplément »")] },
     fabrics: FABRIC_COLLECTION([at(S.supp, "p. 51"), at(S.dteCorsica, "p. 6")]),
-    controls: [{ code: "electric", label: "Motorisation électrique", kind: "electric", status: "to_confirm", sources: [at(S.brochure, "p. 13 — « proposé exclusivement avec une motorisation électrique »"), at(S.dteCorsica, "p. 6")], note: "modèle de moteur établi au devis" }],
+    // motorisation exclusive (brochure p. 13, DT-E p. 6) : modes de la matrice de compatibilité (liste de prix p. 100–107)
+    controls: awningModes("wired", "radio_dedicated", "radio_rts", "radio_io"),
     included: [
       { label: "Semi-coffre (fermé comme un coffre intégral en pose murale)", sources: [at(S.brochure, "p. 13"), at(S.pageCorsica, "description")] },
       { label: "Barre porteuse carrée et joues en aluminium", sources: [at(S.brochure, "p. 13"), at(S.supp, "p. 51")] },
       { label: "Bras à chaînes Flyer (2 ou 3 selon les dimensions)", sources: [at(S.dteCorsica, "p. 6"), at(S.dopCorsica, "tableau")] },
       { label: "Motorisation électrique", sources: [at(S.dteCorsica, "p. 6")] },
+      { label: "Éclairage LED dans le profil bas", visual: "led_cassette", description: "Bande LED intégrée sous le profil du coffre ; comprise dans le prix du store.", sources: [at(PRICE_LIST, "p. 96 — « prix du store banne avec supports muraux et éclairage LED »"), at(S.pageCorsica, "« dans la version standard »")] },
     ],
     supports: { label: "Supports muraux", rows: [{ upToMm: 3500, count: 2 }, { upToMm: 4700, count: 3 }, { upToMm: 5900, count: 4 }, { upToMm: 7000, count: 5 }], sources: [at(S.supp, "p. 52")] },
     options: [
-      { code: "led_bottom_profile", label: "Éclairage LED dans le profil bas", description: "Bande LED intégrée sous le profil du coffre.", group: "lighting", status: "to_confirm", requiresControlKind: "electric", pricing: "quote", visual: "led_cassette", sources: [at(S.supp, "p. 51 — « possibilité »"), at(S.pageCorsica, "« dans la version standard »"), at(S.dteLed, "p. 6 — compatible uniquement avec le moteur SOMFY")], note: "de série selon la page web, en option selon le supplément technique ; kit compatible avec certains moteurs seulement" },
       { code: "led_arms", label: "Bras éclairés LED", description: "Bras équipés de LED.", group: "lighting", status: "to_confirm", requiresControlKind: "electric", prerequisite: "avancée de 3,1 m ou 3,6 m ; moteur compatible avec le kit d'éclairage", pricing: "quote", visual: "led_arms", sources: [at(S.brochure, "p. 13"), at(S.supp, "p. 83"), at(S.dteLed, "p. 6")], note: "kit d'éclairage compatible avec certains moteurs seulement (désignés par le fabricant)" },
       ...commandWishes([at(S.pageCorsica, "onglet Automatisation (liste sans compatibilité par moteur)"), at(S.dteCorsica, "p. 6")]),
     ],
@@ -157,7 +178,7 @@ const jamaica: HelioFamily = {
       { code: "crank_1500", label: "Manuelle — manivelle 150 cm", kind: "manual", status: "established", sources: [at(S.dteJamaica, "p. 6")] },
       { code: "crank_1800", label: "Manuelle — manivelle 180 cm", kind: "manual", status: "established", sources: [at(S.dteJamaica, "p. 6")] },
       { code: "crank_2200", label: "Manuelle — manivelle 220 cm", kind: "manual", status: "established", sources: [at(S.dteJamaica, "p. 6")] },
-      { code: "electric", label: "Motorisation électrique", kind: "electric", status: "to_confirm", sources: [at(S.brochure, "p. 15"), at(S.dopJamaica, "« operated manually or with electric motor »")], note: "modèle de moteur établi au devis" },
+      ...awningModes("wired", "radio_dedicated", "radio_rts", "radio_io", "radio_io_secours"),
     ],
     included: [
       { label: "Barre porteuse carrée en acier, supports de bras usinés", sources: [at(S.supp, "p. 17")] },
@@ -165,7 +186,7 @@ const jamaica: HelioFamily = {
     ],
     supports: { label: "Supports muraux", rows: [{ upToMm: 3500, count: 2 }, { upToMm: 4700, count: 3 }, { upToMm: 5900, count: 4 }, { upToMm: 7000, count: 5 }], sources: [at(S.supp, "p. 17")] },
     options: [
-      { code: "hood", label: "Auvent en aluminium (protection de la toile enroulée)", group: "structure", status: "established", pricing: "quote", sources: [at(S.brochure, "p. 15"), at(S.supp, "p. 17, 20")], note: "pas avec la pose au plafond" },
+      { code: "hood", label: "Auvent en aluminium (protection de la toile enroulée)", group: "structure", status: "established", pricing: "validated", requiresMountings: ["wall", "rafter"], prerequisite: "pose murale ou sur chevrons", sources: [at(S.brochure, "p. 15"), at(S.supp, "p. 17, 20"), at(PRICE_LIST, "p. 96 — auvent selon la largeur")], note: "pas avec la pose au plafond" },
       { code: "valance", label: "Lambrequin (3 formes)", group: "other", status: "established", pricing: "quote", sources: [at(S.brochure, "p. 15"), at(S.supp, "p. 17")] },
       { code: "telescopic_supports", label: "Supports télescopiques", description: "Éléments supplémentaires qui augmentent la résistance au vent.", group: "structure", status: "established", pricing: "quote", sources: [at(S.pageJamaica, "« Support télescopique : Standard et Plus »"), at(S.supp, "p. 17")] },
       { code: "led_arms", label: "Bras éclairés LED", group: "lighting", status: "to_confirm", requiresControlKind: "electric", prerequisite: "avancée de 3,1 m ou 3,6 m ; moteur compatible avec le kit d'éclairage", pricing: "quote", visual: "led_arms", sources: [at(S.brochure, "p. 15"), at(S.supp, "p. 83"), at(S.dteLed, "p. 2, 6")], note: "kit d'éclairage compatible avec certains moteurs seulement (désignés par le fabricant)" },
@@ -224,15 +245,16 @@ const madera: HelioFamily = {
     customFinish: { code: "RAL_CUSTOM", label: "Autre teinte du nuancier (option avec supplément)", status: "to_confirm" as const, tier: "special" as const, sources: [at(S.pageMadeira, "couleurs — « * Option avec supplément »")], note: "teinte avec supplément : disponibilité, conditions et délai confirmés au devis" },
     palette: { edition: "nuancier du fabricant, brochure stores bannes (10.2026)", component: "coffre et bras", sources: [at(S.brochure, "p. 5"), at(S.pageMadeira, "couleurs")] },
     fabrics: FABRIC_COLLECTION([at(S.supp, "p. 3")]),
-    controls: [{ code: "electric", label: "Motorisation électrique (secours manuel possible)", kind: "electric", status: "to_confirm", sources: [at(S.brochure, "p. 5 — « exclusivement avec une motorisation électrique »"), at(S.supp, "p. 3 — manœuvre de secours par manivelle possible")], note: "moteur établi au devis" }],
+    // motorisation exclusive (brochure p. 5) ; seul moteur compatible de la matrice : radio io avec manœuvre de secours
+    controls: awningModes("radio_io_secours"),
     included: [
       { label: "Coffre cubique protégeant la toile", status: "to_confirm", description: "« entièrement fermé » selon la brochure, « demi-coffre » selon la page web", sources: [at(S.brochure, "p. 5"), at(S.pageMadeira, "description")] },
       { label: "Barre porteuse carrée, joues en aluminium, bras à chaînes Flyer", sources: [at(S.supp, "p. 3")] },
       { label: "Motorisation électrique", sources: [at(S.brochure, "p. 5")] },
+      { label: "Éclairage LED intégré au coffre", visual: "led_cassette", description: "Compris dans le prix du store.", sources: [at(PRICE_LIST, "p. 96 — « prix du store banne avec supports muraux et éclairage LED »"), at(S.pageMadeira, "« de série »"), at(S.brochure, "p. 5")] },
     ],
     supports: { label: "Supports muraux", rows: [{ upToMm: 3500, count: 2 }, { upToMm: 4700, count: 3 }, { upToMm: 5900, count: 4 }, { upToMm: 6000, count: 5 }], sources: [at(S.supp, "p. 5"), at(S.imMadeira, "p. 10–11")] },
     options: [
-      { code: "led_cassette", label: "Éclairage LED intégré au coffre", group: "lighting", status: "to_confirm", requiresControlKind: "electric", pricing: "quote", visual: "led_cassette", sources: [at(S.pageMadeira, "« de série »"), at(S.brochure, "p. 5"), at(S.supp, "p. 3 — « possibilité »")], note: "de série selon la page web et la brochure, en option selon le supplément technique" },
       { code: "led_arms", label: "Bras éclairés LED", group: "lighting", status: "to_confirm", wish: true, requiresControlKind: "electric", pricing: "quote", visual: "led_arms", sources: [at(S.brochure, "p. 5"), at(S.supp, "p. 3")], note: "HelioSquare est absent des listes du kit LED pour bras" },
       ...commandWishes([at(S.pageMadeira, "onglet Automatisation : deux entrées seulement"), at(S.brochure, "p. 5 — automatisme météorologique et domotique possibles")]),
     ],

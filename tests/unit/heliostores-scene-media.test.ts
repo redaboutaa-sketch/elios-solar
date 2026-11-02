@@ -92,11 +92,14 @@ describe("attribution du prospect", () => {
 
 describe("visualisation liée à la configuration (nomenclature du 2026-10-25)", () => {
   it("toiture toile (HelioLux), teinte de toile suivie, LED et capteur représentés seulement s'ils sont choisis", () => {
-    const sev = scene(input("sevilla", { fabricCode: "serge_600" }));
-    expect(sev).toMatchObject({ kind: "pergola", roof: "fabric", roofFabricColor: "#a7a59d", mounting: "wall" });
+    const sev = scene(input("sevilla", { fabricCode: "solid_beige", mounting: "wall" }));
+    expect(sev).toMatchObject({ kind: "pergola", roof: "fabric", roofFabricColor: "#d9ccb4", mounting: "wall" });
+    // HelioShade : éclairage du profil bas compris dans le prix (liste de prix p. 96) → toujours représenté
     const plain = scene(input("corsica", { depthMm: 2600, widthMm: 4000 }));
-    expect(plain).toMatchObject({ kind: "awning", led: false, ledArms: false, anemometer: false, bracketCount: 3 });
-    const lit = scene(input("corsica", { depthMm: 3100, widthMm: 4000, options: [{ code: "led_bottom_profile" }, { code: "led_arms" }, { code: "wind_sensor" }] }));
+    expect(plain).toMatchObject({ kind: "awning", led: true, ledArms: false, anemometer: false, bracketCount: 3 });
+    const bare = scene(input("jamaica", { depthMm: 2600, widthMm: 4000 }));
+    expect(bare).toMatchObject({ kind: "awning", led: false, ledArms: false, anemometer: false });
+    const lit = scene(input("corsica", { depthMm: 3100, widthMm: 4000, options: [{ code: "led_arms" }, { code: "wind_sensor" }] }));
     expect(lit).toMatchObject({ led: true, ledArms: true, anemometer: true });
   });
   it("screen de toiture et moustiquaire : modèles 2D propres (pas de projection de pergola, pas de lames)", () => {

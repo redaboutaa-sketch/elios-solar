@@ -38,7 +38,10 @@ export async function publicCell(familySlug: string, variantKey: string, dimMm: 
   if (!list) return null;
   const cells = await many<{ dimAmm: number; widthMinMm: number; widthMaxMm: number; amountMinor: number }>(`SELECT r."dimAmm", COALESCE(r."widthMinMm", r."widthMaxMm") AS "widthMinMm", r."widthMaxMm", r."amountMinor" FROM "SupplierPriceRow" r WHERE r."listId" = $1 AND r.kind = 'GRID' AND r."amountMinor" IS NOT NULL AND r.status <> 'REJECTED'`, [list.id]);
   if (list.dimRule !== "ROUND_UP") return cells.find((c) => c.dimAmm === dimMm && c.widthMinMm <= widthMm && widthMm <= c.widthMaxMm)?.amountMinor ?? null;
-  const dim = [...new Set(cells.map((c) => c.dimAmm))].sort((a, b) => a - b).find((d) => d >= dimMm);
+  const dims = [...new Set(cells.map((c) => c.dimAmm))].sort((a, b) => a - b);
+  // cote sous la première valeur de la grille : hors grille (la règle ne vaut qu'entre deux valeurs)
+  if (!dims.length || dimMm < dims[0]! || widthMm < Math.min(...cells.map((c) => c.widthMinMm))) return null;
+  const dim = dims.find((d) => d >= dimMm);
   if (dim == null) return null;
   const row = cells.filter((c) => c.dimAmm === dim).sort((a, b) => a.widthMaxMm - b.widthMaxMm);
   const cell = row.find((c) => c.widthMaxMm >= widthMm);

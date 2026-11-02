@@ -12,7 +12,7 @@ import type { TechnicalSpecValue } from "./technical-spec";
  * des tests et du contrôle des médias) : fabricant, fournisseur, références des produits et des moteurs.
  */
 export const PUBLIC_FORBIDDEN_NAMES =
-  /aluprof|thysens|\bselt\b|euro[\s-]?confort|\bsb\s?[3-5][05]0\b|refleksol|zi{2,}p|\bzip\s?120\b|\br\s?120\b|veranda\s?fts|\bfts\b|sunbreaker|zoomtech|blebox|elero|somfy|linak|picolo|\baltus\b|sunilus|suntop|varieco|\bdm45|palladio|tahoma|eolis|soliris|ondeis|madeira|open\s?slide|system\s?slide|veranda\s?v\b|pergola\s?solid|\bmph\s?(harmony|dual|verti)\b|\bm(zn|zh|zp|rp|rs|rsz|ro)\b/i;
+  /aluprof|thysens|\bselt\b|euro[\s-]?confort|\bsb\s?[3-5][05]0\b|refleksol|zi{2,}p|\bzip\s?120\b|\br\s?120\b|veranda\s?fts|\bfts\b|sunbreaker|zoomtech|blebox|elero|somfy|linak|picolo|\baltus\b|sunilus|suntop|varieco|\bdm45|palladio|tahoma|eolis|soliris|ondeis|madeira|open\s?slide|system\s?slide|veranda\s?v\b|pergola\s?solid|\bmph\s?(harmony|dual|verti)\b|\bm(zn|zh|zp|rp|rs|rsz|ro)\b|\bnemo\b|situo|maestria|variea[sz]y|\bdm45|\bmh45|\bysia\b|\bamy\s?\d|teleco\b|105\s?hk|\binis\s?uno\b|\borea\b|sunis\b/i;
 
 /**
  * Entité juridique du vendeur (décision du propriétaire du 2026-10-26) : THYSENS exploite la marque HELIOSTORES. Son nom

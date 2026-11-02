@@ -26,15 +26,15 @@ test("HelioSun structure seule : commande en ligne au prix de la grille, paiemen
   await goStep(page, "recap");
   await expect(order).toHaveAttribute("data-orderable", "true");
 
-  // commande électrique à confirmer, puis option : commande en ligne indisponible (chiffrées au devis)
+  // motorisation (moteur à chiffrer : plusieurs moteurs possibles), puis option : commande en ligne indisponible
   await goStep(page, "pose");
-  await page.getByLabel("Manœuvre et commande").selectOption({ label: "Motorisation électrique (moteur à définir) — à confirmer" });
+  await page.getByLabel("Manœuvre et commande").selectOption({ label: "Motorisée — radio io" });
   await goStep(page, "equip");
   await page.getByTestId("option-remote_control").getByRole("checkbox").check();
   await goStep(page, "recap");
   await expect(order).toHaveAttribute("data-orderable", "false");
   await expect(order).toContainText("les options sont chiffrées au devis");
-  await expect(order).toContainText("un choix est à confirmer au devis");
+  await expect(order).toContainText("éléments à chiffrer");
   await goStep(page, "equip");
   await page.getByTestId("option-remote_control").getByRole("checkbox").uncheck();
   await page.getByLabel("Pose professionnelle souhaitée").check();

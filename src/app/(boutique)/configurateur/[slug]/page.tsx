@@ -11,7 +11,8 @@ import { getGuestKey } from "@/server/guest";
 import { prisma } from "@/lib/prisma";
 import { isOwner } from "@/server/configuration/service";
 import { getLineForOwner } from "@/server/cart/service";
-import type { SystemInput } from "@/domain/system";
+import { withholdsSupplierMedia, type SystemInput, type SystemRules } from "@/domain/system";
+import { FamilySketch } from "@/components/illustrations/sketches";
 import { RetiredProduct } from "@/components/catalog/retired-product";
 import { getRetiredFamily } from "@/server/catalog/systems";
 import { configuratorHref } from "@/domain/categories";
@@ -50,22 +51,25 @@ export default async function SystemConfiguratorPage(props: PageProps<"/configur
   const t = (await getT("configurator")).page;
   const catLabel = (await getT("layout")).categories[cat.key] ?? cat.label;
   const media = await publishedMediaFor(family.slug);
-  const hero = media.find((m) => m.role === "hero") ?? media[0];
+  // visuels d'un autre système retenus (fiche révisée) : dessin du modèle, jamais ces photos
+  const hero = withholdsSupplierMedia(family.systemRules as SystemRules) ? undefined : media.find((m) => m.role === "hero") ?? media[0];
   let initial: Partial<SystemInput> | undefined;
   let existing: { id: string; token: string; title: string | null } | null = null;
   let cartLineId: string | null = null;
+  let savedAt: string | null = null;
   if (typeof sp.ligne === "string") {
     // modification d'une ligne du panier : seule une ligne du panier du visiteur, pour ce produit
     const [session, guestKey] = await Promise.all([getSession(), getGuestKey()]);
     const line = await getLineForOwner({ userId: session?.user.id, guestKey }, sp.ligne);
     const li = line?.input as unknown as SystemInput | undefined;
-    if (line && li?.kind === "system" && li.familySlug === family.slug) { initial = li; cartLineId = line.id; }
+    if (line && li?.kind === "system" && li.familySlug === family.slug) { initial = li; cartLineId = line.id; savedAt = line.updatedAt.toISOString(); }
   } else if (typeof sp.projet === "string") {
     const [session, guestKey] = await Promise.all([getSession(), getGuestKey()]);
     const c = await prisma.configuration.findFirst({ where: { OR: [{ id: sp.projet }, { shareToken: sp.projet }] } });
     const owner = { userId: session?.user.id, guestKey };
     if (c && c.kind === "system" && (c.input as { familySlug?: string }).familySlug === family.slug && (!c.shareRevoked || isOwner(c, owner))) {
       initial = c.input as unknown as SystemInput;
+      savedAt = c.updatedAt.toISOString();
       if (isOwner(c, owner)) existing = { id: c.id, token: c.shareToken, title: c.title };
     }
   }
@@ -76,13 +80,13 @@ export default async function SystemConfiguratorPage(props: PageProps<"/configur
     siblings: catalog.families.filter((f) => f.category === family.category && f.slug !== family.slug && !f.legacy && (f.status === "published" || f.status === "quote_only") && f.systemRules).map((f) => ({ slug: f.slug, name: f.name, href: configuratorHref(f.slug) })),
   };
   // eslint-disable-next-line @next/next/no-img-element -- média de la médiathèque
-  const art = hero ? <img src={hero.path} alt={hero.alt} className="aspect-[4/3] w-full bg-white object-contain" /> : <div className="grid aspect-[4/3] place-items-center text-sm text-stone-700">{t.noVisual}</div>;
+  const art = hero ? <img src={hero.path} alt={hero.alt} className="aspect-[4/3] w-full bg-white object-contain" /> : withholdsSupplierMedia(family.systemRules as SystemRules) ? <div className="grid aspect-[4/3] place-items-center bg-white p-8"><FamilySketch kind={cat.key} showWall={false} className="w-2/3" /></div> : <div className="grid aspect-[4/3] place-items-center text-sm text-stone-700">{t.noVisual}</div>;
   return (
     <div className="container-x py-8">
       <Breadcrumbs items={[{ href: cat.href, label: catLabel }, { href: productHref(cat.key, family.slug), label: family.name }, { label: t.breadcrumb }]} />
       <h1 className="mt-3 font-display text-2xl font-semibold sm:mt-4 sm:text-display">{fmt(t.title, { name: family.name })}</h1>
       <p className="mt-2 hidden max-w-3xl text-stone-700 text-pretty sm:block">{t.intro}</p>
-      <div className="mt-6"><SystemConfigurator catalog={catalog} familySlug={family.slug} art={art} initial={initial} existing={existing} cartLineId={cartLineId} nav={nav} salesOpen={onlineSalesEnabled()} /></div>
+      <div className="mt-6"><SystemConfigurator catalog={catalog} familySlug={family.slug} art={art} initial={initial} existing={existing} cartLineId={cartLineId} savedAt={savedAt} nav={nav} salesOpen={onlineSalesEnabled()} /></div>
     </div>
   );
 }

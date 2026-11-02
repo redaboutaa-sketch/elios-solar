@@ -21,17 +21,23 @@
   SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
 
-## Catalogue de prix 09.2026 (2026-11-02) — `docs/pricing/catalogue-2026-09.md`
+## Correspondances SOLID / VÉRANDA V ZiiiP, moteurs et options (2026-11-03) — `docs/pricing/catalogue-2026-09.md`
 
-- « Liste des prix des produits finis » (EUR HT, prix catalogue avant remise revendeur, valable au 15/09/2026)
-  importée en base : 1 282 lignes tracées (page, tableau, ligne, colonne), 16 grilles « prix catalogue fournisseur »
-  (internes) et leurs 24 suppléments ; grilles de vente = catalogue × 1, TVA 20 %, dimension supérieure (décision
-  écrite du client du 2026-11-02, `docs/DECISIONS.md`).
-- Prix affichés : HelioMax, HelioSky, HelioScreen, HelioSun, HelioPro (complets selon les choix) ; HelioShade et
-  HelioSquare en sous-total partiel (moteur obligatoire à chiffrer). Préparés sans publication : HelioLux (SOLID),
-  HelioRoof (VÉRANDA V ZiiiP) — fiches à aligner. Aucune moustiquaire ni SYSTEM SLIDE dans ce catalogue.
-- Moteur : décomposition (structure, suppléments en % ou montant, éléments à chiffrer, HT/TTC), simulateur A/B/C/D,
-  suppléments éditables, réévaluation d'un devis, commande en ligne toujours fermée (paiement non activé).
+- HelioLux = SOLID et HelioRoof = VÉRANDA V ZiiiP (confirmés par le client) : fiches, configurateurs et données
+  remplacés (dimensions, poses, toiles, commandes, options) ; photos d'un autre système retenues (dessin du modèle) ;
+  anciens projets signalés pour revalidation, jamais convertis ; devis émis inchangés.
+- Prix affichés pour les neuf produits configurables (grilles de vente = catalogue × 1, TVA 20 %, dimension supérieure
+  entre deux valeurs) ; import 1 603 lignes (345 suppléments : modes de commande, télécommandes, capteurs, box,
+  éclairages, poteaux, auvent, hauteur hors norme) ; contrôle cellule par cellule 1 556 / 0 écart.
+- Modes de commande compréhensibles (filaire, radio RTS, radio io…) ; moteur déduit du mode et du couple : montant
+  si un seul moteur convient, fourchette « à chiffrer » sinon ; comparatif des modes dans le configurateur.
+- Questions fournisseur restantes : `docs/pricing/questions-fournisseur-2026-11.md`. Livraison et pose au devis ;
+  paiement en ligne désactivé ; langues préparées non activées.
+
+## Catalogue de prix 09.2026 (2026-11-02)
+
+- Import, grilles catalogue internes, grilles de vente et décisions écrites du client (`docs/DECISIONS.md`) ;
+  simulateur A/B/C/D, suppléments éditables, réévaluation d'un devis ; commande en ligne fermée.
 
 ## Itération du 2026-11-01 (dix retours client) — `docs/client-feedback-followup.md`
 

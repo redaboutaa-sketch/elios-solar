@@ -1,15 +1,19 @@
 import { expect, test } from "@playwright/test";
 import { acceptNecessaryOnly, fillQuote, loginAdmin, uid } from "./helpers";
+import { IN_FORCE_GRID_SQL, one } from "./db";
 
 /**
  * Prix affichés depuis l'administration (circuit du 2026-11-02) : grille de vente créée et modifiée (cellule +
  * supplément en pourcentage), simulation A / B / C / D, vérification et publication, configurateur (prix HT et TTC,
  * détail du supplément, récapitulatif), demande de devis (décomposition figée), puis désactivation : aucun tarif de
- * test ne reste en vigueur. Produit : HelioLux (aucune grille de vente publiée en recette), pose adossée.
- * Montants fictifs.
+ * test ne reste en vigueur. Produit : HelioLux, pose adossée, sans grille de vente en vigueur (base de recette sans
+ * catalogue privé). Si une grille réelle est en vigueur (préproduction, base de développement importée), le parcours est
+ * sauté : la désactivation finale retirerait un prix réel. Montants fictifs.
  */
 test("administration → modification → simulation → publication → configurateur → devis", async ({ page, browser }, info) => {
   test.skip(info.project.name !== "desktop", "parcours d'écriture : une seule fois par campagne");
+  const real = await one(`SELECT l.id FROM "SupplierPriceList" l WHERE ${IN_FORCE_GRID_SQL} AND l."familySlug" = 'sevilla' AND l."variantKey" = 'murale' LIMIT 1`);
+  test.skip(!!real, "grille réelle en vigueur (HelioLux adossée) : parcours d'écriture non rejouable sans retirer un prix réel");
   test.setTimeout(180_000);
   await loginAdmin(page, "/admin/tarifs");
   const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Créer le brouillon" }) });

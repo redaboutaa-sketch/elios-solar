@@ -64,12 +64,21 @@ export async function loadPublicSystemPrices(now: Date = new Date()): Promise<{ 
  * saisi sans mode (ancien format) n'est jamais appliqué automatiquement (cible « non_configurable »).
  */
 export function supplementOf(f: { code: string; label: string; amountMinor: number | null; conditions: unknown }): PriceSupplement | null {
-  const c = (f.conditions ?? {}) as { mode?: string; percentBps?: number; applies?: string[]; mandatory?: boolean; rule?: string };
-  const mode = c.mode === "percent" || c.mode === "pending" ? c.mode : "fixed";
+  const c = (f.conditions ?? {}) as { mode?: string; percentBps?: number; applies?: string[]; mandatory?: boolean; rule?: string; table?: { axis?: string; cells?: Array<{ dimMin: number; dimMax: number; widthMin?: number; widthMax?: number; amountMinor: number | null }> }; perOptionQty?: string; rangeMinor?: [number, number] };
+  const mode = c.mode === "percent" || c.mode === "pending" || c.mode === "table" ? c.mode : "fixed";
   if (mode === "fixed" && f.amountMinor == null) return null;
   if (mode === "percent" && (c.percentBps == null || !Number.isInteger(c.percentBps))) return null;
-  // public : aucune désignation du fabricant (libellé ou règle) ne quitte l'administration
+  const axis = c.table?.axis;
+  if (mode === "table" && (!c.table?.cells?.length || (axis !== "avancee" && axis !== "largeur" && axis !== "hauteur"))) return null;
+  // public : aucune désignation du fabricant (libellé ou règle), aucune provenance de cellule
   const safe = (t: string | undefined) => (t && !PUBLIC_FORBIDDEN_NAMES.test(t) ? t : undefined);
   const rule = safe(c.rule);
-  return { code: f.code, label: safe(f.label) ?? "Supplément", mode, amountMinor: mode === "fixed" ? f.amountMinor : null, percentBps: mode === "percent" ? c.percentBps! : null, applies: Array.isArray(c.applies) && c.applies.length ? c.applies : ["non_configurable"], mandatory: !!c.mandatory, ...(rule ? { rule } : {}) };
+  return {
+    code: f.code, label: safe(f.label) ?? "Supplément", mode,
+    amountMinor: mode === "fixed" ? f.amountMinor : null, percentBps: mode === "percent" ? c.percentBps! : null,
+    applies: Array.isArray(c.applies) && c.applies.length ? c.applies : ["non_configurable"], mandatory: !!c.mandatory, ...(rule ? { rule } : {}),
+    ...(mode === "table" ? { table: { axis: axis as "avancee" | "largeur" | "hauteur", cells: c.table!.cells!.filter((x) => x.amountMinor != null).map((x) => ({ dimMin: x.dimMin, dimMax: x.dimMax, ...(x.widthMin != null ? { widthMin: x.widthMin, widthMax: x.widthMax } : {}), amountMinor: x.amountMinor! })) } } : {}),
+    ...(c.perOptionQty ? { perOptionQty: c.perOptionQty } : {}),
+    ...(Array.isArray(c.rangeMinor) && c.rangeMinor.every((x) => Number.isInteger(x)) ? { rangeMinor: c.rangeMinor } : {}),
+  };
 }

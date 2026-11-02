@@ -40,10 +40,11 @@ describe("nomenclature commerciale HELIOSTORES (transcodification HELIO du 2026-
     const ref = Object.fromEntries(HELIOSTORES_FAMILIES.map((f) => [f.slug, f.supplierRef]));
     expect(ref.malaga).toMatch(/^SB 350/);
     expect(ref.marbella).toMatch(/^SB 450/);
-    // écarts de correspondance : nouvelle référence client, données existantes signalées « à confirmer » (pas de transfert)
-    expect(ref.sevilla).toMatch(/^SOLID .*PERGOLA V ZiiiP.*à confirmer/);
+    // correspondances confirmées par le client le 2026-11-03 : données des fiches remplacées par celles du système
+    expect(ref.sevilla).toMatch(/^SOLID \(correspondance confirmée par le client le 2026-11-03\)/);
     expect(ref.helioscreen).toMatch(/R 120 ZiiiP/);
-    expect(ref["helioroof-screen"]).toMatch(/^VERANDA V ZiiiP .*« Veranda » standard.*à confirmer ; pas Veranda FTS/);
+    expect(ref["helioroof-screen"]).toMatch(/^VERANDA V ZiiiP \(correspondance confirmée par le client le 2026-11-03\)/);
+    expect(ref["helioroof-screen"]).not.toMatch(/FTS/);
     expect(ref.madera).toMatch(/MADEIRA/);
     for (const s of ["moskifold", "moskifold-2", "moskiup", "moskislide", "moskifix"]) expect(ref[s], s).toMatch(/à confirmer/);
     for (const f of current) expect(JSON.stringify(publicSystemRules(f.rules)), f.slug).not.toContain("supplierRef");
@@ -80,7 +81,7 @@ describe("nomenclature commerciale HELIOSTORES (transcodification HELIO du 2026-
       expect(families[t.slug]?.name, t.slug).toBe(t.name); // même slug (identifiant stable, URL conservée)
       for (const p of t.previous.filter((x) => x !== t.name)) expect(NAME_ALIASES).toContainEqual({ alias: p, name: t.name, slug: t.slug });
     }
-    expect(NAME_TRANSCO.filter((t) => t.technical === "a_confirmer").map((t) => t.slug).sort()).toEqual(["helioroof-screen", "sevilla", "sliding_panels"]);
+    expect(NAME_TRANSCO.filter((t) => t.technical === "a_confirmer").map((t) => t.slug).sort()).toEqual(["sliding_panels"]);
     // anciens noms : ni dans les données publiques des produits actuels, ni dans les textes alternatifs et légendes
     for (const f of current) expect(publicView(f), f.slug).not.toMatch(PUBLIC_RETIRED_NAMES);
     for (const m of [...HELIOSTORES_MEDIA, ...HELIOSTORES_MEDIA_2026]) expect(`${m.alt} ${m.caption}`, m.key).not.toMatch(PUBLIC_RETIRED_NAMES);

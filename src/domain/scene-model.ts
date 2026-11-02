@@ -620,7 +620,7 @@ export function buildSystemSceneModel(catalog: CatalogSnapshot, input: SystemInp
       disclaimer: SCENE_DISCLAIMER,
     };
   }
-  const chosenVisuals = new Set(input.options.map((o) => rules.options.find((d) => d.code === o.code)?.visual).filter(Boolean));
+  const chosenVisuals = new Set([...input.options.map((o) => rules.options.find((d) => d.code === o.code)?.visual), ...rules.included.map((i) => i.visual)].filter(Boolean));
   if (rules.type === "awning") {
     const control = rules.controls?.find((c) => c.code === input.controlCode);
     const fabric = rules.fabrics?.find((f) => f.code === input.fabricCode);

@@ -1,3 +1,17 @@
+# SOLID / VÉRANDA V ZiiiP, modes de commande, options tarifées — 2026-11-03
+
+- Unitaires 320/320, intégration 117/117, tsc sans erreur, eslint 0 erreur (2 avertissements antérieurs), build OK.
+- Nouveaux tests : cibles composées, tableaux de suppléments (cote intermédiaire, quantité), forfait « toujours »,
+  fourchette « à chiffrer » (`pricing-breakdown`) ; import de tableaux sans faux doublon, cible `option:code=valeur`,
+  répétition sans nouvelle version malgré l'ordre jsonb (`catalogue-pricing`) ; règles SOLID / V ZiiiP, modes de
+  commande, auvent interdit au plafond, options validées listées (`heliostores-rules`) ; e2e `22-revalidation-modes`
+  (ancien brouillon HelioLux : avis, toile et option périmées, retrait ; comparatif des modes HelioScreen).
+- Base de développement : import du catalogue (1 603 lignes, 0 rejet, 0 doublon), neuf produits publiés, second passage
+  sans nouvelle version ; contrôle cellule par cellule 1 556 conformes, 0 écart ; 20 configurations chiffrées à la main
+  (privé : `private/heliostores/selt-2026-09/exemples-calcul.md`).
+- Non-divulgation : aucun nom de fabricant, de moteur ou de commande dans les libellés et règles publics (filet
+  `PUBLIC_FORBIDDEN_NAMES` élargi aux désignations de moteurs et télécommandes).
+
 # Noms HELIO, logo, chat, configurateur, préparation SELT — 2026-10-31
 
 - Code déployé **`8434cfb`** (CI verte, push et PR) : unitaires 291/291, intégration 110/110, tsc sans erreur, eslint

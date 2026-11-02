@@ -105,3 +105,36 @@ describe("catalogue fournisseur → prix de vente publiés", () => {
     expect((await loadPublicSystemPrices()).tables.get("marbella")!.cells.find((c) => c.variantKey === VARIANT && c.dimAmm === 2000 && c.widthMaxMm === 1500)!.amountMinor).toBe(2_000_00);
   });
 });
+
+describe("suppléments en tableau (une ligne par cellule) : import, agrégation, répétition sans nouvelle version", () => {
+  const V = `${VARIANT}-tab`;
+  const H = `${HEAD};axe;cote_min;cote_max;quantite_selon;fourchette_min;fourchette_max`;
+  const cell = (code: string, axis: string, min: number, max: number, amount: string, qty = "") => `SB450;marbella;${V};option;${code};Tableau ${code};;mm;;;;${amount};EUR;HT;catalogue_fournisseur;tableau;;option:${code};;;;${DOC};p. 20;15/09/2026;${axis};${min};${max};${qty};;`;
+  const rows = [
+    `SB450;marbella;${V};grille;;Grille;projection;mm;2000;1500;1500;1000;EUR;HT;catalogue_fournisseur;;;;;;;${DOC};p. 12;15/09/2026;;;;;;`,
+    // cellules volontairement dans le désordre
+    cell("led_blades", "avancee", 2134, 2134, "825"), cell("led_blades", "avancee", 1930, 1930, "550"),
+    cell("intermediate_post", "hauteur", 2501, 3000, "310", "intermediate_post"), cell("intermediate_post", "hauteur", 2000, 2500, "255", "intermediate_post"),
+    `SB450;marbella;${V};option;telecommande;Télécommande;;;;;;;EUR;HT;catalogue_fournisseur;a_chiffrer;;!option:remote_io;;;;${DOC};p. 115;15/09/2026;;;;;60;171`,
+    // valeur d'une option (modèle de télécommande)
+    `SB450;marbella;${V};option;telecommande-1;Télécommande 1 canal;;;;;;60;EUR;HT;catalogue_fournisseur;montant;;option:remote_io=io_1ch;;;;${DOC};p. 115;15/09/2026;;;;;;`,
+  ];
+  const f = (r: string[]) => [{ fileName: `tableau-${TAG}.csv`, bytes: new TextEncoder().encode([H, ...r].join("\n")), sourceKey: `tableau-test-${TAG}` }];
+  const cols = { columns: { CATALOGUE_FOURNISSEUR: { enabled: true, nature: "SUPPLIER_LIST" as const, currency: "EUR", taxBasis: "HT" as const } } };
+
+  it("cellules d'un même tableau : jamais signalées en doublon ; agrégées en un supplément ; répétition sans nouvelle grille", async () => {
+    const { results } = await applySupplierPrices(f(rows), ACTOR);
+    const imported = await prisma.supplierPriceRow.findMany({ where: { listId: results[0]!.listId } });
+    expect(imported).toHaveLength(7);
+    expect(imported.filter((r) => r.status !== "OK").map((r) => r.issues)).toEqual([]);
+    const g = await deriveGridsFromImport(results[0]!.listId, cols, ACTOR);
+    expect(g.created).toHaveLength(1);
+    const fixed = await prisma.supplierPriceRow.findMany({ where: { listId: g.created[0]!.id, kind: "FIXED" }, orderBy: { code: "asc" } });
+    expect(fixed.map((r) => r.code)).toEqual(["intermediate_post", "led_blades", "telecommande", "telecommande-1"]);
+    expect(fixed[3]!.conditions).toMatchObject({ mode: "fixed", applies: ["option:remote_io=io_1ch"] });
+    expect(fixed[0]!.conditions).toMatchObject({ mode: "table", perOptionQty: "intermediate_post", table: { axis: "hauteur", cells: [{ dimMin: 2000, amountMinor: 255_00 }, { dimMin: 2501, amountMinor: 310_00 }] } });
+    expect(fixed[2]!.conditions).toMatchObject({ mode: "pending", rangeMinor: [60_00, 171_00] });
+    // la base réordonne les clés des objets (jsonb) : la comparaison n'en dépend pas
+    expect((await deriveGridsFromImport(results[0]!.listId, cols, ACTOR)).created).toHaveLength(0);
+  });
+});

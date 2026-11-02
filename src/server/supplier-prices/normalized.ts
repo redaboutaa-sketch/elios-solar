@@ -16,6 +16,8 @@ export const NORMALIZED_COLUMNS = [
   "montant", "devise", "base", "nature", "remise_fournisseur_pct", "inclus", "regle", "source_document", "source_localisation", "valide_du", "valide_au",
   // suppléments (lignes « option ») : mode de calcul, pourcentage, élément de la configuration concerné ; grille : exigence de la cellule
   "mode", "pourcentage", "applique_a", "exigence", "obligatoire",
+  // supplément « tableau » (une ligne par cellule) : axe et plage de la cote ; quantité selon une option ; fourchette
+  "axe", "cote_min", "cote_max", "quantite_selon", "fourchette_min", "fourchette_max",
 ] as const;
 type Column = (typeof NORMALIZED_COLUMNS)[number];
 export const NORMALIZED_REQUIRED: readonly Column[] = ["ref_fournisseur", "type_ligne", "libelle", "montant", "devise", "base", "nature", "source_document", "source_localisation"];
@@ -24,9 +26,10 @@ export const NORMALIZED_REQUIRED: readonly Column[] = ["ref_fournisseur", "type_
  * Mode d'un supplément : montant fixe, pourcentage du prix du système (assiette : cellule de la grille, documentée par
  * la colonne « regle »), ou élément à chiffrer (connu mais sans prix applicable : le prix affiché devient partiel).
  */
-export const SUPPLEMENT_MODES = { montant: "fixed", pourcentage: "percent", a_chiffrer: "pending" } as const;
-/** Cible d'un supplément : « finition:<code> », « tier:special », « option:<code> », « commande:<code> », « toile:<code> », « exigence:<code> », « toujours », « non_configurable » ; plusieurs cibles séparées par « | ». */
-export const SUPPLEMENT_TARGET = /^(toujours|non_configurable|(finition|tier|option|commande|toile|exigence):[a-z0-9_-]+)$/i;
+export const SUPPLEMENT_MODES = { montant: "fixed", pourcentage: "percent", a_chiffrer: "pending", tableau: "table" } as const;
+/** Cible d'un supplément : « finition:<code> », « tier:special », « option:<code> » ou « option:<code>=<valeur> », « commande:<code> », « pose:<code> », « toile:<code> », « exigence:<code> », « cote:hauteur>2500 », « toujours », « non_configurable » ; conditions liées par « & », niées par « ! » ; plusieurs cibles séparées par « | ». */
+const ATOM = String.raw`!?(toujours|non_configurable|(finition|tier|commande|pose|toile|exigence):[a-z0-9_-]+|option:[a-z0-9_-]+(=[a-z0-9_-]+)?|cote:(largeur|avancee|hauteur)(>=|<=|>|<)\d+)`;
+export const SUPPLEMENT_TARGET = new RegExp(`^${ATOM}(&${ATOM})*$`, "i");
 
 /** Nature déclarée → rôle de montant (colonne) ; chaque rôle devient une lignée de grilles distincte. */
 export const NORMALIZED_ROLES = { catalogue_fournisseur: "CATALOGUE_FOURNISSEUR", achat_net: "ACHAT_NET", vente: "VENTE" } as const;
@@ -158,6 +161,9 @@ export function parseNormalizedRows(table: string[][], opts: NormalizedOptions):
         ...(get("inclus") ? { included: get("inclus") } : {}),
         ...(get("regle") ? { rule: get("regle") } : {}),
         ...(mode ? { mode, ...(percentBps != null ? { percentBps } : {}), applies, mandatory: /^(oui|yes|1|x)$/i.test(get("obligatoire")) } : {}),
+        ...(mode === "table" ? { tableCell: { axis: norm(get("axe")), dimMin: toMm(intOf(get("cote_min"))), dimMax: toMm(intOf(get("cote_max"))), ...(get("largeur_min") ? { widthMin: toMm(intOf(get("largeur_min"))), widthMax: toMm(intOf(get("largeur_max"))) } : {}) } } : {}),
+        ...(get("quantite_selon") ? { perOptionQty: get("quantite_selon") } : {}),
+        ...(get("fourchette_min") && get("fourchette_max") ? { rangeMinor: [amountOf(get("fourchette_min")), amountOf(get("fourchette_max"))] } : {}),
         ...(kind === "GRID" && get("exigence") ? { requirement: norm(get("exigence")) } : {}),
         ...(get("valide_du") ? { validFrom: parseDate(get("valide_du")) } : {}),
         ...(get("valide_au") ? { validTo: parseDate(get("valide_au")) } : {}),
@@ -178,7 +184,12 @@ export function parseNormalizedRows(table: string[][], opts: NormalizedOptions):
       if (!mode) addIssue(r, `ligne ${line} : mode inconnu (montant, pourcentage ou a_chiffrer)`, "REJECTED");
       if (mode === "percent" && percentBps == null) addIssue(r, `ligne ${line} : pourcentage illisible (0 à 99,99)`, "REJECTED");
       if (mode !== "percent" && get("pourcentage")) addIssue(r, `ligne ${line} : pourcentage renseigné pour un supplément qui n'est pas en pourcentage`, "REJECTED");
-      if (mode !== "fixed" && get("montant")) addIssue(r, `ligne ${line} : montant renseigné pour un supplément en pourcentage ou à chiffrer`, "REJECTED");
+      if ((mode === "percent" || mode === "pending") && get("montant")) addIssue(r, `ligne ${line} : montant renseigné pour un supplément en pourcentage ou à chiffrer`, "REJECTED");
+      if (mode === "table") {
+        if (!["avancee", "largeur", "hauteur"].includes(norm(get("axe")))) addIssue(r, `ligne ${line} : axe du tableau « avancee », « largeur » ou « hauteur » attendu`, "REJECTED");
+        if (!get("cote_min") || !get("cote_max") || factor == null) addIssue(r, `ligne ${line} : cote_min, cote_max et unité obligatoires pour une cellule de tableau`, "REJECTED");
+        if (amount == null) addIssue(r, `ligne ${line} : montant obligatoire pour une cellule de tableau`, "REJECTED");
+      }
       if (!applies.length) addIssue(r, `ligne ${line} : colonne « applique_a » vide (élément de la configuration concerné)`, "TO_CHECK");
       for (const a of applies) if (!SUPPLEMENT_TARGET.test(a)) addIssue(r, `ligne ${line} : cible « ${a} » inconnue`, "REJECTED");
     }

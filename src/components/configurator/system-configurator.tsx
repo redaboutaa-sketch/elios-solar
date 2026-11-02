@@ -15,7 +15,7 @@ import { addToCartAction, saveConfigurationAction } from "@/server/actions/confi
 import { evaluate } from "@/domain/engine";
 import { CUSTOM_SIZE, INSTALL_HEIGHT_SANE, defaultSystemInput, dimRangeText, installHeightApplies, nearestAllowed, spotsFor, type DimRule, type SystemInput, type SystemRules } from "@/domain/system";
 import type { CatalogSnapshot, EvaluationResult, SideKey } from "@/domain/types";
-import { formatSystemPrice } from "@/domain/system-pricing";
+import { controlSupplementCodes, formatSystemPrice } from "@/domain/system-pricing";
 import { IssueList, Notice } from "@/components/ui/alert";
 import { QuoteForm } from "./quote-form";
 import { SystemDrawingPeek, SystemVisuals } from "./scene-3d/visuals";
@@ -168,12 +168,12 @@ const DRAFT_PREFIX = "heliostores:configuration:";
 function draftKey(slug: string, projectId?: string | null, cartLineId?: string | null): string {
   return DRAFT_PREFIX + slug + (projectId ? `@projet:${projectId}` : cartLineId ? `@ligne:${cartLineId}` : "");
 }
-function readDraft(key: string, slug: string): SystemInput | null {
+function readDraft(key: string, slug: string): { input: SystemInput; at: string | null } | null {
   try {
     const raw = window.localStorage.getItem(key);
     if (!raw) return null;
-    const v = JSON.parse(raw) as { input?: SystemInput };
-    return v.input?.kind === "system" && v.input.familySlug === slug ? v.input : null;
+    const v = JSON.parse(raw) as { input?: SystemInput; at?: string };
+    return v.input?.kind === "system" && v.input.familySlug === slug ? { input: v.input, at: typeof v.at === "string" ? v.at : null } : null;
   } catch {
     return null;
   }
@@ -245,7 +245,7 @@ function OnlineOrder({ result, busy, onAdd, editing, salesOpen }: { result: Eval
   );
 }
 
-export function SystemConfigurator({ catalog, familySlug, art, initial, existing = null, cartLineId = null, nav, salesOpen = false }: { catalog: CatalogSnapshot; familySlug: string; art: ReactNode; initial?: Partial<SystemInput>; existing?: { id: string; token: string; title: string | null } | null; cartLineId?: string | null; nav?: ConfiguratorNav; salesOpen?: boolean }) {
+export function SystemConfigurator({ catalog, familySlug, art, initial, existing = null, cartLineId = null, savedAt = null, nav, salesOpen = false }: { catalog: CatalogSnapshot; familySlug: string; art: ReactNode; initial?: Partial<SystemInput>; existing?: { id: string; token: string; title: string | null } | null; cartLineId?: string | null; /** date d'enregistrement du projet ou de la ligne rouverte (ISO) */ savedAt?: string | null; nav?: ConfiguratorNav; salesOpen?: boolean }) {
   const t = useT("configurator");
   const intl = useIntl();
   const lp = useLocalePath();
@@ -256,6 +256,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
   const [peek, setPeek] = useState(false);
   const [step, setStep] = useState(0);
   const [restored, setRestored] = useState(false);
+  const [restoredAt, setRestoredAt] = useState<string | null>(null);
   const key = draftKey(familySlug, existing?.id, cartLineId);
   // empreinte de la configuration telle qu'ouverte (valeurs par défaut, projet ou ligne de panier)
   const [openedKey] = useState(() => inputKey({ ...defaults, ...initial, kind: "system", familySlug }));
@@ -270,8 +271,9 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
     // lecture différée (après hydratation) : le rendu serveur reste celui des valeurs ouvertes
     const t = window.setTimeout(() => {
       restoredFor.current = key;
-      const d = readDraft(key, familySlug);
-      if (d && inputKey({ ...defaults, ...d, kind: "system", familySlug }) !== openedKey) { setInput({ ...defaults, ...d, kind: "system", familySlug }); setRestored(true); }
+      const draft = readDraft(key, familySlug);
+      const d = draft?.input;
+      if (d && inputKey({ ...defaults, ...d, kind: "system", familySlug }) !== openedKey) { setInput({ ...defaults, ...d, kind: "system", familySlug }); setRestored(true); setRestoredAt(draft.at); }
       setStep(stepFromUrl());
       setDraftReady(true);
     }, 0);
@@ -324,6 +326,30 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
     setRestored(false);
     goStep(0);
   };
+  // projet, ligne de panier ou brouillon enregistré avant la révision des caractéristiques du modèle : revalidation
+  // explicite (aucune conversion ; les choix devenus invalides sont signalés par l'évaluation)
+  const revisedSince = !!rules.revision && [savedAt, restored ? restoredAt : null].some((d) => !!d && d.slice(0, 10) < rules.revision!.date);
+  // comparatif des modes de commande : supplément réel du moteur (montant établi), fourchette documentée quand plusieurs
+  // moteurs conviennent, ou indisponibilité — calculé par le moteur de prix, pour les dimensions et la pose choisies
+  const modeComparison = useMemo(() => {
+    const table = family.systemPrices;
+    if (!table || !rules.controls?.length || !result.priceBreakdown || !result.systemPrice) return [];
+    const variantKey = result.systemPrice.variantKey;
+    return rules.controls.map((c) => {
+      const options = input.options.filter((o) => {
+        const d = rules.options.find((x) => x.code === o.code);
+        return !d || ((!d.requiresControlKind || d.requiresControlKind === c.kind) && (!d.requiresControls?.length || d.requiresControls.includes(c.code)));
+      });
+      const b = evaluate(catalog, { ...input, controlCode: c.code, options }).priceBreakdown;
+      const codes = controlSupplementCodes(table, variantKey, c.code);
+      const lines = b?.lines.filter((l) => codes.has(l.code)) ?? [];
+      const pending = b?.pending.filter((p) => codes.has(p.code)) ?? [];
+      const sum = lines.reduce((a, l) => a + l.amountMinor, 0);
+      const effect = !b ? t.pose.modeQuote
+        : [lines.length ? fmt(t.pose.modePlus, { amount: formatSystemPrice(sum, b.currency, b.taxBasis) }) : "", ...pending.map((p) => p.reason)].filter(Boolean).join(" ; ") || t.pose.modeNoSupplement;
+      return { code: c.code, label: c.label, effect };
+    });
+  }, [catalog, family.systemPrices, input, result.priceBreakdown, result.systemPrice, rules, t.pose]);
   const finishes = rules.customFinish ? [...rules.finishes, rules.customFinish] : rules.finishes;
   const finish = finishes.find((f) => f.code === input.finishCode);
   const optionOn = (code: string) => input.options.find((o) => o.code === code);
@@ -340,7 +366,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
   const optionCard = (o: (typeof rules.options)[number]) => {
     const on = optionOn(o.code);
     const ctl = rules.controls?.find((x) => x.code === input.controlCode);
-    const unmet = (o.requiresControlKind && ctl?.kind !== o.requiresControlKind) || (o.requiresControls?.length && !o.requiresControls.includes(ctl?.code ?? ""));
+    const unmet = (o.requiresControlKind && ctl?.kind !== o.requiresControlKind) || (o.requiresControls?.length && !o.requiresControls.includes(ctl?.code ?? "")) || (o.requiresMountings?.length && !!input.mounting && !o.requiresMountings.includes(input.mounting));
     return (
       <div key={o.code} className="rounded-xl border border-sand-200 p-3 text-sm transition-colors duration-150 has-[:checked]:border-brand-700 has-[:checked]:bg-brand-50" data-testid={`option-${o.code}`}>
         <label className="flex cursor-pointer items-start gap-2">
@@ -386,6 +412,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
             {nav.siblings.length ? <span className="text-stone-700">{t.links.otherModels}{nav.siblings.map((x, i) => <span key={x.slug}>{i ? ", " : ""}<Link href={x.href} className="underline">{x.name}</Link></span>)}</span> : null}
           </div>
         )}
+        {revisedSince && rules.revision && <div data-testid="revision-notice"><Notice tone="warn">{fmt(t.revised, { name: String(family.name), date: new Date(`${rules.revision.date}T12:00:00Z`).toLocaleDateString(intl, { day: "numeric", month: "long", year: "numeric" }), note: rules.revision.note })}</Notice></div>}
         {restored && <Notice tone="info">{fmt(t.restored, { name: String(family.name) })}<button type="button" className="underline" onClick={reset}>{t.restart}</button></Notice>}
         <StepNav step={step} onStep={goStep} />
 
@@ -515,6 +542,19 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
                   {rules.controls.map((c) => <option key={c.code} value={c.code}>{c.label}{c.minWidthMm ? fmt(t.pose.minWidth, { cm: c.minWidthMm / 10 }) : ""}{c.status === "to_confirm" ? t.pose.toConfirmDash : ""}</option>)}
                 </select>
                 {(() => { const c = rules.controls!.find((x) => x.code === input.controlCode); return c ? <p className="mt-1 text-xs text-stone-700">{c.description ? `${c.description} ` : ""}{c.cable ? fmt(t.pose.suppliedWith, { cable: c.cable }) : ""}</p> : null; })()}
+                {modeComparison.length > 1 && (
+                  <div className="mt-3" data-testid="control-modes">
+                    <p className="text-xs font-semibold text-stone-800">{t.pose.modesTitle}</p>
+                    <ul className="mt-1 grid gap-1.5 text-xs text-stone-700">
+                      {modeComparison.map((m) => (
+                        <li key={m.code} data-testid={`control-mode-${m.code}`} className={`rounded-lg border px-2.5 py-1.5 ${m.code === input.controlCode ? "border-brand-700 bg-brand-50" : "border-sand-200"}`}>
+                          <span className="block font-semibold text-stone-900">{m.label}</span>
+                          <span className="block">{m.effect}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             ) : null}
             <IssueList issues={stepIssues("pose")} />
@@ -529,6 +569,12 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
             <ul className="mt-1 list-disc pl-5 text-sm text-stone-800">{rules.included.map((i) => <li key={i.label}>{i.label}{i.status === "to_confirm" ? t.pose.toConfirmParen : ""}</li>)}</ul></> : null}
             {confirmed.length > 0 && <h3 className="mt-5 text-sm font-semibold">{t.equip.options} <span className="font-normal text-stone-700">{t.equip.optionsNote}</span></h3>}
             <div className="mt-2 grid gap-2">{confirmed.map(optionCard)}</div>
+            {input.options.filter((o) => !rules.options.some((d) => d.code === o.code)).map((o) => (
+              <div key={o.code} className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-danger/40 bg-danger/5 p-3 text-sm text-danger" data-testid={`stale-option-${o.code}`}>
+                <span>{fmt(t.option.stale, { code: o.code })}</span>
+                <button type="button" className="btn-secondary" onClick={() => toggleOption(o.code, false)}>{t.option.remove}</button>
+              </div>
+            ))}
             {wishes.length > 0 && (
               <div className="mt-5" data-testid="option-wishes">
                 <h3 className="text-sm font-semibold">{t.equip.wishesTitle}</h3>

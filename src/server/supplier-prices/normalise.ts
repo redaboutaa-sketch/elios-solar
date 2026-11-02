@@ -99,7 +99,9 @@ export function widthKey(r: Pick<ParsedRow, "widthMinMm" | "widthMaxMm">): strin
 
 /** Clé d'identité d'une ligne dans une version (doublon = même clé). */
 export function rowKey(r: ParsedRow): string {
-  return [r.familySlug, r.variantKey, r.kind, r.code, r.amountRole, r.dimAmm ?? "", widthKey(r), JSON.stringify(r.conditions.match ?? null)].join("|");
+  // cellule d'un supplément « tableau » : sa plage de cote fait partie de l'identité (clé inchangée pour les autres lignes)
+  const cell = (r.conditions as { tableCell?: unknown }).tableCell;
+  return [r.familySlug, r.variantKey, r.kind, r.code, r.amountRole, r.dimAmm ?? "", widthKey(r), JSON.stringify(r.conditions.match ?? null), ...(cell ? [JSON.stringify(cell)] : [])].join("|");
 }
 
 export function addIssue(r: ParsedRow, issue: string, status: RowStatus = "TO_CHECK") {

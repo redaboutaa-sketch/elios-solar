@@ -1,4 +1,5 @@
 import Link from "@/i18n/link";
+import { withholdsSupplierMedia } from "@/domain/system";
 import { Check, Info, MessageCircle, Plus, Ruler, FileText, Truck } from "lucide-react";
 import { DELIVERY_LEAD_TIME, DELIVERY_TERMS_IN_QUOTE } from "@/domain/delivery";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -33,7 +34,7 @@ const GUIDES_BY_TYPE: Record<string, string[]> = {
 
 export async function SystemProductPage({ family: f, category, media: allMedia, docs }: { family: SystemFamily; category: CategoryKey; media: PublishedMedia[]; docs: PublicDocument[] }) {
   // demande d'étude : correspondance avec le système du fabricant non confirmée → aucun visuel du système candidat
-  const media = f.rules.studyOnly ? [] : allMedia;
+  const media = withholdsSupplierMedia(f.rules) ? [] : allMedia;
   const cat = categoryByKey(category)!;
   const msg = await getT("catalog");
   const t = msg.product;

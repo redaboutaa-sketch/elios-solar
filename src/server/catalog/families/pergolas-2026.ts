@@ -26,6 +26,7 @@ export const PERGOLA_SOURCES = {
   pageVZiiiP: src("aluprof-pergola-v-ziiip", "Page fabricant « PERGOLA V ZiiiP »", "https://aluprof.com/en/offer/sunshades/pergolas"),
   dteVZiiiP: src("dte-pergola-v-fr", "Documentation technique DT-E 5.6 « véranda V ZiiiP – Pergola V ZiiiP » (éd. 3, mars 2021, FR)"),
   dopVZiiiP: src("dop-100-mw-2021", "Déclaration des performances 100/MW/2021 « PERGOLA V ZiiiP MT.500x600 »"),
+  priceList: src("liste-prix-2026-09", "Liste des prix des produits finis (09.2026)"),
   openSlideIM: src("im-openslide-en", "Notice d'installation MB-OpenSlide (EN, valable au 2026-01-01) et fiche A4 (FR)"),
 } as const satisfies Record<string, SourceRef>;
 
@@ -104,7 +105,6 @@ const malaga: HelioFamily = {
     { field: "Avancées", question: "Deux séries d'avancées publiées (3,40 / 3,85 / 4,30 / 4,75 m dans la notice, la déclaration de performances et le catalogue ; 3,6 / 4,0 / 4,4 / 4,8 m sur la page web) : laquelle publier ?", sources: ["dte-sb350-fr-2025", "aluprof-sb-350"], blocks: "avancée exacte (devis)" },
     { field: "Capteurs", question: "Capteur de vent compatible avec le contrôleur fourni (électronique Blebox) ; liste d'accessoires sans règle de compatibilité.", sources: ["dte-sb350-fr-2025"], blocks: "capteur (souhait au devis)" },
     { field: "Notice", question: "Notice graphique de montage (document séparé, non publié).", sources: ["dte-sb350-fr-2025"], blocks: "guide d'installation" },
-    { field: "Tarifs", question: "Aucune grille de prix SB 350 dans le classeur : prix à fournir.", sources: ["classeur tarifaire (privé)"], blocks: "prix affiché" },
   ],
 };
 
@@ -125,7 +125,7 @@ const marbella: HelioFamily = {
   supplierRef: "SB 450 (Pergola de terrasse – produit fini)",
   shortDescription: "Pergola bioclimatique sur mesure, autoportante ou adossée, jusqu'à 4 × 6 m, lames orientables motorisées.",
   description:
-    "HelioMax est une pergola à lames orientables, autoportante ou adossée, fabriquée à vos dimensions jusqu'à 4 m de largeur et 6 m d'avancée. Le moteur est dissimulé dans la structure et se commande par émetteur radio ou application. Éclairage LED dans les lames ou périphérique, capteurs et fermetures latérales sont étudiés au devis.",
+    "HelioMax est une pergola à lames orientables, autoportante ou adossée, fabriquée à vos dimensions jusqu'à 4 m de largeur et 6 m d'avancée. Le moteur est dissimulé dans la structure et piloté par une centrale radio et sa télécommande. Éclairage LED dans les lames ou périphérique, capteur pluie et antigel et poteaux supplémentaires se choisissent dans le configurateur ; les fermetures latérales sont étudiées au devis.",
   seoTitle: "Pergola bioclimatique HelioMax sur mesure",
   seoDescription: "Pergola HelioMax à lames orientables, autoportante ou adossée, jusqu'à 4 × 6 m : configurez vos cotes et demandez votre devis.",
   rules: {
@@ -148,17 +148,18 @@ const marbella: HelioFamily = {
     customFinish: { code: "WOOD_DECOR", label: "Décor bois (option)", status: "to_confirm", sources: [at(S.pageSB450, "« * Option avec supplément » : R26, R27, R28, R30, R49, R52")], note: "décor bois en supplément : conditions et délai confirmés au devis" },
     included: [
       { label: "Toiture à lames orientables, motorisée (moteur dissimulé)", sources: [at(S.iuikSB450, "p. 6, 10"), at(S.pageSB450, "description")] },
-      { label: "Centrale de commande radio (protocole io)", sources: [at(S.iuikSB450, "p. 10")] },
-      { label: "Commande par émetteur sans fil et/ou application dédiée", status: "to_confirm", sources: [at(S.iuikSB450, "p. 12")], description: "la fourniture de l'émetteur et son nombre de canaux ne sont pas documentés" },
       { label: "Gouttière sèche à double pente, évacuation par les poteaux", sources: [at(S.iuikSB450, "p. 6, 11")] },
     ],
     options: [
-      { code: "led_blades", label: "Éclairage LED linéaire dans les lames", group: "lighting", status: "established", pricing: "quote", visual: "led_perimeter", sources: [at(S.suppPergolas, "p. 77"), at(S.iuikSB450, "p. 6")], note: "lames de type FLAT ; longueur et nombre de lames équipées établis au devis" },
-      { code: "led_spots", label: "Spots LED dans les lames (4 à 12 points)", group: "lighting", status: "established", pricing: "quote", visual: "led_spots", sources: [at(S.suppPergolas, "p. 77")], note: "lames de type FLAT ; nombre de points établi au devis", cumulToConfirmWith: ["led_blades"] },
-      { code: "led_perimeter", label: "Éclairage LED périphérique", group: "lighting", status: "established", pricing: "quote", visual: "led_perimeter", sources: [at(S.suppPergolas, "p. 77 — bande LED de couronne")] },
-      { code: "weather_sensors", label: "Capteurs de vent, pluie et soleil", description: "Équipements de contrôle supplémentaires prévus par la notice ; modèles compatibles avec la centrale établis au devis.", group: "control", status: "to_confirm", pricing: "quote", visual: "wind_sensor", sources: [at(S.iuikSB450, "p. 12 — « Équipement de contrôle supplémentaire éventuel »")] },
-      { code: "frost_sensor", label: "Capteur antigel", description: "Sous 2 °C, il entrouvre les lames (10 %, ou 66 % en cas de neige).", group: "control", status: "to_confirm", pricing: "quote", sources: [at(S.iuikSB450, "p. 6")], note: "inclus ou en option : non précisé par la notice" },
-      { code: "intermediate_post", label: "Poteau intermédiaire", group: "structure", status: "to_confirm", pricing: "quote", sources: [at(S.pageSB450, "« poteau intermédiaire pouvant être installé également sur une structure existante »")], note: "position et règles de pose établies au devis" },
+      // centrale radio du moteur : supplément « toujours » ajouté au prix de la structure (liste de prix p. 10–11), présenté
+      // dans la décomposition ; la télécommande io est choisie à part (sinon « à choisir », chiffrée entre deux montants)
+      { code: "remote_io", label: "Télécommande radio io", description: "Émetteur de la centrale de commande ; choisissez le modèle.", group: "control", status: "established", pricing: "validated", visual: "remote", values: [{ code: "io_1ch", label: "1 canal" }, { code: "io_2modes", label: "2 modes" }, { code: "io_4modes", label: "4 modes" }, { code: "io_screen", label: "à écran" }], sources: [at(S.priceList, "p. 10–11 — centrale radio ; p. 115 — commandes io"), at(S.iuikSB450, "p. 10, 12")] },
+      { code: "frost_sensor", label: "Capteur pluie et antigel", description: "Ferme les lames sous la pluie ; sous 2 °C, il les entrouvre (10 %, ou 66 % en cas de neige).", group: "control", status: "established", pricing: "validated", sources: [at(S.priceList, "p. 10–11 — capteur de pluie et antigel"), at(S.iuikSB450, "p. 6, 10")] },
+      { code: "led_blades", label: "Éclairage LED linéaire dans les lames", description: "LED blanc chaud ou neutre ; nombre de lames équipées selon l'avancée.", group: "lighting", status: "established", pricing: "validated", visual: "led_perimeter", sources: [at(S.priceList, "p. 20 — éclairage, lame F"), at(S.suppPergolas, "p. 77"), at(S.iuikSB450, "p. 6")], cumulToConfirmWith: ["led_spots"] },
+      { code: "led_spots", label: "Spots LED dans les lames", description: "Points lumineux blanc chaud ; nombre selon les dimensions.", group: "lighting", status: "established", pricing: "validated", visual: "led_spots", sources: [at(S.priceList, "p. 20 — éclairage, lame F"), at(S.suppPergolas, "p. 77")], cumulToConfirmWith: ["led_blades"] },
+      { code: "led_perimeter", label: "Éclairage LED périphérique", description: "Bande LED dans la couronne, blanc chaud ou neutre.", group: "lighting", status: "established", pricing: "validated", visual: "led_perimeter", sources: [at(S.priceList, "p. 20 — éclairage de la couronne"), at(S.suppPergolas, "p. 77")] },
+      { code: "intermediate_post", label: "Poteau supplémentaire", description: "Prix par poteau, pied et liaison compris, selon la hauteur.", group: "structure", status: "established", pricing: "validated", maxQty: 4, sources: [at(S.priceList, "p. 10–11 — poteau supplémentaire"), at(S.pageSB450, "« poteau intermédiaire »")], note: "position établie à l'étude du projet ; au-delà de 4 poteaux, étude au devis" },
+      { code: "weather_sensors", label: "Capteurs de vent et de soleil", description: "Équipements de contrôle supplémentaires prévus par la notice ; modèles compatibles avec la centrale établis au devis.", group: "control", status: "to_confirm", wish: true, pricing: "quote", visual: "wind_sensor", sources: [at(S.iuikSB450, "p. 12 — « Équipement de contrôle supplémentaire éventuel »")], note: "aucun capteur de vent ou de soleil tarifé pour ce modèle" },
       { code: "heating", label: "Chauffage", group: "other", status: "to_confirm", wish: true, pricing: "quote", sources: [at(S.brochurePergolas, "p. 4 — « système de chauffage »")], note: "modèle et puissance non documentés" },
     ],
     closureWishes: [
@@ -188,9 +189,9 @@ const marbella: HelioFamily = {
   ],
   openQuestions: [
     { field: "Vent", question: "Valeur de vent publiable : 95 mph (page web), 110 km/h toit fermé (notice), classe 3 (déclaration) avec propriété additionnelle classe 6.", sources: ["aluprof-sb-450", "iuik-sb450-fr", "dop-sb450-25"], blocks: "communication sur le vent" },
-    { field: "Commande", question: "Émetteur livré (modèle, nombre de canaux) et capteur antigel : inclus ou option ?", sources: ["iuik-sb450-fr"], blocks: "équipements inclus" },
+    { field: "Commande", question: "La centrale radio (supplément systématique) est-elle livrée sans émetteur, la télécommande étant obligatoire ?", sources: ["liste-prix-2026-09"], blocks: "sous-total sans télécommande" },
+    { field: "Éclairage", question: "Cumul LED lames + spots, contrôleur commun et spots sous 1,50 m d'avancée.", sources: ["liste-prix-2026-09"], blocks: "cumul des éclairages (devis)" },
     { field: "Teintes", question: "Teintes standard et teintes sur demande (la page ne les distingue pas, hors décors bois).", sources: ["aluprof-sb-450"], blocks: "teinte (devis)" },
-    { field: "Tarifs", question: "Aucune grille de prix SB 450 dans le classeur : la grille SB 400 / SB 500 ne s'applique pas.", sources: ["classeur tarifaire (privé)"], blocks: "prix affiché" },
   ],
 };
 
@@ -206,66 +207,84 @@ const sevilla: HelioFamily = {
   status: "QUOTE_ONLY",
   sortOrder: 7,
   brand: "Aluprof",
-  manufacturer: "SELT Sp. z o.o. (Opole) — ALUPROF",
-  // Correspondance client du 2026-10-31 : HelioLux = SOLID. Les règles et caractéristiques ci-dessous viennent de la
-  // documentation PERGOLA V ZiiiP (ancienne correspondance) : elles ne sont PAS transférées vers SOLID ni validées pour
-  // lui ; dossier de validation technique « helioLux-solid » (docs/product-naming-transco.csv).
-  supplierRef: "SOLID (correspondance client du 2026-10-31) — données actuelles issues de PERGOLA V ZiiiP (MT, DT-E 5.6), à confirmer",
-  shortDescription: "Pergola adossée à toiture en toile tendue motorisée, jusqu'à 5 × 6 m par module.",
+  manufacturer: "ALUPROF SA",
+  // Correspondance confirmée par le client (2026-11-03) : HelioLux = Pergola SEVILLA = système SOLID. Données reprises
+  // du Supplément technique PERGOLAS (SOLID, p. 123–138), de la brochure Pergolas (p. 7, 12–15) et de la liste de prix
+  // 09.2026 (p. 6, 7, 17, 19 de l'index) ; les données de l'ancienne correspondance (PERGOLA V ZiiiP) sont retirées.
+  supplierRef: "SOLID (correspondance confirmée par le client le 2026-11-03)",
+  shortDescription: "Pergola à toiture en toile PVC plissée motorisée, autoportante ou adossée, jusqu'à 4 × 7 m par module.",
   description:
-    "HelioLux est une pergola adossée à toiture en toile enroulable, tendue par des ressorts à gaz et motorisée. Un module mesure jusqu'à 5 m de largeur et 6 m d'avancée ; plusieurs modules s'assemblent en largeur. Elle protège du soleil mais pas de la pluie : la toile s'enroule par pluie, neige, gel ou vent fort.",
-  seoTitle: "Pergola toile HelioLux adossée, motorisée",
-  seoDescription: "Pergola HelioLux à toiture en toile tendue motorisée, adossée, jusqu'à 5 × 6 m par module. Configurez et demandez votre devis.",
+    "HelioLux est une pergola à toiture en toile enduite PVC qui se replie en plis sur des chariots mobiles : motorisée, elle s'ouvre entièrement ou s'arrête dans n'importe quelle position. Autoportante ou adossée au mur, elle mesure jusqu'à 4 m de largeur et 7 m d'avancée par module ; plusieurs modules s'assemblent. L'eau de pluie est recueillie par une gouttière et évacuée par les poteaux avant. Elle protège de la pluie et du vent, mais pas des chutes de neige.",
+  seoTitle: "Pergola toile HelioLux autoportante ou adossée, motorisée",
+  seoDescription: "Pergola HelioLux à toiture en toile PVC plissée motorisée, autoportante ou adossée, jusqu'à 4 × 7 m par module. Configurez vos cotes et obtenez votre prix.",
   rules: {
     type: "pergola",
     roof: "fabric",
+    revision: { date: "2026-11-03", note: "caractéristiques remplacées par celles du système correspondant (dimensions, poses, toiles, équipements)" },
+    mediaWithheld: "photos enregistrées issues d'un autre système : dessin du modèle en attendant les visuels du système correspondant",
     dims: {
-      width: { label: "Largeur", minMm: 2000, maxMm: 5000, sources: [at(S.dteVZiiiP, "p. 9 — jusqu'à 5 000 mm"), at(S.brochurePergolas, "p. 8 — minimum 2 m")], note: "Minimum indiqué par la brochure seulement." },
-      depth: { label: "Avancée", minMm: 2000, maxMm: 6000, sources: [at(S.dteVZiiiP, "p. 9 — jusqu'à 6 000 mm"), at(S.brochurePergolas, "p. 8 — minimum 2 m")] },
-      height: { label: "Hauteur des poteaux avant", minMm: null, maxMm: 2450, confirmAboveMm: 2400, confirmNote: "la documentation technique indique 2 450 mm, la page web et la brochure 2,4 m", sources: [at(S.dteVZiiiP, "p. 9"), at(S.brochurePergolas, "p. 8")] },
+      width: { label: "Largeur", minMm: 1500, maxMm: 4000, sources: [at(S.suppPergolas, "p. 123 — largeur jusqu'à 4 000 mm"), at(S.brochurePergolas, "p. 7 — 1,5 à 4 m"), at(S.priceList, "p. 17 — dimensions minimales")], note: "Par module ; plusieurs modules s'assemblent pour une plus grande largeur." },
+      depth: { label: "Avancée", minMm: 2000, maxMm: 7000, sources: [at(S.suppPergolas, "p. 123 — avancée jusqu'à 7 000 mm"), at(S.brochurePergolas, "p. 7"), at(S.priceList, "p. 17 — projection minimale 2 000 mm")], note: "La grille de prix commence à 3 m d'avancée : en dessous, prix sur devis." },
+      height: { label: "Hauteur libre", minMm: null, maxMm: 3000, confirmAboveMm: 2500, confirmNote: "au-delà de 2,50 m (jusqu'à 3,00 m) : hauteur hors norme avec supplément et exclusions partielles de garantie", sources: [at(S.suppPergolas, "p. 123 — hauteur libre 2 500 mm"), at(S.brochurePergolas, "p. 7"), at(S.priceList, "p. 6 — Solid : 2 501–3 000 mm avec supplément")] },
     },
-    mountings: [{ code: "wall", label: "Adossée (deux poteaux avant)", status: "established", sources: [at(S.brochurePergolas, "p. 8 — autoportée NON / adossée OUI"), at(S.dteVZiiiP, "p. 12")] }],
-    // HelioLux = SOLID (transcodification du 2026-10-31) : SOLID n'a pas de liste de teintes publiée (« large choix de
-    // couleurs issues du nuancier RAL », Supplément PERGOLAS p. 123, brochure p. 7 et p. 17) ; les cinq teintes ci-dessous
-    // sont celles du modèle précédent de la fiche → à confirmer
-    finishes: ["RAL 9010 mat", "RAL 7016 mat", "RAL 9006 mat", "FSM 71319", "RAL 9005 mat"].map((c) => ({ ...finishOf(c, [at(S.pageVZiiiP, "teintes sans supplément"), at(S.suppPergolas, "p. 123"), at(S.brochurePergolas, "p. 7")]), status: "to_confirm" as const, note: "teinte en cours de confirmation pour ce modèle" })),
-    palette: { edition: "nuancier RAL du fabricant (liste du modèle en cours de confirmation)", component: "structure", sources: [at(S.suppPergolas, "p. 123"), at(S.brochurePergolas, "p. 7, p. 17")] },
-    customFinish: { code: "RAL_CUSTOM", label: "Autre teinte RAL (option)", status: "to_confirm", sources: [at(S.pageVZiiiP, "« * Option avec supplément »")], note: "disponibilité confirmée par le fabricant, au devis" },
+    mountings: [
+      { code: "freestanding", label: "Autoportante (quatre poteaux)", status: "established", sources: [at(S.suppPergolas, "p. 124–125"), at(S.brochurePergolas, "p. 7"), at(S.priceList, "p. 17 — autoportante")] },
+      { code: "wall", label: "Adossée (fixations murales et deux poteaux avant)", status: "established", sources: [at(S.suppPergolas, "p. 126–127, 136–137"), at(S.brochurePergolas, "p. 7"), at(S.priceList, "p. 17 — murale")], note: "chevilles et tôle de fixation murale non fournies ; support mural établi à l'étude" },
+    ],
+    finishes: [...SB450_RAL.map((c) => ({ ...finishOf(`${c} mat`, [at(S.priceList, "p. 7 — teintes des pergolas, incluses")]), tier: "standard" as const })),
+      ...["FSM 71319 mat", "VSR 240 satin", "VSR 780 mat", "DB 703 mat", "RAL 7038 mat", "RAL 7048 mat", "RAL 7016 STR", "RAL 7021 STR", "RAL 9005 STR", "RAL 9010 STR", "RAL 8003 STR"].map((c) => ({ ...finishOf(c, [at(S.priceList, "p. 7 — teintes des pergolas, incluses")]), tier: "standard" as const }))],
+    palette: { edition: "nuancier du fabricant, liste de prix 09.2026 (teintes des pergolas)", component: "structure", sources: [at(S.priceList, "p. 7")] },
+    customFinish: { code: "RAL_CUSTOM", label: "Autre teinte RAL (hors nuancier)", status: "to_confirm", tier: "special", sources: [at(S.priceList, "p. 6 — RAL hors palette : supplément")], note: "teinte avec supplément : délai confirmé au devis" },
     fabrics: [
-      { code: "serge_100", label: "Toile Serge 100 (facteur d'ouverture 1 %)", status: "established", description: "Toile microperforée très occultante.", swatch: "#8b8a84", sources: [at(S.dteVZiiiP, "p. 9"), at(S.brochurePergolas, "p. 8")] },
-      { code: "serge_600", label: "Toile Serge 600", status: "established", description: "Toile microperforée ; facteur d'ouverture indiqué par la brochure seulement.", swatch: "#a7a59d", sources: [at(S.dteVZiiiP, "p. 9")], note: "coloris choisi sur nuancier au devis" },
+      { code: "solid_white", label: "Toile PVC blanche (602N opaque)", status: "established", swatch: "#f1f0ea", sources: [at(S.priceList, "p. 17 — toiles disponibles")] },
+      { code: "solid_beige", label: "Toile PVC beige (602N opaque)", status: "established", swatch: "#d9ccb4", sources: [at(S.priceList, "p. 17")] },
+      { code: "solid_alu_grey", label: "Toile PVC gris aluminium (702N opaque)", status: "established", swatch: "#9ea2a3", sources: [at(S.priceList, "p. 17")] },
+    ],
+    controls: [
+      { code: "radio_included", label: "Commande radio — télécommande 5 canaux incluse", kind: "electric", status: "established", sources: [at(S.priceList, "p. 17 — moteur, commande radio et télécommande 5 canaux inclus"), at(S.suppPergolas, "p. 123 — moteur")], description: "Moteur, récepteur radio et télécommande 5 canaux compris dans le prix." },
     ],
     included: [
-      { label: "Toiture en toile enroulable, tendue par ressorts à gaz", sources: [at(S.dteVZiiiP, "p. 9")] },
-      { label: "Moteur tubulaire 230 V", sources: [at(S.dteVZiiiP, "p. 9")] },
-      { label: "Commande par interrupteur ou télécommande", status: "to_confirm", sources: [at(S.dteVZiiiP, "p. 10")], description: "le point de commande fourni n'est pas documenté" },
+      { label: "Structure aluminium, toiture en toile PVC plissée sur chariots mobiles", sources: [at(S.suppPergolas, "p. 123, 130"), at(S.priceList, "p. 17")] },
+      { label: "Mécanisme d'entraînement et moteur", sources: [at(S.priceList, "p. 17"), at(S.suppPergolas, "p. 123")] },
+      { label: "Commande radio et télécommande 5 canaux", sources: [at(S.priceList, "p. 17")] },
+      { label: "Gouttière et évacuation de l'eau par les poteaux avant", sources: [at(S.suppPergolas, "p. 123, 130–131")] },
     ],
     options: [
-      { code: "wind_automation", label: "Automatisme de vent", description: "Recommandé par le fabricant ; modèle compatible établi au devis.", group: "control", status: "to_confirm", wish: true, pricing: "quote", visual: "wind_sensor", sources: [at(S.dteVZiiiP, "p. 32 — « Il est recommandé d'utiliser un automatisme de vent »")] },
+      { code: "led_alt", label: "Éclairage LED sur une barre mobile sur deux", description: "Plinthe LED, alimentation et commande radio à variation comprises ; prix selon les dimensions.", group: "lighting", status: "established", pricing: "validated", visual: "led_perimeter", excludes: ["led_all"], sources: [at(S.priceList, "p. 19 — éclairage SOLID")] },
+      { code: "led_all", label: "Éclairage LED sur chaque barre mobile", description: "Plinthe LED, alimentation et commande radio à variation comprises ; prix selon les dimensions.", group: "lighting", status: "established", pricing: "validated", visual: "led_perimeter", excludes: ["led_alt"], sources: [at(S.priceList, "p. 19 — éclairage SOLID")] },
+      { code: "intermediate_post", label: "Poteau supplémentaire", description: "Prix par poteau selon la hauteur.", group: "structure", status: "established", pricing: "validated", maxQty: 4, sources: [at(S.priceList, "p. 17 — poteau supplémentaire")], note: "position établie à l'étude du projet ; au-delà de 4 poteaux, étude au devis" },
+      { code: "weather_automation", label: "Automatisme selon la météo (capteurs)", description: "Proposé par le fabricant ; capteurs et fonctionnement précisés au devis.", group: "control", status: "to_confirm", wish: true, pricing: "quote", visual: "wind_sensor", sources: [at(S.suppPergolas, "p. 123 — option d'automatisation en fonction des conditions météorologiques")], note: "modèle de capteur non documenté" },
     ],
-    modules: { maxSingleWidthMm: 5000, multiModule: "documented", sources: [at(S.dteVZiiiP, "p. 5, 10 — modules avec deux supports avant communs")] },
-    structure3d: { postMm: [68, 68], beamMm: [136, 75] },
-    notices: ["Désignation commerciale mise à jour le 2026-10-31 : les caractéristiques techniques présentées sont en cours de confirmation. Dimensions, pose et équipements sont confirmés sur devis.", "HelioLux ne protège pas de la pluie : la toile doit être enroulée par pluie, neige ou gel. L'installation de parois latérales n'est pas prévue par le fabricant."],
-    wind: { action: "retract", text: "La toile doit être enroulée dès que le vent dépasse la classe de vent du produit (classe 2) ; un automatisme de vent est recommandé.", status: "established", sources: [at(S.dteVZiiiP, "p. 32, 41"), at(S.dopVZiiiP, "classe 2")] },
+    closureWishes: [
+      { familySlug: "sliding_glass", label: OPENSLIDE_WISH_LABEL, status: "to_confirm", note: "fermeture vitrée citée pour ce modèle par le fabricant : dimensions, vitrage et fixations étudiés au devis." },
+      { familySlug: "sliding_panels", label: SLIDE_WISH_LABEL, status: "to_confirm", note: "modules coulissants cités pour ce modèle : modèle et fixations étudiés au devis." },
+      { familySlug: "helioscreen", label: "Screen latéral HelioScreen", status: "to_confirm", note: "stores screen cités comme fermetures possibles : intégration étudiée au devis." },
+    ],
+    modules: { maxSingleWidthMm: 4000, multiModule: "documented", sources: [at(S.suppPergolas, "p. 125, 127, 131 — extension modulaire"), at(S.priceList, "p. 17 — premier module / module suivant")] },
+    structure3d: { postMm: [85, 150], beamMm: [85, 165] },
+    notices: ["HelioLux protège de la pluie et du vent, mais pas des chutes de neige.", "Pente de toiture de 5° à 10°, réglée à l'installation selon l'avancée."],
+    wind: { action: "not_documented", text: "Classe de résistance au vent non documentée pour ce modèle : confirmée au devis.", status: "to_confirm", sources: [at(S.suppPergolas, "p. 123 — protège de la pluie et du vent")] },
   },
   specs: [
-    { key: "width_max", label: "Largeur maximale d'un module", valueNum: 5000, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "DT-E 5.6 p. 9" },
-    { key: "projection_max", label: "Avancée maximale", valueNum: 6000, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "DT-E 5.6 p. 9" },
-    { key: "tilt", label: "Inclinaison", valueText: "10° à 45°", source: "SUPPLIER_DOCUMENT", sourceRef: "DT-E 5.6 p. 10, 41 ; brochure p. 8", note: "le tableau p. 9 indique 10° à 90°" },
-    { key: "wind_class", label: "Résistance au vent (EN 13561)", valueText: "classe 2 (84 Pa)", source: "SUPPLIER_DOCUMENT", sourceRef: "DoP 100/MW/2021", note: "la documentation technique indique 70 Pa / 38 km/h pour la classe 2" },
-    { key: "rain", label: "Pluie", valueText: "ne protège pas de la pluie", source: "SUPPLIER_DOCUMENT", sourceRef: "DT-E 5.6 p. 10" },
+    { key: "width_max", label: "Largeur maximale d'un module", valueNum: 4000, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Supplément PERGOLAS p. 123" },
+    { key: "projection_max", label: "Avancée maximale", valueNum: 7000, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Supplément PERGOLAS p. 123" },
+    { key: "clear_height", label: "Hauteur libre standard", valueNum: 2500, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Supplément PERGOLAS p. 123" },
+    { key: "tilt", label: "Pente de la toiture", valueText: "5° à 10°", source: "SUPPLIER_DOCUMENT", sourceRef: "Supplément PERGOLAS p. 123 ; brochure p. 7" },
+    { key: "rain", label: "Pluie", valueText: "protège de la pluie", source: "SUPPLIER_DOCUMENT", sourceRef: "Supplément PERGOLAS p. 123" },
+    { key: "snow", label: "Neige", valueText: "ne protège pas des chutes de neige", source: "SUPPLIER_DOCUMENT", sourceRef: "Supplément PERGOLAS p. 123" },
   ],
   faq: [
-    { q: "HelioLux protège-t-elle de la pluie ?", a: "Non : c'est une protection solaire. Le fabricant demande d'enrouler la toile par pluie, neige, gel ou vent fort." },
-    { q: "Peut-on la poser sans mur ?", a: "Non : HelioLux se fixe au mur et repose sur deux poteaux avant." },
-    { q: "Peut-on fermer les côtés ?", a: "Non : le fabricant indique que l'installation de parois n'est pas prévue sur ce modèle." },
+    { q: "HelioLux protège-t-elle de la pluie ?", a: "Oui : la toile est étanche et l'eau est évacuée par la gouttière et les poteaux avant. Elle ne protège pas des chutes de neige." },
+    { q: "Peut-on la poser sans mur ?", a: "Oui : HelioLux existe en version autoportante et en version adossée au mur." },
+    { q: "Peut-on fermer les côtés ?", a: "Des fermetures latérales sont prévues par le fabricant pour ce modèle ; elles sont étudiées au devis." },
+    { q: "Le prix est-il affiché en ligne ?", a: "Oui, pour les dimensions de la grille de prix (de 3 à 7 m d'avancée) : le configurateur affiche le prix HT et TTC. Un élément sans prix établi, la livraison et la pose sont chiffrés sur devis." },
   ],
   openQuestions: [
-    { field: "Modèle", question: "Correspondance client du 2026-10-31 : HelioLux = SOLID, alors que les données publiées (adossée, modules de 5 × 6 m, ressorts à gaz) viennent de PERGOLA V ZiiiP. La page fabricant décrit SOLID comme une pergola toile prête à poser, autoportante ou adossée, 4,0 m de largeur maximale. Fournir la documentation SOLID (dimensions, poses, toile, commande, fermetures) avant de remplacer ces caractéristiques.", sources: ["validation client 2026-10-31", "aluprof-pergolas (page de gamme)"], blocks: "caractéristiques, configurateur et prix" },
-    { field: "Vent", question: "Classe 2 : 84 Pa (déclaration de performances) ou 70 Pa / 38 km/h (documentation technique) ? Seuil du capteur de vent.", sources: ["dop-100-mw-2021", "dte-pergola-v-fr"], blocks: "communication sur le vent" },
-    { field: "Commande", question: "Télécommande et moteur livrés (protocole, canaux).", sources: ["dte-pergola-v-fr"], blocks: "équipements inclus" },
-    { field: "Toiles", question: "Facteur d'ouverture de la toile Serge 600 ; coloris proposés.", sources: ["brochure-pergolas-fr"], blocks: "choix de toile (devis)" },
-    { field: "Tarifs", question: "Aucune grille de prix PERGOLA V ZiiiP dans le classeur.", sources: ["classeur tarifaire (privé)"], blocks: "prix affiché" },
+    { field: "Vent et neige", question: "Classe de résistance au vent et charge de neige de SOLID (aucune déclaration de performances dans la documentation).", sources: ["supp-pergolas p. 123"], blocks: "communication sur le vent" },
+    { field: "Prix", question: "Prix des avancées de 2 000 à 2 999 mm (la grille commence à 3 000 mm).", sources: ["liste de prix p. 17"], blocks: "prix en ligne sous 3 m d'avancée (devis)" },
+    { field: "Teintes", question: "Décors bois pour SOLID (supplément documenté pour SB 400 / SB 450 / SB 550 seulement).", sources: ["liste de prix p. 6–7"], blocks: "décor bois (non proposé)" },
+    { field: "Capteurs", question: "Modèle et prix des capteurs météo compatibles avec la commande fournie.", sources: ["supp-pergolas p. 123"], blocks: "automatisme (devis)" },
+    { field: "Modules", question: "Nombre maximal de modules et surface maximale.", sources: [], blocks: "grandes largeurs (devis)" },
   ],
 };
 

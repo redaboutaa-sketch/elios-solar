@@ -44,8 +44,8 @@ test("stores bannes : lecture de la gamme et comparatif des quatre modèles ; op
   const wish = page.getByTestId("option-wishes").getByRole("checkbox", { name: /Automatisme vent-soleil/ });
   await expect(wish).toBeDisabled();
   await goStep(page, "pose");
-  await page.getByLabel("Manœuvre et commande").selectOption("electric");
-  await expect(page.locator("#control")).toHaveValue("electric");
+  await page.getByLabel("Manœuvre et commande").selectOption("radio_io");
+  await expect(page.locator("#control")).toHaveValue("radio_io");
   await goStep(page, "equip");
   await expect(wish).toBeEnabled();
   await expect(page.getByTestId("wind-behaviour")).toContainText("se replie");

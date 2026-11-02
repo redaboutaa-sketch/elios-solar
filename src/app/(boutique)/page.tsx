@@ -1,4 +1,5 @@
 import Link from "@/i18n/link";
+import { withholdsSupplierMedia } from "@/domain/system";
 import { ArrowRight } from "lucide-react";
 import { CATEGORIES, configuratorHref, productHref, type CategoryKey } from "@/domain/categories";
 import { dimRangeText } from "@/domain/system";
@@ -73,7 +74,7 @@ export default async function HomePage() {
   // retour client (2026-11-01) : diversité des familles — un détail par famille, pris à tour de rôle dans chaque famille
   // (pergola, screen, store banne, moustiquaire) avant un second détail d'une même famille ; jamais de système candidat
   // (demande d'étude)
-  const detailPools = families.map(({ items }) => items.filter((f) => !f.rules.studyOnly).map((f) => (media.get(f.slug) ?? []).filter((m) => m.role === "detail" && (m.width ?? 0) >= 800).slice(0, 1).map((m) => ({ ...m, model: f.name, family: f.slug }))).flat());
+  const detailPools = families.map(({ items }) => items.filter((f) => !withholdsSupplierMedia(f.rules)).map((f) => (media.get(f.slug) ?? []).filter((m) => m.role === "detail" && (m.width ?? 0) >= 800).slice(0, 1).map((m) => ({ ...m, model: f.name, family: f.slug }))).flat());
   const details: Array<PublishedMedia & { model: string; family: string }> = [];
   for (let round = 0; details.length < 4 && detailPools.some((p) => p.length > round); round++) {
     for (const pool of detailPools) if (pool[round] && details.length < 4) details.push(pool[round]!);
@@ -135,10 +136,10 @@ export default async function HomePage() {
                 <ul className={`grid grid-cols-1 gap-px border border-sand-200 bg-sand-200 ${items.length > 1 ? "md:grid-cols-2" : ""}`}>
                   {items.map((f) => {
                     // demande d'étude : aucun visuel du système candidat (même règle que la fiche), dessin de la famille
-                    const shot = f.rules.studyOnly ? null : productShot(media.get(f.slug) ?? []);
+                    const shot = withholdsSupplierMedia(f.rules) ? null : productShot(media.get(f.slug) ?? []);
                     return (
                       <li key={f.slug} className={`card-link group grid min-w-0 grid-cols-1 bg-white ${items.length > 1 ? "grid-rows-[auto_1fr]" : "md:grid-cols-2"}`}>
-                        <div className="relative aspect-[16/10] min-w-0 overflow-hidden bg-white">{shot ? <MediaImage media={shot} sizes="(min-width: 768px) 45vw, 92vw" className="absolute inset-0 size-full object-contain p-6 transition-transform duration-500 group-hover:scale-[1.03]" /> : f.rules.studyOnly ? <span className="grid size-full place-items-center p-8"><FamilySketch kind={c.key} showWall={false} className="w-2/3" /></span> : <span className="grid size-full place-items-center text-sm text-stone-700">{t.models.visualPending}</span>}</div>
+                        <div className="relative aspect-[16/10] min-w-0 overflow-hidden bg-white">{shot ? <MediaImage media={shot} sizes="(min-width: 768px) 45vw, 92vw" className="absolute inset-0 size-full object-contain p-6 transition-transform duration-500 group-hover:scale-[1.03]" /> : withholdsSupplierMedia(f.rules) ? <span className="grid size-full place-items-center p-8"><FamilySketch kind={c.key} showWall={false} className="w-2/3" /></span> : <span className="grid size-full place-items-center text-sm text-stone-700">{t.models.visualPending}</span>}</div>
                         <div className={`border-t border-sand-200 p-6 md:p-8 ${items.length > 1 ? "" : "md:border-l md:border-t-0 md:self-center"}`}>
                           <h3 className="font-display text-2xl font-semibold"><Link href={productHref(c.key, f.slug)} className="stretched">{f.name}</Link></h3>
                           <p className="mt-2 text-stone-800">{f.shortDescription}</p>

@@ -275,8 +275,8 @@ export const INSTALL_GUIDES: InstallGuide[] = [
   OMBRA,
   pending("malaga-installation", "malaga", "HelioSky", ["Documentation technique et d'utilisation du modèle (édition 2025, français)"], ["Notice graphique de montage : document séparé, non publié par le fabricant."]),
   pending("marbella-installation", "marbella", "HelioMax", ["Notice de montage du modèle (français, état au 2026-01-01)", "Notice d'utilisation et d'entretien (français)"], ["Synthèse à rédiger à partir de la notice de montage, puis validation technique."]),
-  pending("sevilla-installation", "sevilla", "HelioLux", ["Documentation technique du modèle (français, 2021)"], ["Notice de montage graphique et notice d'utilisation propres au modèle."]),
-  pending("helioroof-screen-installation", "helioroof-screen", "HelioRoof", ["Documentation technique du store de toiture (français, 2020)"], ["Synthèse à rédiger et validation technique ; confirmation du modèle (un ou deux moteurs)."]),
+  pending("sevilla-installation", "sevilla", "HelioLux", ["Supplément technique pergolas (français, 2026) : pages du modèle"], ["Notice de montage et notice d'utilisation propres au modèle ; synthèse à rédiger et valider."]),
+  pending("helioroof-screen-installation", "helioroof-screen", "HelioRoof", ["Documentation technique du store de toiture (français, 2021) et supplément technique screens (2026)"], ["Synthèse à rédiger et validation technique (supports de coulisses et de coffre, sous-structure)."]),
   pending("madera-installation", "madera", "HelioSquare", ["Notice de montage du modèle (français, 2026)"], ["Synthèse à rédiger et validation technique."]),
 ];
 

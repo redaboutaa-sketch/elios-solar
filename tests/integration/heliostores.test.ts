@@ -181,7 +181,7 @@ describe("commande en ligne d'une configuration entièrement tarifée (paiement 
       invalidateCatalogCache();
       const catalog = await loadCatalog({ fresh: true });
       const input = await systemInput("marbella", { widthMm: 4000, depthMm: 5000, mounting: "wall", options: [], installation: "self", sides: {} });
-      const withOption = { ...input, options: [{ code: (catalog.families.find((f) => f.slug === "marbella")!.systemRules as SystemRules).options[0]!.code, qty: 1 }] };
+      const withOption = { ...input, options: [{ code: (catalog.families.find((f) => f.slug === "marbella")!.systemRules as SystemRules).options.find((o) => !o.values?.length && !o.maxQty)!.code }] };
       await expect(addLine({ guestKey: g }, withOption)).rejects.toBeInstanceOf(CartError);
       await addLine({ guestKey: g }, input);
       const ev = await evaluateCart((await findActiveCart({ guestKey: g }))!);

@@ -1,4 +1,5 @@
 import Link from "@/i18n/link";
+import { withholdsSupplierMedia } from "@/domain/system";
 import { ArrowRight } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { FamilySketch } from "@/components/illustrations/sketches";
@@ -22,7 +23,11 @@ type Item = Awaited<ReturnType<typeof listSystemFamilies>>[number];
 const priceText = (f: Item) => (f.fromPrice ? formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis) : null);
 
 const manualPossible = (f: Item) => !!f.rules.controls?.some((c) => c.kind === "manual");
-const lighting = (f: Item) => f.rules.options.filter((o) => o.group === "lighting" && !o.wish);
+/** Éclairage : compris dans le prix (inclus, ex. LED du coffre) ou en option établie ; jamais un souhait. */
+const lighting = (f: Item): Array<{ label: string; status?: string }> => [
+  ...f.rules.included.filter((i) => i.visual?.startsWith("led")).map((i) => ({ label: `${i.label} (compris)`, status: i.status })),
+  ...f.rules.options.filter((o) => o.group === "lighting" && !o.wish),
+];
 
 /**
  * Lecture « basique / intermédiaire / équipé » des stores bannes, calculée depuis les règles documentées : elle porte
@@ -114,9 +119,9 @@ export async function SystemCollection({ category, items, drafts = [] }: { categ
   const label = (await getT("layout")).categories[category];
   const { singular, intro } = msg.categories[category];
   // demande d'étude (correspondance fournisseur non confirmée) : aucun visuel du système candidat, comme sur la fiche
-  const shots = new Map(await Promise.all(items.map(async (f) => [f.slug, f.rules.studyOnly ? null : productShot(await publishedMediaFor(f.slug))] as const)));
+  const shots = new Map(await Promise.all(items.map(async (f) => [f.slug, withholdsSupplierMedia(f.rules) ? null : productShot(await publishedMediaFor(f.slug))] as const)));
   // bandeau pleine largeur : seulement une image assez grande (jamais une miniature agrandie) ; sinon fond uni + dessin
-  const banner = items.filter((f) => !f.rules.studyOnly).map((f) => f.hero).find((h) => h && (h.width ?? 0) >= 1400) ?? null;
+  const banner = items.filter((f) => !withholdsSupplierMedia(f.rules)).map((f) => f.hero).find((h) => h && (h.width ?? 0) >= 1400) ?? null;
   return (
     <>
       <section className="relative isolate overflow-hidden bg-night text-white" aria-labelledby="famille-titre">
@@ -140,7 +145,7 @@ export async function SystemCollection({ category, items, drafts = [] }: { categ
             {items.map((f, i) => (
               <li key={f.slug} className="grid items-center gap-6 py-10 md:grid-cols-2 md:gap-12 md:py-14">
                 <Link href={productHref(category, f.slug)} className={`group relative block aspect-[4/3] overflow-hidden border border-sand-200 bg-white ${i % 2 ? "md:order-2" : ""}`} tabIndex={-1} aria-hidden="true">
-                  {shots.get(f.slug) ? <MediaImage media={shots.get(f.slug)!} sizes="(min-width: 768px) 46vw, 92vw" className="absolute inset-0 size-full object-contain p-8 transition-transform duration-500 group-hover:scale-[1.03]" /> : f.rules.studyOnly ? <span className="grid size-full place-items-center p-10" data-testid="study-sketch"><FamilySketch kind={category} showWall={false} className="w-3/4" /></span> : <span className="grid size-full place-items-center text-sm text-stone-700">{t.visualSoon}</span>}
+                  {shots.get(f.slug) ? <MediaImage media={shots.get(f.slug)!} sizes="(min-width: 768px) 46vw, 92vw" className="absolute inset-0 size-full object-contain p-8 transition-transform duration-500 group-hover:scale-[1.03]" /> : withholdsSupplierMedia(f.rules) ? <span className="grid size-full place-items-center p-10" data-testid="study-sketch"><FamilySketch kind={category} showWall={false} className="w-3/4" /></span> : <span className="grid size-full place-items-center text-sm text-stone-700">{t.visualSoon}</span>}
                 </Link>
                 <div className="min-w-0">
                   <p className="eyebrow">{singular}</p>

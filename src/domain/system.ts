@@ -85,6 +85,8 @@ export interface OptionDef extends Choice {
   /** prérequis de commande : une motorisation (type) ou des commandes précises (codes) */
   requiresControlKind?: "electric";
   requiresControls?: string[];
+  /** poses compatibles (codes) ; absente : toutes les poses */
+  requiresMountings?: string[];
   /** prérequis rédigé, affiché au client (sans marque ni référence fournisseur) */
   prerequisite?: string;
   /** options requises / incompatibles (cumul interdit documenté) */
@@ -149,6 +151,16 @@ export interface SystemRules {
    * des souhaits libres (bornes `maxMm: 0` = non documentées), jamais une configuration validée ni commandable.
    */
   studyOnly?: string;
+  /**
+   * visuels du fabricant retenus : aucun visuel ne représente le système correspondant (ex. photos d'un autre système
+   * de la gamme) → fiche, collection et accueil montrent le dessin de la famille ; raison interne
+   */
+  mediaWithheld?: string;
+  /**
+   * révision des caractéristiques (ex. changement de système correspondant) : un projet enregistré avant cette date est
+   * signalé et doit être revalidé explicitement ; il n'est jamais converti en silence
+   */
+  revision?: { date: string; note: string };
   /** largeur minimale par valeur de profondeur (combinaisons absentes de la fiche) */
   depthWidthMin?: Array<{ depthMm: number; widthMinMm: number; sources: SourceRef[] }>;
   mountings: MountingChoice[];
@@ -162,7 +174,7 @@ export interface SystemRules {
   palette?: { edition: string; component: string; sources: SourceRef[]; note?: string };
   fabrics?: Choice[];
   controls?: ControlChoice[];
-  included: Array<{ label: string; sources: SourceRef[]; status?: "established" | "to_confirm"; description?: string; supplierRef?: string }>;
+  included: Array<{ label: string; sources: SourceRef[]; status?: "established" | "to_confirm"; description?: string; supplierRef?: string; visual?: OptionDef["visual"] }>;
   options: OptionDef[];
   /** pergola : un module seul, extension modulaire documentée ou non */
   modules?: { maxSingleWidthMm: number; multiModule: "documented" | "not_documented"; sources: SourceRef[]; note?: string };
@@ -426,7 +438,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
   let control: ControlChoice | undefined;
   if (rules.controls?.length) {
     control = rules.controls.find((c) => c.code === input.controlCode);
-    if (!control) add({ code: "control_unavailable", severity: "blocking", message: "Commande non proposée pour ce système.", path: "controlCode" });
+    if (!control) add({ code: "control_unavailable", severity: "blocking", message: input.controlCode ? "La commande enregistrée n'est plus proposée pour ce modèle : choisissez un mode de commande." : "Choisissez un mode de commande.", path: "controlCode" });
     else {
       if (control.minWidthMm && input.widthMm < control.minWidthMm) add({ code: "control_min_width", severity: "blocking", message: `${control.label} : largeur minimale du système ${fmtM(control.minWidthMm)}.`, path: "controlCode" });
       if (control.status === "to_confirm") add({ code: "control_to_confirm", severity: "review", message: `${control.label} : ${control.note ?? "à confirmer au devis"}.`, path: "controlCode", quoteSuggested: true });
@@ -438,7 +450,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
   input.options.forEach((o, idx) => {
     const def = rules.options.find((d) => d.code === o.code);
     const path = `options.${idx}`;
-    if (!def) { add({ code: "option_unknown", severity: "blocking", message: "Option non proposée pour ce système.", path }); return; }
+    if (!def) { add({ code: "option_unknown", severity: "blocking", message: "Une option enregistrée n'est plus proposée pour ce modèle : retirez-la ou choisissez un équipement de la liste.", path }); return; }
     if (chosen.has(def.code)) { add({ code: "option_duplicate", severity: "blocking", message: `${def.label} : sélectionnée deux fois.`, path }); return; }
     chosen.add(def.code);
     if (def.maxQty != null && (!Number.isInteger(o.qty ?? 1) || (o.qty ?? 1) < 1 || (o.qty ?? 1) > def.maxQty)) add({ code: "option_qty", severity: "blocking", message: `${def.label} : quantité entre 1 et ${def.maxQty}.`, path });
@@ -451,6 +463,9 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
     else if (def.status === "to_confirm") add({ code: "option_to_confirm", severity: "review", message: `${def.label} : ${def.note ?? "à confirmer au devis"}.`, path, quoteSuggested: true });
     if ((def.requiresControlKind && control?.kind !== def.requiresControlKind) || (def.requiresControls?.length && (!control || !def.requiresControls.includes(control.code)))) {
       add({ code: "option_requires_control", severity: "blocking", message: `${def.label} : ${def.prerequisite ?? "nécessite une commande motorisée compatible"}.`, path });
+    }
+    if (def.requiresMountings?.length && input.mounting && !def.requiresMountings.includes(input.mounting)) {
+      add({ code: "option_requires_mounting", severity: "blocking", message: `${def.label} : non proposé avec cette pose${def.note ? ` (${def.note})` : ""}.`, path });
     }
   });
   for (const def of rules.options) {
@@ -548,4 +563,9 @@ export function systemSceneBlocker(rules: SystemRules, input: SystemInput): stri
   if (dim) return `${dim.message} Vue 3D indisponible tant que la cote n'est pas corrigée.`;
   if (ev.issues.some((i) => i.severity === "blocking" && i.path === "mounting")) return "Pose non proposée : vue 3D indisponible.";
   return null;
+}
+
+/** Aucun visuel du fabricant affiché (demande d'étude, ou visuels d'un autre système retenus). */
+export function withholdsSupplierMedia(rules: Pick<SystemRules, "studyOnly" | "mediaWithheld">): boolean {
+  return !!rules.studyOnly || !!rules.mediaWithheld;
 }

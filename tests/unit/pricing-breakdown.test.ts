@@ -35,7 +35,7 @@ const awning = (mandatoryMotor: boolean): SystemPriceTable => ({
     { code: "autre-teinte-palette", label: "Autre couleur de la palette", mode: "percent", percentBps: 2000, applies: ["finition:RAL_CUSTOM"] },
     mandatoryMotor
       ? { code: "moteur", label: "Moteur", mode: "pending", applies: ["toujours"], mandatory: true, rule: "à ajouter au prix indiqué" }
-      : { code: "moteur", label: "Moteur", mode: "pending", applies: ["commande:electric"], rule: "manivelle incluse" },
+      : { code: "moteur-radio_io", label: "Moteur radio io", mode: "pending", applies: ["commande:radio_io"], rule: "manivelle incluse", rangeMinor: [437_00, 472_00] },
   ]) },
   cells: [
     { variantKey: "", dimAmm: 1600, widthMinMm: 2050, widthMaxMm: 2900, amountMinor: 500_00 },
@@ -49,9 +49,9 @@ const awning = (mandatoryMotor: boolean): SystemPriceTable => ({
 const screen: SystemPriceTable = {
   currency: "EUR", taxBasis: "HT", dimAKey: "hauteur", listVersion: 1,
   variants: { "": meta([
-    { code: "moteur-electric_3", label: "Moteur — modèle 3", mode: "fixed", amountMinor: 200_00, applies: ["commande:electric_3"], mandatory: true },
-    { code: "moteur-autre", label: "Moteur", mode: "pending", applies: ["commande:electric_1"], mandatory: true },
-    { code: "moteur-20nm", label: "Moteur 20 Nm minimum", mode: "pending", applies: ["exigence:moteur_20nm"], mandatory: true },
+    { code: "moteur-io", label: "Moteur radio io", mode: "fixed", amountMinor: 200_00, applies: ["commande:radio_io&!exigence:moteur_20nm"], mandatory: true },
+    { code: "moteur-filaire", label: "Moteur filaire", mode: "pending", applies: ["commande:wired_mech&!exigence:moteur_20nm"], mandatory: true, rangeMinor: [102_00, 212_00] },
+    { code: "moteur-20nm", label: "Moteur 20 Nm minimum", mode: "pending", applies: ["commande:radio_io&exigence:moteur_20nm"], mandatory: true },
     { code: "ral-hors-palette", label: "Teinte RAL hors palette", mode: "fixed", amountMinor: 300_00, applies: ["finition:RAL_CUSTOM"] },
   ]) },
   cells: [
@@ -69,8 +69,9 @@ describe("lecture de la grille : dimension supérieure (décision écrite), limi
   it("cote intermédiaire : valeurs immédiatement supérieures sur chaque axe, jamais d'interpolation", () => {
     expect(at({ widthMm: 1501, depthMm: 1931 })).toMatchObject({ ok: true, price: { amountMinor: 1_166_67, roundedUp: true, grid: { widthMm: 2000, dimMm: 2134 } } });
   });
-  it("cote sous la première valeur : première valeur ; au-delà de la dernière : hors grille (devis)", () => {
-    expect(at({ widthMm: 1000, depthMm: 1400 })).toMatchObject({ ok: true, price: { amountMinor: 1_000_00 } });
+  it("cote sous la première valeur ou au-delà de la dernière : hors grille (devis) — la règle ne vaut qu'entre deux valeurs", () => {
+    expect(at({ widthMm: 1000, depthMm: 1930 })).toEqual({ ok: false, reason: "out_of_grid" });
+    expect(at({ widthMm: 1500, depthMm: 1400 })).toEqual({ ok: false, reason: "out_of_grid" });
     expect(at({ widthMm: 2001, depthMm: 1930 })).toEqual({ ok: false, reason: "out_of_grid" });
     expect(at({ widthMm: 1500, depthMm: 2135 })).toEqual({ ok: false, reason: "out_of_grid" });
   });
@@ -116,22 +117,47 @@ describe("décomposition : suppléments, éléments à chiffrer, arrondis, TVA",
   it("store à manivelle incluse : complet en manuel, moteur à chiffrer seulement si la motorisation est choisie", () => {
     const manual = evaluate(withTable("jamaica", awning(false)), cfg("jamaica", { widthMm: 2500, depthMm: 1600, controlCode: "crank_1500" }));
     expect(manual.priceBreakdown).toMatchObject({ totalMinor: 500_00, partial: false });
-    const motor = evaluate(withTable("jamaica", awning(false)), cfg("jamaica", { widthMm: 2500, depthMm: 1600, controlCode: "electric" }));
-    expect(motor.priceBreakdown).toMatchObject({ partial: true });
+    const motor = evaluate(withTable("jamaica", awning(false)), cfg("jamaica", { widthMm: 2500, depthMm: 1600, controlCode: "radio_io" }));
+    expect(motor.priceBreakdown).toMatchObject({ partial: true, totalMinor: 500_00 });
+    // plusieurs moteurs possibles : fourchette documentée affichée, jamais ajoutée au total
+    expect(motor.priceBreakdown!.pending[0]).toMatchObject({ code: "moteur-radio_io" });
+    expect(JSON.stringify(motor.priceBreakdown!.pending[0])).toMatch(/437.*472/);
     expect(minSystemPrice(awning(false))).toMatchObject({ amountMinor: 500_00 });
   });
   it("screen : plus-value du moteur choisi ajoutée ; moteur sans plus-value établie → à chiffrer ; cellule « 20 Nm » → le moteur standard est remplacé par un moteur à chiffrer", () => {
     const base = cfg("helioscreen", { widthMm: 2000, heightMm: 1500, finishCode: "RAL_9016" });
-    expect(evaluate(withTable("helioscreen", screen), { ...base, controlCode: "electric_3" }).priceBreakdown).toMatchObject({ totalMinor: 600_00, partial: false });
-    expect(evaluate(withTable("helioscreen", screen), { ...base, controlCode: "electric_1" }).priceBreakdown).toMatchObject({ totalMinor: 400_00, partial: true });
-    const big = evaluate(withTable("helioscreen", screen), { ...base, widthMm: 5250, controlCode: "electric_3" }).priceBreakdown!;
+    expect(evaluate(withTable("helioscreen", screen), { ...base, controlCode: "radio_io" }).priceBreakdown).toMatchObject({ totalMinor: 600_00, partial: false });
+    expect(evaluate(withTable("helioscreen", screen), { ...base, controlCode: "wired_mech" }).priceBreakdown).toMatchObject({ totalMinor: 400_00, partial: true });
+    const big = evaluate(withTable("helioscreen", screen), { ...base, widthMm: 5250, controlCode: "radio_io" }).priceBreakdown!;
     expect(big.lines.map((l) => l.code)).toEqual(["structure"]);
     expect(big.pending.map((p) => p.code)).toEqual(["moteur-20nm"]);
     expect(minSystemPrice(screen)).toBeNull();
   });
   it("teinte hors palette : forfait ajouté", () => {
-    const res = evaluate(withTable("helioscreen", screen), cfg("helioscreen", { widthMm: 2000, heightMm: 1500, controlCode: "electric_3", finishCode: "RAL_CUSTOM" }));
+    const res = evaluate(withTable("helioscreen", screen), cfg("helioscreen", { widthMm: 2000, heightMm: 1500, controlCode: "radio_io", finishCode: "RAL_CUSTOM" }));
     expect(res.priceBreakdown).toMatchObject({ totalMinor: 900_00, totalTtcMinor: 1_080_00 });
+  });
+  it("options tarifées : forfait toujours ajouté, valeur choisie, tableau selon la cote, quantité ; télécommande à choisir → fourchette", () => {
+    const t: SystemPriceTable = { ...pergola, variants: { autoportante: meta([
+      { code: "centrale-radio", label: "Centrale de commande radio", mode: "fixed", amountMinor: 100_00, applies: ["toujours"] },
+      { code: "telecommande-a-choisir", label: "Télécommande", mode: "pending", applies: ["!option:remote_io"], rangeMinor: [60_00, 171_00] },
+      { code: "telecommande-1-canal", label: "Télécommande 1 canal", mode: "fixed", amountMinor: 60_00, applies: ["option:remote_io=io_1ch"] },
+      { code: "telecommande-ecran", label: "Télécommande à écran", mode: "fixed", amountMinor: 171_00, applies: ["option:remote_io=io_screen"] },
+      { code: "led-lames", label: "LED lames", mode: "table", applies: ["option:led_blades"], table: { axis: "avancee", cells: [{ dimMin: 1930, dimMax: 1930, amountMinor: 550_00 }, { dimMin: 2134, dimMax: 2134, amountMinor: 825_00 }] } },
+      { code: "poteau", label: "Poteau supplémentaire", mode: "table", applies: ["option:intermediate_post"], perOptionQty: "intermediate_post", table: { axis: "hauteur", cells: [{ dimMin: 2000, dimMax: 2500, amountMinor: 255_00 }, { dimMin: 2501, dimMax: 3000, amountMinor: 310_00 }] } },
+    ]), murale: meta() } };
+    const opts = [{ code: "remote_io", value: "io_1ch" }, { code: "led_blades" }, { code: "intermediate_post", qty: 2 }];
+    const full = evaluate(withTable("marbella", t), cfg("marbella", { mounting: "freestanding", widthMm: 1500, depthMm: 1930, heightMm: 2400, options: opts })).priceBreakdown!;
+    // 1 000 + 100 (centrale) + 60 (télécommande) + 550 (LED, avancée 1 930) + 2 × 255 (poteaux, hauteur 2 400) = 2 220,00 HT
+    expect(full).toMatchObject({ totalMinor: 2_220_00, totalTtcMinor: 2_664_00, partial: false, pending: [] });
+    // cote intermédiaire (avancée 1 931 → 2 134 ; hauteur 2 600 → 310) ; autre valeur de télécommande
+    const up = evaluate(withTable("marbella", t), cfg("marbella", { mounting: "freestanding", widthMm: 1500, depthMm: 1931, heightMm: 2600, options: [{ code: "remote_io", value: "io_screen" }, { code: "led_blades" }, { code: "intermediate_post", qty: 1 }] })).priceBreakdown!;
+    // 1 050 + 100 + 171 + 825 + 310 = 2 456,00
+    expect(up.totalMinor).toBe(2_456_00);
+    // sans télécommande : sous-total partiel, fourchette affichée sans être ajoutée
+    const none = evaluate(withTable("marbella", t), cfg("marbella", { mounting: "freestanding", widthMm: 1500, depthMm: 1930, heightMm: 2400 })).priceBreakdown!;
+    expect(none).toMatchObject({ totalMinor: 1_100_00, partial: true });
+    expect(none.pending.map((p) => p.code)).toEqual(["telecommande-a-choisir"]);
   });
   it("changement non chiffrable : aucun ancien montant conservé", () => {
     const t = withTable("marbella", pergola);

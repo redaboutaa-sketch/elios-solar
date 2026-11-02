@@ -13,10 +13,10 @@
  * restent dans `supplierRef` (famille, moteur, équipement), `manufacturer`, `brand`, les sources et les
  * `sourceRef` des caractéristiques : données internes, retirées de tout ce qui part vers le navigateur.
  */
-import type { SourceRef, SystemRules } from "@/domain/system";
+import type { SourceRef, SystemRules, ControlChoice } from "@/domain/system";
 import type { CategoryKey } from "@/domain/categories";
 import { PERGOLAS_2026 } from "./families/pergolas-2026";
-import { AWNINGS_2026, AWNING_SOURCES } from "./families/awnings-2026";
+import { AWNINGS_2026, AWNING_CONNECT_BOX, AWNING_SOURCES, awningModes } from "./families/awnings-2026";
 import { INSECT_SCREENS_2026 } from "./families/insect-screens-2026";
 import { SCREENS_2026 } from "./families/screens-2026";
 
@@ -401,17 +401,22 @@ const refSheet = SOURCES.ficheRefleksol;
  * référence nomme le protocole radio RTS ou IO) ; le modèle du fabricant reste dans `supplierRef`.
  * [code, libellé public, modèle fournisseur, largeur minimale du système, câble]
  */
-const REF_MOTORS: Array<[string, string, string, number, string]> = [
-  ["electric_1", "Motorisation électrique — modèle 1", "M45-10/26", 580, "3 m noir VVF"],
-  ["electric_2", "Motorisation électrique — modèle 2", "VariEco M 10/14", 590, "2 m blanc RNF"],
-  ["electric_3", "Motorisation électrique — modèle 3", "Jet 10/17", 640, "2,5 m blanc VVF"],
-  ["electric_4", "Motorisation électrique — modèle 4", "SunTop M", 580, "2 m blanc RNF"],
-  ["electric_5", "Motorisation électrique — modèle 5", "Altus WT", 730, "3 m noir RRF"],
-  ["electric_6", "Motorisation électrique — modèle 6", "DM45EAF/S-10/26", 720, "3 m blanc VVF"],
-  ["electric_7", "Motorisation électrique — modèle 7", "SunTop 868 M 10/14", 580, "2 m blanc RNF"],
-  ["radio_rts", "Motorisation radio — commande RTS", "Altus 50 RTS 10/17", 680, "3 m blanc VVF"],
-  ["radio_io", "Motorisation radio — commande io", "SUNILUS SCR IO 10/17", 680, "5 m blanc VVF"],
+/** Liste de prix des produits finis (09.2026) : source privée (retirée des données publiques). */
+const PRICE_LIST = { id: "liste-prix-2026-09", label: "Liste des prix des produits finis (09.2026)" } as const;
+
+/**
+ * HelioScreen : modes de commande proposés au client (liste de prix p. 69 de l'index). Le moteur n'est jamais choisi
+ * par un numéro : il découle du mode et du couple exigé par les dimensions (cellules « 20 Nm » de la grille).
+ */
+const SCREEN_CONTROL_MODES: ControlChoice[] = [
+  { code: "wired_mech", label: "Filaire — fins de course mécaniques", kind: "electric", status: "established", description: "Interrupteur mural ; les fins de course se règlent sur le moteur.", sources: [{ ...PRICE_LIST, loc: "p. 69" }] },
+  { code: "wired_elec", label: "Filaire — fins de course électroniques", kind: "electric", status: "established", description: "Interrupteur mural ; réglage électronique des positions haute et basse.", sources: [{ ...PRICE_LIST, loc: "p. 69" }] },
+  { code: "wired_obstacle", label: "Filaire — avec détection d'obstacles", kind: "electric", status: "established", description: "Interrupteur mural ; le moteur s'arrête s'il rencontre un obstacle.", sources: [{ ...PRICE_LIST, loc: "p. 69" }] },
+  { code: "radio_rts", label: "Radio RTS — télécommande", kind: "electric", status: "established", description: "Récepteur radio intégré au moteur ; télécommande RTS, compatible box smartphone.", sources: [{ ...PRICE_LIST, loc: "p. 69" }] },
+  { code: "radio_io", label: "Radio io — télécommande", kind: "electric", status: "established", description: "Récepteur radio io intégré ; télécommandes, capteurs et box smartphone io.", sources: [{ ...PRICE_LIST, loc: "p. 69" }] },
+  { code: "radio_io_obstacle", label: "Radio io — avec détection d'obstacles", kind: "electric", status: "established", description: "Radio io et arrêt du moteur s'il rencontre un obstacle.", sources: [{ ...PRICE_LIST, loc: "p. 69" }] },
 ];
+
 const refleksol: HelioFamily = {
   slug: "helioscreen",
   name: "HelioScreen",
@@ -456,18 +461,20 @@ const refleksol: HelioFamily = {
       { code: "sunworker", label: "Sunworker", status: "to_confirm", sources: [at(refSheet, "Tissus disponibles"), T("p. 157")], note: "citée par la fiche transmise, absente des toiles de la page du fabricant pour ce screen" },
       { code: "polyscreen", label: "Polyscreen", status: "to_confirm", sources: [at(refSheet, "Tissus disponibles"), T("p. 157")], note: "citée par la fiche transmise, absente des toiles de la page du fabricant pour ce screen" },
     ],
-    // moteurs de la fiche transmise : présents dans la liste du fabricant, mais largeurs minimales non confirmées par
-    // ses documents (la fiche décrit en partie le screen classique sans zip) → choix à confirmer, sans blocage
-    controls: REF_MOTORS.map(([c, label, model, minW, cable]) => ({ code: c, label, supplierRef: `Moteur ${model}`, kind: "electric" as const, cable: `câble ${cable}`, status: "to_confirm" as const, note: `largeur minimale indiquée par la fiche transmise : ${minW / 10} cm (à confirmer)`, sources: [at(refSheet, "Options moteurs — largeur minimale du système et câble"), at(SOURCES.aluprofRefleksol, "onglet Automatisation")] })),
+    // mode de commande choisi par le client ; le moteur est déterminé par le mode et le couple exigé par la cellule de la
+    // grille (10 ou 20 Nm), liste de prix p. 69 de l'index : un seul moteur → plus-value ; plusieurs → fourchette au devis
+    controls: SCREEN_CONTROL_MODES,
     included: [
       { label: "Coffre en aluminium extrudé (126 mm)", sources: [T("p. 66–67")] },
       { label: "Guidage zip : coulisses en deux parties avec joints de compensation", supplierRef: "Mécanisme ZiiiP", sources: [T("p. 67")] },
     ],
     options: [
-      { code: "remote_control", label: "Télécommande radio", description: "Émetteur pour un moteur radio ; modèle défini avec le moteur.", group: "control", status: "to_confirm", wish: true, requiresControls: ["radio_rts", "radio_io"], prerequisite: "nécessite une motorisation radio", pricing: "quote", visual: "remote", sources: [at(SOURCES.aluprofRefleksol, "onglet Automatisation — télécommandes (liste sans compatibilité)")] },
+      { code: "remote_rts", label: "Télécommande RTS", group: "control", status: "established", pricing: "validated", visual: "remote", requiresControls: ["radio_rts"], prerequisite: "nécessite la commande radio RTS", values: [{ code: "rts_1", label: "1 canal" }, { code: "rts_5", label: "5 canaux" }], sources: [{ ...PRICE_LIST, loc: "p. 114 — télécommandes RTS" }] },
+      { code: "remote_io", label: "Télécommande io", group: "control", status: "established", pricing: "validated", visual: "remote", requiresControls: ["radio_io", "radio_io_obstacle"], prerequisite: "nécessite une commande radio io", values: [{ code: "io_1", label: "1 canal" }, { code: "io_5", label: "5 canaux" }], sources: [{ ...PRICE_LIST, loc: "p. 115 — télécommandes io" }] },
+      { code: "sensor_rts", label: "Capteur vent et soleil (RTS)", description: "Relève le screen par vent fort et le pilote selon l'ensoleillement.", group: "control", status: "established", pricing: "validated", visual: "wind_sensor", requiresControls: ["radio_rts"], prerequisite: "nécessite la commande radio RTS", values: [{ code: "rts_wind_sun", label: "vent et soleil" }], sources: [{ ...PRICE_LIST, loc: "p. 114 — capteur RTS" }] },
+      { code: "sensor_io", label: "Capteur météo (io)", description: "Relève le screen par vent fort ; la version vent et soleil le pilote aussi selon l'ensoleillement.", group: "control", status: "established", pricing: "validated", visual: "wind_sensor", requiresControls: ["radio_io", "radio_io_obstacle"], prerequisite: "nécessite une commande radio io", values: [{ code: "io_wind", label: "vent" }, { code: "io_wind_sun", label: "vent et soleil" }], sources: [{ ...PRICE_LIST, loc: "p. 116 — capteurs io" }] },
+      { code: "connect_box", label: "Box domotique — commande par smartphone", visual: "box", description: "Box internet qui pilote depuis une application les moteurs radio io et RTS.", group: "control", status: "established", pricing: "validated", requiresControls: ["radio_rts", "radio_io", "radio_io_obstacle"], prerequisite: "nécessite une commande radio (RTS ou io)", sources: [{ ...PRICE_LIST, loc: "p. 116 — box (appareils io et RTS)" }] },
       { code: "group_installation", label: "Installation groupée (supports modulaires)", group: "structure", status: "to_confirm", sources: [T("p. 67 — « option to create modules using modular brackets »")], note: "nombre de modules et supports établis au devis" },
-      { code: "weather_automation", label: "Automatisme vent et soleil (capteurs)", visual: "wind_sensor", wish: true, description: "Relève le screen dans son coffre par vent fort ; pilote la toile selon l'ensoleillement.", supplierRef: "Automatisme (capteurs vent / soleil), modèle selon le moteur", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "capteur compatible avec le moteur choisi (à confirmer)", pricing: "quote", sources: [T("p. 160 — pilotage automatique selon la météo"), at(SOURCES.noticeScreens, "p. 10 — relevage complet par vent"), at(SOURCES.dteRefleksol, "p. 27 — automatisation du vent recommandée")], note: "capteurs compatibles avec le moteur choisi à confirmer" },
-      { code: "connect_box", label: "Box domotique — commande par smartphone", visual: "box", wish: true, description: "Box internet qui pilote depuis une application un moteur radio io compatible. Elle ne rend pas connectés les autres moteurs.", supplierRef: "Somfy TaHoma Switch (liste d'accessoires du fabricant)", group: "control", status: "to_confirm", requiresControls: ["radio_io"], prerequisite: "nécessite la motorisation radio — commande io", pricing: "quote", sources: [at(SOURCES.aluprofRefleksol, "onglet Automatisation (liste, sans compatibilité par moteur)")], note: "compatibilité à confirmer" },
     ],
     structure3d: { cassetteMm: [126, 126] },
     wind: { action: "raise", text: "Par vent fort, le screen doit être entièrement relevé dans son coffre ; l'automatisme de vent recommandé ne dispense pas de le relever au-delà de la vitesse admissible.", status: "established", sources: [at(SOURCES.dteRefleksol, "p. 27"), at(SOURCES.noticeScreens, "p. 10")] },
@@ -551,7 +558,8 @@ const casablanca: HelioFamily = {
       { code: "crank_1500", label: "Manuelle — manivelle 150 cm", kind: "manual", status: "established", sources: [at(casaSheet, "Commande manuelle")] },
       { code: "crank_1800", label: "Manuelle — manivelle 180 cm", kind: "manual", status: "established", sources: [at(casaSheet, "Commande manuelle")] },
       { code: "crank_2200", label: "Manuelle — manivelle 220 cm", kind: "manual", status: "established", sources: [at(casaSheet, "Commande manuelle")] },
-      { code: "electric", label: "Motorisation électrique (moteur à définir)", kind: "electric", status: "to_confirm", sources: [T("p. 114 — « electric drive: yes »"), at(SOURCES.aluprofCasablanca, "commande manuelle ou électrique")], note: "motorisation citée par le catalogue mais absente de la fiche : moteur et conditions établis au devis" },
+      // motorisation : modes de la matrice de compatibilité moteur × store (liste de prix p. 100–107)
+      ...awningModes("wired", "radio_dedicated", "radio_rts", "radio_io", "radio_io_secours"),
     ],
     included: [
       { label: "Coffre avec joint de protection de la toile", sources: [T("p. 115")] },
@@ -564,7 +572,7 @@ const casablanca: HelioFamily = {
       { code: "remote_control", label: "Télécommande radio", visual: "remote", description: "Émetteur de commande à distance de la version motorisée.", supplierRef: "émetteur de commande à distance (modèle à définir avec le moteur)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite la motorisation", pricing: "quote", sources: [at(SOURCES.dteCasablanca, "p. 6 — « émetteur de commande à distance »")], note: "modèle défini avec le moteur au devis" },
       { code: "weather_automation", label: "Automatisme vent-soleil (capteur)", visual: "wind_sensor", wish: true, description: "Replie le store par vent fort et le déploie selon l'ensoleillement ; seuils réglables.", supplierRef: "automatisation météorologique vent-soleil (capteurs selon le moteur)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite la motorisation", pricing: "quote", sources: [T("p. 115 — « simple handling using full weather automation »"), at(SOURCES.dteCasablanca, "p. 6, p. 19"), at(SOURCES.brochureAwnings, "p. 29")], note: "capteurs définis avec le moteur au devis" },
       { code: "shock_sensor", label: "Capteur de vibrations", wish: true, description: "Capteur de choc fixé sur la barre de charge, pour la commande automatique du store motorisé.", supplierRef: "capteurs de choc / vibration listés par le fabricant (Eolis 3D io, capteurs RED / BLUE)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite la motorisation ; capteur compatible avec le moteur", pricing: "quote", sources: [at(SOURCES.aluprofCasaAutomation, "capteurs de choc ou de vibration")], note: "compatibilité avec le moteur à confirmer" },
-      { code: "connect_box", label: "Box domotique — commande par smartphone", visual: "box", wish: true, description: "Box internet qui pilote depuis une application un moteur radio compatible. Elle ne rend pas connectée une commande non compatible.", supplierRef: "Somfy TaHoma Switch (liste d'accessoires du fabricant)", group: "control", status: "to_confirm", requiresControlKind: "electric", prerequisite: "nécessite une motorisation radio io (moteur à définir)", pricing: "quote", sources: [at(SOURCES.aluprofCasaAutomation, "TaHoma Switch")], note: "compatibilité avec le moteur à confirmer" },
+      AWNING_CONNECT_BOX,
     ],
     wind: { action: "retract", text: "Par vent fort, le store se replie : au-delà de sa classe de vent déclarée, il doit être enroulé immédiatement ; l'automatisme de vent recommandé ne protège pas contre les rafales qui dépassent ses réglages.", status: "established", sources: [at(SOURCES.dteCasablanca, "p. 18–19"), at(SOURCES.noticeAwnings, "p. 10")] },
     protection: { label: "coffre intégral avec joint", level: "full", status: "established", sources: [T("p. 115"), at(SOURCES.brochureAwnings, "p. 9")] },

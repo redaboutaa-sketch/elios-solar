@@ -25,17 +25,24 @@
 | 6 / 8 | informations pergolas, suppléments | RAL hors palette, imitation bois, évacuation par un poteau |
 | 10–11 / 12–13 | SB 450 autoportante et murale, lames F et Z | grilles HelioMax |
 | 16 / 18 | SB 350, lames 195 et 217,4 mm | grille HelioSky (lame 195 = tailles du site) |
-| 17 / 19 | SOLID autoportante et murale, premier module et module suivant | grilles HelioLux (préparées) |
+| 6 / 8 | SOLID : hauteur hors norme (2,50–3,00 m) | supplément HelioLux selon la pose |
+| 10–11 / 12–13 | SB 450 : centrale radio, capteur pluie et antigel, poteau supplémentaire | options HelioMax |
+| 17 / 19 | SOLID autoportante et murale, premier module et module suivant ; poteau supplémentaire | grilles et option HelioLux |
+| 19 / 21 | éclairage SOLID (une barre sur deux, chaque barre) | options HelioLux (tableaux avancée × largeur) |
+| 20 / 22 | éclairage SB 450 lame F (lames, spots, couronne) | options HelioMax |
 | 22 / 24 | parois SLIDE (modules lames 52 mm et toile) | données tracées (HelioSlide ALU : correspondance non confirmée) |
 | 24 / 26 | parois OPEN SLIDE (vitrage non inclus) | données tracées (HelioSlide VERRE) |
 | 65 / 67 | informations screens : teintes, forfait RAL | HelioScreen, HelioRoof |
 | 69 / 71 | REFLEKSOL ZIIIP 120 : grille hauteur × largeur, moteurs | grille HelioScreen, plus-values moteur |
-| 90 / 92 | VÉRANDA V ZIIIP | grille HelioRoof (préparée) |
+| 90 / 92 | VÉRANDA V ZIIIP (moteur io ou filaire compris) | grille HelioRoof |
 | 94 / 96 | informations stores bannes : teintes, suppléments | HelioSun, HelioShade, HelioPro, HelioSquare |
-| 96 / 98 | grilles CASABLANCA, JAMAICA, CORSICA, MADEIRA | grilles des stores bannes (transcription contrôlée sur un rendu 3x) |
+| 96 / 98 | grilles CASABLANCA, JAMAICA, CORSICA, MADEIRA (CORSICA et MADEIRA : éclairage LED compris) | grilles des stores bannes (transcription contrôlée sur un rendu 3x) |
+| 100–107 / 102–109 | moteurs et commandes des stores bannes, matrice moteur × store, couples | modes de commande des stores bannes |
+| 109 / 111 | auvent JAMAICA selon la largeur | option HelioPro |
+| 112–116 / 114–118 | commandes filaires, RTS et io, capteurs, box smartphone | options screens et stores |
 
-Non utilisées : SB 550, SB 400 (modèles non proposés ou retirés), Pergola V ZiiiP p. 18 (≠ VÉRANDA V ZiiiP), BSO,
-autres screens, éclairages, motorisations des stores bannes (p. 100–107, tableaux altérés), accessoires.
+Non utilisées : SB 550, SB 400 (modèles non proposés ou retirés), Pergola V ZiiiP p. 18 (≠ VÉRANDA V ZiiiP), VERANDA
+FTS, BSO, autres screens, accessoires non proposés sur le site. Les pages 100–107 (texte altéré) sont relues sur rendu.
 
 ## 3. Correspondances et situation
 
@@ -43,16 +50,39 @@ autres screens, éclairages, motorisations des stores bannes (p. 100–107, tabl
 |---|---|---|---|
 | HelioMax | SB 450 (lame F, standard) | p. 10–11 | **prix affichés** (autoportante, adossée) ; lame Z importée, non utilisée (aucun choix de lame sur le site) |
 | HelioSky | SB 350 (lame 195 mm) | p. 16 | **prix affichés** (4 tailles fabriquées) ; lame 217,4 mm importée, non utilisée |
-| HelioScreen | R 120 ZiiiP | p. 69 | **prix affichés** : grille + plus-value du moteur choisi quand elle est établie ; sinon moteur « à chiffrer » (sous-total partiel) |
-| HelioSun | CASABLANCA | p. 96 | **prix affichés** (manivelle incluse) ; moteur à chiffrer si motorisation choisie |
-| HelioPro | JAMAICA | p. 96 | **prix affichés** (manivelle incluse) ; moteur à chiffrer si motorisation choisie |
-| HelioShade | CORSICA | p. 96 | **sous-total partiel affiché** : le moteur, obligatoire, s'ajoute au prix de la grille et n'est pas chiffré |
-| HelioSquare | MADEIRA | p. 96 | **sous-total partiel affiché** : idem |
-| HelioLux | SOLID | p. 17 | grilles importées, vente **préparée, non publiée** : la fiche du site reprend encore les caractéristiques d'un autre système |
-| HelioRoof | VÉRANDA V ZiiiP | p. 90 | grille importée, vente **préparée, non publiée** : même raison |
+| HelioScreen | R 120 ZiiiP | p. 69 | **prix affichés** : grille + moteur du mode de commande choisi (montant si un seul moteur convient, fourchette « à chiffrer » sinon) |
+| HelioSun | CASABLANCA | p. 96 | **prix complets** en manivelle et en commande filaire ; radio : moteur à chiffrer (fourchette) |
+| HelioPro | JAMAICA | p. 96 | **prix complets** en manivelle ; motorisé : moteur à chiffrer (fourchette) ; auvent chiffré |
+| HelioShade | CORSICA | p. 96 | **prix complet** en commande filaire ; radio : moteur obligatoire à chiffrer (fourchette) |
+| HelioSquare | MADEIRA | p. 96 | **sous-total partiel** : un seul mode (radio io avec secours), plusieurs moteurs selon le couple |
+| HelioLux | SOLID (confirmé le 2026-11-03) | p. 17 | **prix affichés** (autoportante, adossée) de 3 à 7 m d'avancée ; 2 à 3 m : devis |
+| HelioRoof | VÉRANDA V ZiiiP (confirmé le 2026-11-03) | p. 90 | **prix affichés** ; jamais de donnée VERANDA FTS ni « Veranda » standard |
 | HelioSlide VERRE | OPEN SLIDE | p. 24 | données tracées dans l'import, aucune grille (souhait de fermeture, vitrage non inclus) |
 | HelioSlide ALU | SYSTEM SLIDE | absent | seul « PAROIS LATÉRALES SLIDE » (p. 22) existe : données tracées, correspondance à confirmer |
 | Moustiquaires (5) | — | absentes | aucune moustiquaire dans ce catalogue : situation inchangée (demandes d'étude) |
+
+## 3 bis. Modes de commande et options rapprochés (source : liste de prix)
+
+Le client choisit un **mode de commande** compréhensible ; le moteur découle du produit, du mode et du couple exigé
+par la cellule (screen : cellules « 20 Nm » ; stores : avancée, largeur, nombre de bras). Un seul moteur documenté →
+montant ajouté ; plusieurs → **fourchette affichée, jamais ajoutée**, modèle confirmé au devis ; aucun → « non
+disponible pour ces dimensions ». Le configurateur affiche le comparatif des modes (supplément ou fourchette) pour les
+cotes saisies. Les désignations des moteurs et commandes restent dans la référence fournisseur (administration).
+
+| Produit | Modes proposés | Options chiffrées (cible) | Source (index) |
+|---|---|---|---|
+| HelioScreen | filaire (fins de course mécaniques, électroniques, détection d'obstacles), radio RTS, radio io, radio io avec détection d'obstacles | télécommande RTS 1/5 canaux, io 1/5 canaux, capteur vent-soleil RTS, capteur vent ou vent-soleil io, box smartphone (RTS et io) | p. 69, 112–116 |
+| HelioRoof | radio io, filaire (moteur compris) | télécommande io 1/5 canaux, capteur vent ou vent-soleil io, box ; interrupteur filaire à chiffrer | p. 90, 115–116 |
+| HelioMax | moteur compris ; centrale radio ajoutée à toute configuration | télécommande io (4 modèles), capteur pluie et antigel, LED lames / spots (tableaux), LED périphérique, poteau supplémentaire × quantité selon la hauteur | p. 10–11, 20, 115 |
+| HelioLux | radio et télécommande 5 canaux compris | hauteur hors norme > 2,50 m (selon la pose), LED une barre sur deux / chaque barre (exclusives), poteau supplémentaire × quantité | p. 6, 17, 19 |
+| HelioSun / HelioPro | manivelle ; filaire, radio dédiée, radio RTS, radio io, radio io avec secours | box (RTS, io) ; auvent (HelioPro, pas en pose plafond) | p. 96, 100–109 |
+| HelioShade | filaire, radio dédiée, radio RTS, radio io (motorisation obligatoire) ; LED comprise | box | p. 96, 100–107 |
+| HelioSquare | radio io avec secours (seul moteur compatible) ; LED comprise | box | p. 96, 100–107 |
+
+Double facturation évitée : un élément compris dans la grille (LED CORSICA / MADEIRA, moteur et télécommande SOLID,
+moteur V ZiiiP) n'est jamais proposé en option ; la télécommande « à choisir » disparaît dès qu'un modèle est choisi ;
+une exigence de cellule (20 Nm) remplace le moteur standard. Restent en souhait étudié au devis : capteurs non tarifés
+pour le modèle (HelioSky, HelioMax vent-soleil, HelioLux, stores : vibrations), chauffage, fermetures, modules.
 
 ## 4. Règles de calcul (décision écrite du 2026-11-02)
 
@@ -65,15 +95,21 @@ autres screens, éclairages, motorisations des stores bannes (p. 100–107, tabl
    - pourcentage : appliqué au prix de la structure (cellule) — assiette « prix du système après remise » du
      catalogue, la remise étant nulle pour le client ; chaque pourcentage arrondi au centime (demi supérieur), sans cumul ;
    - montant fixe : ajouté (plus-value du moteur choisi, forfait teinte RAL des screens) ;
-   - « à chiffrer » : élément connu sans prix applicable (moteur obligatoire des stores motorisés, moteur 20 Nm exigé
-     par certaines cellules du screen, modèle de moteur sans plus-value identifiée) → **sous-total partiel**, listé.
+   - « à chiffrer » : élément connu sans prix applicable (plusieurs moteurs possibles, télécommande à choisir,
+     interrupteur) → **sous-total partiel**, listé avec la fourchette documentée quand elle existe ;
+   - tableau : montant lu selon une cote (avancée, largeur ou hauteur ; valeur supérieure entre deux valeurs), éventuellement
+     multiplié par la quantité choisie (poteaux) ; hors tableau → à chiffrer ;
+   - « toujours » : montant ajouté à toute configuration (centrale radio HelioMax), compris dans le « à partir de ».
 4. **Éléments choisis sans tarif** (options, fermetures, modules) : jamais retirés en silence, listés « à chiffrer ».
 5. **TVA 20 %** ajoutée une fois au total HT (demi supérieur) ; le prix TTC est affiché à côté du HT.
 6. **Livraison et pose** : toujours au devis, signalées.
 7. Montants en **centimes entiers** ; serveur seul juge (devis et panier recalculés) ; un montant envoyé par le
    navigateur est ignoré. Les devis émis gardent leur décomposition figée.
-8. « À partir de » : cellule la moins chère d'une configuration complète (aucun élément obligatoire à chiffrer) ;
-   absent pour HelioScreen, HelioShade et HelioSquare.
+8. « À partir de » : cellule la moins chère (plus les montants « toujours ») d'une variante sans élément obligatoire à
+   chiffrer ; absent pour HelioScreen, HelioShade et HelioSquare.
+9. **Anciens projets** (HelioLux, HelioRoof révisés le 2026-11-03) : jamais convertis ; avis de revalidation dans le
+   configurateur (projet, ligne de panier ou brouillon enregistré avant la révision) ; toile, commande ou option
+   devenue invalide nommée et à choisir de nouveau. Devis et PDF émis : décomposition figée, inchangée.
 
 Exemple de calcul (sans montant) : HelioMax adossée 4,00 × 6,01 m, décor bois → cellule « murale, lame F, ligne
 6 010, colonne 4 000 » (p. 11) + 20 % de cette cellule (p. 6) = total HT ; TTC = HT + 20 %. Exemples chiffrés (9
@@ -82,8 +118,10 @@ configurations, une par cas) : `private/heliostores/selt-2026-09/exemples-calcul
 ## 5. Import (fichier privé, idempotent)
 
 1. Report normalisé contrôlé : `private/heliostores/selt-2026-09/extract.py` → `inputs/heliostores/selt-pricing/normalises/catalogue-2026-09.csv`
-   (1 282 lignes : 1 258 cellules de grille dont 44 de parois tracées, 24 suppléments ; page imprimée, tableau, ligne et
-   colonne pour chacune ; colonnes `mode`, `pourcentage`, `applique_a`, `exigence`, `obligatoire`).
+   (1 603 lignes : 1 258 cellules de grille dont 44 de parois tracées, 345 lignes de suppléments ; page imprimée, tableau,
+   ligne et colonne pour chacune ; colonnes `mode`, `pourcentage`, `applique_a`, `exigence`, `obligatoire`, `axe`,
+   `cote_min`, `cote_max`, `quantite_selon`, `fourchette_min`, `fourchette_max`). Cibles composées : `&` (toutes),
+   `!` (négation), `option:<code>=<valeur>`, `cote:hauteur>2500`.
 2. Contrôles : relecture indépendante par position des mots (1 092 cellules de pergolas, screen et véranda retrouvées
    à leur colonne, 0 écart) ; stores bannes vérifiés sur un rendu 3x ; plus-values moteur relevées sur l'image (texte
    multicolonne non fiable) ; anomalies d'extraction corrigées (caractères du bandeau latéral, en-têtes « [cm] »
@@ -96,7 +134,8 @@ configurations, une par cas) : `private/heliostores/selt-2026-09/exemples-calcul
 4. Contrôle final sur la base : `NODE_OPTIONS="--require ./scripts/lib/server-only-shim.cjs" tsx scripts/pricing-check.ts --file <csv>`
    compare chaque cellule du fichier au prix du moteur de la boutique (cote exacte et cote intermédiaire).
 
-Production (fichier monté en lecture seule, ponctuellement) : runbook § 2 quinquies.
+Production (fichier monté en lecture seule, ponctuellement) : runbook § 2 quinquies. Une nouvelle version publiée remplace
+la version en vigueur à la date de publication (aucun chevauchement fictif avec la date de validité du catalogue).
 
 ## 6. Administration (Administration → Tarifs, `/admin/tarifs`)
 
@@ -119,14 +158,9 @@ Production (fichier monté en lecture seule, ponctuellement) : runbook § 2 quin
 
 ## 7. Décisions et données encore attendues
 
+Aucune ne bloque les prix affichés : chaque point reste « à chiffrer » ou au devis tant qu'il n'est pas confirmé.
+
 1. Remise revendeur (prix d'achat net, interne) — n'influe pas sur le prix public décidé.
-2. HelioScreen : correspondance des moteurs proposés sans plus-value identifiée (modèles 1, 2, 4) et offre d'un moteur
-   20 Nm pour les grandes dimensions.
-3. HelioShade, HelioSquare (et motorisation d'HelioSun, HelioPro) : moteur retenu par largeur (p. 100–107) pour
-   compléter le prix.
-4. HelioLux (SOLID) et HelioRoof (VÉRANDA V ZiiiP) : caractéristiques du site à aligner sur ces systèmes, puis
-   publication des grilles préparées.
-5. Options (éclairage, capteurs, poteaux, centrale radio) : correspondance option du site ↔ ligne du catalogue.
-6. HelioSlide : correspondance SYSTEM SLIDE ; mode de chiffrage d'une fermeture (largeur du côté, nombre de panneaux,
-   vitrage).
-7. Livraison et pose ; paiement en ligne (chantier distinct, non activé).
+2. Livraison et pose : chiffrées séparément au devis (aucun forfait) ; délai indiqué 4 à 7 semaines.
+3. Paiement en ligne : non activé (chantier distinct).
+4. Questions fournisseur : tableau `docs/pricing/questions-fournisseur-2026-11.md`.

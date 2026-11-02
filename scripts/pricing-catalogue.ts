@@ -26,21 +26,21 @@ const DECISION = "Décision écrite du client du 2026-11-02 (inputs/heliostores/
 const VALID_FROM = new Date("2026-09-15T00:00:00+02:00");
 
 /** Produits dont la grille de vente est publiée (correspondance confirmée, données du site cohérentes). */
+const DELIVERY = "livraison et pose chiffrées séparément";
 const ACTIVATE: Array<{ familySlug: string; variants: string[]; included: string; excluded: string }> = [
-  { familySlug: "marbella", variants: ["autoportante", "murale"], included: "Structure, lames orientables (lame standard F), mécanisme d'entraînement et moteur 24 V.", excluded: "Centrale radio, capteurs, éclairage, poteaux supplémentaires, fermetures, livraison et pose (au devis)." },
-  { familySlug: "malaga", variants: [""], included: "Structure, lames, mécanisme d'entraînement, moteur 24 V, récepteur et télécommande ; tailles fabriquées.", excluded: "Capteurs, fermetures, livraison et pose (au devis)." },
-  { familySlug: "helioscreen", variants: [""], included: "Screen à guidage zip (barre de charge élargie quand la taille l'exige), toile de la gamme, supports de coulisses.", excluded: "Moteur : plus-value selon le modèle choisi (ajoutée quand elle est établie, sinon à chiffrer) ; automatismes, télécommandes, livraison et pose (au devis)." },
-  { familySlug: "casablanca", variants: [""], included: "Store coffre, toile de la collection, commande manuelle par manivelle, supports muraux.", excluded: "Moteur et commandes si motorisation choisie, livraison et pose (au devis)." },
-  { familySlug: "jamaica", variants: [""], included: "Store, toile de la collection, commande manuelle par manivelle, supports muraux.", excluded: "Moteur et commandes si motorisation choisie, auvent, livraison et pose (au devis)." },
-  { familySlug: "corsica", variants: [""], included: "Store coffre, toile de la collection, éclairage LED, supports muraux.", excluded: "Moteur (obligatoire, à ajouter au prix de la grille), commandes, livraison et pose (au devis)." },
-  { familySlug: "madera", variants: [""], included: "Store caisson, toile de la collection, éclairage LED, supports muraux.", excluded: "Moteur (obligatoire, à ajouter au prix de la grille), commandes, livraison et pose (au devis)." },
+  { familySlug: "marbella", variants: ["autoportante", "murale"], included: "Structure, lames orientables (lame standard F), mécanisme d'entraînement et moteur.", excluded: `Centrale de commande radio (ajoutée au prix), télécommande, capteur, éclairage et poteaux supplémentaires selon vos choix ; fermetures au devis ; ${DELIVERY}.` },
+  { familySlug: "malaga", variants: [""], included: "Structure, lames, mécanisme d'entraînement, moteur 24 V, récepteur et télécommande ; tailles fabriquées.", excluded: `Capteurs et fermetures au devis ; ${DELIVERY}.` },
+  { familySlug: "sevilla", variants: ["autoportante", "murale"], included: "Structure, toiture en toile PVC plissée, mécanisme d'entraînement, moteur, commande radio et télécommande 5 canaux.", excluded: `Hauteur hors norme (ajoutée au-delà de 2,50 m), éclairage et poteaux supplémentaires selon vos choix ; capteurs et fermetures au devis ; ${DELIVERY}.` },
+  { familySlug: "helioscreen", variants: [""], included: "Screen à guidage zip (barre de charge élargie quand la taille l'exige), toile de la gamme, supports de coulisses.", excluded: `Moteur selon le mode de commande choisi (ajouté quand un seul moteur convient, sinon à chiffrer), télécommande, capteur et box selon vos choix ; ${DELIVERY}.` },
+  { familySlug: "helioroof-screen", variants: [""], included: "Store de toiture à guidage zip, toile screen, moteur radio io ou filaire, supports de coulisses et de coffre.", excluded: `Télécommande, capteur et box selon vos choix ; interrupteur de la commande filaire à chiffrer ; installation en plusieurs modules au devis ; ${DELIVERY}.` },
+  { familySlug: "casablanca", variants: [""], included: "Store coffre, toile de la collection, commande manuelle par manivelle, supports muraux.", excluded: `Moteur selon le mode de commande si la motorisation est choisie (ajouté quand un seul moteur convient, sinon à chiffrer), box selon vos choix ; ${DELIVERY}.` },
+  { familySlug: "jamaica", variants: [""], included: "Store, toile de la collection, commande manuelle par manivelle, supports muraux.", excluded: `Moteur selon le mode de commande si la motorisation est choisie (à chiffrer), auvent et box selon vos choix ; ${DELIVERY}.` },
+  { familySlug: "corsica", variants: [""], included: "Store coffre, toile de la collection, éclairage LED, supports muraux.", excluded: `Moteur obligatoire selon le mode de commande (ajouté quand un seul moteur convient, sinon à chiffrer), box selon vos choix ; ${DELIVERY}.` },
+  { familySlug: "madera", variants: [""], included: "Store caisson, toile de la collection, éclairage LED, supports muraux.", excluded: `Moteur radio io avec manœuvre de secours, obligatoire (à chiffrer), box selon vos choix ; ${DELIVERY}.` },
 ];
 
-/** Produits dont la grille de vente est préparée sans publication, avec la raison. */
-const PREPARE_ONLY: Array<{ familySlug: string; variants: string[]; reason: string }> = [
-  { familySlug: "sevilla", variants: ["autoportante", "murale"], reason: "HelioLux = SOLID : les caractéristiques publiées (dimensions jusqu'à 5 × 6 m, toiles, poses) viennent encore de l'ancienne correspondance ; la grille SOLID couvre 1,5–4 m × 3–7 m. Fiche à aligner sur SOLID avant publication." },
-  { familySlug: "helioroof-screen", variants: [""], reason: "HelioRoof = VÉRANDA V ZiiiP : les caractéristiques publiées (largeur 1,25–4,5 m, projection ≤ 5 m, toiles) viennent de « Veranda » standard ; la grille couvre 2–5 m × 2–6 m. Fiche à aligner avant publication." },
-];
+/** Produits dont la grille de vente est préparée sans publication, avec la raison (aucun le 2026-11-03). */
+const PREPARE_ONLY: Array<{ familySlug: string; variants: string[]; reason: string }> = [];
 
 function parseArgs(argv: string[]) {
   const a = { file: "", apply: false, publish: false };

@@ -59,13 +59,18 @@ test("store banne : hauteur de pose facultative, collectée comme souhait, borne
 
 test("coloris : teintes standard et teintes avec supplément distinguées, nuancier de référence, prix honnête", async ({ page }) => {
   await openConfigurator(page, "corsica");
-  // HelioShade : sans grille de vente publiée (CI) → motif explicite, aucun montant ; avec la grille du catalogue →
-  // sous-total partiel, le moteur obligatoire restant à chiffrer (jamais un prix présenté comme complet)
+  // HelioShade : sans grille de vente publiée (CI) → motif explicite, aucun montant ; avec la grille du catalogue → le
+  // moteur obligatoire figure toujours dans le prix : ajouté (commande filaire, un seul moteur) ou à chiffrer (radio)
   const price = page.getByTestId("system-price");
   await expect(price).toHaveAttribute("data-price-status", /^(priced|no_table|incomplete|out_of_grid|blocked|custom)$/);
   if ((await price.getAttribute("data-priced")) === "true") {
+    await expect(price).toContainText("Moteur");
+    await goStep(page, "pose");
+    await page.getByLabel("Manœuvre et commande").selectOption("radio_io");
     await expect(price).toHaveAttribute("data-partial", "true");
     await expect(page.getByTestId("price-pending")).toContainText("Moteur");
+    await page.getByLabel("Manœuvre et commande").selectOption("wired");
+    await goStep(page, "dims");
   } else await expect(price).not.toContainText("€");
   await goStep(page, "pose");
   const swatches = page.getByTestId("finish-swatches");

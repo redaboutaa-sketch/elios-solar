@@ -145,20 +145,27 @@ export default async function GridPage(props: PageProps<"/admin/tarifs/grilles/[
           <form action={saveFixedAction} className="space-y-2 text-sm">
             <input type="hidden" name="id" value={g.id} /><input type="hidden" name="revision" value={g.revision} />
             <Table caption="Suppléments et tarifs fixes">
-              <thead><tr><th>Code</th><th>Libellé</th><th>Mode</th><th>Montant ({g.currency ?? "?"})</th><th>%</th><th>Cible</th><th>Oblig.</th><th>Règle (interne)</th><th>Origine</th></tr></thead>
+              <thead><tr><th>Code</th><th>Libellé</th><th>Mode</th><th>Montant ({g.currency ?? "?"})</th><th>%</th><th>Cible</th><th>Oblig.</th><th>Règle (interne)</th><th>Tableau, quantité, fourchette</th><th>Origine</th></tr></thead>
               <tbody>
                 {[...fixed, null, null].map((r, i) => {
-                  const c = (r?.conditions ?? {}) as { unit?: string; mode?: string; percentBps?: number; applies?: string[]; mandatory?: boolean; rule?: string };
+                  const c = (r?.conditions ?? {}) as { unit?: string; mode?: string; percentBps?: number; applies?: string[]; mandatory?: boolean; rule?: string; table?: { axis?: string; cells?: Array<{ dimMin: number; dimMax: number; widthMin?: number; widthMax?: number; amountMinor: number | null }> }; perOptionQty?: string; rangeMinor?: [number, number] };
+                  const cellsText = (c.table?.cells ?? []).map((x) => [x.dimMin, x.dimMax, ...(x.widthMin != null ? [x.widthMin, x.widthMax] : []), formatAmountInput(x.amountMinor)].join(";")).join("\n");
                   return (
                     <tr key={r?.id ?? `new-${i}`} data-testid={r ? `fixed-${r.code}` : undefined}>
                       <td><input name="code" className="input min-h-0 w-32 py-1" defaultValue={r?.code ?? ""} aria-label="Code" /><input type="hidden" name="unit" defaultValue={c.unit ?? ""} /></td>
                       <td><input name="label" className="input min-h-0 w-56 py-1" defaultValue={r?.label ?? ""} aria-label="Libellé" /></td>
-                      <td><select name="mode" className="input min-h-0 py-1" defaultValue={c.mode ?? "fixed"} aria-label="Mode"><option value="fixed">montant</option><option value="percent">pourcentage</option><option value="pending">à chiffrer</option></select></td>
+                      <td><select name="mode" className="input min-h-0 py-1" defaultValue={c.mode ?? "fixed"} aria-label="Mode"><option value="fixed">montant</option><option value="percent">pourcentage</option><option value="pending">à chiffrer</option><option value="table">tableau</option></select></td>
                       <td><input name="value" className="input min-h-0 w-24 py-1" inputMode="decimal" defaultValue={formatAmountInput(r?.amountMinor)} aria-label="Montant" /></td>
                       <td><input name="percent" className="input min-h-0 w-16 py-1" inputMode="decimal" defaultValue={c.percentBps != null ? String(c.percentBps / 100).replace(".", ",") : ""} aria-label="Pourcentage" /></td>
                       <td><input name="applies" className="input min-h-0 w-48 py-1" defaultValue={(c.applies ?? []).join("|")} aria-label="Cible" /></td>
                       <td><select name="mandatory" className="input min-h-0 py-1" defaultValue={c.mandatory ? "1" : "0"} aria-label="Obligatoire"><option value="0">non</option><option value="1">oui</option></select></td>
                       <td><input name="rule" className="input min-h-0 w-56 py-1" defaultValue={c.rule ?? ""} aria-label="Règle" /></td>
+                      <td className="space-y-1">
+                        <select name="axis" className="input min-h-0 py-1" defaultValue={c.table?.axis ?? ""} aria-label="Axe du tableau"><option value="">—</option><option value="avancee">avancée</option><option value="largeur">largeur</option><option value="hauteur">hauteur</option></select>
+                        <textarea name="cells" className="input min-h-0 w-56 py-1 font-mono text-xs" rows={cellsText ? Math.min(8, cellsText.split("\n").length) : 1} defaultValue={cellsText} aria-label="Cellules du tableau (min;max[;largeur min;largeur max];montant, en mm)" placeholder="min;max;montant" />
+                        <input name="perOptionQty" className="input min-h-0 w-40 py-1" defaultValue={c.perOptionQty ?? ""} aria-label="Quantité selon l'option" placeholder="quantité selon option" />
+                        <input name="range" className="input min-h-0 w-40 py-1" defaultValue={c.rangeMinor ? c.rangeMinor.map((x) => formatAmountInput(x)).join(";") : ""} aria-label="Fourchette (min;max)" placeholder="fourchette min;max" />
+                      </td>
                       <td className="text-xs text-stone-700">{r ? `${r.sourceRef}${r.editedBy ? ` — modifié par ${r.editedBy}` : ""}` : "nouveau"}</td>
                     </tr>
                   );
@@ -168,7 +175,7 @@ export default async function GridPage(props: PageProps<"/admin/tarifs/grilles/[
             <button className="btn-secondary" type="submit" data-testid="save-fixed">Enregistrer les suppléments</button>
           </form>
         ) : fixed.length ? (
-          <Table caption="Suppléments et tarifs fixes"><thead><tr><th>Code</th><th>Libellé</th><th>Mode</th><th>Valeur</th><th>Cible</th><th>Oblig.</th><th>Règle</th></tr></thead><tbody>{fixed.map((r) => { const c = (r.conditions ?? {}) as { mode?: string; percentBps?: number; applies?: string[]; mandatory?: boolean; rule?: string }; return <tr key={r.id}><td>{r.code}</td><td>{r.label}</td><td>{c.mode === "percent" ? "pourcentage" : c.mode === "pending" ? "à chiffrer" : "montant"}</td><td>{c.mode === "percent" ? `${(c.percentBps ?? 0) / 100} %` : c.mode === "pending" ? "—" : formatAmount(r.amountMinor, g.currency)}</td><td className="text-xs">{(c.applies ?? []).join(" | ") || "—"}</td><td>{c.mandatory ? "oui" : "non"}</td><td className="text-xs">{c.rule ?? ""}</td></tr>; })}</tbody></Table>
+          <Table caption="Suppléments et tarifs fixes"><thead><tr><th>Code</th><th>Libellé</th><th>Mode</th><th>Valeur</th><th>Cible</th><th>Oblig.</th><th>Règle</th></tr></thead><tbody>{fixed.map((r) => { const c = (r.conditions ?? {}) as { mode?: string; percentBps?: number; applies?: string[]; mandatory?: boolean; rule?: string }; return <tr key={r.id}><td>{r.code}</td><td>{r.label}</td><td>{c.mode === "percent" ? "pourcentage" : c.mode === "pending" ? "à chiffrer" : c.mode === "table" ? "tableau" : "montant"}</td><td>{c.mode === "percent" ? `${(c.percentBps ?? 0) / 100} %` : c.mode === "pending" ? "—" : c.mode === "table" ? `${(c as { table?: { axis?: string; cells?: unknown[] } }).table?.cells?.length ?? 0} cellule(s) selon ${(c as { table?: { axis?: string } }).table?.axis ?? "?"}` : formatAmount(r.amountMinor, g.currency)}</td><td className="text-xs">{(c.applies ?? []).join(" | ") || "—"}</td><td>{c.mandatory ? "oui" : "non"}</td><td className="text-xs">{c.rule ?? ""}</td></tr>; })}</tbody></Table>
         ) : <p className="text-sm text-stone-700">Aucun.</p>}
       </Section>
 

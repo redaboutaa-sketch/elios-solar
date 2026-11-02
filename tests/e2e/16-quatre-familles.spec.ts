@@ -220,11 +220,11 @@ test("HelioLux : pergola à toiture toile, sans lames ; moustiquaire et screen d
   await expect(drawing.locator('[data-part="roof-fabric"]')).toHaveCount(1);
   await expect(drawing.locator('[data-part="blade"]')).toHaveCount(0);
   await goStep(page, "pose");
-  // adossée seulement
-  await expect(page.getByTestId("step-pose").getByRole("group", { name: "Pose", exact: true }).getByRole("radio")).toHaveCount(1);
-  await expect(page.getByRole("radio", { name: /Adossée/ })).toBeChecked();
+  // autoportante ou adossée (système SOLID) ; toiles PVC du tarif
+  await expect(page.getByTestId("step-pose").getByRole("group", { name: "Pose", exact: true }).getByRole("radio")).toHaveCount(2);
+  await page.getByRole("radio", { name: /Adossée/ }).check();
   const fabric = await drawingAttr(page, "fabric-color");
-  await page.locator("#fabric").selectOption({ label: "Toile Serge 600" });
+  await page.locator("#fabric").selectOption({ label: "Toile PVC gris aluminium (702N opaque)" });
   await expect(drawing).not.toHaveAttribute("data-fabric-color", fabric!);
   await shot(page, "configurateur-sevilla");
 

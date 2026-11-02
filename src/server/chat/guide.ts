@@ -24,7 +24,8 @@ export async function guideKnowledge(now = Date.now()): Promise<GuideKnowledge> 
     loadPublicSystemPrices(),
     prisma.siteSettings.findUnique({ where: { id: 1 }, select: { contactEmail: true } }),
   ]);
-  const toConfirm = new Set<string>(NAME_TRANSCO.filter((t) => t.kind === "product" && t.technical === "a_confirmer").map((t) => t.slug));
+  const transco: ReadonlyArray<{ slug: string; kind: string; technical: string }> = NAME_TRANSCO;
+  const toConfirm = new Set<string>(transco.filter((t) => t.kind === "product" && t.technical === "a_confirmer").map((t) => t.slug));
   const value: GuideKnowledge = {
     families: rows.map((r) => {
       const category = r.category as CategoryKey;

@@ -56,7 +56,10 @@ describe("catalogue HELIOSTORES : périmètre", () => {
     // SB 350 / SB 450 sont d'autres produits : aucune fiche SB 400 / SB 500 ne leur est rattachée
     expect(HELIOSTORES_FAMILIES.find((f) => f.slug === "malaga")!.supplierRef).toMatch(/SB 350/);
     expect(HELIOSTORES_FAMILIES.find((f) => f.slug === "marbella")!.supplierRef).toMatch(/SB 450/);
-    expect(HELIOSTORES_FAMILIES.find((f) => f.slug === "helioroof-screen")!.supplierRef).toMatch(/pas Veranda FTS/);
+    // correspondances confirmées par le client le 2026-11-03 : HelioLux = SOLID, HelioRoof = VÉRANDA V ZiiiP (jamais FTS)
+    expect(HELIOSTORES_FAMILIES.find((f) => f.slug === "sevilla")!.supplierRef).toMatch(/^SOLID /);
+    expect(HELIOSTORES_FAMILIES.find((f) => f.slug === "helioroof-screen")!.supplierRef).toMatch(/^VERANDA V ZiiiP/);
+    expect(HELIOSTORES_FAMILIES.find((f) => f.slug === "helioroof-screen")!.supplierRef).not.toMatch(/FTS/);
   });
 
   it("chaque dimension, pose, teinte et option cite au moins une source", () => {
@@ -71,7 +74,8 @@ describe("catalogue HELIOSTORES : périmètre", () => {
   it("aucune donnée tarifaire dans les données publiables (montant, devise, coefficient)", () => {
     const all = JSON.stringify(HELIOSTORES_FAMILIES);
     expect(all).not.toMatch(/\d\s?(€|DH|MAD|EUR)\b/);
-    expect(all).not.toMatch(/0[.,](59|48|45|39)\b/);
+    // coefficients (hors tableau JSON, ex. inclinaison [0,45])
+    expect(all).not.toMatch(/(?<!\[)0[.,](59|48|45|39)\b/);
     // les questions « Tarifs » (administration, jamais affichées sur la fiche) citent des intitulés de colonnes, sans montant
     const publicPart = JSON.stringify(HELIOSTORES_FAMILIES.map((f) => ({ ...f, openQuestions: f.openQuestions.filter((q) => q.field !== "Tarifs") })));
     expect(publicPart).not.toMatch(/prix fournisseur|prix final|coefficient|remise|marge/i);
@@ -171,9 +175,12 @@ describe("HelioScreen (R 120 ZiiiP, ex-HELIO Ombra)", () => {
     expect(codes("helioscreen", { widthMm: 4500 })).toContain("review:dimension_to_confirm");
     expect(codes("helioscreen", { widthMm: 7100 })).toContain("blocking:dimension_out_of_bounds");
   });
-  it("moteurs de la fiche transmise : à confirmer, sans largeur minimale imposée (non confirmée par le fabricant)", () => {
-    expect(codes("helioscreen", { widthMm: 700, controlCode: "electric_5" })).not.toContain("blocking:control_min_width");
-    expect(codes("helioscreen", { controlCode: "electric_5" })).toContain("review:control_to_confirm");
+  it("modes de commande compréhensibles (filaire, radio RTS, radio io) ; ancien code moteur → choix explicite demandé", () => {
+    expect(rules("helioscreen").controls!.map((c) => c.code)).toEqual(["wired_mech", "wired_elec", "wired_obstacle", "radio_rts", "radio_io", "radio_io_obstacle"]);
+    for (const c of rules("helioscreen").controls!) expect(c.label, c.code).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
+    expect(codes("helioscreen", { widthMm: 700, controlCode: "radio_io" })).not.toContain("blocking:control_min_width");
+    const old = evaluate(catalog, input("helioscreen", { controlCode: "electric_5" }));
+    expect(old.issues.find((i) => i.code === "control_unavailable")?.message).toMatch(/n'est plus proposée.*choisissez un mode de commande/);
   });
   it("hauteur requise, jusqu'à 4 m ; au-delà de 3 m signalée (texte fabricant)", () => {
     expect(codes("helioscreen", { heightMm: undefined })).toContain("blocking:dimension_missing");
@@ -213,9 +220,12 @@ describe("HelioSun", () => {
     expect(new Set(spec("helio-panorama", "manufacturer_reference").map((t) => t.source)).size).toBe(2);
     expect(new Set(spec("casablanca", "drive").map((t) => t.valueText)).size).toBe(2);
   });
-  it("commande manuelle documentée ; électrique à confirmer", () => {
+  it("commande manuelle ou modes motorisés de la matrice de compatibilité", () => {
     expect(codes("casablanca", { controlCode: "crank_1800" })).not.toContain("review:control_to_confirm");
-    expect(codes("casablanca", { controlCode: "electric" })).toContain("review:control_to_confirm");
+    expect(codes("casablanca", { controlCode: "radio_io" })).not.toContain("review:control_to_confirm");
+    expect(codes("casablanca", { controlCode: "electric" })).toContain("blocking:control_unavailable");
+    expect(rules("corsica").controls!.map((c) => c.code)).toEqual(["wired", "radio_dedicated", "radio_rts", "radio_io"]);
+    expect(rules("madera").controls!.map((c) => c.code)).toEqual(["radio_io_secours"]);
   });
 });
 
@@ -227,27 +237,42 @@ describe("options, souhaits et protection au vent (nomenclature du 2026-10-25)",
   });
   it("une option motorisée exige la motorisation ; aucune LED sur HelioSun", () => {
     expect(codes("casablanca", { controlCode: "crank_1500", options: [{ code: "remote_control" }] })).toContain("blocking:option_requires_control");
-    expect(codes("casablanca", { controlCode: "electric", options: [{ code: "remote_control" }] })).not.toContain("blocking:option_requires_control");
+    expect(codes("casablanca", { controlCode: "radio_rts", options: [{ code: "remote_control" }] })).not.toContain("blocking:option_requires_control");
+    // box smartphone : moteurs radio RTS ou io seulement (liste de prix), jamais une télécommande dédiée ni le filaire
+    expect(codes("casablanca", { controlCode: "radio_dedicated", options: [{ code: "connect_box" }] })).toContain("blocking:option_requires_control");
+    expect(codes("casablanca", { controlCode: "radio_io_secours", options: [{ code: "connect_box" }] })).not.toContain("blocking:option_requires_control");
     expect(rules("casablanca").options.some((o) => o.group === "lighting")).toBe(false);
   });
   it("équipement sans compatibilité confirmée : souhait au devis, jamais une option compatible", () => {
-    expect(codes("casablanca", { controlCode: "electric", options: [{ code: "connect_box" }] })).toContain("review:option_wish");
+    expect(codes("casablanca", { controlCode: "radio_io", options: [{ code: "shock_sensor" }] })).toContain("review:option_wish");
+    expect(codes("casablanca", { controlCode: "radio_io", options: [{ code: "connect_box" }] })).not.toContain("review:option_wish");
     const r = evaluate(catalog, input("corsica", { options: [{ code: "wind_sensor" }] }));
     expect(r.recap!.find((x) => x.label === "Souhait")!.value).toMatch(/étude au devis/);
     expect(r.onlineOrder!.ok).toBe(false);
   });
   it("protection au vent propre à chaque système, jamais identique", () => {
     const actions = Object.fromEntries(["malaga", "marbella", "sevilla", "helioscreen", "helioroof-screen", "casablanca", "corsica", "jamaica", "madera"].map((s) => [s, rules(s).wind?.action]));
-    expect(actions).toEqual({ malaga: "blades", marbella: "blades", sevilla: "retract", helioscreen: "raise", "helioroof-screen": "retract", casablanca: "retract", corsica: "retract", jamaica: "retract", madera: "retract" });
+    expect(actions).toEqual({ malaga: "blades", marbella: "blades", sevilla: "not_documented", helioscreen: "raise", "helioroof-screen": "retract", casablanca: "retract", corsica: "retract", jamaica: "retract", madera: "retract" });
     for (const s of Object.keys(actions)) expect(rules(s).wind!.sources.length, s).toBeGreaterThan(0);
   });
-  it("options : prix toujours sur devis ; libellés et prérequis sans marque ni ancienne appellation", () => {
+  it("options : tarif validé seulement si démontré (jamais pour un souhait) ; libellés et prérequis sans marque ni ancienne appellation", () => {
+    const validated: string[] = [];
     for (const f of base.families.filter((x) => x.systemRules && x.status !== "archived")) for (const o of f.systemRules!.options) {
-      expect(o.pricing ?? "quote", `${f.slug}/${o.code}`).toBe("quote");
+      if (o.wish || o.status === "to_confirm") expect(o.pricing ?? "quote", `${f.slug}/${o.code}`).toBe("quote");
+      if (o.pricing === "validated") validated.push(`${f.slug}/${o.code}`);
+      for (const v of o.values ?? []) expect(v.label, `${f.slug}/${o.code}`).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
       if (o.prerequisite) expect(o.prerequisite).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
       expect(o.label, `${f.slug}/${o.code}`).not.toMatch(PUBLIC_FORBIDDEN_NAMES);
       expect(o.label, `${f.slug}/${o.code}`).not.toMatch(/HELIO (Pilot|Vent|Soleil|Connect|Lumière)/);
     }
+    // options rapprochées d'une ligne de la liste de prix 09.2026 (docs/pricing/catalogue-2026-09.md § 3 bis)
+    expect(validated.sort()).toEqual([
+      "casablanca/connect_box", "corsica/connect_box", "helioroof-screen/connect_box", "helioroof-screen/remote_io", "helioroof-screen/sensor_io",
+      "helioscreen/connect_box", "helioscreen/remote_io", "helioscreen/remote_rts", "helioscreen/sensor_io", "helioscreen/sensor_rts",
+      "jamaica/connect_box", "jamaica/hood", "madera/connect_box",
+      "marbella/frost_sensor", "marbella/intermediate_post", "marbella/led_blades", "marbella/led_perimeter", "marbella/led_spots", "marbella/remote_io",
+      "sevilla/intermediate_post", "sevilla/led_all", "sevilla/led_alt",
+    ].sort());
   });
 });
 
@@ -274,15 +299,31 @@ describe("HelioMax, HelioLux, HelioRoof, stores bannes, moustiquaires", () => {
     expect(codes("marbella", { heightMm: 2950 })).toContain("review:dimension_to_confirm");
     expect(codes("marbella", { mounting: "wall", sides: { front: "sliding_glass" } })).toContain("review:closure_to_confirm");
   });
-  it("HelioLux : toiture toile, adossée uniquement, aucune fermeture latérale", () => {
+  it("HelioLux (SOLID) : toiture toile, autoportante ou adossée, 1,5–4 × 2–7 m, hauteur > 2,5 m à confirmer", () => {
     expect(rules("sevilla").roof).toBe("fabric");
-    expect(codes("sevilla", { mounting: "freestanding" })).toContain("blocking:mounting_unavailable");
-    expect(rules("sevilla").closureWishes).toBeUndefined();
+    expect(rules("sevilla").mountings.map((m) => m.code)).toEqual(["freestanding", "wall"]);
+    expect(codes("sevilla", { mounting: "freestanding" })).not.toContain("blocking:mounting_unavailable");
+    expect(codes("sevilla", { widthMm: 1400 })).toContain("blocking:dimension_out_of_bounds");
+    expect(codes("sevilla", { depthMm: 7100 })).toContain("blocking:dimension_out_of_bounds");
+    expect(codes("sevilla", { heightMm: 2800 })).toContain("review:dimension_to_confirm");
+    expect(rules("sevilla").fabrics!.map((f) => f.code)).toEqual(["solid_white", "solid_beige", "solid_alu_grey"]);
+    expect(codes("sevilla", { options: [{ code: "led_alt" }, { code: "led_all" }] })).toContain("blocking:option_excluded");
+    expect(rules("sevilla").revision?.date).toBe("2026-11-03");
+    expect(rules("sevilla").mediaWithheld).toBeTruthy();
   });
-  it("HelioRoof : 4,5 × 5 m maximum, projection > 4 m à confirmer ; aucune donnée FTS (6,5 m, deux moteurs)", () => {
-    expect(codes("helioroof-screen", { depthMm: 4500 })).toContain("review:dimension_to_confirm");
+  it("HelioRoof (VÉRANDA V ZiiiP) : 2–5 × 2–6 m sur toiture ; aucune donnée FTS (6,5 m, deux moteurs)", () => {
+    expect(codes("helioroof-screen", { depthMm: 6000 })).not.toContain("blocking:dimension_out_of_bounds");
     expect(codes("helioroof-screen", { depthMm: 6500 })).toContain("blocking:dimension_out_of_bounds");
+    expect(codes("helioroof-screen", { widthMm: 1900 })).toContain("blocking:dimension_out_of_bounds");
+    expect(rules("helioroof-screen").mountings.map((m) => m.code)).toEqual(["roof"]);
+    expect(rules("helioroof-screen").controls!.map((c) => c.code)).toEqual(["radio_io", "wired"]);
+    expect(codes("helioroof-screen", { controlCode: "wired", options: [{ code: "sensor_io", value: "io_wind" }] })).toContain("blocking:option_requires_control");
     expect(JSON.stringify(rules("helioroof-screen").included)).not.toMatch(/deux moteurs|6,5/i);
+    expect(rules("helioroof-screen").mediaWithheld).toBeTruthy();
+  });
+  it("HelioPro : auvent impossible en pose au plafond (règle du fabricant)", () => {
+    expect(codes("jamaica", { mounting: "ceiling", options: [{ code: "hood" }] })).toContain("blocking:option_requires_mounting");
+    expect(codes("jamaica", { mounting: "wall", options: [{ code: "hood" }] })).not.toContain("blocking:option_requires_mounting");
   });
   it("supports muraux selon la largeur (HelioShade, HelioPro, HelioSquare)", () => {
     const sup = (slug: string, w: number) => evaluate(catalog, input(slug, { widthMm: w, depthMm: 1600 })).recap!.find((x) => x.label === "Supports muraux")!.value;
