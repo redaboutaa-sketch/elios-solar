@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { CATEGORIES, type CategoryKey } from "@/domain/categories";
 import { applyBps } from "@/domain/money";
 import { defaultSystemInput, type SystemInput, type SystemMounting, type SystemRules } from "@/domain/system";
-import { lookupSystemPrice, priceBreakdown, type SystemPriceTable } from "@/domain/system-pricing";
+import { gridMeta, lookupSystemPrice, priceBreakdown, type SystemPrice, type SystemPriceTable } from "@/domain/system-pricing";
 import { supplementOf } from "@/server/pricing/system-prices";
 import { evaluate } from "@/domain/engine";
 import { effectiveState, type Clientele, type EffectiveState } from "@/domain/tariffs";
@@ -182,7 +182,7 @@ export async function simulate(s: SimulationInput) {
   if (!fam?.systemRules) return { error: "Produit sans règles de configuration." } as const;
   const rules = fam.systemRules as unknown as SystemRules;
   const d = defaultSystemInput(fam.slug, rules);
-  const input: SystemInput = { ...d, kind: "system", familySlug: fam.slug, mounting: s.mounting, widthMm: s.widthMm, ...(rules.dims.depth ? { depthMm: s.dimMm } : {}), ...(rules.dims.height && !rules.dims.depth ? { heightMm: s.dimMm } : {}), ...(s.finishCode ? { finishCode: s.finishCode } : {}), ...(s.controlCode ? { controlCode: s.controlCode } : {}), ...(s.options?.length ? { options: s.options.map((code) => ({ code })) } : {}) };
+  const input: SystemInput = { ...d, kind: "system", familySlug: fam.slug, mounting: s.mounting, widthMm: s.widthMm, ...(rules.dims.depth ? { depthMm: s.dimMm } : {}), ...(rules.dims.height && !rules.dims.depth ? { heightMm: s.dimMm } : {}), ...(s.finishCode ? { finishCode: s.finishCode } : {}), ...(s.controlCode ? { controlCode: s.controlCode } : {}), ...(s.options?.length ? { options: s.options.map((o) => { const [code, value] = o.split("="); return value ? { code: code!, value } : { code: code! }; }) } : {}) };
   const { table, used } = await tableFor(fam.slug, s.at, s.clientele, s.versionId);
   const lookup = lookupSystemPrice(table, rules, input);
   const catalog = await loadCatalog();
@@ -195,9 +195,30 @@ export async function simulate(s: SimulationInput) {
   const ttc = price && vat != null ? (price.taxBasis === "TTC" ? price.amountMinor : price.amountMinor + applyBps(price.amountMinor, vat)) : null;
   // A. prix catalogue fournisseur de la même configuration (interne, jamais publié) ; B. achat net : remise non établie
   const supplier = await tableFor(fam.slug, s.at, s.clientele, null, "SUPPLIER_LIST");
-  const supplierLookup = lookupSystemPrice(supplier.table, rules, input);
-  const supplierBreakdown = supplierLookup.ok && supplier.table ? priceBreakdown(supplier.table, rules, input, supplierLookup.price, settingsVat, fam.name) : null;
-  return { family: { slug: fam.slug, name: fam.name, status: fam.status }, input, used, lookup, price, supplierBreakdown, supplierUsed: supplier.used, finishes: [...rules.finishes, ...(rules.customFinish ? [rules.customFinish] : [])].map((f) => ({ code: f.code, label: f.label })), controls: (rules.controls ?? []).map((c) => ({ code: c.code, label: c.label })), options: rules.options.map((o) => ({ code: o.code, label: o.label })), vatRateBps: vat, vatFromCatalog: price ? price.vatRateBps == null : false, ttcMinor: ttc, result, table: table ? { dims: [...new Set(table.cells.map((c) => c.dimAmm))].sort((a, b) => a - b), widths: [...new Set(table.cells.map((c) => `${c.widthMinMm}–${c.widthMaxMm}`))] } : null, rules: { dimLabel: rules.dims.depth?.label ?? rules.dims.height?.label ?? "Dimension", mountings: rules.mountings.map((m) => m.code) } } as const;
+  // même règle de lecture que la vente (la grille catalogue est en lecture exacte, la vente peut lire la dimension
+  // supérieure) : même cellule, mêmes cotes pour les suppléments en tableau
+  const saleRule = price?.dimRule;
+  // et même variante (une grille catalogue peut porter des variantes non vendues, ex. lame 217,4 mm de HelioSky)
+  const saleVariant = price?.variantKey;
+  const supplierTable: SystemPriceTable | null = supplier.table && saleRule && saleVariant != null && supplier.table.cells.some((c) => c.variantKey === saleVariant)
+    ? { ...supplier.table, dimRule: saleRule, cells: supplier.table.cells.filter((c) => c.variantKey === saleVariant), variants: Object.fromEntries(Object.entries(supplier.table.variants ?? {}).filter(([k]) => k === saleVariant).map(([k, v]) => [k, { ...v, dimRule: saleRule }])) }
+    : supplier.table;
+  const supplierLookup = lookupSystemPrice(supplierTable, rules, input);
+  const supplierBreakdown = supplierLookup.ok && supplierTable ? priceBreakdown(supplierTable, rules, input, supplierLookup.price, settingsVat, fam.name) : null;
+  // cellule retenue (coordonnées exactes) et suppléments de chaque grille : comparatif marché (coût net, brouillon d'une cellule)
+  const saleCell = price && table ? cellOf(table, price) : null;
+  // décomposition de vente calculée par la même fonction que la boutique, indépendamment du statut du produit
+  const saleBreakdown = price && table ? priceBreakdown(table, rules, input, price, settingsVat, fam.name) : null;
+  const saleSupplements = price && table ? gridMeta(table, price.variantKey).supplements ?? [] : [];
+  const supplierSupplements = supplierLookup.ok && supplierTable ? gridMeta(supplierTable, supplierLookup.price.variantKey).supplements ?? [] : [];
+  return { family: { slug: fam.slug, name: fam.name, status: fam.status }, input, used, lookup, price, saleCell, saleBreakdown, saleSupplements, supplierSupplements, supplierBreakdown, supplierUsed: supplier.used, finishes: [...rules.finishes, ...(rules.customFinish ? [rules.customFinish] : [])].map((f) => ({ code: f.code, label: f.label })), controls: (rules.controls ?? []).map((c) => ({ code: c.code, label: c.label })), options: rules.options.map((o) => ({ code: o.code, label: o.label })), vatRateBps: vat, vatFromCatalog: price ? price.vatRateBps == null : false, ttcMinor: ttc, result, table: table ? { dims: [...new Set(table.cells.map((c) => c.dimAmm))].sort((a, b) => a - b), widths: [...new Set(table.cells.map((c) => `${c.widthMinMm}–${c.widthMaxMm}`))] } : null, rules: { dimLabel: rules.dims.depth?.label ?? rules.dims.height?.label ?? "Dimension", mountings: rules.mountings.map((m) => m.code) } } as const;
+}
+
+/** Cellule de la grille correspondant au prix retenu (même règle de lecture que lookupSystemPrice). */
+function cellOf(table: SystemPriceTable, price: SystemPrice) {
+  const row = table.cells.filter((c) => c.variantKey === price.variantKey && c.dimAmm === price.grid.dimMm && c.amountMinor === price.amountMinor);
+  const c = row.find((x) => x.widthMinMm <= price.grid.widthMm && price.grid.widthMm <= x.widthMaxMm) ?? row.find((x) => x.widthMaxMm === price.grid.widthMm) ?? row[0];
+  return c ? { variantKey: c.variantKey, dimAmm: c.dimAmm, widthMinMm: c.widthMinMm, widthMaxMm: c.widthMaxMm } : null;
 }
 
 export { gridCells, CATEGORIES };

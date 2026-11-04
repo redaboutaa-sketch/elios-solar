@@ -146,11 +146,31 @@ describe("import des tarifs fournisseur", () => {
         const allowed = rel.startsWith("server/supplier-prices/") || rel === "server/actions/admin/supplier-prices.ts" || rel.startsWith("app/admin/catalogue/tarifs-fournisseur/")
           // écran Tarifs (administrateurs) et seul lecteur public : grilles de vente publiées
           || rel.startsWith("server/tariffs/") || rel.startsWith("app/admin/tarifs/") || rel === "server/actions/admin/tariffs.ts"
-          || rel === "server/pricing/system-prices.ts";
+          || rel === "server/pricing/system-prices.ts"
+          // comparatif marché (administrateurs) : brouillon de grille depuis une proposition
+          || rel.startsWith("server/market/") || rel === "server/actions/admin/market.ts";
         if (allowed) continue;
         const src = readFileSync(p, "utf8");
         // import du module ou accès Prisma aux modèles (les simples mentions en commentaire sont ignorées)
         if (/from\s+["'][^"']*supplier-prices[^"']*["']|import\(\s*["'][^"']*supplier-prices|\.supplierPrice(Row|List)\b/.test(src)) offenders.push(rel);
+      }
+    };
+    walk(root);
+    expect(offenders).toEqual([]);
+  });
+
+  it("aucun module public ne lit le comparatif marché (coûts, marges, relevés, propositions)", () => {
+    const root = path.resolve(import.meta.dirname, "../../src");
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const n of readdirSync(dir)) {
+        const p = path.join(dir, n);
+        if (statSync(p).isDirectory()) { if (!p.includes(`${path.sep}generated`)) walk(p); continue; }
+        if (!/\.(ts|tsx)$/.test(n)) continue;
+        const rel = path.relative(root, p).split(path.sep).join("/");
+        if (rel.startsWith("server/market/") || rel === "server/actions/admin/market.ts" || rel.startsWith("app/admin/tarifs/comparatif-marche/")) continue;
+        const src = readFileSync(p, "utf8");
+        if (/from\s+["'][^"']*(server\/market|actions\/admin\/market)[^"']*["']|\.(costPolicyVersion|marketObservation|marketObservationRevision|marketPriceProposal)\b/.test(src)) offenders.push(rel);
       }
     };
     walk(root);

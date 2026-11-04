@@ -7,7 +7,15 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/acquisition", label: "Suivi par origine" },
   { href: "/admin/registre", label: "Registre de lancement" },
   { href: "/admin/contacts", label: "Contacts" },
-  { href: "/admin/tarifs", label: "Tarifs (admin)" },
+  {
+    href: "/admin/tarifs",
+    label: "Tarifs (admin)",
+    children: [
+      { href: "/admin/tarifs", label: "Grilles tarifaires" },
+      { href: "/admin/tarifs/simulateur", label: "Simulateur" },
+      { href: "/admin/tarifs/comparatif-marche", label: "Comparatif marché" },
+    ],
+  },
   {
     href: "/admin/catalogue/familles",
     label: "Catalogue",

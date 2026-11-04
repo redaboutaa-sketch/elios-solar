@@ -21,6 +21,17 @@
   SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
 
+## Comparatif marché et coût d'achat net (2026-11-04) — `docs/pricing/comparatif-marche.md`
+
+- Administration → Tarifs → Comparatif marché (`/admin/tarifs/comparatif-marche`, administrateurs seulement) : étude
+  d'une configuration réelle (prix actuel, coût d'achat net poste par poste, marges, contribution partielle), relevés
+  concurrents avec historique, politique de coût versionnée, plancher, scénarios, prix conseillé, propositions en
+  brouillon et brouillon de grille d'une seule cellule ; exports CSV internes. Aucun prix public modifié.
+- Remise revendeur 37 % (décision du 2026-11-04) : politique de coût v1 ; éligibilité des postes fixes à confirmer ;
+  objectif de marge non défini (aucun prix conseillé tant qu'il ne l'est pas).
+- Première étude : 49 relevés publics (PERGOLUX, NEO10, Castorama, Sunny Inch, Vente-unique, Truffaut…) ; aucune offre
+  fortement comparable retenue (livraison et LED comprises, HT/TTC non indiqué, kits) : simulations internes seulement.
+
 ## Correspondances SOLID / VÉRANDA V ZiiiP, moteurs et options (2026-11-03) — `docs/pricing/catalogue-2026-09.md`
 
 - HelioLux = SOLID et HelioRoof = VÉRANDA V ZiiiP (confirmés par le client) : fiches, configurateurs et données

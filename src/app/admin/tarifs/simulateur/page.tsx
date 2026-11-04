@@ -6,6 +6,8 @@ import { CLIENTELE_LABEL, formatAmount, type Clientele } from "@/domain/tariffs"
 import { MOUNTING_FR, type SystemMounting } from "@/domain/system";
 import { prisma } from "@/lib/prisma";
 import { familiesInfo, simulate } from "@/server/tariffs/queries";
+import { netCostOf } from "@/domain/market";
+import { policyAt } from "@/server/market/policy";
 import { ConfidentialNote, fmtMm, variantLabel } from "../labels";
 
 export const metadata: Metadata = { title: "Simulateur de prix" };
@@ -25,6 +27,8 @@ export default async function SimulatorPage(props: PageProps<"/admin/tarifs/simu
   const at = str("date") ? new Date(str("date")) : new Date();
   const optionCodes = Array.isArray(sp.option) ? (sp.option as string[]) : typeof sp.option === "string" ? [sp.option] : [];
   const sim = run ? await simulate({ familySlug, mounting: (str("pose") || mountings[0] || "wall") as SystemMounting, widthMm: Math.round(Number(str("largeur"))), dimMm: Math.round(Number(str("cote"))), clientele: (str("clientele") || "PARTICULIER") as Clientele, at: Number.isNaN(at.getTime()) ? new Date() : at, versionId: str("version") || null, finishCode: str("teinte") || null, controlCode: str("commande") || null, options: optionCodes }) : null;
+  const policy = sim && !("error" in sim) ? await policyAt(Number.isNaN(at.getTime()) ? new Date() : at) : null;
+  const net = sim && !("error" in sim) && sim.supplierBreakdown && policy ? netCostOf(sim.supplierBreakdown, sim.supplierSupplements, policy) : null;
   const rulesInfo = fam?.systemRules as { finishes?: { code: string; label: string }[]; customFinish?: { code: string; label: string }; controls?: { code: string; label: string }[]; options?: { code: string; label: string }[] } | null;
   return (
     <div className="space-y-6">
@@ -73,7 +77,7 @@ export default async function SimulatorPage(props: PageProps<"/admin/tarifs/simu
             <Table caption="Natures de prix">
               <tbody data-testid="sim-natures">
                 <tr><th>A. Prix catalogue fournisseur HT</th><td>{sim.supplierBreakdown ? <><strong>{formatAmount(sim.supplierBreakdown.totalMinor, sim.supplierBreakdown.currency)}</strong>{sim.supplierBreakdown.partial ? " (partiel)" : ""} — interne, jamais publié</> : "aucune grille catalogue pour cette configuration"}</td></tr>
-                <tr><th>B. Prix d'achat net</th><td>non établi : remise revendeur non communiquée (aucune valeur supposée)</td></tr>
+                <tr><th>B. Prix d'achat net</th><td data-testid="sim-net">{net ? <><strong>{formatAmount(net.knownNetMinor, sim.supplierBreakdown!.currency)}</strong> établi (politique de coût v{policy!.version}, remise revendeur {(policy!.discountBps / 100).toLocaleString("fr-FR")} %){net.partial ? <> — partiel : {[...net.unknown, ...net.missing].map((l) => l.label).join(", ")} non établi(s)</> : ""} — interne ; détail et marges : <Link className="underline" href={`/admin/tarifs/comparatif-marche?produit=${familySlug}&pose=${str("pose") || mountings[0] || "wall"}&largeur=${str("largeur")}&cote=${str("cote")}`}>Comparatif marché</Link></> : !policy ? "non établi : aucune politique de coût en vigueur (Comparatif marché → Politique de coût)" : "non établi : aucune grille catalogue pour cette configuration"}</td></tr>
                 <tr><th>C. Prix de vente HELIOSTORES HT</th><td>{sim.result.priceBreakdown ? <><strong data-testid="sim-sale-ht">{formatAmount(sim.result.priceBreakdown.totalMinor, sim.result.priceBreakdown.currency)}</strong>{sim.result.priceBreakdown.partial ? " — sous-total partiel" : ""}</> : "pas de grille de vente applicable"}</td></tr>
                 <tr><th>D. Prix public TTC</th><td>{sim.result.priceBreakdown?.totalTtcMinor != null ? <><strong data-testid="sim-sale-ttc">{formatAmount(sim.result.priceBreakdown.totalTtcMinor, sim.result.priceBreakdown.currency)}</strong> (TVA {(sim.result.priceBreakdown.vatRateBps / 100).toLocaleString("fr-FR")} %)</> : "—"}</td></tr>
               </tbody>

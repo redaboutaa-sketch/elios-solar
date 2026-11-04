@@ -57,7 +57,7 @@ test("administration → modification → simulation → publication → configu
   await page.goto(`/admin/tarifs/simulateur?produit=sevilla&pose=wall&largeur=3000&cote=3000&version=${draftId}&teinte=RAL_CUSTOM`);
   await expect(page.getByTestId("sim-sale-ht")).toHaveText(/1\s?150,00\s?(€|EUR)/);
   await expect(page.getByTestId("sim-sale-ttc")).toHaveText(/1\s?380,00\s?(€|EUR)/);
-  await expect(page.getByTestId("sim-natures")).toContainText("remise revendeur non communiquée");
+  await expect(page.getByTestId("sim-net")).toContainText(/non établi|politique de coût v\d+/);
 
   // vérification et publication
   await page.goto(gridUrl);

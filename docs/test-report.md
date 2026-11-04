@@ -1,3 +1,19 @@
+# Comparatif marché, coût d'achat net — 2026-11-04
+
+- Unitaires 338/338 (nouveau `market` : contrôle catalogue 4 000 € HT − 37 % = achat 2 520 €, marge 1 480 € pour une
+  vente à 4 000 € HT ; pourcentage sur la structure nette sans double remise ; éligibilité inconnue ; coûts directs et
+  contribution partielle ; plancher de marge et de contribution ; comparables non équivalents, « à partir de »,
+  promotion, ancienneté, dimensions ; indépendance ; jamais sous le plancher ; arrondi ; cellule visée).
+- Intégration 124/124 (nouveau `market` : politique versionnée et date d'effet, journal sans taux ; étude ; relevés
+  créés, corrigés, archivés avec historique et verrou ; import idempotent ; plancher ; proposition refusée sous le
+  plancher ou premium non justifiée ; brouillon d'une seule cellule ; **empreinte des prix publics identique** ;
+  catalogue à plusieurs variantes lu à la cellule de la vente) ; garde-fou : aucun module public ne lit le comparatif.
+- Navigateur (base de développement) : campagne complète 106 réussis, 0 échec, 7 sautés par conception ; nouveau
+  `23-comparatif-marche` (configuration → comparables → simulation instantanée → proposition → brouillon de grille
+  rejeté, exports, prix publics identiques ; visiteur, client et gestionnaire refusés, exports en 404).
+- Défaut corrigé en recette : le prix catalogue (A) et le coût n'étaient pas trouvés pour une cote intermédiaire ni
+  pour HelioSky (catalogue à deux variantes de lame) ; lecture désormais à la même cellule que la vente.
+
 # SOLID / VÉRANDA V ZiiiP, modes de commande, options tarifées — 2026-11-03
 
 - Unitaires 320/320, intégration 117/117, tsc sans erreur, eslint 0 erreur (2 avertissements antérieurs), build OK.

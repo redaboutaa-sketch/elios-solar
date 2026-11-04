@@ -26,6 +26,7 @@ export default async function TariffsPage(props: PageProps<"/admin/tarifs">) {
         <div className="flex flex-wrap gap-2">
           <Link className="btn-secondary" href="/admin/tarifs/import">Importer un classeur</Link>
           <Link className="btn-secondary" href="/admin/tarifs/simulateur">Simulateur</Link>
+          <Link className="btn-secondary" href="/admin/tarifs/comparatif-marche">Comparatif marché</Link>
           <Link className="btn-ghost" href="/admin/catalogue/tarifs-fournisseur">Fichiers importés</Link>
         </div>
       </PageTitle>

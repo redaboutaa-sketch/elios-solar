@@ -86,8 +86,8 @@ pour le modèle (HelioSky, HelioMax vent-soleil, HelioLux, stores : vibrations),
 
 ## 4. Règles de calcul (décision écrite du 2026-11-02)
 
-1. **Prix de vente HELIOSTORES HT = prix catalogue HT** (coefficient 1) ; remise revendeur (prix d'achat net) non
-   communiquée : aucune valeur supposée, jamais affichée.
+1. **Prix de vente HELIOSTORES HT = prix catalogue HT** (coefficient 1). Remise revendeur (décision du 2026-11-04) :
+   paramètre de coût interne versionné (prix d'achat net, marges), sans effet sur le prix public — `comparatif-marche.md`.
 2. **Cote intermédiaire** : valeur de grille immédiatement supérieure, sur chaque axe ; une cote au-delà de la dernière
    valeur reste hors grille (devis) ; une largeur sous le début de la première plage d'une avancée n'est pas proposée.
    Aucune interpolation.
@@ -146,8 +146,9 @@ la version en vigueur à la date de publication (aucun chevauchement fictif avec
   de chaque valeur modifiée sont enregistrés ; la valeur précédente reste dans la version antérieure.
 - **Comparer** : brouillon / version publiée ou grille catalogue (écarts par cellule, en %).
 - **Simuler** (`/admin/tarifs/simulateur`) : produit, pose, cotes, teinte, commande, options, version (brouillon
-  compris) → A prix catalogue fournisseur HT, B prix d'achat net (non établi), C prix de vente HT, D prix public TTC,
-  et décomposition.
+  compris) → A prix catalogue fournisseur HT, B prix d'achat net (politique de coût en vigueur ; postes d'éligibilité
+  inconnue signalés), C prix de vente HT, D prix public TTC, et décomposition. Marges, comparables et recommandation :
+  Comparatif marché (`docs/pricing/comparatif-marche.md`).
 - **Valider et publier** : « Vérifier la grille » (contrôles bloquants) puis « Publier » (immédiat ou programmé) ;
   caches du catalogue et de l'aide immédiate vidés.
 - **Revenir en arrière** : « Désactiver cette version » (le produit repasse au devis), puis « Reprendre en brouillon »
@@ -160,7 +161,8 @@ la version en vigueur à la date de publication (aucun chevauchement fictif avec
 
 Aucune ne bloque les prix affichés : chaque point reste « à chiffrer » ou au devis tant qu'il n'est pas confirmé.
 
-1. Remise revendeur (prix d'achat net, interne) — n'influe pas sur le prix public décidé.
+1. Remise revendeur : 37 % décidée le 2026-11-04 (interne) ; éligibilité des postes fixes (centrale, moteurs,
+   télécommandes, LED, poteaux) à confirmer — n'influe pas sur le prix public décidé.
 2. Livraison et pose : chiffrées séparément au devis (aucun forfait) ; délai indiqué 4 à 7 semaines.
 3. Paiement en ligne : non activé (chantier distinct).
 4. Questions fournisseur : tableau `docs/pricing/questions-fournisseur-2026-11.md`.

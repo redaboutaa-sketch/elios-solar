@@ -1652,3 +1652,151 @@ model LaunchInput {
 
   @@index([status])
 }
+
+/// ------------------------------------------------------------------
+/// Comparatif marché (administration, interne) : jamais lu par le site public
+/// ------------------------------------------------------------------
+
+/// Politique de coût interne : remise revendeur sur le prix catalogue éligible, éligibilité des postes, coûts directs
+/// par défaut, objectifs et règles de la recommandation. Versionnée : une version n'est jamais modifiée ; la version
+/// en vigueur est la plus récente dont la date d'effet est passée. Paramètre de coût, jamais une remise client.
+model CostPolicyVersion {
+  id                    String   @id @default(cuid())
+  version               Int      @unique
+  validFrom             DateTime
+  /// remise revendeur (points de base : 3700 = 37 %)
+  discountBps           Int
+  /// { "structure": "ELIGIBLE", "supplement:<code>": "ELIGIBLE" | "NOT_ELIGIBLE" | "UNKNOWN" } ; absent = inconnu
+  eligibility           Json     @default("{}")
+  /// coûts directs par défaut (transport, pose, paiement, acquisition, SAV, commission) ; inconnu ≠ zéro
+  directCosts           Json     @default("[]")
+  /// objectif de marge brute en % du prix de vente (points de base) ; null = non défini
+  marginTargetBps       Int?
+  /// objectif de contribution après coûts directs (points de base) ; prioritaire sur la marge s'il est défini
+  contributionTargetBps Int?
+  /// relevé plus ancien : signalé et écarté du calcul courant
+  staleDays             Int      @default(120)
+  /// tolérance de dimensions par côté (points de base)
+  dimToleranceBps       Int      @default(1000)
+  /// règle d'arrondi du prix conseillé { stepMinor, basis }
+  rounding              Json     @default("{}")
+  note                  String   @default("")
+  createdBy             String?
+  createdAt             DateTime @default(now())
+
+  @@index([validFrom])
+}
+
+enum MarketComparability {
+  STRONG
+  PARTIAL
+  INSUFFICIENT
+}
+
+enum MarketRecordStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+/// Relevé de prix concurrent (offre publique consultée, sans commande ni demande de devis). Chaque correction ou
+/// archivage incrémente `revision` et garde l'état précédent dans MarketObservationRevision.
+model MarketObservation {
+  id                  String                      @id @default(cuid())
+  status              MarketRecordStatus          @default(ACTIVE)
+  revision            Int                         @default(1)
+  retailer            String
+  manufacturer        String                      @default("")
+  model               String
+  url                 String
+  observedAt          DateTime
+  country             String                      @default("FR")
+  currency            String                      @default("EUR")
+  /// produit HELIOSTORES comparé (slug de famille)
+  familySlug          String
+  widthMm             Int?
+  depthMm             Int?
+  heightMm            Int?
+  /// freestanding | wall | unknown
+  mounting            String                      @default("unknown")
+  roofType            String                      @default("")
+  control             String                      @default("")
+  options             String                      @default("")
+  /// prix constaté (centimes) et sa base fiscale
+  priceMinor          Int
+  taxBasis            TaxBasis                    @default(UNKNOWN)
+  /// configured (configuration précise) | fixed_size (taille fixe affichée) | from (« à partir de »)
+  priceKind           String                      @default("configured")
+  regularPriceMinor   Int?
+  promoPriceMinor     Int?
+  promoEnd            DateTime?
+  /// { delivery|installation|motor|remote|led|screen|glazing: { status, extraAmountMinor?, note? } }
+  scope               Json                        @default("{}")
+  warranty            String                      @default("")
+  material            String                      @default("")
+  blades              String                      @default("")
+  resistance          String                      @default("")
+  sav                 String                      @default("")
+  comparability       MarketComparability         @default(INSUFFICIENT)
+  comparabilityReason String                      @default("")
+  evidence            String                      @default("")
+  /// accès à la source (ok, prix sur devis, rendu non lisible…)
+  access              String                      @default("")
+  notes               String                      @default("")
+  /// origine : manual (saisie), import:<nom> (fichier de relevés)
+  source              String                      @default("manual")
+  createdBy           String?
+  updatedBy           String?
+  archivedAt          DateTime?
+  archivedBy          String?
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+  revisions           MarketObservationRevision[]
+
+  @@index([familySlug, status])
+  @@index([observedAt])
+}
+
+model MarketObservationRevision {
+  id            String            @id @default(cuid())
+  observationId String
+  observation   MarketObservation @relation(fields: [observationId], references: [id], onDelete: Cascade)
+  revision      Int
+  /// create | update | archive | restore
+  action        String
+  /// état du relevé après l'opération
+  data          Json
+  reason        String            @default("")
+  actorEmail    String?
+  createdAt     DateTime          @default(now())
+
+  @@unique([observationId, revision])
+}
+
+/// Proposition de prix en brouillon, liée à la version tarifaire de vente utilisée. Elle ne change aucun prix : un
+/// brouillon de grille peut en être créé, dont la publication reste manuelle (Administration → Tarifs).
+model MarketPriceProposal {
+  id               String             @id @default(cuid())
+  status           MarketRecordStatus @default(ACTIVE)
+  familySlug       String
+  variantKey       String             @default("")
+  /// configuration étudiée (cotes, pose, teinte, commande, options)
+  config           Json
+  /// version de la grille de vente utilisée (SupplierPriceList) et version de la politique de coût
+  priceListId      String?
+  priceListVersion Int?
+  policyVersionId  String?
+  currentHtMinor   Int?
+  proposedHtMinor  Int
+  proposedTtcMinor Int
+  scenario         String
+  /// coûts, marges, contribution, comparables retenus, confiance (instantané)
+  snapshot         Json
+  justification    String             @default("")
+  /// brouillon de grille créé depuis la proposition (jamais publié automatiquement)
+  gridDraftId      String?
+  createdBy        String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([familySlug, createdAt])
+}

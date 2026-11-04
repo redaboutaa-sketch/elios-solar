@@ -99,6 +99,21 @@ $DC run --rm --no-deps -v $CSV:/import/catalogue.csv:ro -e NODE_OPTIONS="--requi
 Idempotent (empreinte du fichier, cellules et suppléments identiques). Retour arrière : Administration → Tarifs →
 grille → « Désactiver cette version » (le produit repasse au devis). Détail : `docs/pricing/catalogue-2026-09.md`.
 
+## 2 sexies. Comparatif marché : politique de coût et relevés concurrents
+
+Après sauvegarde (§ 6) et déploiement (migration additive `20261104090000_comparatif_marche`). Le fichier de relevés
+PRIVÉ est monté en lecture seule le temps de la commande ; aucun montant n'est imprimé ; l'empreinte des prix publics
+est affichée avant et après (doit rester identique).
+```bash
+DC="docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod"
+REL="$PWD/private/heliostores/market-2026-11/releves-2026-11-04.json"
+RUN="$DC run --rm --no-deps -v $REL:/import/releves.json:ro -e NODE_OPTIONS=--require=./scripts/lib/server-only-shim.cjs migrate node_modules/.bin/tsx scripts/market-observations.ts"
+$RUN --file /import/releves.json --policy-init 37 --valid-from 2026-11-04 --note "Décision du client du 2026-11-04"           # aperçu
+$RUN --file /import/releves.json --policy-init 37 --valid-from 2026-11-04 --note "Décision du client du 2026-11-04" --apply   # idempotent
+```
+La politique n'est créée que si aucune version n'existe ; ensuite : Administration → Tarifs → Comparatif marché →
+Politique de coût. Détail : `docs/pricing/comparatif-marche.md`.
+
 ## 2 quater. Langues (aperçus de traduction)
 
 Variables du fichier d'environnement (lues à l'exécution, sans reconstruction) : `SITE_LOCALES` (langues servies,
