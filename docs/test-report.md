@@ -8,6 +8,8 @@
   créés, corrigés, archivés avec historique et verrou ; import idempotent ; plancher ; proposition refusée sous le
   plancher ou premium non justifiée ; brouillon d'une seule cellule ; **empreinte des prix publics identique** ;
   catalogue à plusieurs variantes lu à la cellule de la vente) ; garde-fou : aucun module public ne lit le comparatif.
+  CI `b67648c` verte (verify, e2e-docker) après autorisation du simulateur admin dans ce garde-fou (échec CI sur
+  `fd62687`).
 - Navigateur (base de développement) : campagne complète 106 réussis, 0 échec, 7 sautés par conception ; nouveau
   `23-comparatif-marche` (configuration → comparables → simulation instantanée → proposition → brouillon de grille
   rejeté, exports, prix publics identiques ; visiteur, client et gestionnaire refusés, exports en 404).

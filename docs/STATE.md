@@ -31,6 +31,9 @@
   objectif de marge non défini (aucun prix conseillé tant qu'il ne l'est pas).
 - Première étude : 49 relevés publics (PERGOLUX, NEO10, Castorama, Sunny Inch, Vente-unique, Truffaut…) ; aucune offre
   fortement comparable retenue (livraison et LED comprises, HT/TTC non indiqué, kits) : simulations internes seulement.
+- Production `b67648c` (2026-11-05) : sauvegarde `db_20261105_090941` avant déploiement, migration
+  `20261104090000_comparatif_marche` appliquée, politique v1 (37 %, effet 04/11/2026) et 49 relevés importés (seconde
+  passe : 0 créé) ; empreinte des prix publics identique avant/après ; page admin 307 et export 404 sans session.
 
 ## Correspondances SOLID / VÉRANDA V ZiiiP, moteurs et options (2026-11-03) — `docs/pricing/catalogue-2026-09.md`
 
