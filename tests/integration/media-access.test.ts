@@ -38,4 +38,21 @@ describe("accès aux fichiers de la médiathèque (anonyme)", () => {
     expect((await get(await file("PUBLISHED", { status: "PUBLISHED", audience: "CUSTOMER" }))).status).toBe(404);
     expect((await get(await file("PUBLISHED", { status: "PUBLISHED", audience: "INTERNAL" }))).status).toBe(404);
   });
+  it("variante listée (AVIF à nom descriptif) : suit le statut de son média", async () => {
+    const names: Record<string, string> = {};
+    for (const status of ["PUBLISHED", "DRAFT"] as const) {
+      const main = `${randomBytes(16).toString("hex")}.webp`;
+      const avif = `test-visualisation-640-${randomBytes(4).toString("hex")}.avif`;
+      await writeFile(resolveMediaFile(main)!, "RIFF0000WEBP");
+      await writeFile(resolveMediaFile(avif)!, Buffer.concat([Buffer.from([0, 0, 0, 0x1c]), Buffer.from("ftypavif")]));
+      const m = await prisma.media.create({ data: { kind: "image", nature: "RENDER", status, path: `${MEDIA_URL_PREFIX}${main}`, mimeType: "image/webp", alt: "test", source: "test", license: "test", credit: "", provenance: { files: [`${MEDIA_URL_PREFIX}${main}`, `${MEDIA_URL_PREFIX}${avif}`] } } });
+      created.push(m.id);
+      names[status] = avif;
+    }
+    const ok = await get(names.PUBLISHED!);
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get("content-type")).toBe("image/avif");
+    expect((await get(names.DRAFT!)).status).toBe(404);
+    for (const n of Object.values(names)) await unlink(resolveMediaFile(n)!).catch(() => undefined);
+  });
 });

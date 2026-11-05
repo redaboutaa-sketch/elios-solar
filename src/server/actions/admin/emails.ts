@@ -16,6 +16,18 @@ export async function retryEmailAction(formData: FormData) {
   back("/admin/emails", "E-mail remis en file d'attente.");
 }
 
+/** Écarte un message en attente (test, ancien ou devenu inutile) : il ne sera jamais envoyé. */
+export async function abandonEmailAction(formData: FormData) {
+  const { session } = await assertRole(["ADMIN", "MANAGER"]);
+  const id = String(formData.get("id") ?? "");
+  const item = await prisma.emailOutbox.findUnique({ where: { id }, select: { status: true, template: true } });
+  if (!item) back("/admin/emails", "E-mail introuvable", "err");
+  if (item.status === "SENT" || item.status === "DEAD") back("/admin/emails", "Cet e-mail n'est plus en attente.", "err");
+  await prisma.emailOutbox.update({ where: { id }, data: { status: "DEAD", lastError: "abandonné manuellement" } });
+  await audit({ ...actorOf(session), action: "email.abandon", entity: "EmailOutbox", entityId: id, before: { status: item.status }, after: { status: "DEAD", template: item.template } });
+  back("/admin/emails", "E-mail abandonné : il ne sera pas envoyé.");
+}
+
 export async function processOutboxAction() {
   const { session } = await assertRole(["ADMIN", "MANAGER"]);
   const r = await processOutbox();

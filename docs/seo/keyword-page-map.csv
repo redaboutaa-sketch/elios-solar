@@ -1,0 +1,31 @@
+url;intention_principale;requete_cible_proposee;requetes_secondaires;etape_parcours;cta_existant;donnees_manquantes;statut
+/;navigation et découverte de l'offre;pergola et store sur mesure;pergola bioclimatique, store screen, store banne, moustiquaire plissée;découverte;Configurer / Demander un devis;zones desservies, réalisations authentiques;hypothèse (aucune donnée de requête)
+/pergolas;choisir un type de pergola;pergola bioclimatique sur mesure;pergola à lames orientables, pergola adossée, pergola autoportante, pergola toile;comparaison;Configurer (par modèle);points « à confirmer » des fiches, zones desservies;hypothèse
+/pergolas/marbella;évaluer un modèle sur mesure;pergola bioclimatique sur mesure;pergola lames orientables 4 x 6 m, pergola bioclimatique adossée;décision;Configurer mon projet;points « à confirmer » de la fiche, garantie (non publiée);hypothèse
+/pergolas/malaga;évaluer un modèle en tailles définies;pergola bioclimatique 3,5 m;pergola autoportante lames orientables;décision;Configurer mon projet;aucune taille sur mesure (tailles définies) ;hypothèse
+/pergolas/sevilla;évaluer une pergola à toiture toile;pergola toile rétractable adossée;pergola toile motorisée sur mesure;décision;Configurer mon projet;points « à confirmer » de la fiche;hypothèse
+/screens;choisir une protection verticale ou de toiture;store screen extérieur sur mesure;screen zip, store de véranda, store de toiture;comparaison;Configurer (par modèle);points « à confirmer » des fiches;hypothèse
+/screens/helioscreen;évaluer un screen de baie ou façade;store screen extérieur sur mesure;screen zip motorisé, store vertical extérieur;décision;Configurer mon projet;largeur au-delà de 4 m divergente selon sources;hypothèse
+/screens/helioroof-screen;évaluer un store de toiture;store de véranda sur mesure;store toiture verrière, store pergola vitrée;décision;Configurer mon projet;compatibilité par type de toiture au devis;hypothèse
+/stores-bannes;choisir un store banne;store banne sur mesure;store banne coffre, store banne semi-coffre, store banne motorisé;comparaison;Configurer (par modèle);points « à confirmer » des fiches;hypothèse
+/stores-bannes/casablanca;évaluer un store banne coffre;store banne coffre sur mesure;store banne coffre intégral 6 m;décision;Configurer mon projet;—;hypothèse
+/stores-bannes/corsica;évaluer un store semi-coffre;store banne semi-coffre;store banne semi-coffre motorisé;décision;Configurer mon projet;—;hypothèse
+/stores-bannes/jamaica;évaluer un store sans coffre;store banne monobloc sans coffre;store banne manivelle 7 m;décision;Configurer mon projet;—;hypothèse
+/stores-bannes/madera;évaluer un store à coffre droit;store banne coffre motorisé;store banne inclinaison 50°;décision;Configurer mon projet;type de coffre à confirmer;hypothèse
+/moustiquaires;choisir une moustiquaire selon l'ouverture;moustiquaire plissée sur mesure;moustiquaire porte-fenêtre, moustiquaire baie coulissante;comparaison;Demander une étude;MoskiUp, MoskiSlide, MoskiFix en brouillon (données non validées);hypothèse
+/moustiquaires/moskifold;demande d'étude moustiquaire 1 vantail;moustiquaire plissée porte-fenêtre;moustiquaire plissée sur mesure;décision;Demander une étude;bornes dimensionnelles non publiées;hypothèse
+/moustiquaires/moskifold-2;demande d'étude moustiquaire 2 vantaux;moustiquaire plissée double baie;moustiquaire grande baie coulissante;décision;Demander une étude;bornes dimensionnelles non publiées;hypothèse
+/accessoires;vérifier options et compatibilités;options pergola et store motorisé;télécommande, capteur vent, LED, fermeture latérale;décision;Configurer;—;hypothèse
+/guides/choisir-sa-pergola;comparer les pergolas;comment choisir sa pergola;lames orientables ou toile, adossée ou autoportante;information → comparaison;liens vers modèles;—;hypothèse
+/guides/adossee-ou-autoportee;arbitrer l'implantation;pergola adossée ou autoportante;pergola contre mur, pergola indépendante;information;liens vers modèles;—;hypothèse
+/guides/choisir-son-screen-exterieur;choisir un screen;comment choisir un store screen;screen zip ou store banne;information → comparaison;liens vers modèles;—;hypothèse
+/guides/comparer-protections-solaires;comparer les solutions;screen ou store banne;pergola ou store banne, protection solaire terrasse;comparaison;liens vers modèles;—;hypothèse
+/guides/choisir-sa-moustiquaire;choisir selon l'ouverture;quelle moustiquaire pour porte-fenêtre;moustiquaire plissée ou enroulable;information;Demander une étude;types non publiés en brouillon;hypothèse
+/guides/choisir-toile-et-motorisation;choisir toile et commande;choisir toile store extérieur;motorisation store, télécommande;information;liens vers modèles;—;hypothèse
+/guides/prise-de-mesures;mesurer son projet;comment mesurer pour une pergola;mesurer store banne, mesurer moustiquaire;préparation du devis;Configurer;—;hypothèse
+/guides/preparation-projet;préparer le projet;préparer installation pergola;ancrage, alimentation 230 V, accès livraison;préparation du devis;Demander un devis;—;hypothèse
+/guides/autorisation-urbanisme;démarches;pergola déclaration préalable;pergola permis de construire, PLU pergola;information;Demander un devis;—;hypothèse (sujet réglementaire : vérifier en mairie)
+/devis;demander un devis;devis pergola sur mesure;devis store banne, devis store screen;conversion;Envoyer la demande;—;hypothèse
+/contact;contacter;contact HELIOSTORES;—;conversion;Envoyer;boîte contact@ non opérationnelle (pas de MX);navigation
+/livraison-installation;délais et pose;délai livraison pergola;pose pergola;réassurance;Demander un devis;zones desservies, conditions de pose;navigation
+/aide;questions fréquentes;—;—;réassurance;liens guides;—;navigation

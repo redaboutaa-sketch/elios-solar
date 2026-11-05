@@ -1,6 +1,10 @@
 import type { MetadataRoute } from "next";
+import { connection } from "next/server";
 import { BRAND } from "@/config/brand";
-export default function robots(): MetadataRoute.Robots {
-  if (process.env.SITE_INDEXABLE !== "true") return { rules: { userAgent: "*", disallow: "/" } };
-  return { rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/compte", "/panier", "/commande", "/projets/", "/api/"] }, sitemap: `${BRAND.siteUrl}/sitemap.xml` };
+import { robotsRules } from "@/server/seo/robots-rules";
+
+/** Lu à chaque requête (jamais figé au build) : la même image sert la préproduction (fermée) et la production. */
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  await connection();
+  return robotsRules(process.env.SITE_INDEXABLE === "true", BRAND.siteUrl);
 }

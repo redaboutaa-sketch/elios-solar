@@ -67,11 +67,15 @@ export async function updateFamilyAction(formData: FormData) {
     faq.push({ q: q.slice(0, 300), a: a.slice(0, 3000) });
   }
   const included = d.included.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, 50);
-  const before = await prisma.productFamily.findUnique({ where: { id: d.id }, select: { name: true, shortDescription: true, description: true, seoTitle: true, seoDescription: true, specs: true, included: true, faq: true, accessoryRails: true, lightingIncluded: true, dividerThresholdMm: true } });
+  const before = await prisma.productFamily.findUnique({ where: { id: d.id }, select: { name: true, shortDescription: true, description: true, seoTitle: true, seoDescription: true, specs: true, included: true, faq: true, accessoryRails: true, lightingIncluded: true, dividerThresholdMm: true, nameHistory: true } });
   if (!before) back("/admin/catalogue/familles", "Famille introuvable", "err");
+  const { nameHistory, ...beforeData } = before;
   const data = { name: d.name, shortDescription: d.shortDescription, description: d.description, seoTitle: d.seoTitle, seoDescription: d.seoDescription, specs, included, faq, accessoryRails: d.accessoryRails, lightingIncluded: d.lightingIncluded, dividerThresholdMm: d.dividerThresholdMm };
-  await prisma.productFamily.update({ where: { id: d.id }, data });
-  await audit({ ...actorOf(session), action: "family.update", entity: "ProductFamily", entityId: d.id, before, after: data });
+  // nom commercial : l'ancien nom rejoint l'historique ; la référence fournisseur et le slug ne changent pas
+  const history = Array.isArray(nameHistory) ? nameHistory : [];
+  const renamed = d.name !== before.name ? [...history, { name: before.name, until: new Date().toISOString().slice(0, 10), by: session.user.email, note: "renommage dans l'administration" }] : history;
+  await prisma.productFamily.update({ where: { id: d.id }, data: { ...data, nameHistory: renamed as never, commercialEditedAt: new Date() } });
+  await audit({ ...actorOf(session), action: "family.update", entity: "ProductFamily", entityId: d.id, before: beforeData, after: data });
   invalidateCatalogCache();
   back(path, "Famille enregistrée.");
 }

@@ -1,33 +1,36 @@
 import { test, expect } from "./fixtures";
 import { loginAdmin, shot, uid } from "./helpers";
-import { pool } from "./db";
+import { one, pool } from "./db";
 
-test("validation des références : dossier câble (conflit, manques), puis un dossier de test soumis et rejeté avec historique", async ({ page }) => {
+test("validation des références : contradiction HelioScreen (fiche 4 m / catalogue 7 m), puis un dossier de test soumis et rejeté avec historique", async ({ page }) => {
   const id = uid();
   await loginAdmin(page, "/admin/catalogue/validations");
   await expect(page.getByRole("heading", { name: "Validation des références" })).toBeVisible();
 
-  // 1. dossier initial « à vérifier » sur la longueur du câble : rien n'est confirmé
-  await page.getByRole("link", { name: /Store banne Ombra — Longueur du câble/ }).first().click();
+  // 1. dossier initial « à vérifier » sur la largeur maximale du screen : sources divergentes, rien n'est tranché
+  const dossier = await one<{ id: string; targetLabel: string }>(`SELECT id, "targetLabel" FROM "ReferenceValidation" WHERE "targetType" = 'FAMILY_SPEC' AND "targetId" = 'helioscreen#width_max' ORDER BY "createdAt" LIMIT 1`);
+  expect(dossier).not.toBeNull();
+  const link = page.locator(`a[href="/admin/catalogue/validations/${dossier!.id}"]`);
+  // le dossier porte le nom actuel du produit (renommage HELIO Ombra → HelioScreen, même produit)
+  await expect(link, "libellé du dossier au nom actuel du produit").toHaveText(/^HelioScreen — Largeur maximale/);
+  await link.click();
   await expect(page.getByTestId("divergences")).toContainText("Valeurs divergentes selon les sources");
-  await expect(page.getByTestId("missing")).toContainText("Valeur confirmée par le fournisseur");
-  await expect(page.getByTestId("spec-candidates")).toContainText("Donnée fictive (démonstration)");
-  await expect(page.getByTestId("spec-candidates")).toContainText("Observation sur la référence");
-  await expect(page.getByTestId("blockers")).toContainText("Source manquante");
+  await expect(page.getByTestId("spec-candidates")).toContainText("Fiche du modèle (client)");
+  await expect(page.getByTestId("spec-candidates")).toContainText("Document fournisseur");
+  await expect(page.getByTestId("spec-candidates")).toContainText("Site du fabricant");
   await expect(page.getByRole("button", { name: "Valider cette version" })).toBeDisabled();
-  await expect(page.getByTestId("impact")).toContainText("Configurations enregistrées concernées");
-  await shot(page, "validation-cable");
+  await shot(page, "validation-refleksol-largeur");
 
-  // 2. dossier de test sur une référence (création → à vérifier → rejet), sans modifier la donnée
-  await page.goto("/admin/catalogue/validations/nouveau?type=VARIANT&cible=ES-SV-3M-ANT");
-  await page.getByLabel(/^Délai minimum/).fill("12");
-  await page.getByLabel("Référence et contexte de la source").fill(`Test e2e ${id} : aucune source réelle`);
+  // 2. dossier de test sur une donnée technique (création → à vérifier → rejet), sans modifier la donnée
+  const specsBefore = (await pool.query(`SELECT source, "valueNum", "sourceRef" FROM "TechnicalSpec" t JOIN "ProductFamily" f ON f.id = t."familyId" WHERE f.slug = 'marbella' AND t.key = 'height_max' ORDER BY source, "valueNum", "sourceRef"`)).rows;
+  await page.goto(`/admin/catalogue/validations/nouveau?type=FAMILY_SPEC&cible=${encodeURIComponent("marbella#height_max")}`);
+  await page.getByLabel(/^Valeur numérique/).fill("2950");
+  await page.getByLabel("Référence et contexte de la source").fill(`Test e2e ${id} : valeur fictive de test, aucune source réelle`);
   await page.getByRole("button", { name: "Créer le dossier (brouillon)" }).click();
   await expect(page.getByText("Dossier créé en brouillon.")).toBeVisible();
   const dossierId = new URL(page.url()).pathname.split("/").pop()!;
   try {
-    await expect(page.getByTestId("diff")).toContainText("Délai minimum");
-    await expect(page.getByTestId("checklist")).toContainText("Mise en vente activée (décision séparée, jamais automatique)");
+    await expect(page.getByTestId("diff")).toContainText("Valeur numérique");
     await page.getByRole("button", { name: "Soumettre (à vérifier)" }).click();
     await expect(page.getByText("Dossier soumis : à vérifier.")).toBeVisible();
     await page.getByLabel(/Commentaire/).fill(`rejet e2e ${id}`);
@@ -37,9 +40,8 @@ test("validation des références : dossier câble (conflit, manques), puis un d
     await expect(history).toContainText("Brouillon → À vérifier");
     await expect(history).toContainText("À vérifier → Rejeté");
     await expect(history).toContainText(`rejet e2e ${id}`);
-    await expect(page.getByRole("button", { name: "Valider cette version" })).toHaveCount(0);
-    const v = await pool.query('SELECT "leadMinDays" FROM "Variant" WHERE sku = $1', ["ES-SV-3M-ANT"]);
-    expect(v.rows[0].leadMinDays).not.toBe(12);
+    // un dossier rejeté ne modifie aucune donnée technique (les divergences sourcées restent intactes)
+    expect((await pool.query(`SELECT source, "valueNum", "sourceRef" FROM "TechnicalSpec" t JOIN "ProductFamily" f ON f.id = t."familyId" WHERE f.slug = 'marbella' AND t.key = 'height_max' ORDER BY source, "valueNum", "sourceRef"`)).rows).toEqual(specsBefore);
   } finally {
     await pool.query('DELETE FROM "ReferenceValidation" WHERE id = $1', [dossierId]);
   }

@@ -1,6 +1,8 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { SiteSettings } from "@/generated/prisma/client";
+import { salesMode } from "@/server/payment/mode";
+import { mailDeliveryReal, mailProvider } from "@/server/mail/transport";
 
 export const REQUIRED_SETTINGS: Array<{ key: keyof SiteSettings; label: string }> = [
   { key: "legalName", label: "Raison sociale" },
@@ -34,7 +36,10 @@ export async function launchBlockers(): Promise<LaunchBlocker[]> {
   for (const m of missingSettings(settings)) out.push({ area: "Réglages", message: `${m.label} non renseigné(e)`, href: "/admin/reglages" });
   for (const p of pages) out.push({ area: "Contenus", message: `Page « ${p.title} » non publiée (${p.status})`, href: `/admin/contenus/pages/${p.slug}` });
   for (const f of demoFamilies) out.push({ area: "Catalogue", message: `Famille « ${f.name} » en données de démonstration`, href: `/admin/catalogue/familles/${f.id}` });
-  if (process.env.PAYMENT_PROVIDER !== "stripe") out.push({ area: "Paiement", message: "Paiement en mode démonstration (PAYMENT_PROVIDER ≠ stripe)", href: "/admin" });
+  const mode = salesMode();
+  if (mode === "demo") out.push({ area: "Paiement", message: "Paiement simulé (environnement non public) : aucun encaissement réel", href: "/admin/paiement" });
+  if (mode === "disabled") out.push({ area: "Paiement", message: "Encaissement en ligne fermé : panier, commande et paiement de devis indisponibles (site sur devis)", href: "/admin/paiement" });
+  if (!mailDeliveryReal()) out.push({ area: "Notifications", message: `Aucun envoi d'e-mail réel (MAIL_PROVIDER=${mailProvider()}) : suivre les nouvelles demandes dans Administration → Devis`, href: "/admin/emails" });
   return out;
 }
 

@@ -5,6 +5,7 @@ export const MEDIA_TYPES = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
+  "image/avif": "avif",
   "image/svg+xml": "svg",
   "application/pdf": "pdf",
 } as const;
@@ -15,8 +16,13 @@ export const EXT_TO_MIME: Record<string, MediaMime> = Object.fromEntries(Object.
 export const MAX_MEDIA_BYTES = 8 * 1024 * 1024;
 export const MEDIA_URL_PREFIX = "/api/media/";
 
-/** Nom de fichier généré : 32 caractères hexadécimaux + extension connue. */
-const NAME_RE = /^[a-f0-9]{32}\.(jpg|png|webp|svg|pdf)$/;
+/**
+ * Nom de fichier généré : 32 caractères hexadécimaux, ou nom public descriptif (minuscules, chiffres, tirets) suivi
+ * de 8 caractères hexadécimaux aléatoires ; extension connue.
+ */
+const NAME_RE = /^(?:[a-f0-9]{32}|[a-z0-9]+(?:-[a-z0-9]+)*-[a-f0-9]{8})\.(jpg|png|webp|avif|svg|pdf)$/;
+/** Préfixe descriptif accepté pour un nom public (sans extension ni suffixe aléatoire). */
+export const MEDIA_SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export function mediaDir(): string {
   return path.resolve(process.env.MEDIA_STORAGE_DIR ?? "./uploads");
@@ -45,6 +51,8 @@ export function checkSignature(buf: Buffer, mime: MediaMime): string | null {
       return head(8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) ? null : "Fichier PNG invalide";
     case "image/webp":
       return buf.subarray(0, 4).toString("ascii") === "RIFF" && buf.subarray(8, 12).toString("ascii") === "WEBP" ? null : "Fichier WebP invalide";
+    case "image/avif":
+      return buf.subarray(4, 8).toString("ascii") === "ftyp" && /^avi[fs]$/.test(buf.subarray(8, 12).toString("ascii")) ? null : "Fichier AVIF invalide";
     case "application/pdf":
       return buf.subarray(0, 5).toString("ascii") === "%PDF-" ? null : "Fichier PDF invalide";
     case "image/svg+xml": {
@@ -57,16 +65,18 @@ export function checkSignature(buf: Buffer, mime: MediaMime): string | null {
 }
 
 /**
- * Écrit un fichier dans le répertoire des médias sous un nom aléatoire (32 hex + extension).
- * Retourne le nom de fichier et l'URL publique. Utilisé par le téléversement et par les rendus générés.
+ * Écrit un fichier dans le répertoire des médias sous un nom aléatoire (32 hex + extension), ou sous un nom public
+ * descriptif (`slug` + 8 hex) quand `slug` est fourni. Retourne le nom de fichier et l'URL publique. Utilisé par le
+ * téléversement, les rendus générés et les imports.
  */
-export async function storeMediaBuffer(buf: Buffer | Uint8Array, mime: MediaMime): Promise<{ name: string; url: string; fullPath: string }> {
+export async function storeMediaBuffer(buf: Buffer | Uint8Array, mime: MediaMime, opts: { slug?: string } = {}): Promise<{ name: string; url: string; fullPath: string }> {
+  if (opts.slug !== undefined && !MEDIA_SLUG_RE.test(opts.slug)) throw new Error("Nom public de média invalide");
   const { randomBytes } = await import("node:crypto");
   const { mkdir, writeFile } = await import("node:fs/promises");
   const dir = mediaDir();
   await mkdir(dir, { recursive: true });
   for (let attempt = 0; attempt < 3; attempt++) {
-    const name = `${randomBytes(16).toString("hex")}.${MEDIA_TYPES[mime]}`;
+    const name = opts.slug ? `${opts.slug}-${randomBytes(4).toString("hex")}.${MEDIA_TYPES[mime]}` : `${randomBytes(16).toString("hex")}.${MEDIA_TYPES[mime]}`;
     const full = resolveMediaFile(name);
     if (!full) throw new Error("Nom de fichier média invalide");
     try {

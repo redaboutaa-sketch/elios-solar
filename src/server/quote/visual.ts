@@ -182,7 +182,7 @@ export async function attachQuoteVisual(opts: { quoteId: string; dataUrl?: unkno
       refused = d.reason;
     }
     const layout = result?.layout;
-    if (layout && (input.kind === "pergola_standard" || input.kind === "pergola_custom")) {
+    if (layout && (input.kind === "pergola_standard" || input.kind === "pergola_custom" || (input.kind === "system" && model?.kind === "pergola"))) {
       const closures: Record<string, string> = {};
       if (model?.kind === "pergola") for (const c of model.closures) closures[c.id] = c.type;
       const plan = await planPng(layout, closures, model?.kind === "pergola" ? model.colors.structure : undefined);

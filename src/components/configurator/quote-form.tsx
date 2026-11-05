@@ -1,15 +1,13 @@
 "use client";
 import { useState, useTransition } from "react";
+import Link from "@/i18n/link";
 import { requestQuoteAction } from "@/server/actions/configurator";
 import { Notice } from "@/components/ui/alert";
+import { readAttribution } from "@/components/analytics/attribution";
+import { useT } from "@/i18n/client";
+import { fmt } from "@/i18n/format";
 
 const VISUAL_TIMEOUT_MS = 10_000;
-
-const VISUAL_DONE: Record<string, string> = {
-  SCENE_3D: "La visualisation 3D de votre configuration est jointe au devis (non contractuelle).",
-  PLAN_2D: "La vue 3D n'a pas pu être jointe : un plan 2D de votre configuration est joint au devis.",
-  NONE: "Aucune visualisation n'a pu être jointe : le devis reste établi sur la base de votre configuration.",
-};
 
 /** Obtient la visualisation sans jamais bloquer la demande de devis (délai maximal, erreurs ignorées). */
 async function visualOrNull(getVisual?: () => Promise<string | null>): Promise<string | null> {
@@ -21,9 +19,23 @@ async function visualOrNull(getVisual?: () => Promise<string | null>): Promise<s
   }
 }
 
-export function QuoteForm({ input, kind, configurationId, onDone, compact = false, getVisual }: { input: unknown; kind: "configuration" | "custom" | "accessory" | "general"; configurationId: string | null; onDone?: (number: string, visualNote?: string) => void; compact?: boolean; /** visualisation à joindre (dataURL), voir useQuoteVisual */ getVisual?: () => Promise<string | null> }) {
+/** Recours direct après l'enregistrement : e-mail de contact public (Réglages), en citant la référence de la demande. */
+function ContactAlternatives({ contact, number }: { contact: { email: string | null }; number: string }) {
+  const t = useT("configurator").quote;
+  if (!contact.email) return null;
+  return (
+    <span data-testid="quote-contact" className="block mt-1">
+      {fmt(t.contact, { number })}<a href={`mailto:${contact.email}?subject=${encodeURIComponent(fmt(t.mailSubject, { number }))}`} className="underline">{contact.email}</a>.
+    </span>
+  );
+}
+
+export function QuoteForm({ input, kind, configurationId, onDone, compact = false, getVisual }: { input: unknown; kind: "configuration" | "custom" | "accessory" | "general" | "system"; configurationId: string | null; onDone?: (number: string, visualNote?: string) => void; compact?: boolean; /** visualisation à joindre (dataURL), voir useQuoteVisual */ getVisual?: () => Promise<string | null> }) {
+  const all = useT("configurator");
+  const t = all.quote;
+  const visualDone = (v: string) => (t.visual as Record<string, string>)[v] ?? t.visual.NONE;
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ number: string; visual: string } | null>(null);
+  const [done, setDone] = useState<{ number: string; visual: string; mailed: boolean; contact: { email: string | null } } | null>(null);
   const [preparing, setPreparing] = useState(false);
   const [busy, start] = useTransition();
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -34,22 +46,22 @@ export function QuoteForm({ input, kind, configurationId, onDone, compact = fals
       setPreparing(!!getVisual);
       const visual = await visualOrNull(getVisual);
       setPreparing(false);
-      const r = await requestQuoteAction(input, form, kind, configurationId, visual);
-      if (r.ok) { setDone({ number: r.data.number, visual: r.data.visual }); onDone?.(r.data.number, getVisual ? VISUAL_DONE[r.data.visual] ?? VISUAL_DONE.NONE : undefined); } else setError(r.error);
+      const r = await requestQuoteAction(input, form, kind, configurationId, visual, readAttribution());
+      if (r.ok) { setDone({ number: r.data.number, visual: r.data.visual, mailed: r.data.mailed, contact: r.data.contact }); onDone?.(r.data.number, getVisual ? visualDone(r.data.visual) : undefined); } else setError(r.error);
     });
   };
-  if (done) return <Notice tone="success"><span data-testid="quote-done">Demande {done.number} enregistrée. Vous recevez un e-mail de confirmation ; un conseiller vous répond sous 48 h ouvrées.</span>{getVisual && <span data-testid="quote-visual-status" className="block mt-1">{VISUAL_DONE[done.visual] ?? VISUAL_DONE.NONE}</span>}</Notice>;
+  if (done) return <Notice tone="success"><span data-testid="quote-done">{fmt(t.done, { number: done.number })}{done.mailed ? t.mailed : t.notMailed}</span>{getVisual && <span data-testid="quote-visual-status" className="block mt-1">{visualDone(done.visual)}</span>}{kind === "system" && <span data-testid="quote-delivery-lead-time" className="block mt-1">{all.deliveryLeadTime} {t.deliveryDetails}</span>}<ContactAlternatives contact={done.contact} number={done.number} /></Notice>;
   return (
-    <form onSubmit={submit} className={`grid gap-3 ${compact ? "" : "sm:grid-cols-2"}`} aria-label="Demande de devis">
-      <div><label className="label" htmlFor="q-firstName">Prénom</label><input id="q-firstName" name="firstName" required className="input" autoComplete="given-name" /></div>
-      <div><label className="label" htmlFor="q-lastName">Nom</label><input id="q-lastName" name="lastName" required className="input" autoComplete="family-name" /></div>
-      <div><label className="label" htmlFor="q-email">E-mail</label><input id="q-email" name="email" type="email" required className="input" autoComplete="email" /></div>
-      <div><label className="label" htmlFor="q-phone">Téléphone (facultatif)</label><input id="q-phone" name="phone" type="tel" className="input" autoComplete="tel" /></div>
-      <div><label className="label" htmlFor="q-cp">Code postal du projet</label><input id="q-cp" name="postalCode" className="input" inputMode="numeric" autoComplete="postal-code" /></div>
-      <div className={compact ? "" : "sm:col-span-2"}><label className="label" htmlFor="q-message">Votre projet, vos contraintes</label><textarea id="q-message" name="message" rows={3} className="input" /></div>
-      <label className={`flex items-start gap-2 text-sm ${compact ? "" : "sm:col-span-2"}`}><input type="checkbox" name="consent" required className="mt-1" /> J'accepte que mes informations soient utilisées pour traiter ma demande de devis (voir la politique de confidentialité).</label>
+    <form onSubmit={submit} className={`grid gap-3 ${compact ? "" : "sm:grid-cols-2"}`} aria-label={t.formAria}>
+      <div><label className="label" htmlFor="q-firstName">{t.firstName}</label><input id="q-firstName" name="firstName" required className="input" autoComplete="given-name" /></div>
+      <div><label className="label" htmlFor="q-lastName">{t.lastName}</label><input id="q-lastName" name="lastName" required className="input" autoComplete="family-name" /></div>
+      <div><label className="label" htmlFor="q-email">{t.email}</label><input id="q-email" name="email" type="email" required className="input" autoComplete="email" /></div>
+      <div><label className="label" htmlFor="q-phone">{t.phone}</label><input id="q-phone" name="phone" type="tel" className="input" autoComplete="tel" /></div>
+      <div><label className="label" htmlFor="q-cp">{t.postalCode}</label><input id="q-cp" name="postalCode" className="input" inputMode="numeric" autoComplete="postal-code" /></div>
+      <div className={compact ? "" : "sm:col-span-2"}><label className="label" htmlFor="q-message">{t.message}</label><textarea id="q-message" name="message" rows={3} className="input" /></div>
+      <label className={`flex items-start gap-2 text-sm ${compact ? "" : "sm:col-span-2"}`}><input type="checkbox" name="consent" required className="mt-1" /> <span>{t.consentBefore}<Link href="/confidentialite" className="underline" target="_blank">{t.privacy}</Link>{t.consentAfter}</span></label>
       {error && <div className={compact ? "" : "sm:col-span-2"}><Notice tone="error">{error}</Notice></div>}
-      <div className={compact ? "" : "sm:col-span-2"}><button className="btn-primary" type="submit" disabled={busy}>{preparing ? "Préparation de la visualisation…" : "Envoyer la demande de devis"}</button></div>
+      <div className={compact ? "" : "sm:col-span-2"}><button className="btn-primary" type="submit" disabled={busy}>{preparing ? t.preparing : t.submit}</button></div>
     </form>
   );
 }

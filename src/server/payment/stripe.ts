@@ -8,34 +8,71 @@ function client(): Stripe {
 }
 
 /**
+ * Garde-fous du compte : clé « live » refusée tant que la bascule réelle n'est pas autorisée (PAYMENT_LIVE_ENABLED=true),
+ * et compte vérifié s'il est attendu (STRIPE_ACCOUNT_ID = acct_…), pour ne jamais encaisser sur un autre compte du
+ * même administrateur. Le résultat est mis en cache pour la durée du processus.
+ */
+let accountCheck: Promise<{ id: string; livemode: boolean }> | null = null;
+export function assertStripeAccount(stripe: Stripe = client()): Promise<{ id: string; livemode: boolean }> {
+  const key = process.env.STRIPE_SECRET_KEY ?? "";
+  if (/^(sk|rk)_live_/.test(key) && process.env.PAYMENT_LIVE_ENABLED !== "true") return Promise.reject(new Error("Clé Stripe de production refusée : la bascule en paiement réel n'est pas autorisée (PAYMENT_LIVE_ENABLED)."));
+  accountCheck ??= stripe.accounts.retrieveCurrent().then((acct) => {
+    const expected = process.env.STRIPE_ACCOUNT_ID;
+    if (expected && acct.id !== expected) throw new Error(`Compte Stripe inattendu (${acct.id}) : attendu ${expected}.`);
+    return { id: acct.id, livemode: /^(sk|rk)_live_/.test(key) };
+  });
+  accountCheck.catch(() => { accountCheck = null; });
+  return accountCheck;
+}
+
+/** Pays du marchand (virement SEPA : IBAN présenté au client). */
+const MERCHANT_COUNTRY = () => (process.env.MERCHANT_COUNTRY ?? "FR").toUpperCase();
+
+/**
  * Paiement hébergé Stripe Checkout (aucune donnée de carte ne transite par le site).
- * Paiement fractionné : le moyen Klarna ou Alma est imposé via `allowed_payment_method_types`
- * (le SDK stripe@23 / API 2026-09-30 a retiré `payment_method_types` sur Checkout Session :
- * le moyen doit être activé dans le Dashboard Stripe, sinon la session est refusée).
+ * - « card » (paiement en ligne) : moyens de paiement DYNAMIQUES activés dans le Dashboard et éligibles pour ce client
+ *   (carte, Apple Pay, Google Pay, PayPal, Bancontact…) ; le paiement fractionné et le virement en sont exclus, car
+ *   ils ont leurs propres contrôles d'éligibilité (montant, pays, particulier).
+ * - « bank_transfer » : virement bancaire (solde client Stripe, IBAN virtuel), paiement à notification différée.
+ * - « installments » : Klarna ou Alma imposé via `allowed_payment_method_types` après contrôle d'éligibilité serveur.
  */
 export const stripeProvider: PaymentProvider = {
   name: "STRIPE",
   async createCheckout(order, payment, options) {
     const stripe = client();
+    const account = await assertStripeAccount(stripe);
     const base = process.env.NEXT_PUBLIC_SITE_URL ?? "";
-    const installments = options?.method === "installments" && options.stripePaymentMethod ? options : null;
-    const metadata = { orderId: order.id, paymentId: payment.id, method: options?.method ?? "card", installments: installments ? String(installments.installments ?? "") : "", planProvider: installments ? installments.stripePaymentMethod ?? "" : "" };
+    const method = options?.method ?? "card";
+    const installments = method === "installments" && options?.stripePaymentMethod ? options : null;
+    const metadata = { orderId: order.id, paymentId: payment.id, method, installments: installments ? String(installments.installments ?? "") : "", planProvider: installments ? installments.stripePaymentMethod ?? "" : "", account: account.id };
+    let byMethod: Partial<Stripe.Checkout.SessionCreateParams> = {};
+    if (installments) {
+      byMethod = { allowed_payment_method_types: [installments.stripePaymentMethod!], ...(installments.stripePaymentMethod === "klarna" ? { payment_method_options: { klarna: {} } } : {}) } as never;
+    } else if (method === "bank_transfer") {
+      const customer = await stripe.customers.create({ email: order.email, metadata: { orderId: order.id } });
+      byMethod = {
+        customer: customer.id,
+        allowed_payment_method_types: ["customer_balance"],
+        payment_method_options: { customer_balance: { funding_type: "bank_transfer", bank_transfer: { type: "eu_bank_transfer", eu_bank_transfer: { country: MERCHANT_COUNTRY() } } } },
+      } as never;
+    } else {
+      byMethod = { customer_email: order.email, excluded_payment_method_types: ["customer_balance", "alma", "klarna"] } as never;
+    }
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       locale: "fr",
       client_reference_id: order.id,
-      customer_email: order.email,
       line_items: [{ quantity: 1, price_data: { currency: "eur", unit_amount: order.totalCents, product_data: { name: `Commande ${order.number}` } } }],
       metadata,
       // Les métadonnées du PaymentIntent sont reprises sur la Charge : utile pour charge.refunded / payment_intent.*
       payment_intent_data: { metadata },
-      ...(installments ? { allowed_payment_method_types: [installments.stripePaymentMethod!], ...(installments.stripePaymentMethod === "klarna" ? { payment_method_options: { klarna: {} } } : {}) } : {}),
+      ...byMethod,
       success_url: `${base}/commande/${order.id}/confirmation?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/commande/${order.id}/annulation`,
       expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
-    });
+    } as Stripe.Checkout.SessionCreateParams);
     if (!session.url) throw new Error("Stripe n'a pas renvoyé d'URL de paiement");
-    return { checkoutUrl: session.url, providerRef: session.id };
+    return { checkoutUrl: session.url, providerRef: session.id, providerAccount: account.id, livemode: account.livemode };
   },
 };
 
@@ -56,7 +93,17 @@ export function normalizeStripeEvent(event: Stripe.Event): IncomingEvent {
     case "checkout.session.async_payment_succeeded": {
       const s = event.data.object;
       const paid = s.payment_status === "paid";
-      return { ...base, normalized: paid ? "payment_succeeded" : "ignored", providerRef: s.id, orderId: s.client_reference_id, amountCents: s.amount_total ?? null, paymentIntentId: idOf(s.payment_intent) };
+      // session validée sans fonds (virement, moyen différé) : en attente, jamais « payée » sur un simple retour navigateur
+      const pending = !paid && event.type === "checkout.session.completed" && s.payment_status === "unpaid";
+      return { ...base, normalized: paid ? "payment_succeeded" : pending ? "payment_pending" : "ignored", providerRef: s.id, orderId: s.client_reference_id, amountCents: s.amount_total ?? null, paymentIntentId: idOf(s.payment_intent) };
+    }
+    case "payment_intent.requires_action":
+    case "payment_intent.partially_funded": {
+      // virement bancaire : instructions hébergées, montant restant dû (fonds partiels)
+      const pi = event.data.object;
+      const instr = pi.next_action?.display_bank_transfer_instructions;
+      const remaining = instr?.amount_remaining ?? null;
+      return { ...base, normalized: event.type === "payment_intent.partially_funded" ? "payment_partially_funded" : instr ? "payment_pending" : "ignored", orderId: (pi.metadata?.orderId as string | undefined) ?? null, paymentIntentId: pi.id, amountCents: remaining != null ? pi.amount - remaining : null, instructionsUrl: instr?.hosted_instructions_url ?? null, detail: remaining != null ? `reste dû : ${remaining} c` : null };
     }
     case "checkout.session.async_payment_failed": {
       // Klarna / Alma : refus asynchrone du prestataire après redirection.

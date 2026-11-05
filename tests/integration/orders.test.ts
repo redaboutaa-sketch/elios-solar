@@ -157,7 +157,10 @@ describe("stock", () => {
     // un webhook tardif de succès sur une commande expirée ne la paie pas
     const payment = await prisma.payment.findFirstOrThrow({ where: { orderId: order.id } });
     const r = await ingestPaymentEvent({ provider: "DEMO", eventId: "evt_late_1", type: "demo.payment.succeeded", normalized: "payment_succeeded", providerRef: payment.providerRef, amountCents: payment.amountCents, payload: {} });
-    expect(r.outcome).toBe("order_paid");
-    // NOTE : le fournisseur réel a débité ; la commande passe PAID et doit être traitée (ou remboursée) par l'administration.
+    // les fonds sont reçus mais la commande avait expiré : jamais réactivée automatiquement, signalée pour examen
+    expect(r.outcome).toBe("late_payment_review");
+    const after = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
+    expect(after.status).toBe("EXPIRED");
+    expect(after.paymentReview).toMatch(/rembourser/);
   });
 });

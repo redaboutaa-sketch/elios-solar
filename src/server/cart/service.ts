@@ -3,6 +3,7 @@ import { evaluate, resolveShipping } from "@/domain/engine";
 import type { CatalogSnapshot, ConfigurationInput, DeliveryInput, EvaluationResult, Issue } from "@/domain/types";
 import { loadCatalog } from "@/server/catalog/load";
 import type { Cart, CartLine } from "@/generated/prisma/client";
+import { ONLINE_SALES_CLOSED, onlineSalesEnabled } from "@/server/payment/mode";
 
 export type Owner = { userId?: string | null; guestKey?: string | null };
 
@@ -47,6 +48,7 @@ export async function addLine(owner: Owner, input: ConfigurationInput, configura
   const catalog = await loadCatalog();
   const stripped = stripDelivery(input);
   const result = evaluate(catalog, { ...stripped, delivery: { countryCode: "FR", postalCode: "00000" } } as ConfigurationInput);
+  if (!onlineSalesEnabled()) throw new CartError(ONLINE_SALES_CLOSED);
   if (!result.purchasable) throw new CartError("Cette configuration ne peut pas être ajoutée au panier.", result.issues.filter((i) => i.severity !== "info"));
   const cart = await getOrCreateCart(owner);
   const line = await prisma.cartLine.create({ data: { cartId: cart.id, configurationId: configurationId ?? null, input: stripped as never, qty: 1 } });
@@ -65,6 +67,7 @@ export async function replaceLine(owner: Owner, lineId: string, input: Configura
   const catalog = await loadCatalog();
   const stripped = stripDelivery(input);
   const result = evaluate(catalog, { ...stripped, delivery: { countryCode: "FR", postalCode: "00000" } } as ConfigurationInput);
+  if (!onlineSalesEnabled()) throw new CartError(ONLINE_SALES_CLOSED);
   if (!result.purchasable) throw new CartError("Cette configuration ne peut pas être enregistrée dans le panier.", result.issues.filter((i) => i.severity !== "info"));
   return prisma.cartLine.update({ where: { id: lineId }, data: { input: stripped as never, configurationId: configurationId ?? line.configurationId } });
 }
@@ -98,6 +101,9 @@ function stripDelivery<T extends ConfigurationInput>(input: T): T {
   return { ...input, delivery: { countryCode: input.delivery?.countryCode ?? "FR" } };
 }
 
+/** Mention de livraison d'un panier de systèmes HELIOSTORES (structure seule). */
+export const SYSTEM_DELIVERY_LABEL = "Livraison et pose non comprises : organisées avec un conseiller après la commande";
+
 export interface CartLineEvaluation {
   line: CartLine;
   input: ConfigurationInput;
@@ -113,11 +119,14 @@ export interface CartEvaluation {
   discountCents: number;
   shippingCents: number | null;
   shippingLabel: string | null;
-  shippingStatus: "ok" | "postal_code_required" | "quote" | "unsupported";
+  /** not_included : panier de systèmes HELIOSTORES, livraison et pose organisées avec un conseiller (hors commande en ligne) */
+  shippingStatus: "ok" | "postal_code_required" | "quote" | "unsupported" | "not_included";
   taxCents: number;
   totalCents: number;
   isFinal: boolean;
   purchasable: boolean;
+  /** toutes les lignes sont des systèmes HELIOSTORES (structure seule) */
+  systemOnly: boolean;
   containsDemoData: boolean;
   delivery: DeliveryInput;
   catalogVersion: string;
@@ -136,9 +145,12 @@ export async function evaluateCart(cart: Cart & { lines: CartLine[] }, catalogOv
   const goodsCents = lines.reduce((s, l) => s + l.result.totals.goodsGrossCents * l.line.qty, 0);
   const installationCents = lines.reduce((s, l) => s + l.result.totals.installationGrossCents * l.line.qty, 0);
   const discountCents = lines.reduce((s, l) => s + l.result.totals.discountGrossCents * l.line.qty, 0);
-  const ship = resolveShipping(catalog, delivery);
-  const shippingCents = ship.status === "ok" ? ship.rule.priceCents : null;
-  const shippingLabel = ship.status === "ok" || ship.status === "quote" ? ship.rule.label : null;
+  // systèmes HELIOSTORES : la commande en ligne porte sur la structure seule ; aucune règle de livraison n'est établie
+  // pour ces produits (les règles du catalogue sont celles de l'ancienne démonstration)
+  const systemOnly = lines.length > 0 && lines.every((l) => l.input.kind === "system");
+  const ship = systemOnly ? ({ status: "not_included" } as const) : resolveShipping(catalog, delivery);
+  const shippingCents = ship.status === "ok" ? ship.rule.priceCents : ship.status === "not_included" ? 0 : null;
+  const shippingLabel = ship.status === "ok" || ship.status === "quote" ? ship.rule.label : ship.status === "not_included" ? SYSTEM_DELIVERY_LABEL : null;
   const subtotal = goodsCents + installationCents - discountCents;
   const taxCents = lines.reduce((s, l) => s + l.result.totals.taxCents * l.line.qty, 0) + Math.round(((shippingCents ?? 0) * catalog.taxRateBps) / (10_000 + catalog.taxRateBps));
   const purchasable = lines.length > 0 && lines.every((l) => l.result.purchasable);
@@ -147,6 +159,7 @@ export async function evaluateCart(cart: Cart & { lines: CartLine[] }, catalogOv
     totalCents: subtotal + (shippingCents ?? 0),
     isFinal: purchasable && shippingCents !== null,
     purchasable,
+    systemOnly,
     containsDemoData: lines.some((l) => l.result.containsDemoData),
     delivery,
     catalogVersion: catalog.version,

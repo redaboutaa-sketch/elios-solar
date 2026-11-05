@@ -139,6 +139,10 @@ model SiteSettings {
   shipmentPolicy       String   @default("GROUPED")
   chatEnabled          Boolean  @default(true)
   chatOfflineMessage   String   @default("")
+  /// habillage saisonnier léger (src/domain/seasonal.ts) : actif seulement si un thème est choisi ET dans la période
+  seasonalTheme        String   @default("")
+  seasonalStartsAt     DateTime?
+  seasonalEndsAt       DateTime?
   updatedAt            DateTime @updatedAt
 }
 
@@ -166,6 +170,21 @@ enum FamilyKind {
   SIDE_CLOSURE
   OPTION
   SERVICE
+  /// systèmes configurables à la cote (catalogue HELIOSTORES) : règles sourcées dans `systemRules`
+  PERGOLA_SYSTEM
+  SCREEN_SYSTEM
+  AWNING_SYSTEM
+  ROOF_BLIND_SYSTEM
+  /// moustiquaires (quatrième famille, 2026-10-25)
+  INSECT_SCREEN_SYSTEM
+}
+
+/// Les trois familles publiques du catalogue HELIOSTORES (navigation principale).
+enum ProductCategory {
+  PERGOLAS
+  SCREENS
+  STORES_BANNES
+  MOUSTIQUAIRES
 }
 
 enum FamilyStatus {
@@ -229,6 +248,18 @@ model ProductFamily {
   included           Json              @default("[]")
   dataStatus         DataStatus        @default(DEMO)
   sortOrder          Int               @default(0)
+  /// famille publique (Pergolas, Screens, Stores bannes) ; null = hors navigation (ancien catalogue, brouillon)
+  category           ProductCategory?
+  /// marque commerciale, fabricant du système et référence exacte, quand ils sont établis par une source
+  brand              String?
+  manufacturer       String?
+  supplierRef        String?
+  /// règles du configurateur (dimensions, implantations, options, inclus) avec leurs sources — voir src/domain/system.ts
+  systemRules        Json?
+  /// questions ouvertes bloquant une décision (texte + champ concerné + sources)
+  openQuestions      Json              @default("[]")
+  /// ancien produit de démonstration conservé pour l'historique des devis, projets et commandes
+  legacy             Boolean           @default(false)
   seoTitle           String?
   seoDescription     String?
   createdAt          DateTime          @default(now())
@@ -239,6 +270,12 @@ model ProductFamily {
   media              ProductMedia[]
   documents          Document[]
   technicalSpecs     TechnicalSpec[]
+  /// anciens slugs publics (redirections permanentes, liens enregistrés)
+  legacySlugs        String[]          @default([])
+  /// historique des noms commerciaux : [{ name, until, by, note }]
+  nameHistory        Json              @default("[]")
+  /// dernière modification des textes commerciaux dans l'administration (le seed ne les écrase plus)
+  commercialEditedAt DateTime?
 }
 
 model FamilyFinish {
@@ -578,6 +615,8 @@ model Media {
    * paramètres du rendu (gamme, finition, implantation, équipements)
    */
   renderConfig    Json?
+  /// provenance : fichier source + page, ou URL + date de récupération, modèle représenté, autorisation client
+  provenance      Json?
   sortOrder       Int            @default(0)
   validatedBy     String?
   validatedAt     DateTime?
@@ -781,6 +820,15 @@ model Quote {
   adminNotes         String?
   proposedTotalCents Int?
   containsDemoData   Boolean        @default(true)
+  /// attribution du prospect transmise avec la demande (utm_*, référent, page d'entrée) — jamais par cookie
+  attribution        Json?
+  /// qualification commerciale (à qualifier, qualifié, non qualifié) — indépendante du statut du devis
+  qualification      String         @default("TO_QUALIFY")
+  /// montant HT réellement encaissé hors ligne (centimes) ; null = non renseigné (jamais 0 par défaut)
+  cashedNetCents     Int?
+  cashedAt           DateTime?
+  /// motif de gain ou de perte (saisie commerciale)
+  outcomeNote        String?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   visuals            QuoteVisual[]
@@ -839,12 +887,17 @@ model Order {
   reservations      StockReservation[]
   expiresAt         DateTime?
   paidAt            DateTime?
+  /// devis approuvé à l'origine de la commande (paiement d'un devis) ; null = panier
+  quoteId           String?
+  /// paiement à examiner (ex. fonds reçus après expiration ou annulation de la commande) : jamais résolu automatiquement
+  paymentReview     String?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
   @@index([userId])
   @@index([email])
   @@index([status])
+  @@index([quoteId])
 }
 
 model OrderLine {
@@ -898,6 +951,14 @@ model Payment {
   installments  Int?
   planProvider  String?
   feesCents     Int             @default(0)
+  /// virement bancaire : session validée, fonds attendus (statut PENDING) ; instructions hébergées par le prestataire
+  awaitingFundsSince DateTime?
+  instructionsUrl    String?
+  /// montant déjà reçu (virement partiel), en centimes
+  amountReceivedCents Int?
+  /// identifiant du compte prestataire et environnement (test / live) qui ont traité le paiement
+  providerAccount    String?
+  livemode           Boolean?
   events        PaymentEvent[]
   refunds       Refund[]
   createdAt     DateTime        @default(now())
@@ -999,6 +1060,8 @@ model ContactRequest {
   message       String?
   preferredSlot String?
   status        String   @default("NEW")
+  /// attribution du prospect transmise avec la demande (utm_*, référent, page d'entrée)
+  attribution   Json?
   createdAt     DateTime @default(now())
 }
 
@@ -1153,9 +1216,24 @@ model ContentPage {
 
 model Realisation {
   id          String   @id @default(cuid())
+  /// REALISATION = projet réellement réalisé par HELIOSTORES ; PRODUCTION = fabrication, matériaux, assemblage, contrôle
+  kind        String   @default("REALISATION")
   title       String
   description String   @default("")
+  /// légende publique de la photo
+  caption     String   @default("")
+  /// production chez un partenaire : description publique du site (« usine d'un partenaire fabricant »)
+  partnerNote String   @default("")
+  /// emplacement préparé, en attente d'une photo et d'informations réelles
+  placeholder Boolean  @default(false)
   location    String?
+  /// la localisation peut-elle être affichée (accord du client) ?
+  locationPublic Boolean @default(false)
+  /// crédit de la photographie (photographe, client, HELIOSTORES)
+  credit      String   @default("")
+  /// autorisation de publication : qui l'a donnée, comment (requise pour publier)
+  authorization String @default("")
+  authorizedAt DateTime?
   familySlug  String?
   mediaId     String?
   media       Media?   @relation(fields: [mediaId], references: [id], onDelete: SetNull)
@@ -1163,6 +1241,17 @@ model Realisation {
   isDemo      Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
+}
+
+/// Guide d'accompagnement HELIOSTORES (synthèse des notices) : contenu dans le code, statut de validation en base.
+/// Brouillon tant qu'aucune validation technique n'est enregistrée ; seul un guide publié est visible.
+model InstallGuideStatus {
+  slug        String    @id
+  status      String    @default("DRAFT")
+  validatedBy String?
+  validatedAt DateTime?
+  note        String    @default("")
+  updatedAt   DateTime  @updatedAt
 }
 
 model Showroom {
@@ -1198,6 +1287,12 @@ enum SpecSource {
   DEMO_SEED
   OBSERVED_REFERENCE
   SUPPLIER_CONFIRMED
+  /// fiche technique du modèle exact transmise par le client
+  CLIENT_SHEET
+  /// catalogue ou document technique du fournisseur / fabricant
+  SUPPLIER_DOCUMENT
+  /// page officielle du fabricant
+  MANUFACTURER_WEBSITE
 }
 
 /**
@@ -1322,4 +1417,386 @@ model QuoteVisual {
   createdAt            DateTime       @default(now())
 
   @@index([quoteId])
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Tarifs fournisseur — PRIVÉS (jamais dans l'instantané public)
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+enum PriceNature {
+  /// nature non établie : ni prix de vente, ni prix d'achat confirmé
+  UNKNOWN
+  PURCHASE
+  SALE
+  RECOMMENDED
+  EXAMPLE
+  /// prix catalogue du fournisseur (tarif public du fournisseur) : ni un prix d'achat net, ni un prix de vente HELIOSTORES
+  SUPPLIER_LIST
+}
+
+enum TaxBasis {
+  UNKNOWN
+  HT
+  TTC
+}
+
+enum PriceListStatus {
+  /// importée, en revue (grille : brouillon modifiable)
+  DRAFT
+  /// grille contrôlée, prête à publier (toute modification la ramène en brouillon)
+  VERIFIED
+  /// version de référence (une seule active par source)
+  ACTIVE
+  ARCHIVED
+  REJECTED
+}
+
+/// IMPORT = version d'un fichier importé (classeur, fiche) ; GRID = grille tarifaire administrée (une famille, une variante)
+enum PriceListScope {
+  IMPORT
+  GRID
+}
+
+/// Clientèle visée par une grille ; ALL = toutes (seules ALL et PARTICULIER alimentent la boutique)
+enum PriceClientele {
+  ALL
+  PARTICULIER
+  PROFESSIONNEL
+}
+
+/// Lecture d'une cote : EXACT = la cote doit être une dimension de la grille ; ROUND_UP = dimension supérieure (règle à confirmer)
+enum GridDimRule {
+  EXACT
+  ROUND_UP
+}
+
+enum PriceRowStatus {
+  OK
+  TO_CHECK
+  REJECTED
+}
+
+/// Version importée d'un tarif fournisseur (classeur, fiche). Les montants restent internes tant que leur nature n'est pas établie.
+model SupplierPriceList {
+  id           String             @id @default(cuid())
+  /// identifiant stable de la source (ex. « situation-des-tarifs ») ; les versions se succèdent
+  sourceKey    String
+  version      Int
+  label        String
+  sourceFile   String
+  sourceSha256 String
+  status       PriceListStatus    @default(DRAFT)
+  /// devise indiquée par la source (code ISO, ex. MAD) ; null = non indiquée
+  currency     String?
+  currencyNote String             @default("")
+  taxBasis     TaxBasis           @default(UNKNOWN)
+  nature       PriceNature        @default(UNKNOWN)
+  natureNote   String             @default("")
+  validFrom    DateTime?
+  validTo      DateTime?
+  /// feuilles analysées, formules, contrôles, rapport d'import (lignes intégrées / à vérifier / rejetées)
+  report       Json               @default("{}")
+  notes        String             @default("")
+  importedBy   String?
+  activatedBy  String?
+  activatedAt  DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  rows         SupplierPriceRow[]
+
+  // --- grille tarifaire administrée (scope = GRID) ---
+  scope         PriceListScope @default(IMPORT)
+  /// famille et variante tarifaires couvertes (GRID)
+  familySlug    String?
+  variantKey    String         @default("")
+  /// colonne d'origine (PRIX_FINAL, PRIX_SOURCE, MANUAL)
+  amountRole    String?
+  clientele     PriceClientele @default(ALL)
+  /// taux de TVA appliqué à un prix HT (points de base) ; null = taux du catalogue
+  vatRateBps    Int?
+  dimRule       GridDimRule    @default(EXACT)
+  /// justification d'une règle de lecture ROUND_UP (obligatoire pour publier)
+  dimRuleNote   String         @default("")
+  /// implantations / variantes concernées (texte libre affiché aux administrateurs)
+  scopeNote     String         @default("")
+  included      String         @default("")
+  excluded      String         @default("")
+  /// version importée d'où viennent les cellules
+  originListId  String?
+  /// version reprise (« reprendre en brouillon », recalcul)
+  basedOnId     String?
+  /// version en vigueur du même contexte quand le brouillon a été créé (détection d'un brouillon obsolète)
+  baseActiveId  String?
+  /// compteur de modifications (verrou optimiste)
+  revision      Int            @default(0)
+  zeroConfirmed Boolean        @default(false)
+  verifiedAt    DateTime?
+  verifiedBy    String?
+  publishedAt   DateTime?
+  publishedBy   String?
+  deactivatedAt DateTime?
+  deactivatedBy String?
+
+  @@unique([sourceKey, version])
+  @@index([sourceKey, status])
+  @@index([scope, familySlug, status])
+}
+
+/// Ligne de tarif : montant d'une cellule précise, avec sa provenance et ses contrôles.
+model SupplierPriceRow {
+  id          String            @id @default(cuid())
+  listId      String
+  list        SupplierPriceList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  familySlug  String
+  /// variante tarifaire telle que nommée par la source (ex. « autoportante », « murale », « module suivant »)
+  variantKey  String            @default("")
+  /// GRID = produit à la dimension ; OPTION = équipement / supplément
+  kind        String            @default("GRID")
+  code        String            @default("")
+  label       String            @default("")
+  /// dimension principale (projection, hauteur…) et plage de largeur couvertes, en mm
+  dimAKey     String?
+  dimAmm      Int?
+  widthMinMm  Int?
+  widthMaxMm  Int?
+  /// conditions d'application (plages, unité, remise, « non remisé »…)
+  conditions  Json              @default("{}")
+  /// montant en unités mineures (centimes) de `currency` ; null = cellule vide (jamais zéro par défaut)
+  amountMinor Int?
+  currency    String?
+  /// colonne / nature de la valeur dans la source (ex. « C Prix », « F Prix final HELIOSTORES »)
+  amountRole  String
+  /// formule source et valeur en cache, quand la cellule est calculée
+  formula     String?
+  cachedValue Float?
+  sourceRef   String
+  status      PriceRowStatus    @default(TO_CHECK)
+  issues      String[]          @default([])
+  createdAt   DateTime          @default(now())
+  /// IMPORT = cellule lue dans un fichier ; MANUAL = saisie dans l'administration
+  origin      String            @default("IMPORT")
+  editedBy    String?
+  editedAt    DateTime?
+
+  @@index([listId, familySlug])
+}
+
+/// Téléversement d'un classeur ou d'une fiche depuis l'administration : fichiers privés gardés en base le temps de
+/// l'analyse, effacés après l'import ou l'abandon (seules l'empreinte et les métadonnées restent).
+model PriceImportUpload {
+  id         String            @id @default(cuid())
+  status     String            @default("ANALYSED")
+  createdBy  String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  /// correspondances corrigées par l'administrateur (feuille/bloc → famille/variante, colonnes → nature)
+  mapping    Json              @default("{}")
+  /// résultat de l'import (versions et grilles créées)
+  result     Json              @default("{}")
+  importedAt DateTime?
+  files      PriceImportFile[]
+}
+
+model PriceImportFile {
+  id        String            @id @default(cuid())
+  uploadId  String
+  upload    PriceImportUpload @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  fileName  String
+  sha256    String
+  size      Int
+  /// contenu (vidé après import ou abandon)
+  bytes     Bytes?
+
+  @@index([uploadId])
+}
+
+enum LaunchInputStatus {
+  OPEN
+  ANSWERED
+  VALIDATED
+  WAIVED
+}
+
+enum LaunchInputOwner {
+  CLIENT
+  SUPPLIER
+  OPERATOR
+}
+
+/// Registre de lancement : données fournisseur, commerciales ou d'exploitation attendues, leur conséquence sur le site
+/// et leur validation datée. Aucun montant ni secret : la réponse détaillée reste dans les documents privés.
+model LaunchInput {
+  id             String            @id
+  area           String
+  product        String
+  subject        String
+  sources        String            @default("")
+  divergence     String            @default("")
+  expected       String
+  owner          LaunchInputOwner
+  siteImpact     String
+  blocksLaunch   Boolean           @default(false)
+  status         LaunchInputStatus @default(OPEN)
+  answerNote     String            @default("")
+  validatedAt    DateTime?
+  validatedBy    String?
+  sortOrder      Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([status])
+}
+
+/// ------------------------------------------------------------------
+/// Comparatif marché (administration, interne) : jamais lu par le site public
+/// ------------------------------------------------------------------
+
+/// Politique de coût interne : remise revendeur sur le prix catalogue éligible, éligibilité des postes, coûts directs
+/// par défaut, objectifs et règles de la recommandation. Versionnée : une version n'est jamais modifiée ; la version
+/// en vigueur est la plus récente dont la date d'effet est passée. Paramètre de coût, jamais une remise client.
+model CostPolicyVersion {
+  id                    String   @id @default(cuid())
+  version               Int      @unique
+  validFrom             DateTime
+  /// remise revendeur (points de base : 3700 = 37 %)
+  discountBps           Int
+  /// { "structure": "ELIGIBLE", "supplement:<code>": "ELIGIBLE" | "NOT_ELIGIBLE" | "UNKNOWN" } ; absent = inconnu
+  eligibility           Json     @default("{}")
+  /// coûts directs par défaut (transport, pose, paiement, acquisition, SAV, commission) ; inconnu ≠ zéro
+  directCosts           Json     @default("[]")
+  /// objectif de marge brute en % du prix de vente (points de base) ; null = non défini
+  marginTargetBps       Int?
+  /// objectif de contribution après coûts directs (points de base) ; prioritaire sur la marge s'il est défini
+  contributionTargetBps Int?
+  /// relevé plus ancien : signalé et écarté du calcul courant
+  staleDays             Int      @default(120)
+  /// tolérance de dimensions par côté (points de base)
+  dimToleranceBps       Int      @default(1000)
+  /// règle d'arrondi du prix conseillé { stepMinor, basis }
+  rounding              Json     @default("{}")
+  note                  String   @default("")
+  createdBy             String?
+  createdAt             DateTime @default(now())
+
+  @@index([validFrom])
+}
+
+enum MarketComparability {
+  STRONG
+  PARTIAL
+  INSUFFICIENT
+}
+
+enum MarketRecordStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+/// Relevé de prix concurrent (offre publique consultée, sans commande ni demande de devis). Chaque correction ou
+/// archivage incrémente `revision` et garde l'état précédent dans MarketObservationRevision.
+model MarketObservation {
+  id                  String                      @id @default(cuid())
+  status              MarketRecordStatus          @default(ACTIVE)
+  revision            Int                         @default(1)
+  retailer            String
+  manufacturer        String                      @default("")
+  model               String
+  url                 String
+  observedAt          DateTime
+  country             String                      @default("FR")
+  currency            String                      @default("EUR")
+  /// produit HELIOSTORES comparé (slug de famille)
+  familySlug          String
+  widthMm             Int?
+  depthMm             Int?
+  heightMm            Int?
+  /// freestanding | wall | unknown
+  mounting            String                      @default("unknown")
+  roofType            String                      @default("")
+  control             String                      @default("")
+  options             String                      @default("")
+  /// prix constaté (centimes) et sa base fiscale
+  priceMinor          Int
+  taxBasis            TaxBasis                    @default(UNKNOWN)
+  /// configured (configuration précise) | fixed_size (taille fixe affichée) | from (« à partir de »)
+  priceKind           String                      @default("configured")
+  regularPriceMinor   Int?
+  promoPriceMinor     Int?
+  promoEnd            DateTime?
+  /// { delivery|installation|motor|remote|led|screen|glazing: { status, extraAmountMinor?, note? } }
+  scope               Json                        @default("{}")
+  warranty            String                      @default("")
+  material            String                      @default("")
+  blades              String                      @default("")
+  resistance          String                      @default("")
+  sav                 String                      @default("")
+  comparability       MarketComparability         @default(INSUFFICIENT)
+  comparabilityReason String                      @default("")
+  evidence            String                      @default("")
+  /// accès à la source (ok, prix sur devis, rendu non lisible…)
+  access              String                      @default("")
+  notes               String                      @default("")
+  /// origine : manual (saisie), import:<nom> (fichier de relevés)
+  source              String                      @default("manual")
+  createdBy           String?
+  updatedBy           String?
+  archivedAt          DateTime?
+  archivedBy          String?
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+  revisions           MarketObservationRevision[]
+
+  @@index([familySlug, status])
+  @@index([observedAt])
+}
+
+model MarketObservationRevision {
+  id            String            @id @default(cuid())
+  observationId String
+  observation   MarketObservation @relation(fields: [observationId], references: [id], onDelete: Cascade)
+  revision      Int
+  /// create | update | archive | restore
+  action        String
+  /// état du relevé après l'opération
+  data          Json
+  reason        String            @default("")
+  actorEmail    String?
+  createdAt     DateTime          @default(now())
+
+  @@unique([observationId, revision])
+}
+
+/// Proposition de prix en brouillon, liée à la version tarifaire de vente utilisée. Elle ne change aucun prix : un
+/// brouillon de grille peut en être créé, dont la publication reste manuelle (Administration → Tarifs).
+model MarketPriceProposal {
+  id               String             @id @default(cuid())
+  status           MarketRecordStatus @default(ACTIVE)
+  familySlug       String
+  variantKey       String             @default("")
+  /// configuration étudiée (cotes, pose, teinte, commande, options)
+  config           Json
+  /// version de la grille de vente utilisée (SupplierPriceList) et version de la politique de coût
+  priceListId      String?
+  priceListVersion Int?
+  policyVersionId  String?
+  currentHtMinor   Int?
+  proposedHtMinor  Int
+  proposedTtcMinor Int
+  scenario         String
+  /// coûts, marges, contribution, comparables retenus, confiance (instantané)
+  snapshot         Json
+  justification    String             @default("")
+  /// brouillon de grille créé depuis la proposition (jamais publié automatiquement)
+  gridDraftId      String?
+  createdBy        String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([familySlug, createdAt])
 }

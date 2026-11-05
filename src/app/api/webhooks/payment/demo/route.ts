@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { demoVerify, ingestPaymentEvent } from "@/server/payment";
+import { salesMode } from "@/server/payment/mode";
 
 export async function POST(req: Request) {
-  if (process.env.PAYMENT_PROVIDER === "stripe") return NextResponse.json({ error: "demo désactivé" }, { status: 404 });
+  if (salesMode() !== "demo") return NextResponse.json({ error: "demo désactivé" }, { status: 404 });
   const raw = await req.text();
   if (!demoVerify(raw, req.headers.get("x-demo-signature"))) return NextResponse.json({ error: "signature invalide" }, { status: 400 });
   let body: { id?: string; type?: string; data?: { providerRef?: string; orderId?: string; amountCents?: number } };

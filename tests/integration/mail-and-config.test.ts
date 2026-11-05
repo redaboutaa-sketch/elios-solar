@@ -32,6 +32,27 @@ describe("file d'e-mails", () => {
     expect((await prisma.emailOutbox.findFirstOrThrow()).status).toBe("SENT");
     expect((await processOutbox(working)).pending).toBe(0);
   });
+
+  it("raccordement d'un SMTP : les messages antérieurs à MAIL_SEND_AFTER ne partent pas seuls, « Réessayer » les libère un par un", async () => {
+    await enqueueEmail({ to: "ancien@test.invalid", subject: "s", template: "contact-ack", payload: { name: "A" }, dedupeKey: "old" });
+    const old = await prisma.emailOutbox.findFirstOrThrow();
+    await prisma.emailOutbox.update({ where: { id: old.id }, data: { createdAt: new Date(Date.now() - 3_600_000), nextAttemptAt: new Date(Date.now() - 3_600_000) } });
+    process.env.MAIL_SEND_AFTER = new Date(Date.now() - 60_000).toISOString();
+    try {
+      await enqueueEmail({ to: "nouveau@test.invalid", subject: "s", template: "contact-ack", payload: { name: "N" }, dedupeKey: "new" });
+      const sent: string[] = [];
+      const working: MailTransport = { async send(m) { sent.push(m.to); return { id: "ok" }; } };
+      await processOutbox(working);
+      expect(sent).toEqual(["nouveau@test.invalid"]);
+      expect((await prisma.emailOutbox.findUniqueOrThrow({ where: { id: old.id } })).status).toBe("PENDING");
+      // équivalent de « Réessayer » : prochain essai maintenant, après le seuil
+      await prisma.emailOutbox.update({ where: { id: old.id }, data: { nextAttemptAt: new Date() } });
+      await processOutbox(working);
+      expect(sent).toEqual(["nouveau@test.invalid", "ancien@test.invalid"]);
+    } finally {
+      delete process.env.MAIL_SEND_AFTER;
+    }
+  });
 });
 
 describe("devis", () => {
@@ -43,6 +64,7 @@ describe("devis", () => {
     expect(q.number).toMatch(/^DEV-\d{6}-[A-Z0-9]{6}$/);
     const stored = await prisma.quote.findUniqueOrThrow({ where: { id: q.id } });
     expect((stored.snapshot as { input: typeof input }).input.widthMm).toBe(3500);
+    expect((stored.snapshot as { deliveryNote?: string }).deliveryNote).toBe("Délai de livraison : entre 4 et 7 semaines selon le lieu de livraison.");
     const mails = await prisma.emailOutbox.findMany({ orderBy: { createdAt: "asc" } });
     expect(mails.map((m) => [m.toEmail, m.template])).toEqual([["ana@test.invalid", "quote-received"], ["admin@test.invalid", "quote-admin-notification"]]);
   });

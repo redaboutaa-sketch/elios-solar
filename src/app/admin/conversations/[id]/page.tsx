@@ -41,11 +41,11 @@ export default async function ConversationPage(props: PageProps<"/admin/conversa
               return (
                 <li key={m.id} className={`rounded-lg border p-3 ${tone}`}>
                   <p className="text-xs text-stone-700">
-                    {internal ? "Note interne" : AUTHOR_FR[m.author]}{m.authorUserId && m.author !== "CUSTOMER" ? ` · ${nameOf.get(m.authorUserId) ?? "—"}` : ""} · {fmtDate(m.createdAt)}
+                    {internal ? "Note interne" : m.author === "ASSISTANT" && meta.kind === "guide" ? "Aide automatique" : AUTHOR_FR[m.author]}{m.authorUserId && m.author !== "CUSTOMER" ? ` · ${nameOf.get(m.authorUserId) ?? "—"}` : ""} · {fmtDate(m.createdAt)}
                     {meta.kind === "handover" && <span className="ml-2 badge-warn">transmission demandée</span>}
                   </p>
                   <p className="mt-1 whitespace-pre-wrap break-words">{m.body}</p>
-                  {m.author === "ASSISTANT" && <p className="mt-1 text-xs italic text-stone-700">Réponse automatique indicative{meta.model ? ` (${meta.model})` : ""}.</p>}
+                  {m.author === "ASSISTANT" && <p className="mt-1 text-xs italic text-stone-700">{meta.kind === "guide" ? `Réponse déterministe tirée des informations publiées${meta.topic ? ` (thème : ${meta.topic})` : ""}.` : `Réponse automatique indicative${meta.model ? ` (${meta.model})` : ""}.`}</p>}
                 </li>
               );
             })}

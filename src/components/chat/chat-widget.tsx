@@ -1,16 +1,18 @@
 "use client";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
-import Link from "next/link";
+import Link from "@/i18n/link";
+import { useIntl, useT } from "@/i18n/client";
 import { usePathname } from "next/navigation";
 import { MessageCircle, Paperclip, Send, X } from "lucide-react";
-import { attachProjectAction, closeChatAction, handoverAction, loadChatAction, sendChatMessageAction } from "@/server/actions/chat";
+import { attachProjectAction, closeChatAction, guideTopicAction, handoverAction, loadChatAction, sendChatMessageAction } from "@/server/actions/chat";
+import { GUIDE_TOPICS, type GuideAnswer, type GuideTopicId } from "@/domain/chat-guide";
 import type { ChatMessageDto, ChatPollResponse, ChatState } from "./types";
 
 const POLL_MS = 6000;
 const MAX_LEN = 2000;
 
-function fmtTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+function fmtTime(iso: string, intl: string): string {
+  return new Date(iso).toLocaleTimeString(intl, { hour: "2-digit", minute: "2-digit" });
 }
 
 function mergeMessages(current: ChatMessageDto[], incoming: ChatMessageDto[]): ChatMessageDto[] {
@@ -21,6 +23,7 @@ function mergeMessages(current: ChatMessageDto[], incoming: ChatMessageDto[]): C
 }
 
 export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initialOnline: boolean }) {
+  const t = useT("chat");
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<ChatState | null>(null);
   const [online, setOnline] = useState(initialOnline);
@@ -30,6 +33,8 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
   const [name, setName] = useState("");
   const [consent, setConsent] = useState(false);
   const [attach, setAttach] = useState<string>("");
+  /** réponses de l'aide immédiate consultées avant tout message (non enregistrées) */
+  const [quick, setQuick] = useState<Array<{ id: string; label: string; answer: GuideAnswer }>>([]);
   const [busy, start] = useTransition();
   const pathname = usePathname();
   const titleId = useId();
@@ -60,8 +65,15 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
 
   useEffect(() => { if (open && !state) load(); }, [open, state, load]);
   useEffect(() => { if (open) closeRef.current?.focus(); else openerRef.current?.focus({ preventScroll: true }); }, [open]);
+  // Échap ferme le panneau même si le focus l'a quitté (ex. après un envoi)
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !e.defaultPrevented) setOpen(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
   useEffect(() => { lastAtRef.current = messages[messages.length - 1]?.createdAt ?? null; }, [messages]);
-  useEffect(() => { const el = listRef.current; if (el) el.scrollTop = el.scrollHeight; }, [messages.length, open]);
+  useEffect(() => { const el = listRef.current; if (el) el.scrollTop = el.scrollHeight; }, [messages.length, open, quick]);
 
   // Rafraîchissement par polling toutes les 6 s tant que le panneau est ouvert.
   useEffect(() => {
@@ -70,6 +82,7 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
     const tick = async () => {
       const last = lastAtRef.current;
       const qs = new URLSearchParams({ conversationId, read: "1", ...(last ? { after: last } : {}) });
+      if (document.hidden) return; // onglet masqué : pas de rafraîchissement
       try {
         const res = await fetch(`/api/chat/messages?${qs}`, { cache: "no-store" });
         if (!res.ok || cancelled) return;
@@ -91,8 +104,8 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
   const send = () => {
     const body = draft.trim();
     if (!body) return;
-    if (needsConsent && !consent) { setError("Merci d'accepter la politique de confidentialité avant d'envoyer."); return; }
-    if (needsEmail && !email.trim()) { setError("Indiquez votre adresse e-mail pour recevoir la réponse."); return; }
+    if (needsConsent && !consent) { setError(t.errConsent); return; }
+    if (needsEmail && !email.trim()) { setError(t.errEmail); return; }
     setError(null);
     start(async () => {
       const r = await sendChatMessageAction({
@@ -131,6 +144,15 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
     });
   };
 
+  const askTopic = (topic: GuideTopicId, label: string) => {
+    start(async () => {
+      const r = await guideTopicAction({ topic });
+      if (!r.ok) { setError(r.error); return; }
+      setError(null);
+      setQuick((q) => [...q.filter((x) => x.id !== topic), { id: topic, label, answer: r.data }]);
+    });
+  };
+
   const closeConversation = () => {
     if (!conversation) return;
     start(async () => {
@@ -142,7 +164,7 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
   };
 
   const attachOptions: Array<{ value: string; label: string }> = [
-    ...(shareToken ? [{ value: "token", label: "Le projet affiché sur cette page" }] : []),
+    ...(shareToken ? [{ value: "token", label: t.attachCurrent }] : []),
     ...(state?.projects ?? []).map((p) => ({ value: p.id, label: p.title })),
   ];
 
@@ -150,11 +172,12 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
     <>
       <button
         ref={openerRef}
+        data-chat-launcher
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-controls={open ? `${titleId}-panel` : undefined}
-        aria-label={open ? "Fermer le chat" : "Ouvrir le chat avec un conseiller"}
+        aria-label={open ? t.close : t.open}
         className="fixed right-4 bottom-[5.5rem] z-40 inline-flex h-14 w-14 items-center justify-center rounded-full bg-anthracite text-sand-50 shadow-soft hover:bg-ink lg:right-6 lg:bottom-6"
       >
         {open ? <X className="size-6" aria-hidden="true" /> : <MessageCircle className="size-6" aria-hidden="true" />}
@@ -174,26 +197,35 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
         >
           <header className="flex items-start justify-between gap-2 border-b border-sand-200 bg-sand-50 px-4 py-3">
             <div>
-              <h2 id={titleId} className="font-display text-lg leading-tight">Discuter avec un conseiller</h2>
-              <p id={descId} className="mt-0.5 flex items-center gap-1.5 text-xs text-stone-700">
+              <h2 id={titleId} className="font-display text-lg leading-tight">{online ? t.titleOnline : t.titleOffline}</h2>
+              <p id={descId} className="mt-0.5 flex items-center gap-1.5 text-xs text-stone-700" data-testid="chat-status">
                 <span className={`inline-block h-2 w-2 rounded-full ${online ? "bg-success" : "bg-stone-700"}`} aria-hidden="true" />
-                {online ? "Un conseiller est disponible" : "Nos conseillers ne sont pas connectés : laissez un message, réponse par e-mail"}
+                {online ? t.statusOnline : state?.mailDelivery ? t.statusOfflineMail : t.statusOffline}
               </p>
             </div>
-            <button ref={closeRef} type="button" onClick={() => setOpen(false)} className="btn-ghost min-h-0 px-2 py-2" aria-label="Fermer le chat"><X className="size-5" aria-hidden="true" /></button>
+            <button ref={closeRef} type="button" onClick={() => setOpen(false)} className="btn-ghost min-h-0 px-2 py-2" aria-label={t.close}><X className="size-5" aria-hidden="true" /></button>
           </header>
 
-          <div ref={listRef} className="min-h-40 flex-1 space-y-2 overflow-y-auto px-4 py-3 text-sm" aria-live="polite" aria-relevant="additions" aria-label="Messages">
-            {!state && <p className="text-stone-700">Chargement…</p>}
+          <div ref={listRef} className="min-h-40 flex-1 space-y-2 overflow-y-auto px-4 py-3 text-sm" aria-live="polite" aria-relevant="additions" aria-label={t.messages}>
+            {!state && <p className="text-stone-700">{t.loading}</p>}
             {state && !online && !conversation && <p className="rounded-lg bg-sand-100 p-3 text-stone-800">{state.offlineMessage}</p>}
-            {state && messages.length === 0 && online && <p className="text-stone-700">Posez votre question : dimensions, finitions, options, livraison… Nous vous répondons dans ce fil.</p>}
+            {state && messages.length === 0 && online && <p className="text-stone-700">{t.onlineIntro}</p>}
+            {state && messages.length === 0 && (
+              <div data-testid="chat-quick-help">
+                <p className="text-xs font-medium text-stone-800">{t.quickHelp}</p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {GUIDE_TOPICS.map((g) => <button key={g.id} type="button" onClick={() => askTopic(g.id, t.topics[g.id])} disabled={busy} aria-pressed={quick.some((q) => q.id === g.id)} className="rounded-full border border-sand-300 bg-white px-3 py-1 text-xs text-ink hover:border-anthracite focus-visible:outline-2 aria-pressed:border-anthracite aria-pressed:bg-sand-100">{t.topics[g.id]}</button>)}
+                </div>
+                {quick.map((q) => <GuideBubble key={q.id} title={q.label} text={q.answer.text} links={q.answer.links} />)}
+              </div>
+            )}
             {messages.map((m) => <Message key={m.id} m={m} />)}
-            {conversation?.status === "CLOSED" && <p className="text-center text-xs text-stone-700">Conversation terminée. Envoyez un message pour en ouvrir une nouvelle.</p>}
+            {conversation?.status === "CLOSED" && <p className="text-center text-xs text-stone-700">{t.closed}</p>}
           </div>
 
-          {state?.assistant && conversation && lastAssistant && !handedOver && (
+          {conversation && lastAssistant && !handedOver && (
             <div className="border-t border-sand-200 px-4 py-2">
-              <button type="button" onClick={handover} disabled={busy} className="btn-secondary min-h-0 w-full py-2 text-xs">Parler à un conseiller</button>
+              <button type="button" onClick={handover} disabled={busy} className="btn-secondary min-h-0 w-full py-2 text-xs">{online ? t.handoverOnline : t.handoverOffline}</button>
             </div>
           )}
 
@@ -201,11 +233,11 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
             {!conversation && (
               <div className="grid gap-2 sm:grid-cols-2">
                 <div>
-                  <label className="label text-xs" htmlFor={`${titleId}-name`}>Prénom (facultatif)</label>
+                  <label className="label text-xs" htmlFor={`${titleId}-name`}>{t.firstName}</label>
                   <input id={`${titleId}-name`} className="input min-h-10 py-1.5 text-sm" value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" maxLength={80} />
                 </div>
                 <div>
-                  <label className="label text-xs" htmlFor={`${titleId}-email`}>E-mail {needsEmail ? "(obligatoire)" : "(facultatif)"}</label>
+                  <label className="label text-xs" htmlFor={`${titleId}-email`}>{t.email} {needsEmail ? t.required : t.optional}</label>
                   <input id={`${titleId}-email`} type="email" className="input min-h-10 py-1.5 text-sm" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required={needsEmail} maxLength={200} />
                 </div>
               </div>
@@ -213,27 +245,27 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
             {needsConsent && (
               <label className="flex items-start gap-2 text-xs text-stone-800">
                 <input type="checkbox" className="mt-0.5 h-4 w-4" checked={consent} onChange={(e) => setConsent(e.target.checked)} aria-required="true" />
-                <span>J'accepte que mes messages soient conservés pour traiter ma demande (<Link href="/confidentialite" className="underline" target="_blank">politique de confidentialité</Link>).</span>
+                <span>{t.consentBefore}<Link href="/confidentialite" className="underline" target="_blank">{t.consentLink}</Link>{t.consentAfter}</span>
               </label>
             )}
             <div>
-              <label className="sr-only" htmlFor={`${titleId}-msg`}>Votre message</label>
-              <textarea id={`${titleId}-msg`} className="input min-h-10 resize-none py-2 text-sm" rows={2} maxLength={MAX_LEN} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Votre message…" onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
+              <label className="sr-only" htmlFor={`${titleId}-msg`}>{t.yourMessage}</label>
+              <textarea id={`${titleId}-msg`} className="input min-h-10 resize-none py-2 text-sm" rows={2} maxLength={MAX_LEN} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={t.placeholder} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
             </div>
             {attachOptions.length > 0 && (
               <div className="flex items-center gap-2">
-                <label className="sr-only" htmlFor={`${titleId}-attach`}>Joindre ma configuration</label>
+                <label className="sr-only" htmlFor={`${titleId}-attach`}>{t.attachLabel}</label>
                 <select id={`${titleId}-attach`} className="input min-h-10 flex-1 py-1.5 text-xs" value={attach} onChange={(e) => setAttach(e.target.value)}>
-                  <option value="">Joindre ma configuration…</option>
+                  <option value="">{t.attachPlaceholder}</option>
                   {attachOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
-                {conversation && attach && <button type="button" onClick={attachNow} disabled={busy} className="btn-secondary min-h-0 px-3 py-2 text-xs" aria-label="Joindre maintenant"><Paperclip className="size-4" aria-hidden="true" /></button>}
+                {conversation && attach && <button type="button" onClick={attachNow} disabled={busy} className="btn-secondary min-h-0 px-3 py-2 text-xs" aria-label={t.attachNow}><Paperclip className="size-4" aria-hidden="true" /></button>}
               </div>
             )}
             {error && <p role="alert" className="text-xs text-danger">{error}</p>}
             <div className="flex items-center justify-between gap-2">
-              {conversation && conversation.status !== "CLOSED" ? <button type="button" onClick={closeConversation} disabled={busy} className="text-xs text-stone-700 underline">Terminer la conversation</button> : <span />}
-              <button type="submit" disabled={busy || !draft.trim()} className="btn-primary min-h-0 px-4 py-2 text-sm"><Send className="size-4" aria-hidden="true" /> Envoyer</button>
+              {conversation && conversation.status !== "CLOSED" ? <button type="button" onClick={closeConversation} disabled={busy} className="text-xs text-stone-700 underline">{t.end}</button> : <span />}
+              <button type="submit" disabled={busy || !draft.trim()} className="btn-primary min-h-0 px-4 py-2 text-sm"><Send className="size-4" aria-hidden="true" /> {t.send}</button>
             </div>
           </form>
         </section>
@@ -243,22 +275,41 @@ export function ChatWidget({ enabled, initialOnline }: { enabled: boolean; initi
 }
 
 function Message({ m }: { m: ChatMessageDto }) {
+  const t = useT("chat");
+  const intl = useIntl();
   if (m.author === "SYSTEM") {
     return (
       <p className="text-center text-xs text-stone-700">
         {m.body}
-        {m.meta?.shareToken && <> — <Link href={`/projets/${m.meta.shareToken}`} className="underline">voir le projet</Link></>}
+        {m.meta?.shareToken && <> — <Link href={`/projets/${m.meta.shareToken}`} className="underline">{t.viewProject}</Link></>}
       </p>
     );
   }
   const mine = m.author === "CUSTOMER";
-  const label = mine ? "Vous" : m.author === "ASSISTANT" ? "Assistant automatique" : "Conseiller";
+  const guide = m.author === "ASSISTANT" && m.meta?.kind === "guide";
+  if (guide) return <GuideBubble title={`${t.guideAuthor} · ${fmtTime(m.createdAt, intl)}`} text={m.body} links={m.meta?.links ?? []} />;
+  const label = mine ? t.you : m.author === "ASSISTANT" ? t.assistant : t.adviser;
   return (
     <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
       <div className={`max-w-[85%] rounded-xl px-3 py-2 ${mine ? "bg-anthracite text-sand-50" : m.author === "ASSISTANT" ? "border border-sand-300 bg-sand-50 text-ink" : "bg-sand-100 text-ink"}`}>
-        <p className={`text-[11px] ${mine ? "text-sand-200" : "text-stone-700"}`}>{label} · {fmtTime(m.createdAt)}</p>
+        <p className={`text-[11px] ${mine ? "text-sand-200" : "text-stone-700"}`}>{label} · {fmtTime(m.createdAt, intl)}</p>
         <p className="whitespace-pre-wrap break-words">{m.body}</p>
-        {m.author === "ASSISTANT" && <p className="mt-1 text-[11px] italic text-stone-700">Assistant automatique — réponse indicative, à confirmer par un conseiller</p>}
+        {m.author === "ASSISTANT" && <p className="mt-1 text-[11px] italic text-stone-700">{t.assistantNote}</p>}
+      </div>
+    </div>
+  );
+}
+
+/** Réponse de l'aide immédiate : texte validé et liens vers les pages du site (jamais présentée comme un conseiller). */
+function GuideBubble({ title, text, links }: { title: string; text: string; links: Array<{ href: string; label: string }> }) {
+  const t = useT("chat");
+  return (
+    <div className="mt-2 flex justify-start" data-testid="chat-guide-answer">
+      <div className="max-w-[90%] rounded-xl border border-sand-300 bg-sand-50 px-3 py-2 text-ink">
+        <p className="text-[11px] text-stone-700">{title}</p>
+        <p className="whitespace-pre-wrap break-words">{text}</p>
+        {links.length > 0 && <ul className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs">{links.map((l) => <li key={l.href}><Link href={l.href} className="underline underline-offset-2">{l.label}</Link></li>)}</ul>}
+        <p className="mt-1 text-[11px] italic text-stone-700">{t.guideDisclaimer}</p>
       </div>
     </div>
   );

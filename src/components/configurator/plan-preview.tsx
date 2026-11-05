@@ -2,8 +2,8 @@
 import type { Layout, SegmentChoice } from "@/domain/types";
 import { SIDE_LABELS } from "@/domain/layout";
 
-const CLOSURE_COLORS: Record<string, string> = { "paroi-vitree": "#7fb0c4", "persienne-aluminium": "#8d6b4e", "store-vertical-zip": "#5c6166" };
-const CLOSURE_SHORT: Record<string, string> = { "paroi-vitree": "Vitrage", "persienne-aluminium": "Persienne", "store-vertical-zip": "Store ZIP" };
+const CLOSURE_COLORS: Record<string, string> = { "paroi-vitree": "#7fb0c4", "persienne-aluminium": "#8d6b4e", "store-vertical-zip": "#5c6166", helioscreen: "#5c6166", sliding_glass: "#7fb0c4" };
+const CLOSURE_SHORT: Record<string, string> = { "paroi-vitree": "Vitrage", "persienne-aluminium": "Persienne", "store-vertical-zip": "Store ZIP", helioscreen: "Screen (souhait)", sliding_glass: "Vitrage coulissant (souhait)" };
 
 /**
  * Vue en plan (dessus) fidèle à la configuration : dimensions, mur, poteaux, segments

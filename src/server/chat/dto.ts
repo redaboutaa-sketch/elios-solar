@@ -8,7 +8,7 @@ export function toMessageDto(m: ChatMessageRow): ChatMessageDto {
     author: m.author,
     body: m.body,
     createdAt: m.createdAt.toISOString(),
-    meta: meta ? { kind: meta.kind, handover: meta.handover, configurationId: meta.configurationId, shareToken: meta.shareToken, quoteId: meta.quoteId, orderId: meta.orderId } : null,
+    meta: meta ? { kind: meta.kind, handover: meta.handover, configurationId: meta.configurationId, shareToken: meta.shareToken, quoteId: meta.quoteId, orderId: meta.orderId, links: meta.links?.filter((l) => l.href.startsWith("/") && !l.href.startsWith("//")) } : null,
   };
 }
 

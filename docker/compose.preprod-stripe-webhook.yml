@@ -1,0 +1,19 @@
+# OPTION (désactivée par défaut) — préproduction : rend joignable SANS l'identifiant de revue la seule route des
+# notifications Stripe, pour une recette en mode test. À n'ajouter qu'une fois les clés de TEST et le secret du
+# webhook présents dans .env.prod :
+#   docker compose -f docker/compose.prod.yml -f docker/compose.preprod-stripe-webhook.yml --env-file .env.prod up -d --no-deps app
+# Garanties :
+# - règle exacte (méthode POST, chemin /api/webhooks/stripe) ; tout le reste du site garde l'authentification de revue ;
+# - la route répond 404 tant que PAYMENT_PROVIDER ≠ stripe ou que les secrets manquent (src/server/payment/mode.ts) ;
+# - signature Stripe vérifiée sur le corps brut, compte attendu (STRIPE_ACCOUNT_ID) et mode test contrôlés,
+#   événements idempotents (src/app/api/webhooks/stripe/route.ts, src/server/payment/stripe.ts) ;
+# - X-Robots-Tag conservé. Retrait : relancer sans ce fichier.
+services:
+  app:
+    labels:
+      traefik.http.routers.elios-solar-stripe-webhook.rule: "Host(`${SITE_DOMAIN:-elios-solar.invalid}`) && Path(`/api/webhooks/stripe`) && Method(`POST`)"
+      traefik.http.routers.elios-solar-stripe-webhook.priority: "1000"
+      traefik.http.routers.elios-solar-stripe-webhook.entrypoints: "websecure"
+      traefik.http.routers.elios-solar-stripe-webhook.tls.certresolver: "letsencrypt"
+      traefik.http.routers.elios-solar-stripe-webhook.service: "elios-solar"
+      traefik.http.routers.elios-solar-stripe-webhook.middlewares: "elios-solar-headers"

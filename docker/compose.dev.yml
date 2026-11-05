@@ -1,4 +1,4 @@
-# Services de développement locaux pour ELIOS SOLAR (ne pas utiliser en production).
+# Services de développement locaux pour HELIOSTORES (ne pas utiliser en production).
 # Ports liés à 127.0.0.1 uniquement : accès par tunnel SSH si nécessaire.
 name: elios-solar-dev
 services:
