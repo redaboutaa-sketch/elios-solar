@@ -168,7 +168,9 @@ describe("import des tarifs fournisseur", () => {
         if (statSync(p).isDirectory()) { if (!p.includes(`${path.sep}generated`)) walk(p); continue; }
         if (!/\.(ts|tsx)$/.test(n)) continue;
         const rel = path.relative(root, p).split(path.sep).join("/");
-        if (rel.startsWith("server/market/") || rel === "server/actions/admin/market.ts" || rel.startsWith("app/admin/tarifs/comparatif-marche/")) continue;
+        if (rel.startsWith("server/market/") || rel === "server/actions/admin/market.ts" || rel.startsWith("app/admin/tarifs/comparatif-marche/")
+          // simulateur (administrateurs) : coût d'achat net selon la politique de coût
+          || rel === "app/admin/tarifs/simulateur/page.tsx") continue;
         const src = readFileSync(p, "utf8");
         if (/from\s+["'][^"']*(server\/market|actions\/admin\/market)[^"']*["']|\.(costPolicyVersion|marketObservation|marketObservationRevision|marketPriceProposal)\b/.test(src)) offenders.push(rel);
       }
