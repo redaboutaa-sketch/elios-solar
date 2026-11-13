@@ -32,6 +32,10 @@
   « Préparer ce prix » (brouillon d'une cellule, publication manuelle) ; relevés du 13/11 (105).
 - Visuels : illustrations originales de principe qualifiées (HelioMax, HelioLux « toiture en toile », HelioRoof,
   moustiquaires) ; SEO : `docs/seo/audit-2026-11-13.md` ; mentions légales : `private/legal-2026-11-13/`.
+- Production `8de89dd` (2026-11-13) : sauvegarde `db_20261113_120011` avant déploiement ; répétition sur copie de la
+  production identique ; politique v2 (25 %) publiée sur 11 grilles, 1 projet réévalué, devis inchangé (empreinte
+  identique), 105 relevés importés (47 anciens archivés), mentions légales publiées ; 8 prix d'appel retrouvés dans le
+  configurateur ; second administrateur créé (hors dépôt).
 
 ## Comparatif marché et coût d'achat net (2026-11-04) — `docs/pricing/comparatif-marche.md`
 
