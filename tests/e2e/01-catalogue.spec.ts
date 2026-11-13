@@ -69,7 +69,8 @@ test("catalogue HELIOSTORES : quatre familles, fiches sans référence fabricant
     await expect(page.getByTestId("media-credit")).toHaveCount(0);
   } else {
     test.info().annotations.push({ type: "médias", description: "aucun visuel fabricant importé dans cet environnement : état vide vérifié" });
-    await expect(page.getByText("Visuels en cours d'intégration.")).toBeVisible();
+    // galerie vide : illustration de principe qualifiée (jamais « Visuel à venir » ni la photo d'un autre système)
+    await expect(page.getByTestId("system-gallery-empty").getByTestId("principle-caption")).toContainText("Illustration de principe");
   }
   await page.getByRole("tab", { name: "Caractéristiques" }).click();
   const width = page.locator('[data-spec="width_max"]');

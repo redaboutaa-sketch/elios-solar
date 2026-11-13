@@ -72,7 +72,8 @@ test("médiathèque et documents : nouvelle version PDF publiée, visible sur la
       await expect(gallery).not.toContainText(/aluprof|thysens|selt|crédit/i);
     } else {
       test.info().annotations.push({ type: "médias", description: "aucun visuel fabricant importé dans cet environnement : état vide vérifié" });
-      await expect(page.getByText("Visuels en cours d'intégration.")).toBeVisible();
+      // galerie vide : illustration de principe qualifiée (jamais « Visuel à venir » ni la photo d'un autre système)
+      await expect(page.getByTestId("system-gallery-empty").getByTestId("principle-caption")).toContainText("Illustration de principe");
     }
     await shot(page, "fiche-galerie-rendu");
     await page.getByRole("tab", { name: /^Documents/ }).click();
