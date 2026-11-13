@@ -81,11 +81,12 @@ test("administration → modification → simulation → publication → configu
     await v.locator("#dim-depth").fill("3000"); await v.locator("#dim-depth").blur();
     const price = v.getByTestId("system-price");
     await expect(price).toHaveAttribute("data-priced", "true");
-    await expect(v.getByTestId("system-price-amount")).toHaveText(/1\s?000\s?€\s?HT/);
-    await expect(v.getByTestId("system-price-ttc")).toContainText(/1\s?200\s?€/);
+    // TTC en principal (grille de test sans arrondi commercial), HT et TVA en second
+    await expect(v.getByTestId("system-price-amount")).toHaveText(/1\s?200\s?€\s?TTC/);
+    await expect(v.getByTestId("system-price-ht")).toContainText(/1\s?000\s?€\s?HT/);
     await v.getByTestId("config-steps").getByRole("button", { name: /Pose et finitions/ }).click();
     await v.getByTestId("finish-swatches").locator('[data-finish="RAL_CUSTOM"] input').check();
-    await expect(v.getByTestId("system-price-amount")).toHaveText(/1\s?150\s?€\s?HT/);
+    await expect(v.getByTestId("system-price-amount")).toHaveText(/1\s?380\s?€\s?TTC/);
     await expect(v.getByTestId("price-breakdown")).toContainText("Autre teinte RAL");
     // cote hors grille : plus aucun montant
     await v.getByTestId("config-steps").getByRole("button", { name: /Dimensions/ }).click();

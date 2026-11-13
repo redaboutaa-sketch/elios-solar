@@ -22,7 +22,14 @@ test("HelioSun structure seule : commande en ligne au prix de la grille, paiemen
   const width = Math.max(2000, cell!.widthMinMm);
   await setDim(page, "dim-width", width);
   await page.getByTestId("dim-depth-values").getByText(`${(cell!.dimAmm / 1000).toLocaleString("fr-FR")} m`, { exact: true }).click();
-  await expect(page.getByTestId("system-price-amount")).toHaveText(new RegExp(fmt(cell!.amountMinor).replace(/\s/g, "\\s")));
+  // prix commercial : TTC de la cellule (TVA 20 %), arrondi à la terminaison 99 € si la grille en vigueur l'active ;
+  // HT final déduit du TTC (règle recalculée ici à la main, indépendamment du moteur)
+  const rounding = (await one<{ r: string }>(`SELECT l."saleRounding" AS r FROM "SupplierPriceList" l WHERE ${IN_FORCE_GRID_SQL} AND l."familySlug" = 'casablanca' AND l."variantKey" = '' LIMIT 1`))?.r === "NEAREST_99_TTC";
+  const ttc0 = cell!.amountMinor + Math.floor((cell!.amountMinor * 2000 + 5000) / 10_000);
+  const lower = Math.floor((ttc0 - 9900) / 10_000) * 10_000 + 9900;
+  const ttc = rounding && ttc0 >= 9900 ? (lower + 10_000 - ttc0 <= ttc0 - lower ? lower + 10_000 : lower) : ttc0;
+  const ht = ttc === ttc0 ? cell!.amountMinor : Math.floor((2 * ttc * 10_000 + 12_000) / 24_000);
+  await expect(page.getByTestId("system-price-amount")).toHaveText(new RegExp(fmt(ttc).replace(/\s/g, "\\s")));
   await goStep(page, "recap");
   await expect(order).toHaveAttribute("data-orderable", "true");
 
@@ -50,7 +57,7 @@ test("HelioSun structure seule : commande en ligne au prix de la grille, paiemen
   await page.getByTestId("add-to-cart").click();
   await page.waitForURL(/\/panier/);
   await expect(page.getByTestId("cart-lines")).toContainText("HelioSun");
-  expect(norm(await page.getByTestId("cart-line-ht").textContent())).toContain(`${norm(fmt(cell!.amountMinor))} € HT`);
+  expect(norm(await page.getByTestId("cart-line-ht").textContent())).toContain(`${norm(fmt(ht))} € HT`);
   await expect(page.getByTestId("cart-delivery-not-included")).toContainText("non comprises");
   await expect(page.getByTestId("cart-system-note")).toContainText("Livraison et pose non comprises");
   await expect(page.getByLabel("Code promotionnel")).toHaveCount(0);

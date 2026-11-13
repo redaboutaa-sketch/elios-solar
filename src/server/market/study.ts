@@ -70,9 +70,10 @@ export async function study(s: StudyInput) {
   const usedSale = sim.price ? sim.used.find((u) => u.variantKey === sim.price!.variantKey) ?? null : null;
   const cost = sim.supplierBreakdown && policy ? netCostOf(sim.supplierBreakdown, sim.supplierSupplements, policy) : null;
   const costs = s.costs ?? policy?.directCosts ?? [];
-  const evalAt = (ht: number | null) => {
+  // TTC : celui de la décomposition pour le prix en vigueur (arrondi commercial TTC compris), sinon HT + TVA
+  const evalAt = (ht: number | null, ttcOverride?: number | null) => {
     if (ht == null || !cost || vat == null) return null;
-    const ttc = ht + Math.floor((ht * vat + 5_000) / 10_000);
+    const ttc = ttcOverride ?? ht + Math.floor((ht * vat + 5_000) / 10_000);
     const known = marginOf(ht, cost.knownNetMinor);
     const prudent = marginOf(ht, cost.prudentNetMinor);
     const contribution = contributionOf(ht, ttc, { netMinor: cost.prudentNetMinor, partial: cost.partial }, costs);
@@ -88,7 +89,7 @@ export async function study(s: StudyInput) {
   const position = saleHt != null && stats.medianMinor != null ? { vsMedianBps: Math.round(((saleHt - stats.medianMinor) * 10_000) / stats.medianMinor), below: evals.filter((e) => e.retained && e.comparableHtMinor! < saleHt).length, above: evals.filter((e) => e.retained && e.comparableHtMinor! > saleHt).length } : null;
   return {
     sim, policy, rules, sale, saleHt, vat, usedSale, cost, costs, ours, ctx,
-    current: evalAt(saleHt),
+    current: evalAt(saleHt, sale?.taxBasis === "HT" ? sale.totalTtcMinor : null),
     simulated: evalAt(s.simulatedHtMinor ?? null),
     recommended: reco?.recommended ? evalAt(reco.recommended.htMinor) : null,
     evals, stats, floor, reco, position,

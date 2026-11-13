@@ -124,7 +124,12 @@ $RUN scripts/default-pricing.ts --policy-margin 25 --valid-from AAAA-MM-JJ --not
 $RUN scripts/default-pricing.ts --policy-margin 25 --valid-from AAAA-MM-JJ --note "Mission du client du 2026-11-13" --apply  # politique v2
 $RUN scripts/default-pricing.ts --prepare                       # aperçu des grilles (comptes seulement)
 $RUN scripts/default-pricing.ts --prepare --publish --projects --apply   # brouillons, publication, projets réévalués
+# arrondi commercial TTC (terminaison 99 €) : nouvelle version de la politique, puis recalcul des grilles (cellules inchangées)
+$RUN scripts/default-pricing.ts --rounding ttc99 --valid-from AAAA-MM-JJ --note "Décision du client du 2026-11-13" --apply
+$RUN scripts/default-pricing.ts --prepare --publish --projects --apply
+# désactivation : --rounding none (nouvelle version), puis la même publication
 ```
+Migration additive `20261113120000_arrondi_commercial` (colonnes `saleRounding`, défaut NONE) appliquée par le déploiement.
 Relevés : même commande qu'au § 2 sexies avec `releves-2026-11-13.json` (l'ancien relevé d'une offre relue est archivé).
 Mentions légales : `docker exec -i heliostores-prod-postgres psql -U heliostores -d heliostores < private/legal-2026-11-13/apply.sql`
 (source hors dépôt : `private/legal-2026-11-13/`, version précédente `mentions-legales.v2.md`).

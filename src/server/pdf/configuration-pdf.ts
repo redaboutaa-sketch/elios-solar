@@ -144,8 +144,15 @@ export async function buildConfigurationPdf(opts: {
     if (sp && bd) {
       // décomposition figée avec le devis (instantané) : structure, suppléments connus, éléments à chiffrer, HT / TTC
       for (const l of bd.lines) { text(clean(`${l.label}${l.detail ? ` (${l.detail})` : ""}`).slice(0, 80), 40, 9); text(clean(formatSystemPrice(l.amountMinor, bd.currency, bd.taxBasis)), 455, 9); line(12); }
-      text(bd.partial ? "Sous-total partiel" : "Total", 40, 12, bold, GREEN); text(clean(formatSystemPrice(bd.totalMinor, bd.currency, bd.taxBasis)), 455, 12, bold, GREEN); line(14);
-      if (bd.totalTtcMinor != null && bd.taxBasis === "HT") { text(clean(`soit ${formatSystemPrice(bd.totalTtcMinor, bd.currency, "TTC")} (TVA ${bd.vatRateBps / 100} %)`), 40, 9); line(12); }
+      // TTC en principal (montant commercial exact, arrondi compris), HT et TVA en second — seulement pour une
+      // décomposition du format actuel : un devis émis avant garde sa présentation (instantané inchangé)
+      if (bd.totalTtcMinor != null && bd.taxBasis === "HT" && bd.computedTtcMinor !== undefined) {
+        text(bd.partial ? "Sous-total partiel TTC" : "Total TTC", 40, 12, bold, GREEN); text(clean(formatSystemPrice(bd.totalTtcMinor, bd.currency, "TTC")), 455, 12, bold, GREEN); line(14);
+        text(clean(`soit ${formatSystemPrice(bd.totalMinor, bd.currency, "HT")} + TVA ${formatSystemPrice(bd.totalTtcMinor - bd.totalMinor, bd.currency, null)} (${bd.vatRateBps / 100} %)`), 40, 9); line(12);
+      } else {
+        text(bd.partial ? "Sous-total partiel" : "Total", 40, 12, bold, GREEN); text(clean(formatSystemPrice(bd.totalMinor, bd.currency, bd.taxBasis)), 455, 12, bold, GREEN); line(14);
+        if (bd.totalTtcMinor != null && bd.taxBasis === "HT") { text(clean(`soit ${formatSystemPrice(bd.totalTtcMinor, bd.currency, "TTC")} (TVA ${bd.vatRateBps / 100} %)`), 40, 9); line(12); }
+      }
       text(clean(`Grille tarifaire HELIOSTORES v${sp.listVersion} : ${sp.grid.widthMm / 1000} m de largeur x ${sp.grid.dimMm / 1000} m (${sp.grid.dimLabel.toLowerCase()})${sp.roundedUp ? ", dimension de grille immediatement superieure" : ""}.`), 40, 9); line(12);
       if (bd.pending.length) { text("Reste a chiffrer sur le devis :", 40, 9, bold); line(11); for (const x of bd.pending) { text(clean(`- ${x.label} : ${x.reason}`).slice(0, 110), 40, 8); line(11); } }
       text("Livraison et pose : chiffrees sur le devis.", 40, 9); line(20);

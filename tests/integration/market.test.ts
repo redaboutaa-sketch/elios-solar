@@ -237,5 +237,33 @@ describe("politique de vente par défaut : marge brute cible (moteur des grilles
       invalidateCatalogCache();
     }
   });
+
+  it("arrondi commercial TTC : nouvelle version (cellules inchangées), prix d'appel arrondi, coûts intacts ; jamais sous le coût connu", async () => {
+    const supplierRows = async () => JSON.stringify(await prisma.supplierPriceRow.findMany({ where: { list: { familySlug: FAM3, nature: "SUPPLIER_LIST" } }, select: { id: true, amountMinor: true, conditions: true }, orderBy: { id: "asc" } }));
+    const before = await supplierRows();
+    const active = await prisma.supplierPriceList.findFirstOrThrow({ where: { familySlug: FAM3, nature: "SALE", status: "ACTIVE" } });
+    const d = await derivePolicySaleGrid(active.id, { ...rule, saleRounding: "NEAREST_99_TTC" }, ACTOR);
+    expect(d).toMatchObject({ changedCells: 0, rounding: { from: "NONE", to: "NEAREST_99_TTC" }, belowCost: 0, draft: { created: true } });
+    expect((await publishDefaultPricing([d.draft!.id], ACTOR))[0]).toMatchObject({ ok: true });
+    expect((await prisma.supplierPriceList.findUniqueOrThrow({ where: { id: d.draft!.id } })).saleRounding).toBe("NEAREST_99_TTC");
+    await prisma.productFamily.update({ where: { slug: FAM3 }, data: { status: "QUOTE_ONLY" } });
+    try {
+      invalidateCatalogCache();
+      const e = entryPrice(await loadCatalog(), FAM3)!;
+      // 3 240 € HT calculé → 3 888 € TTC → 3 899 € TTC → 3 249,17 € HT + 649,83 € TVA
+      expect(e.entry.breakdown).toMatchObject({ computedMinor: 324_000, computedTtcMinor: 388_800, totalTtcMinor: 389_900, totalMinor: 324_917, vatMinor: 64_983 });
+      expect(e.entry.ttcMinor).toBe(389_900);
+    } finally {
+      await prisma.productFamily.update({ where: { slug: FAM3 }, data: { status: "DRAFT" } });
+      invalidateCatalogCache();
+    }
+    // idempotent : rien de recréé ; coûts d'achat et catalogue intacts
+    expect((await derivePolicySaleGrid(d.draft!.id, { ...rule, saleRounding: "NEAREST_99_TTC" }, ACTOR)).draft).toMatchObject({ created: false });
+    expect(await supplierRows()).toBe(before);
+    // sans marge ni remise, l'arrondi au plus proche ramènerait une cellule sous le coût : publication refusée
+    const low = await derivePolicySaleGrid(d.draft!.id, { ...rule, discountBps: 0, marginBps: 0, saleRounding: "NEAREST_99_TTC" }, ACTOR, { dryRun: true });
+    expect(low.belowCost).toBeGreaterThan(0);
+    expect(low.refused).toMatch(/sous le coût d'achat connu/);
+  });
 });
 

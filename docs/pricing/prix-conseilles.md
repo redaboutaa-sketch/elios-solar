@@ -31,6 +31,30 @@ Exploitation : `scripts/default-pricing.ts` ou Administration → Tarifs → Mes
 Devis, commandes et PDF existants : jamais modifiés (instantané du devis). Projets enregistrés non contractualisés :
 réévalués (`--projects`) ; le client voit l'avis « prix mis à jour » à l'ouverture. Paiement : toujours désactivé.
 
+## 1 bis. Arrondi commercial TTC (2026-11-13)
+
+Décision du client du 2026-11-13 (remplace une demande d'arrondi HT, jamais livrée) : **total TTC de chaque
+configuration complète à la terminaison « 99 € » la plus proche** (99, 199, 299…), égalité au montant supérieur, montant
+déjà terminé par 99 € inchangé, sous 99 € TTC inchangé (signalé dans l'administration).
+
+Ordre : vente HT à la marge cible (grille) → TTC (TVA de la grille, demi-centime supérieur) → **un seul** arrondi du
+total TTC → HT final = TTC ÷ (1 + taux), au centime (demi supérieur) → TVA = TTC − HT. Le TTC affiché, enregistré et
+repris dans le devis est exactement le montant commercial ; l'éventuel centime d'écart entre cette TVA et la TVA
+recalculée sur le HT final est conservé (`ventilationMinor`). Une configuration n'a qu'un taux de TVA (celui de sa
+grille) : aucune ventilation multi-taux n'est nécessaire aujourd'hui.
+
+- Toujours recalculé depuis les montants de la grille (jamais depuis un prix déjà arrondi) ; une seule ligne
+  « Arrondi commercial » (part HT de l'ajustement) dans la décomposition, jamais un arrondi par composant ;
+- décomposition : HT calculé, TTC calculé, ajustement TTC et sa part HT, HT final, TVA, TTC final ;
+- sous-total partiel : aucun arrondi, éléments à chiffrer conservés ;
+- réglage versionné : politique de coût (`saleRounding`), recopié dans chaque version de vente recalculée ; désactivation
+  = nouvelle version de la politique, puis recalcul des grilles ; historique conservé ;
+- garde-fou : une grille dont l'arrondi ramènerait une cellule sous le coût d'achat connu n'est pas publiée
+  automatiquement (validation manuelle) ;
+- la marge de 25 % est une cible **avant** arrondi ; la marge réelle après arrondi est affichée (Mes prix conseillés →
+  « Arrondi commercial TTC ») ; « marge non garantie » si un coût est inconnu ;
+- coûts d'achat, prix catalogue, remises et devis existants : inchangés (un devis émis garde sa présentation PDF).
+
 ## 2. Prix d'appel (« À partir de … € TTC »)
 
 Calcul serveur (`src/domain/entry-price.ts`) avec le moteur de la boutique et la version publiée en vigueur, recalculé

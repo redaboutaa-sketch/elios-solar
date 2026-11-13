@@ -55,7 +55,7 @@ test("HelioMax : règles de cotes, options, fermeture souhaitée, 3D, projet enr
   const priced = expectedCell != null;
   if (priced) {
     await expect(page.getByTestId("system-price")).toHaveAttribute("data-priced", "true");
-    await expect(page.getByTestId("system-price-amount")).toContainText(/€\s?HT/);
+    await expect(page.getByTestId("system-price-amount")).toContainText(/€\s?TTC/);
   } else {
     await expect(page.getByTestId("system-price")).toHaveAttribute("data-priced", "false");
     await expect(page.getByTestId("system-price")).toContainText("Prix sur devis");
@@ -97,7 +97,7 @@ test("HelioMax : règles de cotes, options, fermeture souhaitée, 3D, projet enr
 
   await page.goto("/compte/devis");
   const card = page.getByTestId("account-quote").filter({ hasText: number });
-  await expect(card).toContainText(priced ? /HelioMax · structure \d/ : /HelioMax · prix sur devis/);
+  await expect(card).toContainText(priced ? /HelioMax · (sous-total partiel|prix) \d[\d\s  ]*(,\d+)?\s?€\s?TTC/ : /HelioMax · prix sur devis/);
   await expect.poll(() => card.getByTestId("quote-visual").locator("img").evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBeGreaterThan(0);
   const pdf = await page.request.get(`/api/devis/${quote!.id}/pdf`);
   expect(pdf.status()).toBe(200);
@@ -106,7 +106,7 @@ test("HelioMax : règles de cotes, options, fermeture souhaitée, 3D, projet enr
 
   await page.goto("/compte/projets");
   const project = page.locator("li").filter({ hasText: title });
-  await expect(project).toContainText(priced ? "structure" : "prix sur devis");
+  await expect(project).toContainText(priced ? /(sous-total partiel|prix) \d[^€]*€\s?TTC/ : "prix sur devis");
   await project.getByRole("link", { name: "Reprendre" }).click();
   await expect(page.locator("#dim-width")).toHaveValue("3600");
   await expect(page.locator("#dim-depth")).toHaveValue("5000");

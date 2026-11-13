@@ -52,7 +52,7 @@ export default async function CartPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-xl font-semibold"><Price cents={lineTotalCents} />{input.kind === "system" && <span className="text-sm font-normal"> TTC</span>}</p>
-                    {input.kind === "system" && result.systemPrice && <p className="text-xs text-stone-700" data-testid="cart-line-ht">soit {formatSystemPrice(result.systemPrice.amountMinor * line.qty, result.systemPrice.currency, result.systemPrice.taxBasis)}</p>}
+                    {input.kind === "system" && result.systemPrice && <p className="text-xs text-stone-700" data-testid="cart-line-ht">soit {formatSystemPrice((result.priceBreakdown?.totalMinor ?? result.systemPrice.amountMinor) * line.qty, result.systemPrice.currency, result.systemPrice.taxBasis)}</p>}
                     <form action={updateQtyAction} className="mt-2 flex items-center justify-end gap-2"><input type="hidden" name="lineId" value={line.id} /><label className="text-sm" htmlFor={`qty-${line.id}`}>Qté</label><input id={`qty-${line.id}`} name="qty" type="number" min={1} max={10} defaultValue={line.qty} className="input w-20 py-1" /><button className="btn-secondary py-1.5" type="submit">Mettre à jour</button></form>
                     <form action={removeLineAction} className="mt-2"><input type="hidden" name="lineId" value={line.id} /><button className="text-sm underline text-stone-700" type="submit">Retirer</button></form>
                     {input.kind === "pergola_standard" && <Link href={`/configurateur?ligne=${line.id}`} className="block mt-2 text-sm underline">Modifier la configuration</Link>}

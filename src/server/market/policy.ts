@@ -21,6 +21,8 @@ export interface PolicyView {
   staleDays: number;
   dimToleranceBps: number;
   rounding: RoundingRule;
+  /** arrondi commercial TTC des grilles de vente recalculées : terminaison 99 € la plus proche */
+  saleRounding: "NONE" | "NEAREST_99_TTC";
   note: string;
   createdBy: string | null;
   createdAt: Date;
@@ -48,7 +50,7 @@ const view = (p: Prisma.CostPolicyVersionGetPayload<object>): PolicyView => ({
   eligibility: (p.eligibility ?? {}) as Record<string, Eligibility>,
   directCosts: normalizeCosts(p.directCosts as unknown as DirectCostInput[] | null),
   marginTargetBps: p.marginTargetBps, contributionTargetBps: p.contributionTargetBps, staleDays: p.staleDays, dimToleranceBps: p.dimToleranceBps,
-  rounding: { ...DEFAULT_ROUNDING, ...((p.rounding ?? {}) as Partial<RoundingRule>) }, note: p.note, createdBy: p.createdBy, createdAt: p.createdAt,
+  rounding: { ...DEFAULT_ROUNDING, ...((p.rounding ?? {}) as Partial<RoundingRule>) }, saleRounding: p.saleRounding === "NEAREST_99_TTC" ? "NEAREST_99_TTC" : "NONE", note: p.note, createdBy: p.createdBy, createdAt: p.createdAt,
 });
 
 export function normalizeCosts(list: DirectCostInput[] | null | undefined): DirectCostInput[] {
@@ -75,6 +77,8 @@ export interface PolicyInput {
   staleDays: number;
   dimToleranceBps: number;
   rounding: RoundingRule;
+  /** absent : aucun arrondi commercial */
+  saleRounding?: "NONE" | "NEAREST_99_TTC";
   note: string;
 }
 
@@ -104,7 +108,7 @@ export async function createPolicyVersion(p: PolicyInput, actor: Actor): Promise
       data: {
         version: (last?.version ?? 0) + 1, validFrom: p.validFrom, discountBps: p.discountBps, eligibility: p.eligibility as Prisma.InputJsonValue,
         directCosts: normalizeCosts(p.directCosts) as unknown as Prisma.InputJsonValue, marginTargetBps: p.marginTargetBps, contributionTargetBps: p.contributionTargetBps,
-        staleDays: p.staleDays, dimToleranceBps: p.dimToleranceBps, rounding: p.rounding as unknown as Prisma.InputJsonValue, note: p.note.slice(0, 2000), createdBy: actor.actorEmail ?? null,
+        staleDays: p.staleDays, dimToleranceBps: p.dimToleranceBps, rounding: p.rounding as unknown as Prisma.InputJsonValue, saleRounding: p.saleRounding === "NEAREST_99_TTC" ? "NEAREST_99_TTC" : "NONE", note: p.note.slice(0, 2000), createdBy: actor.actorEmail ?? null,
       },
     });
   });

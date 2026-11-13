@@ -158,7 +158,7 @@ async function tableFor(familySlug: string, at: Date, clientele: Clientele, vers
       // prix catalogue fournisseur : dernière version non rejetée par variante (jamais publiée sur le site)
       ? { scope: "GRID" as const, status: { not: "REJECTED" as const }, nature: "SUPPLIER_LIST" as const, familySlug }
       : { scope: "GRID" as const, status: "ACTIVE" as const, nature: "SALE" as const, familySlug, clientele: { in: clientele === "ALL" ? ["ALL" as const] : [clientele, "ALL" as const] }, AND: [{ OR: [{ validFrom: null }, { validFrom: { lte: at } }] }, { OR: [{ validTo: null }, { validTo: { gt: at } }] }] };
-  const lists = await prisma.supplierPriceList.findMany({ where, orderBy: [{ publishedAt: "desc" }, { version: "desc" }], select: { id: true, version: true, sourceKey: true, variantKey: true, clientele: true, nature: true, status: true, currency: true, taxBasis: true, dimRule: true, vatRateBps: true } });
+  const lists = await prisma.supplierPriceList.findMany({ where, orderBy: [{ publishedAt: "desc" }, { version: "desc" }], select: { id: true, version: true, sourceKey: true, variantKey: true, clientele: true, nature: true, status: true, currency: true, taxBasis: true, dimRule: true, vatRateBps: true, saleRounding: true } });
   const chosen = new Map<string, (typeof lists)[number]>();
   for (const l of [...lists].sort((a, b) => (a.clientele === "ALL" ? 1 : 0) - (b.clientele === "ALL" ? 1 : 0))) if (!chosen.has(l.variantKey)) chosen.set(l.variantKey, l);
   const used = [...chosen.values()];
@@ -166,7 +166,7 @@ async function tableFor(familySlug: string, at: Date, clientele: Clientele, vers
   const table: SystemPriceTable = { currency: used[0]!.currency ?? "", taxBasis: used[0]!.taxBasis === "UNKNOWN" ? null : used[0]!.taxBasis, dimAKey: "projection", listVersion: used[0]!.version, variants: {}, cells: [] };
   for (const l of used) {
     const fixed = await prisma.supplierPriceRow.findMany({ where: { listId: l.id, kind: "FIXED", status: { not: "REJECTED" } }, select: { code: true, label: true, amountMinor: true, conditions: true }, orderBy: { code: "asc" } });
-    table.variants![l.variantKey] = { currency: l.currency ?? "", taxBasis: l.taxBasis === "UNKNOWN" ? null : l.taxBasis, dimRule: l.dimRule === "ROUND_UP" ? "round_up" : "exact", vatRateBps: l.vatRateBps, listVersion: l.version, versionId: l.id, supplements: fixed.map(supplementOf).filter((x): x is NonNullable<typeof x> => x != null) };
+    table.variants![l.variantKey] = { currency: l.currency ?? "", taxBasis: l.taxBasis === "UNKNOWN" ? null : l.taxBasis, dimRule: l.dimRule === "ROUND_UP" ? "round_up" : "exact", vatRateBps: l.vatRateBps, listVersion: l.version, versionId: l.id, supplements: fixed.map(supplementOf).filter((x): x is NonNullable<typeof x> => x != null), saleRounding: l.saleRounding === "NEAREST_99_TTC" ? "nearest_99_ttc" : "none" };
     const rows = await prisma.supplierPriceRow.findMany({ where: { listId: l.id, kind: "GRID", amountMinor: { not: null } }, select: { dimAKey: true, dimAmm: true, widthMinMm: true, widthMaxMm: true, amountMinor: true, conditions: true } });
     if (rows[0]?.dimAKey === "hauteur") table.dimAKey = "hauteur";
     for (const r of rows) {

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireRole } from "@/lib/session";
 import { Flash, PageTitle, Section, StatusBadge, Table } from "@/components/admin/ui";
 import { SALE_BASIS_FR } from "@/domain/market";
-import { adviceOverview } from "@/server/market/advice";
+import { adviceOverview, roundingPreview } from "@/server/market/advice";
 import { previewDefaultPricing } from "@/server/market/default-pricing";
 import { prepareAdvicePriceAction, prepareDefaultPricingAction, publishDefaultPricingAction } from "@/server/actions/admin/advice";
 import { MarketNote, eur, pctFr } from "../comparatif-marche/labels";
@@ -15,7 +15,7 @@ const CONF_SHORT = { elevee: "élevée", moyenne: "moyenne", indicative: "indica
 
 export default async function AdvicePage(props: PageProps<"/admin/tarifs/prix-conseilles">) {
   await requireRole(["ADMIN"]);
-  const o = await adviceOverview();
+  const [o, rp] = await Promise.all([adviceOverview(), roundingPreview()]);
   const preview = o.policy?.marginTargetBps != null ? await previewDefaultPricing().catch(() => null) : null;
   const toUpdate = preview?.rows.filter((r) => !r.refused && !r.draft) ?? [];
   const drafts = preview?.rows.filter((r) => r.draft && !r.draft.created && r.draft.id !== r.current.id) ?? [];
@@ -77,12 +77,34 @@ export default async function AdvicePage(props: PageProps<"/admin/tarifs/prix-co
         <p className="mt-2 text-xs text-stone-700">Prix TTC avec la TVA française validée (20 %). Marge brute = vente HT − achat net HT, en % du prix de vente HT ; elle ne déduit ni livraison, pose, frais de paiement, acquisition, SAV ni commission (voir « Comprendre ») et n'est jamais un bénéfice net. Un prix conseillé différent de la marge cible n'est proposé qu'avec au moins trois offres fortement comparables et indépendantes, jamais sous le plancher. « Préparer ce prix » crée un brouillon d'une seule cellule (ancien prix, nouveau prix, marge et périmètre dans la proposition) ; sa publication reste une action explicite dans Grilles tarifaires, avec historique et retour arrière.</p>
       </Section>
 
+      <Section title="Arrondi commercial TTC : terminaison 99 € la plus proche">
+        <p className="text-sm" data-testid="rounding-state">Réglage de la politique de coût v{o.policy?.version ?? "—"} : <strong>{rp.active ? "activé" : "désactivé"}</strong> (<Link className="underline" href="/admin/tarifs/comparatif-marche/politique">modifier</Link> ; chaque changement crée une nouvelle version, l'historique est conservé). Ordre : vente HT à la marge cible → TTC → un seul arrondi du total TTC (égalité au supérieur, sous 99 € inchangé) → HT final = TTC ÷ (1 + TVA) au centime, TVA = TTC − HT. Jamais sur un sous-total partiel ni sur chaque composant ; coûts et prix catalogue inchangés.</p>
+        <Table caption="Aperçu de l'arrondi des configurations d'appel">
+          <thead><tr><th>Produit</th><th>Configuration d'appel</th><th>Prix calculé</th><th>Prix arrondi TTC</th><th>Écart TTC</th><th>HT final · TVA</th><th>Marge réelle</th><th>Signalements</th></tr></thead>
+          <tbody>
+            {rp.rows.map((r) => (
+              <tr key={r.familySlug} data-testid={`rounding-row-${r.familySlug}`}>
+                <td className="font-medium">{r.name}</td>
+                <td className="max-w-56 text-xs">{r.config}</td>
+                <td className="tabular-nums">{eur(r.computedTtcMinor)} TTC<span className="block text-xs text-stone-700">{eur(r.computedHtMinor)} HT</span></td>
+                <td className="tabular-nums"><strong>{eur(r.ttcMinor)} TTC</strong>{r.partial && <span className="block text-xs">sous-total partiel</span>}</td>
+                <td className="tabular-nums">{r.adjustmentTtcMinor > 0 ? "+" : ""}{eur(r.adjustmentTtcMinor)}</td>
+                <td className="text-xs tabular-nums">{eur(r.htMinor)} HT · {eur(r.vatMinor)} TVA{r.ventilationMinor ? <span className="block text-stone-700">ventilation : {r.ventilationMinor > 0 ? "+" : ""}{eur(r.ventilationMinor)} de TVA (TTC exact)</span> : null}</td>
+                <td className="text-xs tabular-nums">{r.margin ? (r.margin.partial ? <>{pctFr(r.margin.prudent.onPriceBps)} ({eur(r.margin.prudent.grossMinor)})<span className="block text-stone-700">prudente : coût incomplet</span></> : <>{pctFr(r.margin.known.onPriceBps)} ({eur(r.margin.known.grossMinor)})</>) : "—"}</td>
+                <td className="text-xs">{r.flags.length ? r.flags.join(" ; ") : "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+        <p className="mt-2 text-xs text-stone-700">La marge cible s'applique avant arrondi : la marge réelle après arrondi peut être légèrement supérieure ou inférieure. Une grille dont l'arrondi passerait sous le coût d'achat connu n'est jamais publiée automatiquement.</p>
+      </Section>
+
       <Section title="Politique par défaut : grilles à la marge cible">
         <p className="text-sm">Vente HT = achat net HT ÷ (1 − marge cible), achat net = catalogue × (1 − remise) sur les postes éligibles. Bases de calcul : {Object.values(SALE_BASIS_FR).join(" ; ")}. Exceptions commerciales validées : aucune (toutes les grilles de vente suivaient le catalogue × 1 avant cette politique).</p>
         {!preview ? <p className="mt-2 text-sm">Fixez d'abord une marge cible dans la politique de coût.</p> : (
           <div className="mt-3 space-y-3 text-sm" data-testid="default-pricing">
             <p>{preview.rows.length} grille(s) de vente publiée(s) : <strong>{preview.rows.length - toUpdate.length - refused.length}</strong> déjà conforme(s) ou en brouillon, <strong>{toUpdate.length}</strong> à recalculer{refused.length ? <>, <strong>{refused.length}</strong> impossible(s) ({refused.map((r) => `${r.familySlug} : ${r.refused}`).join(" ; ")})</> : null}.</p>
-            {toUpdate.length > 0 && <ul className="list-disc pl-5 text-xs">{toUpdate.map((r) => <li key={r.saleId}>{r.familySlug}{r.variantKey ? ` / ${r.variantKey}` : ""} : {r.changedCells}/{r.cells} cellule(s){r.sample ? `, ex. ${eur(r.sample.before)} → ${eur(r.sample.after)} HT` : ""} ; suppléments d'éligibilité inconnue conservés : {r.supplements.unknown_kept.length}</li>)}</ul>}
+            {toUpdate.length > 0 && <ul className="list-disc pl-5 text-xs">{toUpdate.map((r) => <li key={r.saleId}>{r.familySlug}{r.variantKey ? ` / ${r.variantKey}` : ""} : arrondi {r.rounding.from === "NEAREST_99_TTC" ? "TTC 99 €" : "aucun"} → {r.rounding.to === "NEAREST_99_TTC" ? "TTC 99 €" : "aucun"}, {r.changedCells}/{r.cells} cellule(s){r.sample ? `, ex. ${eur(r.sample.before)} → ${eur(r.sample.after)} HT` : ""} ; suppléments d'éligibilité inconnue conservés : {r.supplements.unknown_kept.length}</li>)}</ul>}
             <div className="flex flex-wrap gap-2">
               <form action={prepareDefaultPricingAction}><button className="btn-secondary" disabled={!toUpdate.length} data-testid="default-prepare">Préparer les brouillons</button></form>
               <form action={publishDefaultPricingAction}><button className="btn-accent" disabled={!drafts.length} data-testid="default-publish">Publier les brouillons de la politique</button></form>

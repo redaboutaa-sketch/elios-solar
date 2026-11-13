@@ -86,7 +86,58 @@ export function lookupSupplementTable(t: SupplementTable, input: SystemInput): n
 export type SystemDimRule = "exact" | "round_up";
 
 /** Paramètres propres à une variante (chaque variante est une grille versionnée distincte). */
+/** Arrondi commercial du total TTC final d'une configuration de vente (versionné avec la grille). */
+export type SaleRounding = "none" | "nearest_99_ttc";
+
+/**
+ * Terminaison « 99 € » la plus proche (99, 199, 299…) d'un montant en centimes ; égalité → montant supérieur ; un montant
+ * déjà terminé par 99 € est inchangé ; sous 99 € : montant conservé, exception signalée.
+ * Ex. 7 076,16 → 7 099 ; 806,40 → 799 ; 609,84 → 599 ; 149 → 199 (égalité).
+ */
+export function roundTo99(amountMinor: number): { roundedMinor: number; adjustmentMinor: number; exception: "below_99" | null } {
+  if (amountMinor < 9_900) return { roundedMinor: amountMinor, adjustmentMinor: 0, exception: "below_99" };
+  const lower = Math.floor((amountMinor - 9_900) / 10_000) * 10_000 + 9_900;
+  const upper = lower + 10_000;
+  const roundedMinor = upper - amountMinor <= amountMinor - lower ? upper : lower;
+  return { roundedMinor, adjustmentMinor: roundedMinor - amountMinor, exception: null };
+}
+
+export interface TtcRounding {
+  /** vente HT calculée avant arrondi et TTC correspondant (TVA au demi-centime supérieur) */
+  computedHtMinor: number;
+  computedTtcMinor: number;
+  /** TTC final (terminaison 99 €) et ajustement commercial TTC */
+  ttcMinor: number;
+  adjustmentTtcMinor: number;
+  /** HT final = TTC final ÷ (1 + taux), au centime (demi supérieur) ; TVA = TTC − HT (le TTC reste exact) */
+  htMinor: number;
+  vatMinor: number;
+  /** écart de ventilation : TVA retenue − TVA calculée sur le HT final (0 ou ± 1 centime), documenté */
+  ventilationMinor: number;
+  exception: "below_99" | null;
+}
+
+/**
+ * Arrondi commercial TTC d'un total HT calculé (taux de TVA unique de la configuration) : TTC calculé, arrondi une seule
+ * fois à la terminaison 99 €, puis HT final et TVA déduits de ce TTC. Toujours à partir du HT calculé (jamais d'un prix
+ * déjà arrondi). Ex. 5 896,80 HT → 7 076,16 TTC → 7 099 TTC → 5 915,83 HT + 1 183,17 TVA.
+ */
+export function roundTtcTo99(computedHtMinor: number, vatRateBps: number): TtcRounding {
+  const computedTtcMinor = computedHtMinor + applyBpsHalfUp(computedHtMinor, vatRateBps);
+  const r = roundTo99(computedTtcMinor);
+  if (r.exception || !r.adjustmentMinor) return { computedHtMinor, computedTtcMinor, ttcMinor: computedTtcMinor, adjustmentTtcMinor: 0, htMinor: computedHtMinor, vatMinor: computedTtcMinor - computedHtMinor, ventilationMinor: 0, exception: r.exception };
+  const den = 10_000 + vatRateBps;
+  const htMinor = Math.floor((2 * r.roundedMinor * 10_000 + den) / (2 * den));
+  const vatMinor = r.roundedMinor - htMinor;
+  return { computedHtMinor, computedTtcMinor, ttcMinor: r.roundedMinor, adjustmentTtcMinor: r.adjustmentMinor, htMinor, vatMinor, ventilationMinor: vatMinor - applyBpsHalfUp(htMinor, vatRateBps), exception: null };
+}
+
+/** Code de la ligne d'ajustement d'arrondi dans une décomposition (jamais un composant tarifé). */
+export const ROUNDING_LINE = "arrondi";
+
 export interface SystemPriceGridMeta {
+  /** arrondi commercial du total TTC final (absent = aucun) */
+  saleRounding?: SaleRounding;
   currency: string;
   taxBasis: "HT" | "TTC" | null;
   dimRule: SystemDimRule;
@@ -253,6 +304,18 @@ export interface PriceBreakdown {
   totalTtcMinor: number | null;
   partial: boolean;
   listVersion: number;
+  /** vente HT calculée avant arrondi commercial (= total sans arrondi) et TTC correspondant */
+  computedMinor?: number;
+  computedTtcMinor?: number | null;
+  /** ajustement commercial d'arrondi : TTC et sa part HT (positif ou négatif ; 0 sans arrondi) */
+  roundingTtcMinor?: number;
+  roundingMinor?: number;
+  /** TVA du total (TTC − HT) et écart de ventilation documenté (0 ou ± 1 centime) */
+  vatMinor?: number | null;
+  ventilationMinor?: number;
+  rounding?: SaleRounding;
+  /** arrondi non appliqué : montant sous 99 € TTC (signalé dans l'administration) */
+  roundingException?: "below_99" | null;
 }
 
 /** a × bps / 10 000, arrondi au demi supérieur (entiers positifs). */
@@ -341,10 +404,27 @@ export function priceBreakdown(table: SystemPriceTable, rules: SystemRules, inpu
     pending.push({ code: `cote:${side}`, label: wish?.label ?? slug, reason: "fermeture souhaitée, étudiée au devis" });
   }
   if (input.multiModule) pending.push({ code: "modules", label: "Installation en plusieurs modules", reason: "étudiée au devis" });
-  const totalMinor = lines.reduce((a, l) => a + l.amountMinor, 0);
+  const computedMinor = lines.reduce((a, l) => a + l.amountMinor, 0);
   const vatRateBps = price.vatRateBps ?? catalogVatRateBps;
-  const totalTtcMinor = price.taxBasis === "TTC" ? totalMinor : price.taxBasis === "HT" ? totalMinor + applyBpsHalfUp(totalMinor, vatRateBps) : null;
-  return { currency: price.currency, taxBasis: price.taxBasis ?? null, vatRateBps, lines, pending, totalMinor, totalTtcMinor, partial: pending.length > 0, listVersion: price.listVersion };
+  // arrondi commercial TTC : une seule fois, sur le total d'une configuration complète (jamais un sous-total partiel,
+  // jamais chaque composant), recalculé depuis le HT de la grille ; HT final et TVA déduits du TTC arrondi
+  const rounding: SaleRounding = meta.saleRounding ?? "none";
+  let totalMinor = computedMinor, roundingMinor = 0, roundingTtcMinor = 0, ventilationMinor = 0, roundingException: "below_99" | null = null;
+  let totalTtcMinor = price.taxBasis === "TTC" ? computedMinor : price.taxBasis === "HT" ? computedMinor + applyBpsHalfUp(computedMinor, vatRateBps) : null;
+  const computedTtcMinor = totalTtcMinor;
+  if (rounding === "nearest_99_ttc" && !pending.length && price.taxBasis === "HT") {
+    const r = roundTtcTo99(computedMinor, vatRateBps);
+    roundingException = r.exception;
+    if (r.adjustmentTtcMinor) {
+      roundingTtcMinor = r.adjustmentTtcMinor;
+      roundingMinor = r.htMinor - computedMinor;
+      ventilationMinor = r.ventilationMinor;
+      totalMinor = r.htMinor;
+      totalTtcMinor = r.ttcMinor;
+      lines.push({ code: ROUNDING_LINE, label: "Arrondi commercial", amountMinor: roundingMinor, detail: `prix calculé ${eur(computedTtcMinor!)} TTC, arrondi à ${eur(r.ttcMinor)} TTC` });
+    }
+  }
+  return { currency: price.currency, taxBasis: price.taxBasis ?? null, vatRateBps, lines, pending, totalMinor, totalTtcMinor, partial: pending.length > 0, listVersion: price.listVersion, computedMinor, computedTtcMinor, roundingTtcMinor, roundingMinor, vatMinor: totalTtcMinor == null ? null : totalTtcMinor - totalMinor, ventilationMinor, rounding, roundingException };
 }
 
 /** Une configuration de la grille peut-elle être complète sans élément obligatoire à chiffrer ? (prix « à partir de ») */

@@ -7,6 +7,9 @@ import { DEFAULT_DIRECT_COSTS, listPolicies, policyAt } from "@/server/market/po
 import { createPolicyAction } from "@/server/actions/admin/market";
 import { MarketNote, SubNav, eur, pctFr } from "../labels";
 
+/** versions antérieures à l'arrondi commercial : la case est proposée cochée (activé par défaut pour la nouvelle politique) */
+const ROUNDING_SINCE = new Date("2026-11-13T12:00:00Z");
+
 export const metadata: Metadata = { title: "Politique de coût" };
 
 /** Postes à montant fixe ou tableau des grilles catalogue fournisseur (les pourcentages suivent l'ordre du catalogue). */
@@ -46,7 +49,7 @@ export default async function PolicyPage(props: PageProps<"/admin/tarifs/compara
                 <td>v{v.version} {current?.id === v.id ? <StatusBadge tone="ok">en vigueur</StatusBadge> : v.validFrom > new Date() ? <StatusBadge tone="neutral">programmée</StatusBadge> : null}</td>
                 <td>{fmtDate(v.validFrom, false)}</td>
                 <td>{pctFr(v.discountBps)}</td>
-                <td className="text-xs">marge {v.marginTargetBps != null ? pctFr(v.marginTargetBps) : "non définie"} · contribution {v.contributionTargetBps != null ? pctFr(v.contributionTargetBps) : "non définie"}</td>
+                <td className="text-xs">marge {v.marginTargetBps != null ? pctFr(v.marginTargetBps) : "non définie"} · contribution {v.contributionTargetBps != null ? pctFr(v.contributionTargetBps) : "non définie"} · arrondi TTC 99 € : {v.saleRounding === "NEAREST_99_TTC" ? "oui" : "non"}</td>
                 <td className="text-xs">{v.staleDays} j · {pctFr(v.dimToleranceBps)}</td>
                 <td className="text-xs">{roundingFr(v.rounding)}</td>
                 <td className="text-xs">{v.createdBy ?? "—"}<div>{fmtDate(v.createdAt)}</div></td>
@@ -63,6 +66,7 @@ export default async function PolicyPage(props: PageProps<"/admin/tarifs/compara
             <label className="flex flex-col">Date d'effet *<input type="date" name="validFrom" className="input" required defaultValue={new Date().toISOString().slice(0, 10)} /></label>
             <label className="flex flex-col">Remise revendeur (%) *<input name="discount" className="input" required inputMode="decimal" defaultValue={val(base?.discountBps)} /></label>
             <label className="flex flex-col">Objectif de marge brute (% du prix HT)<input name="marginTarget" className="input" inputMode="decimal" defaultValue={val(base?.marginTargetBps)} placeholder="non défini" /></label>
+            <label className="flex items-start gap-2 sm:col-span-2"><input type="checkbox" name="saleRounding" value="1" defaultChecked={!base || base.saleRounding === "NEAREST_99_TTC" || base.createdAt < ROUNDING_SINCE} className="mt-1" data-testid="policy-sale-rounding" /><span>Arrondi commercial TTC : terminaison 99 € la plus proche<span className="block text-xs text-stone-700">Total TTC de chaque configuration complète (jamais un sous-total partiel ni chaque composant), égalité au supérieur, sous 99 € inchangé ; HT et TVA déduits du TTC arrondi. La marge cible s'applique avant arrondi. Décocher pour désactiver (nouvelle version, historique conservé).</span></span></label>
             <label className="flex flex-col">Objectif de contribution (% du prix HT, prioritaire)<input name="contributionTarget" className="input" inputMode="decimal" defaultValue={val(base?.contributionTargetBps)} placeholder="non défini" /></label>
             <label className="flex flex-col">Relevé ancien au-delà de (jours)<input name="staleDays" className="input" inputMode="numeric" defaultValue={base?.staleDays ?? 120} /></label>
             <label className="flex flex-col">Tolérance de dimensions par côté (%)<input name="dimTolerance" className="input" inputMode="decimal" defaultValue={val(base?.dimToleranceBps ?? 1000)} /></label>

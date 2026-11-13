@@ -12,7 +12,7 @@ import { MarketError, policyAt, type PolicyView } from "./policy";
 
 export function ruleOf(p: PolicyView): SalePolicyRule {
   if (p.marginTargetBps == null) throw new MarketError(`La politique de coût v${p.version} ne définit pas de marge brute cible : renseignez-la dans « Politique de coût ».`);
-  return { policyVersion: p.version, discountBps: p.discountBps, marginBps: p.marginTargetBps, eligibility: p.eligibility };
+  return { policyVersion: p.version, discountBps: p.discountBps, marginBps: p.marginTargetBps, eligibility: p.eligibility, saleRounding: p.saleRounding };
 }
 
 /** Grilles de vente publiées des produits proposés (hors anciens modèles archivés). */

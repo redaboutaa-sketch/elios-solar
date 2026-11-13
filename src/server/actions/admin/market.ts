@@ -120,7 +120,7 @@ export async function createPolicyAction(formData: FormData) {
     return createPolicyVersion({
       validFrom: new Date(`${f.validFrom}T00:00:00`), discountBps: pct(f.discount) ?? -1, eligibility, directCosts,
       marginTargetBps: pct(f.marginTarget), contributionTargetBps: pct(f.contributionTarget), staleDays: Number(f.staleDays), dimToleranceBps: pct(f.dimTolerance) ?? 1000,
-      rounding: { stepMinor: step ?? 1000, basis: f.roundingBasis === "HT" ? "HT" : "TTC" }, note: f.note ?? "",
+      rounding: { stepMinor: step ?? 1000, basis: f.roundingBasis === "HT" ? "HT" : "TTC" }, saleRounding: f.saleRounding === "1" ? "NEAREST_99_TTC" : "NONE", note: f.note ?? "",
     }, actor);
   }, (p) => `Version ${p.version} de la politique de coût enregistrée (effet le ${p.validFrom.toLocaleDateString("fr-FR")}).`);
 }

@@ -1,3 +1,16 @@
+# Arrondi commercial TTC (terminaison 99 €) — 2026-11-13
+
+- Unitaires 481/481 (nouveau `ttc-rounding` : exemples du client 7 076,16 → 7 099, 5 453,76 → 5 499, 4 692,24 → 4 699,
+  806,40 → 799, 609,84 → 599 ; égalité au supérieur ; montant déjà en 99 € inchangé ; moins de 99 € conservé et signalé ;
+  ventilation HT/TVA/TTC (TTC exact, écart de TVA ≤ 1 centime documenté) sur ~2 000 montants ; aucun double arrondi ;
+  option chiffrée : un seul arrondi sur le total ; sous-total partiel jamais arrondi ; grille sans arrondi inchangée ;
+  ligne d'arrondi sans effet sur la commande en ligne).
+- Intégration 128/128 (arrondi activé par la politique : nouvelle version de vente, cellules inchangées ; prix d'appel
+  3 888 € → 3 899 € TTC = 3 249,17 € HT + 649,83 € TVA ; idempotent ; prix catalogue et coûts intacts ; publication
+  refusée si l'arrondi passe sous le coût connu).
+- Navigateur : 112 réussis, 0 échec, 7 sautés par conception (sans relance) ; TTC en principal dans le configurateur, le
+  panier, les listes du compte et le PDF des nouveaux devis ; prix d'appel retrouvés à l'identique dans le configurateur.
+
 # Politique 25 %, prix d'appel, « Mes prix conseillés », visuels, SEO — 2026-11-13
 
 - Unitaires 471/471 (nouveau `default-pricing` : contrôle 4 000 € catalogue → achat 2 520 € → vente 3 360 € → marge

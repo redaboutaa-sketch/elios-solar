@@ -45,10 +45,12 @@ function SystemPriceBox({ result }: { result: EvaluationResult }) {
   const b = result.priceBreakdown;
   const money = (m: number) => formatSystemPrice(m, p.currency, p.taxBasis);
   const total = b?.totalMinor ?? p.amountMinor;
+  // particuliers en France : TTC en principal (montant commercial, arrondi compris), HT et TVA en second
+  const ttcFirst = b?.totalTtcMinor != null && p.taxBasis === "HT";
   return (
     <div data-testid="system-price" data-priced="true" data-price-status="priced" data-partial={b?.partial ? "true" : "false"} className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink">
-      <p className="flex flex-wrap items-baseline justify-between gap-2"><span>{b?.partial ? t.totalPartial : b && b.lines.length > 1 ? t.total : t.structure}</span><strong className="font-display text-2xl font-semibold tabular-nums" data-testid="system-price-amount">{money(total)}</strong></p>
-      {b?.totalTtcMinor != null && p.taxBasis === "HT" && <p className="text-right text-xs text-stone-700 tabular-nums" data-testid="system-price-ttc">{fmt(t.ttcLine, { amount: formatSystemPrice(b.totalTtcMinor, p.currency, null), rate: (b.vatRateBps / 100).toLocaleString(intl) })}</p>}
+      <p className="flex flex-wrap items-baseline justify-between gap-2"><span>{b?.partial ? (ttcFirst ? t.totalPartialTtc : t.totalPartial) : b && b.lines.length > 1 ? (ttcFirst ? t.totalTtc : t.total) : t.structure}</span><strong className="font-display text-2xl font-semibold tabular-nums" data-testid="system-price-amount">{ttcFirst ? formatSystemPrice(b!.totalTtcMinor!, p.currency, "TTC") : money(total)}</strong></p>
+      {ttcFirst && <p className="text-right text-xs text-stone-700 tabular-nums" data-testid="system-price-ht">{fmt(t.htLine, { amount: formatSystemPrice(total, p.currency, null), vat: formatSystemPrice(b!.totalTtcMinor! - total, p.currency, null), rate: (b!.vatRateBps / 100).toLocaleString(intl) })}</p>}
       <p className="mt-1 text-xs text-stone-700">{fmt(t.tariffFor, { width: fmtM(p.grid.widthMm), dim: fmtM(p.grid.dimMm), dimLabel: p.grid.dimLabel.toLowerCase(), rounded: p.roundedUp ? t.roundedUp : "" })}</p>
       {b && b.lines.length > 1 && (
         <details className="mt-2 text-xs" data-testid="price-breakdown" open>
@@ -644,7 +646,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
       </div>
       {/* barre mobile compacte : prix et action prioritaire ; masquée pendant la saisie (clavier virtuel), voir globals.css */}
       <div className="cfg-bar fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-sand-300 bg-white/95 px-3 py-2 backdrop-blur lg:hidden" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }} data-testid="config-price-bar">
-        <a href="#recap" onClick={() => setRecapOpen(true)} className="min-w-0"><span className="block text-xs text-stone-700">{fmt(t.bar.step, { label: t.steps[STEPS[step]!], n: step + 1, total: STEPS.length })}</span><span className="block truncate text-sm font-semibold tabular-nums">{result.systemPrice ? formatSystemPrice(result.systemPrice.amountMinor, result.systemPrice.currency, result.systemPrice.taxBasis) : t.price.onQuote}</span></a>
+        <a href="#recap" onClick={() => setRecapOpen(true)} className="min-w-0"><span className="block text-xs text-stone-700">{fmt(t.bar.step, { label: t.steps[STEPS[step]!], n: step + 1, total: STEPS.length })}</span><span className="block truncate text-sm font-semibold tabular-nums">{result.priceBreakdown?.totalTtcMinor != null && result.systemPrice?.taxBasis === "HT" ? `${result.priceBreakdown.partial ? `${t.price.totalPartialTtc} : ` : ""}${formatSystemPrice(result.priceBreakdown.totalTtcMinor, result.systemPrice.currency, "TTC")}` : result.systemPrice ? formatSystemPrice(result.systemPrice.amountMinor, result.systemPrice.currency, result.systemPrice.taxBasis) : t.price.onQuote}</span></a>
         <button type="button" className="btn-secondary shrink-0 px-3" aria-pressed={peek} onClick={() => setPeek((v) => !v)} data-testid="drawing-peek-toggle"><Eye className="size-4" aria-hidden="true" /> {t.bar.peek}</button>
         {step < STEPS.length - 1 ? <button type="button" className="btn-accent shrink-0" onClick={() => goStep(step + 1)}>{t.next}</button> : <a href={result.onlineOrder?.ok ? "#order-title" : "#quote-title"} className="btn-accent shrink-0">{result.onlineOrder?.ok ? t.bar.order : t.final.quoteTitle}</a>}
       </div>

@@ -3,6 +3,7 @@
  * Aperçu par défaut ; --apply pour écrire. Aucun montant imprimé (comptes et empreinte des prix publics seulement).
  *
  *   tsx scripts/default-pricing.ts --policy-margin 25 --valid-from AAAA-MM-JJ --note "<source>"   # nouvelle version de la politique
+ *   tsx scripts/default-pricing.ts --rounding ttc99|none --valid-from AAAA-MM-JJ --note "<source>"  # arrondi commercial TTC (99 €)
  *   tsx scripts/default-pricing.ts --prepare            # brouillons recalculés (idempotent)
  *   tsx scripts/default-pricing.ts --publish            # vérifie et publie les brouillons de la politique en vigueur
  *   tsx scripts/default-pricing.ts --projects           # réévalue les projets enregistrés non contractualisés
@@ -28,17 +29,20 @@ async function main() {
     console.log(`Prix publics avant : ${before.lists} grille(s) de vente publiée(s), ${before.rows} ligne(s), empreinte ${before.hash}`);
     const { policyAt, createPolicyVersion } = await import("../src/server/market/policy");
     const margin = arg("--policy-margin");
-    if (margin) {
-      const bps = Math.round(Number(margin.replace(",", ".")) * 100);
+    const roundingArg = arg("--rounding");
+    if (margin || roundingArg) {
+      const bps = margin ? Math.round(Number(margin.replace(",", ".")) * 100) : null;
       const from = new Date(`${arg("--valid-from") ?? ""}T00:00:00`);
       const cur = await policyAt();
       if (!cur) { console.error("Aucune politique de coût : créez d'abord la version 1 (remise revendeur)."); return 2; }
-      if (!Number.isInteger(bps) || bps < 0 || bps > 9500 || Number.isNaN(from.getTime())) { console.error("Marge ou date d'effet invalide."); return 2; }
-      if (cur.marginTargetBps === bps) console.log(`Politique de coût : v${cur.version} définit déjà cette marge cible — rien créé.`);
-      else if (!apply) console.log(`Politique de coût : nouvelle version à créer depuis v${cur.version} (remise et éligibilités reprises) — aperçu.`);
+      if ((bps != null && (!Number.isInteger(bps) || bps < 0 || bps > 9500)) || Number.isNaN(from.getTime()) || (roundingArg && !["ttc99", "none"].includes(roundingArg))) { console.error("Marge, arrondi (ttc99|none) ou date d'effet invalide."); return 2; }
+      const wantMargin = bps ?? cur.marginTargetBps;
+      const wantRounding = roundingArg ? (roundingArg === "ttc99" ? "NEAREST_99_TTC" : "NONE") : cur.saleRounding;
+      if (cur.marginTargetBps === wantMargin && cur.saleRounding === wantRounding) console.log(`Politique de coût : v${cur.version} définit déjà cette marge cible et cet arrondi — rien créé.`);
+      else if (!apply) console.log(`Politique de coût : nouvelle version à créer depuis v${cur.version} (remise et éligibilités reprises ; arrondi TTC 99 € : ${wantRounding === "NEAREST_99_TTC" ? "oui" : "non"}) — aperçu.`);
       else {
-        const v = await createPolicyVersion({ ...cur, validFrom: from, marginTargetBps: bps, note: arg("--note") ?? "" }, actor);
-        console.log(`Politique de coût : version ${v.version} créée (effet le ${v.validFrom.toLocaleDateString("fr-FR")}).`);
+        const v = await createPolicyVersion({ ...cur, validFrom: from, marginTargetBps: wantMargin, saleRounding: wantRounding, note: arg("--note") ?? "" }, actor);
+        console.log(`Politique de coût : version ${v.version} créée (effet le ${v.validFrom.toLocaleDateString("fr-FR")} ; arrondi TTC 99 € : ${v.saleRounding === "NEAREST_99_TTC" ? "oui" : "non"}).`);
       }
     }
     const { previewDefaultPricing, prepareDefaultPricing, publishDefaultPricing } = await import("../src/server/market/default-pricing");
@@ -46,10 +50,10 @@ async function main() {
       for (const r of rows) {
         const s = r.supplements;
         const state = r.refused ? `REFUSÉ : ${r.refused}` : r.draft ? (r.draft.created ? `brouillon v${r.draft.version} créé` : `version v${r.draft.version} identique (rien créé)`) : "à créer";
-        console.log(`  ${r.familySlug}${r.variantKey ? `/${r.variantKey}` : ""} (vente v${r.current.version}, catalogue v${r.base?.version ?? "?"}) : ${r.changedCells}/${r.cells} cellule(s) modifiée(s) ; suppléments recalculés ${s.eligible.length + s.not_eligible.length}, conservés (éligibilité inconnue) ${s.unknown_kept.length}, % ${s.percent.length}, à chiffrer ${s.pending.length} — ${state}`);
+        console.log(`  ${r.familySlug}${r.variantKey ? `/${r.variantKey}` : ""} (vente v${r.current.version}, catalogue v${r.base?.version ?? "?"}) : arrondi ${r.rounding.from} → ${r.rounding.to} ; ${r.changedCells}/${r.cells} cellule(s) modifiée(s) ; suppléments recalculés ${s.eligible.length + s.not_eligible.length}, conservés (éligibilité inconnue) ${s.unknown_kept.length}, % ${s.percent.length}, à chiffrer ${s.pending.length} — ${state}`);
       }
     };
-    if (has("--prepare") || (!has("--publish") && !has("--projects") && !margin)) {
+    if (has("--prepare") || (!has("--publish") && !has("--projects") && !margin && !roundingArg)) {
       if (!apply) { const p = await previewDefaultPricing(); console.log(`Aperçu (politique v${p.policy.version}) :`); report(p.rows); }
       else { const p = await prepareDefaultPricing(actor); console.log(`Brouillons (politique v${p.policy.version}) :`); report(p.rows); }
     }

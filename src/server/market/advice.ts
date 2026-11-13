@@ -15,6 +15,7 @@ import { evaluate } from "@/domain/engine";
 import { CONFIDENCE_FR, DIRECT_COST_FR, marginOf, SCOPE_FR, type Confidence, type Margin } from "@/domain/market";
 import { nearestAllowed, type SystemInput, type SystemMounting, type SystemRules } from "@/domain/system";
 import { loadCatalog } from "@/server/catalog/load";
+import { roundTtcTo99 } from "@/domain/system-pricing";
 import { entryPriceFor } from "@/server/pricing/entry-prices";
 import { policyAt, type PolicyView } from "./policy";
 import { study, type StudyInput, type StudyResult } from "./study";
@@ -44,7 +45,7 @@ export interface AdviceRow {
   /** requête de l'étude détaillée (Comparatif marché) */
   query: string;
   current: { htMinor: number; ttcMinor: number } | null;
-  target: { htMinor: number; ttcMinor: number; partial: boolean; unknown: string[]; missing: string[] } | null;
+  target: { htMinor: number; ttcMinor: number; computedHtMinor: number; partial: boolean; unknown: string[]; missing: string[] } | null;
   market: { n: number; independent: number; minTtc: number | null; maxTtc: number | null; medianTtc: number | null; from: Date | null; to: Date | null; excluded: number };
   /** offres apparentées non retenues (même produit, dimensions et pose proches) : information, jamais un prix de marché */
   related: { n: number; min: number | null; max: number | null; reasons: string[] };
@@ -127,8 +128,11 @@ async function rowFor(familySlug: string, name: string, image: AdviceRow["image"
   const vat = r.vat ?? 2000;
   if (r.saleHt != null) row.current = { htMinor: r.saleHt, ttcMinor: ttcOf(r.saleHt, vat) };
   const m = policy?.marginTargetBps ?? null;
-  const t = m != null ? targetOf(r, m) : null;
-  if (t) row.target = { ...t, ttcMinor: ttcOf(t.htMinor, vat) };
+  const t0 = m != null ? targetOf(r, m) : null;
+  // arrondi commercial TTC de la politique : une seule fois, sur le prix complet calculé à la marge cible
+  const rt = t0 && policy?.saleRounding === "NEAREST_99_TTC" && !t0.missing.length ? roundTtcTo99(t0.htMinor, vat) : null;
+  const t = t0 ? { ...t0, computedHtMinor: t0.htMinor, htMinor: rt?.htMinor ?? t0.htMinor } : null;
+  if (t) row.target = { ...t, ttcMinor: rt?.ttcMinor ?? ttcOf(t.htMinor, vat) };
   const s = r.stats;
   row.market = { n: s.n, independent: s.independent, minTtc: s.minMinor != null ? ttcOf(s.minMinor, vat) : null, maxTtc: s.maxMinor != null ? ttcOf(s.maxMinor, vat) : null, medianTtc: s.medianMinor != null ? ttcOf(s.medianMinor, vat) : null, from: s.dates.from, to: s.dates.to, excluded: r.evals.filter((e) => !e.retained).length };
   // apparentées : écartées seulement pour le périmètre, la base fiscale, le prix « à partir de » ou la promotion
@@ -142,7 +146,7 @@ async function rowFor(familySlug: string, name: string, image: AdviceRow["image"
   // prix conseillé : marge cible par défaut ; marché seulement avec au moins trois offres fortes et indépendantes
   const aligned = r.reco?.recommended;
   if (t && (s.independent < 3 || !aligned)) {
-    row.advice = { htMinor: t.htMinor, ttcMinor: ttcOf(t.htMinor, vat), kind: "target", title: s.n === 0 ? "Prix calculé selon votre marge cible — comparaison marché insuffisante" : `Prix calculé selon votre marge cible — comparaison marché indicative (${s.n} offre${s.n > 1 ? "s" : ""} retenue${s.n > 1 ? "s" : ""})` };
+    row.advice = { htMinor: t.htMinor, ttcMinor: row.target!.ttcMinor, kind: "target", title: s.n === 0 ? "Prix calculé selon votre marge cible — comparaison marché insuffisante" : `Prix calculé selon votre marge cible — comparaison marché indicative (${s.n} offre${s.n > 1 ? "s" : ""} retenue${s.n > 1 ? "s" : ""})` };
   } else if (aligned) {
     row.advice = { htMinor: aligned.htMinor, ttcMinor: aligned.ttcMinor, kind: aligned.htMinor === t?.htMinor ? "target" : "market", title: `Aligné sur la médiane de ${s.n} offres fortement comparables (${s.independent} indépendantes), jamais sous le plancher` };
   }
@@ -199,3 +203,53 @@ export async function adviceFor(familySlug: string): Promise<AdviceRow | null> {
   if (!f || !(await entryPriceFor(f.slug))) return null;
   return rowFor(f.slug, f.name, null, policy);
 }
+
+export interface RoundingPreviewRow {
+  familySlug: string;
+  name: string;
+  config: string;
+  partial: boolean;
+  /** vente calculée avant arrondi (HT, TTC), TTC arrondi, écart, HT final et TVA */
+  computedHtMinor: number;
+  computedTtcMinor: number;
+  ttcMinor: number;
+  adjustmentTtcMinor: number;
+  htMinor: number;
+  vatMinor: number;
+  ventilationMinor: number;
+  /** marge réelle après arrondi (établie, prudente si le coût est incomplet) */
+  margin: { known: Margin; prudent: Margin; partial: boolean } | null;
+  flags: string[];
+}
+
+/**
+ * Aperçu de l'arrondi commercial TTC sur chaque configuration d'appel : toujours recalculé depuis le HT de la grille
+ * (jamais depuis un prix déjà arrondi) ; valable avant comme après l'activation.
+ */
+export async function roundingPreview(): Promise<{ active: boolean; rows: RoundingPreviewRow[] }> {
+  const policy = await policyAt();
+  const active = policy?.saleRounding === "NEAREST_99_TTC";
+  const families = await prisma.productFamily.findMany({ where: { legacy: false, status: { in: ["PUBLISHED", "QUOTE_ONLY"] }, category: { not: null } }, select: { slug: true, name: true }, orderBy: [{ category: "asc" }, { sortOrder: "asc" }] });
+  const rows: RoundingPreviewRow[] = [];
+  for (const f of families) {
+    const e = await entryPriceFor(f.slug);
+    if (!e) continue;
+    const b = e.entry.breakdown;
+    const computedHt = b.computedMinor ?? b.totalMinor;
+    const vat = b.vatRateBps;
+    const r = active && !b.partial ? roundTtcTo99(computedHt, vat) : null;
+    const computedTtc = computedHt + Math.floor((computedHt * vat + 5_000) / 10_000);
+    const ht = r?.htMinor ?? computedHt, ttc = r?.ttcMinor ?? computedTtc;
+    const i = e.entry.input;
+    const s = await study({ familySlug: f.slug, mounting: i.mounting, widthMm: i.widthMm, dimMm: (i.depthMm ?? i.heightMm) ?? 0, finishCode: i.finishCode, controlCode: i.controlCode ?? null, options: i.options.map((o) => (o.value ? `${o.code}=${o.value}` : o.code)), country: "FR" });
+    const cost = "error" in s ? null : s.cost;
+    const flags: string[] = [];
+    if (b.partial) flags.push("sous-total partiel : aucun arrondi");
+    if (r?.exception) flags.push("moins de 99 € TTC : prix calculé conservé");
+    if (cost?.partial) flags.push("marge non garantie (coût incomplet)");
+    if (cost && ht < cost.knownNetMinor) flags.push("sous le coût d'achat connu : validation requise");
+    rows.push({ familySlug: f.slug, name: f.name, config: [e.summary.dims, e.summary.mounting, ...e.summary.equipment].join(", "), partial: b.partial, computedHtMinor: computedHt, computedTtcMinor: computedTtc, ttcMinor: ttc, adjustmentTtcMinor: ttc - computedTtc, htMinor: ht, vatMinor: ttc - ht, ventilationMinor: r?.ventilationMinor ?? 0, margin: cost ? { known: marginOf(ht, cost.knownNetMinor), prudent: marginOf(ht, cost.prudentNetMinor), partial: cost.partial } : null, flags });
+  }
+  return { active, rows };
+}
+

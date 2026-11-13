@@ -14,7 +14,8 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
 import { audit } from "@/server/audit";
 import { SUPPLEMENT_TARGET as TARGET } from "@/server/supplier-prices/normalized";
-import { policySaleMinor, type Eligibility, type SaleBasis } from "@/domain/market";
+import { discountedMinor, policySaleMinor, type Eligibility, type SaleBasis } from "@/domain/market";
+import { roundTtcTo99 } from "@/domain/system-pricing";
 import { checkGrid, clienteleOverlaps, deriveCells, deriveRatio, parseAmountInput, periodsOverlap, roundHalfUp, sameCells, type Clientele, type DeriveMode, type DimRule, type GridCheck, type Nature, type TariffCell, type TaxBasis } from "@/domain/tariffs";
 
 export interface Actor {
@@ -40,7 +41,7 @@ export const EDITABLE = new Set(["DRAFT", "VERIFIED"]);
 
 const gridSelect = {
   id: true, sourceKey: true, version: true, label: true, status: true, scope: true, familySlug: true, variantKey: true, amountRole: true,
-  nature: true, natureNote: true, currency: true, currencyNote: true, taxBasis: true, vatRateBps: true, clientele: true, dimRule: true, dimRuleNote: true,
+  nature: true, natureNote: true, currency: true, currencyNote: true, taxBasis: true, vatRateBps: true, clientele: true, dimRule: true, dimRuleNote: true, saleRounding: true,
   validFrom: true, validTo: true, scopeNote: true, included: true, excluded: true, notes: true, originListId: true, basedOnId: true, baseActiveId: true,
   revision: true, zeroConfirmed: true, verifiedAt: true, verifiedBy: true, publishedAt: true, publishedBy: true, deactivatedAt: true, deactivatedBy: true,
   sourceFile: true, sourceSha256: true, importedBy: true, createdAt: true, updatedAt: true,
@@ -93,6 +94,8 @@ export interface NewGridData {
   clientele?: Clientele;
   dimRule?: DimRule;
   dimRuleNote?: string;
+  /** arrondi commercial du total TTC final (grilles de vente) */
+  saleRounding?: "NONE" | "NEAREST_99_TTC";
   scopeNote?: string;
   included?: string;
   excluded?: string;
@@ -117,7 +120,7 @@ export async function createDraft(tx: Tx, d: NewGridData, rows: RowInput[]) {
     data: {
       scope: "GRID", sourceKey, version: await nextVersion(tx, sourceKey), label: d.label, sourceFile: d.sourceFile, sourceSha256: d.sourceSha256, status: "DRAFT",
       familySlug: d.familySlug, variantKey: d.variantKey, amountRole: d.amountRole, nature: d.nature, natureNote: d.natureNote ?? "", currency: d.currency, currencyNote: d.currencyNote ?? "",
-      taxBasis: d.taxBasis, vatRateBps: d.vatRateBps ?? null, clientele: d.clientele ?? "ALL", dimRule: d.dimRule ?? "EXACT", dimRuleNote: d.dimRuleNote ?? "",
+      taxBasis: d.taxBasis, vatRateBps: d.vatRateBps ?? null, clientele: d.clientele ?? "ALL", dimRule: d.dimRule ?? "EXACT", dimRuleNote: d.dimRuleNote ?? "", saleRounding: d.saleRounding ?? "NONE",
       scopeNote: d.scopeNote ?? "", included: d.included ?? "", excluded: d.excluded ?? "", notes: d.notes ?? "", validFrom: d.validFrom ?? null, validTo: d.validTo ?? null,
       originListId: d.originListId ?? null, basedOnId: d.basedOnId ?? null, baseActiveId: base?.id ?? null, zeroConfirmed: d.zeroConfirmed ?? false, importedBy: d.createdBy,
     },
@@ -138,7 +141,7 @@ async function copyRows(tx: Tx, listId: string): Promise<RowInput[]> {
 
 const paramsOf = (g: GridVersion): Omit<NewGridData, "createdBy" | "basedOnId"> => ({
   familySlug: g.familySlug!, variantKey: g.variantKey, amountRole: g.amountRole ?? "MANUAL", label: g.label, nature: g.nature, natureNote: g.natureNote, currency: g.currency, currencyNote: g.currencyNote,
-  taxBasis: g.taxBasis, vatRateBps: g.vatRateBps, clientele: g.clientele, dimRule: g.dimRule, dimRuleNote: g.dimRuleNote, scopeNote: g.scopeNote, included: g.included, excluded: g.excluded, notes: g.notes,
+  taxBasis: g.taxBasis, vatRateBps: g.vatRateBps, clientele: g.clientele, dimRule: g.dimRule, dimRuleNote: g.dimRuleNote, saleRounding: g.saleRounding === "NEAREST_99_TTC" ? "NEAREST_99_TTC" : "NONE", scopeNote: g.scopeNote, included: g.included, excluded: g.excluded, notes: g.notes,
   originListId: g.originListId, sourceFile: g.sourceFile, sourceSha256: g.sourceSha256, zeroConfirmed: g.zeroConfirmed,
 });
 
@@ -564,6 +567,8 @@ export interface SalePolicyRule {
   marginBps: number;
   /** « structure » et « supplement:<code> » ; absent = inconnu (structure : éligible) */
   eligibility: Record<string, Eligibility>;
+  /** arrondi commercial du total TTC final, écrit dans la version de vente */
+  saleRounding?: "NONE" | "NEAREST_99_TTC";
 }
 
 export interface PolicyDerivation {
@@ -583,6 +588,10 @@ export interface PolicyDerivation {
   supplements: Record<SaleBasis, string[]>;
   /** aperçu (administration seulement) : prix de la plus petite cellule avant / après */
   sample: { before: number; after: number; catalogue: number } | null;
+  /** arrondi commercial : version en vigueur → version recalculée */
+  rounding: { from: string; to: string };
+  /** cellules dont le prix arrondi passerait sous le coût d'achat connu (publication refusée, validation requise) */
+  belowCost: number;
 }
 
 /**
@@ -594,7 +603,7 @@ export interface PolicyDerivation {
  */
 export async function derivePolicySaleGrid(saleId: string, rule: SalePolicyRule, actor: Actor, opts: { dryRun?: boolean } = {}): Promise<PolicyDerivation> {
   const sale = await getGrid(saleId);
-  const out: PolicyDerivation = { saleId, sourceKey: sale.sourceKey, familySlug: sale.familySlug!, variantKey: sale.variantKey, current: { id: sale.id, version: sale.version }, base: null, draft: null, refused: null, cells: 0, changedCells: 0, supplements: { eligible: [], not_eligible: [], unknown_kept: [], percent: [], pending: [] }, sample: null };
+  const out: PolicyDerivation = { saleId, sourceKey: sale.sourceKey, familySlug: sale.familySlug!, variantKey: sale.variantKey, current: { id: sale.id, version: sale.version }, base: null, draft: null, refused: null, cells: 0, changedCells: 0, supplements: { eligible: [], not_eligible: [], unknown_kept: [], percent: [], pending: [] }, sample: null, rounding: { from: sale.saleRounding, to: rule.saleRounding ?? "NONE" }, belowCost: 0 };
   if (sale.nature !== "SALE" || sale.status !== "ACTIVE") return { ...out, refused: "seule une grille de vente publiée peut être recalculée" };
   const structure = rule.eligibility.structure ?? "ELIGIBLE";
   if (structure === "UNKNOWN") return { ...out, refused: "éligibilité de la structure inconnue : coût non établi" };
@@ -611,6 +620,12 @@ export async function derivePolicySaleGrid(saleId: string, rule: SalePolicyRule,
   const cells = baseCells.map((c) => ({ ...c, amountMinor: c.amountMinor == null ? null : price(c.amountMinor, structure) }));
   out.cells = cells.length;
   out.changedCells = cells.filter((c) => c.amountMinor !== saleByKey.get(key(c))!.amountMinor).length;
+  // garde-fou : l'arrondi commercial au plus proche ne doit jamais ramener une configuration sous son coût d'achat connu
+  if ((rule.saleRounding ?? "NONE") === "NEAREST_99_TTC" && structure === "ELIGIBLE") {
+    const vat = sale.vatRateBps ?? 2000;
+    out.belowCost = baseCells.filter((c, i) => c.amountMinor != null && roundTtcTo99(cells[i]!.amountMinor!, vat).htMinor < discountedMinor(c.amountMinor, rule.discountBps)).length;
+    if (out.belowCost) return { ...out, refused: `${out.belowCost} cellule(s) passeraient sous le coût d'achat connu après arrondi : validation manuelle requise` };
+  }
   const smallest = [...baseCells].filter((c) => c.amountMinor != null).sort((a, b) => a.amountMinor! - b.amountMinor!)[0];
   if (smallest) out.sample = { catalogue: smallest.amountMinor!, before: saleByKey.get(key(smallest))!.amountMinor ?? 0, after: price(smallest.amountMinor!, structure)! };
   // suppléments : ligne du catalogue, recalculée selon son éligibilité ; inconnue → ligne de vente actuelle conservée
@@ -647,7 +662,8 @@ export async function derivePolicySaleGrid(saleId: string, rule: SalePolicyRule,
   if (latest) {
     const [lc, lf] = await Promise.all([gridCells(latest.id), prisma.supplierPriceRow.findMany({ where: { listId: latest.id, kind: "FIXED" }, select: { code: true, label: true, amountMinor: true, conditions: true } })]);
     const fk = (x: { code: string | null; label: string | null; amountMinor: number | null; conditions: unknown }) => `${x.code}|${x.label ?? ""}|${x.amountMinor}|${canonicalJson({ ...(x.conditions as object), derive: undefined, saleBasis: undefined })}`;
-    const same = sameCells(lc, cells) && lf.length === supplements.length && lf.map(fk).sort().join() === supplements.map((x) => fk({ code: x.code ?? null, label: x.label ?? null, amountMinor: x.amountMinor ?? null, conditions: x.conditions })).sort().join();
+    const latestRounding = (await prisma.supplierPriceList.findUnique({ where: { id: latest.id }, select: { saleRounding: true } }))?.saleRounding ?? "NONE";
+    const same = latestRounding === (rule.saleRounding ?? "NONE") && sameCells(lc, cells) && lf.length === supplements.length && lf.map(fk).sort().join() === supplements.map((x) => fk({ code: x.code ?? null, label: x.label ?? null, amountMinor: x.amountMinor ?? null, conditions: x.conditions })).sort().join();
     if (same) return { ...out, draft: { id: latest.id, version: latest.version, created: false } };
   }
   if (opts.dryRun) return out;
@@ -655,10 +671,11 @@ export async function derivePolicySaleGrid(saleId: string, rule: SalePolicyRule,
   const formula = structure === "ELIGIBLE" ? `catalogue × (1 − ${pct(rule.discountBps)}) ÷ (1 − ${pct(rule.marginBps)})` : `catalogue ÷ (1 − ${pct(rule.marginBps)})`;
   const baseRows = await prisma.supplierPriceRow.findMany({ where: { listId: base.id, kind: "GRID" }, select: { dimAmm: true, widthMinMm: true, widthMaxMm: true, dimAKey: true, sourceRef: true, conditions: true } });
   const refOf = (c: TariffCell) => baseRows.find((b) => b.dimAmm === c.dimAmm && (b.widthMinMm ?? b.widthMaxMm) === c.widthMinMm && b.widthMaxMm === c.widthMaxMm);
-  const note = `Politique de coût v${rule.policyVersion} : vente = ${formula} (marge brute cible ${pct(rule.marginBps)} du prix de vente HT), appliquée au catalogue v${base.version} ; arrondi au centime. Suppléments d'éligibilité inconnue : prix de vente conservé (${out.supplements.unknown_kept.length}).`;
+  const roundingNote = (rule.saleRounding ?? "NONE") === "NEAREST_99_TTC" ? " Arrondi commercial : total TTC de chaque configuration complète à la terminaison 99 € la plus proche, HT et TVA déduits (marge cible avant arrondi)." : "";
+  const note = `Politique de coût v${rule.policyVersion} : vente = ${formula} (marge brute cible ${pct(rule.marginBps)} du prix de vente HT), appliquée au catalogue v${base.version} ; arrondi au centime. Suppléments d'éligibilité inconnue : prix de vente conservé (${out.supplements.unknown_kept.length}).${roundingNote}`;
   const created = await prisma.$transaction(async (tx) => {
     await lockContext(tx, sale.familySlug!, sale.variantKey);
-    return createDraft(tx, { ...paramsOf(sale), validFrom: null, validTo: null, basedOnId: base.id, createdBy: actor.actorEmail ?? null, notes: [note, sale.notes].filter(Boolean).join("\n") }, cells.map((c): RowInput => {
+    return createDraft(tx, { ...paramsOf(sale), saleRounding: rule.saleRounding ?? "NONE", validFrom: null, validTo: null, basedOnId: base.id, createdBy: actor.actorEmail ?? null, notes: [note, sale.notes].filter(Boolean).join("\n") }, cells.map((c): RowInput => {
       const b = refOf(c);
       const requirement = (b?.conditions as { requirement?: string } | null)?.requirement;
       return { familySlug: sale.familySlug!, variantKey: sale.variantKey, kind: "GRID", dimAKey: b?.dimAKey ?? null, dimAmm: c.dimAmm, widthMinMm: c.widthMinMm, widthMaxMm: c.widthMaxMm, amountMinor: c.amountMinor, currency: sale.currency, amountRole: sale.amountRole ?? "VENTE", sourceRef: `Politique de coût v${rule.policyVersion} (${formula}) de ${b?.sourceRef ?? "la grille catalogue"}`, status: "OK" as const, origin: "DERIVED", conditions: { derive: { mode: "policy", baseId: base.id, baseVersion: base.version, ...policyTag }, ...(requirement ? { requirement } : {}) } };

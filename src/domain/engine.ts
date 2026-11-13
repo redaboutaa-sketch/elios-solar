@@ -8,7 +8,7 @@ import { applyBps, taxIncludedIn, type Cents } from "./money";
 import { activeGridFor, priceFromGrid } from "./pricing-grid";
 import { includedCablePublicText } from "./technical-spec";
 import { evaluateSystemRules, MOUNTING_FR, type SystemInput } from "./system";
-import { lookupSystemPrice, priceBreakdown, pricedSizes, type SystemPrice } from "./system-pricing";
+import { lookupSystemPrice, priceBreakdown, pricedSizes, ROUNDING_LINE, type SystemPrice } from "./system-pricing";
 import type {
   AccessoryStandaloneInput,
   AwningInput,
@@ -719,13 +719,16 @@ function evaluateSystem(catalog: CatalogSnapshot, input: SystemInput): Evaluatio
   // décomposition : cellule + suppléments connus ; éléments sans prix listés (sous-total partiel)
   const priceBreakdownResult = systemPrice && family.systemPrices ? priceBreakdown(family.systemPrices, rules, input, systemPrice, catalog.taxRateBps, family.name) : null;
   const reasons = onlineOrderBlockers(input, b.issues, systemPrice, blocked);
-  if (priceBreakdownResult && (priceBreakdownResult.partial || priceBreakdownResult.lines.length > 1)) reasons.push("des suppléments ou éléments à chiffrer s'ajoutent à la structure : commande au devis");
+  // l'ajustement d'arrondi commercial n'est pas un supplément : seul le reste des lignes compte
+  if (priceBreakdownResult && (priceBreakdownResult.partial || priceBreakdownResult.lines.filter((l) => l.code !== ROUNDING_LINE).length > 1)) reasons.push("des suppléments ou éléments à chiffrer s'ajoutent à la structure : commande au devis");
   const orderable = reasons.length === 0 && systemPrice != null;
   if (orderable) {
     // configuration entièrement tarifée : structure seule au prix de la grille ; TVA du catalogue ajoutée à un prix HT
-    const net = systemPrice.amountMinor;
+    // HT final de la configuration (arrondi commercial compris, le cas échéant)
+    const net = priceBreakdownResult?.totalMinor ?? systemPrice.amountMinor;
     const taxRateBps = systemPrice.vatRateBps ?? catalog.taxRateBps;
-    const gross = systemPrice.taxBasis === "TTC" ? net : net + applyBps(net, taxRateBps);
+    // TTC affiché par la décomposition (arrondi commercial TTC compris), jamais recalculé à part
+    const gross = priceBreakdownResult?.totalTtcMinor ?? (systemPrice.taxBasis === "TTC" ? net : net + applyBps(net, taxRateBps));
     const dims = [fmtM(input.widthMm), input.depthMm != null && rules.dims.depth ? fmtM(input.depthMm) : null].filter(Boolean).join(" × ") + (input.heightMm != null && rules.dims.height ? `, ${rules.dims.height.label.toLowerCase()} ${fmtM(input.heightMm)}` : "");
     b.line({ kind: "base", code: `base:${family.slug}:grid:v${systemPrice.listVersion}`, label: `${family.name} — ${dims}, pose ${MOUNTING_FR[input.mounting]}`, qty: 1, unitGrossCents: gross, taxRateBps, dataStatus: family.dataStatus });
   }

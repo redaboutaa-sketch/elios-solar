@@ -1523,6 +1523,8 @@ model SupplierPriceList {
   dimRule       GridDimRule    @default(EXACT)
   /// justification d'une règle de lecture ROUND_UP (obligatoire pour publier)
   dimRuleNote   String         @default("")
+  /// arrondi commercial du total TTC final d'une configuration de vente : NONE ou NEAREST_99_TTC (TTC à la terminaison 99 € la plus proche)
+  saleRounding  String         @default("NONE")
   /// implantations / variantes concernées (texte libre affiché aux administrateurs)
   scopeNote     String         @default("")
   included      String         @default("")
@@ -1680,6 +1682,8 @@ model CostPolicyVersion {
   dimToleranceBps       Int      @default(1000)
   /// règle d'arrondi du prix conseillé { stepMinor, basis }
   rounding              Json     @default("{}")
+  /// arrondi commercial TTC appliqué aux grilles de vente recalculées : NONE ou NEAREST_99_TTC
+  saleRounding          String   @default("NONE")
   note                  String   @default("")
   createdBy             String?
   createdAt             DateTime @default(now())

@@ -27,7 +27,7 @@ export async function loadPublicSystemPrices(now: Date = new Date()): Promise<{ 
       AND: [{ OR: [{ validFrom: null }, { validFrom: { lte: now } }] }, { OR: [{ validTo: null }, { validTo: { gt: now } }] }],
     },
     orderBy: [{ publishedAt: "desc" }, { version: "desc" }],
-    select: { id: true, version: true, familySlug: true, variantKey: true, clientele: true, currency: true, taxBasis: true, dimRule: true, vatRateBps: true, updatedAt: true },
+    select: { id: true, version: true, familySlug: true, variantKey: true, clientele: true, currency: true, taxBasis: true, dimRule: true, vatRateBps: true, saleRounding: true, updatedAt: true },
   });
   // une seule version par famille × variante (pas de chevauchement à la publication ; garde-fou : la plus spécifique, puis la plus récente)
   const chosen = new Map<string, (typeof lists)[number]>();
@@ -45,7 +45,7 @@ export async function loadPublicSystemPrices(now: Date = new Date()): Promise<{ 
   const fixed = picked.length ? await prisma.supplierPriceRow.findMany({ where: { listId: { in: picked.map((l) => l.id) }, kind: "FIXED", status: { not: "REJECTED" } }, select: { listId: true, code: true, label: true, amountMinor: true, conditions: true }, orderBy: { code: "asc" } }) : [];
   for (const l of picked) {
     const supplements = fixed.filter((f) => f.listId === l.id).map((f) => supplementOf(f)).filter((x): x is PriceSupplement => x != null);
-    const meta = { currency: l.currency!, taxBasis: l.taxBasis === "UNKNOWN" ? null : l.taxBasis, dimRule: l.dimRule === "ROUND_UP" ? "round_up" as const : "exact" as const, vatRateBps: l.vatRateBps, listVersion: l.version, versionId: l.id, supplements };
+    const meta = { currency: l.currency!, taxBasis: l.taxBasis === "UNKNOWN" ? null : l.taxBasis, dimRule: l.dimRule === "ROUND_UP" ? "round_up" as const : "exact" as const, vatRateBps: l.vatRateBps, listVersion: l.version, versionId: l.id, supplements, saleRounding: l.saleRounding === "NEAREST_99_TTC" ? "nearest_99_ttc" as const : "none" as const };
     const mine = rows.filter((r) => r.listId === l.id);
     if (!mine.length) continue;
     let t = tables.get(l.familySlug!);
