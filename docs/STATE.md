@@ -21,6 +21,13 @@
   SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
 
+## Arrondi commercial TTC à la terminaison 99 € (2026-11-13) — `docs/pricing/prix-conseilles.md` § 1 bis
+
+- Production `445edfb` : sauvegarde `db_20261113_131732`, migration additive `20261113120000_arrondi_commercial`,
+  répétition identique sur copie ; politique de coût v3 (25 % avant arrondi + arrondi TTC 99 €), 11 grilles
+  republiées sans changement de cellule ; devis existant inchangé ; prix d'appel 7 099 / 5 499 / 4 699 / 799 / 2 699 /
+  1 199 / 1 299 / 599 € TTC retrouvés dans le configurateur ; HelioSquare : sous-total partiel non arrondi.
+
 ## Politique 25 %, prix d'appel, « Mes prix conseillés » (2026-11-13) — `docs/pricing/prix-conseilles.md`
 
 - Politique de vente par défaut : marge brute produit 25 % du prix de vente HT (politique de coût v2), grilles de vente
