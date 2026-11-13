@@ -21,6 +21,11 @@ import { getT } from "@/i18n/server";
 type Item = Awaited<ReturnType<typeof listSystemFamilies>>[number];
 
 const priceText = (f: Item) => (f.fromPrice ? formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis) : null);
+const htText = (f: Item) => (f.fromPrice ? formatSystemPrice(f.fromPrice.htMinor, f.fromPrice.currency, "HT") : null);
+/** configuration de départ décrite (dimensions, pose, équipements de base) */
+const entryText = (f: Item) => (f.entry ? [f.entry.dims, `pose ${f.entry.mounting}`, ...f.entry.equipment].join(", ") : null);
+/** prix d'appel partiel : sous-total et éléments obligatoires à chiffrer */
+const partialPrice = (f: Item) => (f.entry && !f.entry.complete ? (f.entry.ttcMinor != null ? formatSystemPrice(f.entry.ttcMinor, f.entry.currency, "TTC") : formatSystemPrice(f.entry.htMinor, f.entry.currency, "HT")) : null);
 
 const manualPossible = (f: Item) => !!f.rules.controls?.some((c) => c.kind === "manual");
 /** Éclairage : compris dans le prix (inclus, ex. LED du coffre) ou en option établie ; jamais un souhait. */
@@ -79,7 +84,7 @@ export async function Comparison({ items }: { items: Item[] }) {
     ...(items.some((f) => f.rules.fixedSizes?.length) ? [[t.manufacture, (f: Item) => (f.rules.fixedSizes?.length ? t.fixedSizes : t.madeToMeasure)] as [string, (f: Item) => string]] : []),
     ...(items.some((f) => f.rules.insect) ? [[t.opening, (f: Item) => (f.rules.insect ? INSECT_OPENING_FR[f.rules.insect.opening] + (f.rules.insect.leaves === 2 ? t.twoLeaves : "") : "—")] as [string, (f: Item) => string]] : []),
     ...(items.some((f) => f.rules.modules) ? [[t.modules, (f: Item) => (f.rules.modules ? (f.rules.modules.multiModule === "documented" ? t.modulesDocumented : t.modulesUndocumented) : "—")] as [string, (f: Item) => string]] : []),
-    [t.structurePrice, (f) => (priceText(f) ? fmt(t.fromPrice, { price: priceText(f)! }) : f.pricedOnline ? configuratorPrice : t.onQuote)],
+    [t.structurePrice, (f) => (priceText(f) ? `${fmt(t.fromPrice, { price: priceText(f)! })} (${fmt(t.htEquivalent, { price: htText(f)! })})` : partialPrice(f) ? fmt(t.entryPartial, { price: partialPrice(f)!, missing: f.entry!.missing.join(", ") }) : f.pricedOnline ? configuratorPrice : t.onQuote)],
   ];
   return (
     <section className="section-y border-t border-sand-200" aria-labelledby="comparatif">
@@ -145,7 +150,7 @@ export async function SystemCollection({ category, items, drafts = [] }: { categ
             {items.map((f, i) => (
               <li key={f.slug} className="grid items-center gap-6 py-10 md:grid-cols-2 md:gap-12 md:py-14">
                 <Link href={productHref(category, f.slug)} className={`group relative block aspect-[4/3] overflow-hidden border border-sand-200 bg-white ${i % 2 ? "md:order-2" : ""}`} tabIndex={-1} aria-hidden="true">
-                  {shots.get(f.slug) ? <MediaImage media={shots.get(f.slug)!} sizes="(min-width: 768px) 46vw, 92vw" className="absolute inset-0 size-full object-contain p-8 transition-transform duration-500 group-hover:scale-[1.03]" /> : withholdsSupplierMedia(f.rules) ? <span className="grid size-full place-items-center p-10" data-testid="study-sketch"><FamilySketch kind={category} showWall={false} className="w-3/4" /></span> : <span className="grid size-full place-items-center text-sm text-stone-700">{t.visualSoon}</span>}
+                  {shots.get(f.slug) ? <MediaImage media={shots.get(f.slug)!} sizes="(min-width: 768px) 46vw, 92vw" className="absolute inset-0 size-full object-contain p-8 transition-transform duration-500 group-hover:scale-[1.03]" /> : <span className="relative grid size-full place-items-center p-10" data-testid="study-sketch"><FamilySketch kind={category} roof={f.rules.roof} showWall={false} className="w-3/4" /><span className="absolute bottom-2 left-3 right-3 text-[11px] leading-tight text-stone-700" data-testid="principle-caption">{t.principle}</span></span>}
                 </Link>
                 <div className="min-w-0">
                   <p className="eyebrow">{singular}</p>
@@ -156,10 +161,11 @@ export async function SystemCollection({ category, items, drafts = [] }: { categ
                     {f.rules.dims.depth && <><dt className="text-stone-700">{f.rules.dims.depth.label}</dt><dd className="tabular-nums">{dimRangeText(f.rules.dims.depth)}</dd></>}
                     {f.rules.dims.height && <><dt className="text-stone-700">{f.rules.dims.height.label}</dt><dd className="tabular-nums">{dimRangeText(f.rules.dims.height)}</dd></>}
                   </dl>
-                  <p className="mt-5 text-base" data-testid="collection-price">{priceText(f) ? <>{t.from} <span className="font-display text-2xl font-semibold tabular-nums">{priceText(f)}</span></> : f.pricedOnline ? t.priceConfigurator : t.priceOnQuote}</p>
+                  <p className="mt-5 text-base" data-testid="collection-price">{priceText(f) ? <>{t.from} <span className="font-display text-2xl font-semibold tabular-nums">{priceText(f)}</span> <span className="text-sm tabular-nums text-stone-700">{fmt(t.htEquivalent, { price: htText(f)! })}</span></> : partialPrice(f) ? <span className="text-sm">{fmt(t.entryPartial, { price: partialPrice(f)!, missing: f.entry!.missing.join(", ") })}</span> : f.pricedOnline ? t.priceConfigurator : t.priceOnQuote}</p>
+                  {entryText(f) && <p className="mt-1 text-xs text-stone-700" data-testid="collection-entry">{fmt(t.entryConfig, { config: entryText(f)! })}</p>}
                   <div className="mt-6 flex flex-wrap gap-2">
                     <Link href={productHref(category, f.slug)} className="btn-secondary">{t.discover}</Link>
-                    <Link href={configuratorHref(f.slug)} className="btn-accent">{t.configure} <ArrowRight className="size-4" aria-hidden="true" /></Link>
+                    <Link href={f.entry?.href ?? configuratorHref(f.slug)} className="btn-accent">{t.configure} <ArrowRight className="size-4" aria-hidden="true" /></Link>
                   </div>
                 </div>
               </li>

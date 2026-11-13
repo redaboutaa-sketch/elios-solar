@@ -56,6 +56,10 @@ export async function SystemProductPage({ family: f, category, media: allMedia, 
     breadcrumbJsonLd(BRAND.siteUrl, [{ name: catLabel, path: cat.href }, { name: f.name, path }]),
   ];
   const guides = (GUIDES_BY_TYPE[r.type] ?? []).map((href) => [href, guideLabels[href] ?? href] as const);
+  // prix d'appel : configuration de départ décrite ; le configurateur s'ouvre sur cette configuration
+  const entryText = f.entry ? [f.entry.dims, `pose ${f.entry.mounting}`, ...f.entry.equipment].join(", ") : null;
+  const partialText = f.entry && !f.entry.complete ? fmt(t.entryPartial, { price: f.entry.ttcMinor != null ? formatSystemPrice(f.entry.ttcMinor, f.entry.currency, "TTC") : formatSystemPrice(f.entry.htMinor, f.entry.currency, "HT"), missing: f.entry.missing.join(", ") }) : null;
+  const configHref = f.entry ? f.entry.href : configuratorHref(f.slug);
   const tabs = [
     {
       id: "description", label: t.tabs.description, content: (
@@ -112,7 +116,7 @@ export async function SystemProductPage({ family: f, category, media: allMedia, 
       <Breadcrumbs items={[{ href: cat.href, label: catLabel }, { label: f.name }]} />
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-12">
         <div className="min-w-0">
-          <SystemGallery name={f.name} media={media} scene={scene} />
+          <SystemGallery name={f.name} media={media} scene={scene} sketch={{ kind: cat.key, roof: r.roof }} />
           <section className="mt-10 grid gap-4 sm:grid-cols-2" aria-label={t.equipment} data-testid="system-included-options">
             <div className="border border-sand-200 bg-white p-5">
               <h2 className="font-display text-lg font-semibold">{t.included}</h2>
@@ -138,12 +142,12 @@ export async function SystemProductPage({ family: f, category, media: allMedia, 
           </dl>
           <p data-testid="delivery-lead-time" className="mt-3 flex gap-2 text-sm text-stone-800"><Truck className="mt-0.5 size-4 shrink-0 text-brand-700" aria-hidden="true" /><span>{DELIVERY_LEAD_TIME} {DELIVERY_TERMS_IN_QUOTE}</span></p>
           {f.fromPrice ? (
-            <p data-testid="from-price" className="mt-5 bg-brand-50 p-4 text-sm"><span className="block text-xs text-stone-700">{t.from}</span><strong className="font-display text-3xl font-semibold tabular-nums">{formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis)}</strong><span className="mt-1 block text-xs text-stone-700">{t.fromPriceNote}</span></p>
+            <p data-testid="from-price" className="mt-5 bg-brand-50 p-4 text-sm"><span className="block text-xs text-stone-700">{t.from}</span><strong className="font-display text-3xl font-semibold tabular-nums">{formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis)}</strong><span className="block text-xs tabular-nums text-stone-700" data-testid="from-price-ht">{fmt(t.htEquivalent, { price: formatSystemPrice(f.fromPrice.htMinor, f.fromPrice.currency, "HT") })}</span>{entryText && <span className="mt-2 block text-xs text-stone-800" data-testid="entry-config">{fmt(t.entryConfig, { config: entryText })}</span>}<span className="mt-1 block text-xs text-stone-700">{t.fromPriceNote}</span></p>
           ) : (
-            f.pricedOnline ? <p data-testid="price-configurator" className="mt-5 flex gap-2 bg-brand-50 p-4 text-sm"><Info className="size-4 mt-0.5 shrink-0 text-brand-700" aria-hidden="true" /><span><strong>{t.priceConfigurator}</strong> {t.priceConfiguratorText}</span></p> :
+            f.pricedOnline ? <p data-testid="price-configurator" className="mt-5 flex gap-2 bg-brand-50 p-4 text-sm"><Info className="size-4 mt-0.5 shrink-0 text-brand-700" aria-hidden="true" /><span><strong>{t.priceConfigurator}</strong> {t.priceConfiguratorText}{partialText && <span className="mt-2 block text-xs" data-testid="entry-partial">{partialText}</span>}</span></p> :
             <p data-testid="price-on-quote" className="mt-5 flex gap-2 bg-brand-50 p-4 text-sm"><Info className="size-4 mt-0.5 shrink-0 text-brand-700" aria-hidden="true" /><span><strong>{t.priceOnQuote}</strong> {t.priceOnQuoteText}</span></p>
           )}
-          <Link href={configuratorHref(f.slug)} className="btn-accent w-full mt-5 text-base">{t.configureToSize}</Link>
+          <Link href={configHref} className="btn-accent w-full mt-5 text-base">{t.configureToSize}</Link>
           <Link href={`/devis?produit=${f.slug}`} className="btn-secondary w-full mt-2">{t.requestQuote}</Link>
           <Link href="/contact" className="btn-ghost w-full mt-2">{t.talkAdvisor}</Link>
         </aside>
@@ -163,7 +167,7 @@ export async function SystemProductPage({ family: f, category, media: allMedia, 
               <tr><th scope="row" className="p-3 font-medium text-stone-700">{t.mounting}</th><td className="p-3">{r.mountings.map((m) => `${m.label}${m.status === "to_confirm" ? t.toConfirmParen : ""}`).join(" ; ")}</td></tr>
               {r.controls?.length ? <tr><th scope="row" className="p-3 font-medium text-stone-700">{t.control}</th><td className="p-3">{r.controls.map((c) => `${c.label}${c.status === "to_confirm" ? t.toConfirmParen : ""}`).join(" ; ")}</td></tr> : null}
               {r.wind?.text && <tr><th scope="row" className="p-3 font-medium text-stone-700">{t.wind}</th><td className="p-3">{r.wind.text}{r.wind.status === "to_confirm" ? t.toConfirmParen : ""}</td></tr>}
-              <tr><th scope="row" className="p-3 font-medium text-stone-700">{t.price}</th><td className="p-3">{f.fromPrice ? fmt(t.priceFromStructure, { price: formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis) }) : f.pricedOnline ? t.priceConfigurator : t.onQuote}</td></tr>
+              <tr><th scope="row" className="p-3 font-medium text-stone-700">{t.price}</th><td className="p-3">{f.fromPrice ? <>{fmt(t.priceFromStructure, { price: formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis) })} <span className="text-stone-700">({fmt(t.htEquivalent, { price: formatSystemPrice(f.fromPrice.htMinor, f.fromPrice.currency, "HT") })})</span>{entryText && <span className="block text-xs text-stone-700">{entryText}</span>}</> : f.pricedOnline ? (partialText ?? t.priceConfigurator) : t.onQuote}</td></tr>
             </tbody>
           </table>
         </div>
@@ -186,7 +190,7 @@ export async function SystemProductPage({ family: f, category, media: allMedia, 
       <section className="mt-16 grid gap-6 border-t border-sand-200 pt-10 sm:grid-cols-3" aria-labelledby="accompagnement">
         <h2 id="accompagnement" className="sr-only">{t.support.title}</h2>
         {[
-          [Ruler, t.support.configureTitle, f.fromPrice || f.pricedOnline ? t.support.configurePrice : t.support.configureQuote, configuratorHref(f.slug), t.support.configureCta],
+          [Ruler, t.support.configureTitle, f.fromPrice || f.pricedOnline ? t.support.configurePrice : t.support.configureQuote, configHref, t.support.configureCta],
           [FileText, t.support.quoteTitle, t.support.quoteText, `/devis?produit=${f.slug}`, t.support.quoteCta],
           [MessageCircle, t.support.advisorTitle, t.support.advisorText, "/contact", t.support.advisorCta],
         ].map(([Icon, title, d, href, cta]) => { const I = Icon as typeof Ruler; return (
@@ -195,7 +199,7 @@ export async function SystemProductPage({ family: f, category, media: allMedia, 
       </section>
       <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 border-t border-sand-300 bg-white/95 backdrop-blur p-3 flex items-center justify-between gap-3" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
         <div><p className="text-xs text-stone-700">{f.name}</p><p className="text-sm font-semibold">{f.fromPrice ? fmt(t.mobileFrom, { price: formatSystemPrice(f.fromPrice.amountMinor, f.fromPrice.currency, f.fromPrice.taxBasis) }) : f.pricedOnline ? t.priceConfigurator : t.mobileOnQuote}</p></div>
-        <Link href={configuratorHref(f.slug)} className="btn-accent">{t.configure}</Link>
+        <Link href={configHref} className="btn-accent">{t.configure}</Link>
       </div>
       <div className="lg:hidden h-20" aria-hidden="true" />
       <JsonLd data={jsonLd} />

@@ -123,6 +123,35 @@ function PergolaSketch(morph: Morph, c: Palette) {
   );
 }
 
+/**
+ * Pergola à toiture en toile (principe) : même cadre que la pergola à lames, toile plissée tendue entre les poutres,
+ * repliée vers l'arrière puis déployée (morphing). Illustration originale, non représentative d'un modèle précis.
+ */
+function PergolaFabricSketch(morph: Morph, c: Palette) {
+  const stroke = strokeOf(c), thin = thinOf(c);
+  const P = projector(186, 128, 40);
+  const W = 4, D = 3.2, H = 2.5, bh = 0.24, t = 0.14, f = 0.12, n = 10;
+  const post = (px: number, pz: number) => <g key={`${px}-${pz}`} fill={c.face} {...stroke}><path d={faceZ(P, pz + t, px, px + t, 0, H)} /><path d={faceX(P, px + t, 0, H, pz, pz + t)} /></g>;
+  const yc = H + bh * 0.55, span = D - 2 * f;
+  // pli i de la toile pour une longueur déployée e (fraction) : alternance haut / bas des plis
+  const pleat = (i: number, e: number) => { const z0 = f + (span * e * i) / n, z1 = f + (span * e * (i + 1)) / n, y0 = yc + (i % 2 ? 0.05 : -0.03), y1 = yc + (i % 2 ? -0.03 : 0.05); return poly(P, [[f, y0, z0], [W - f, y0, z0], [W - f, y1, z1], [f, y1, z1]]); };
+  return (
+    <>
+      <path d={faceY(P, 0, -0.5, W + 0.5, -0.5, D + 0.5)} fill={c.ground} />
+      <path d={faceY(P, 0, 0.35, W + 0.35, 0.45, D + 0.45)} fill={c.ink} fillOpacity={c.shadow} />
+      {!c.seeThrough && post(0, 0)}{post(W - t, 0)}{post(0, D - t)}
+      <g fill={c.face} {...thin}><path d={faceZ(P, f, f, W - f, H, H + bh)} /><path d={faceX(P, f, H, H + bh, f, D - f)} /></g>
+      {Array.from({ length: n }, (_, i) => <path key={i} className="sk-move" fill={c.sage} fillOpacity={i % 2 ? 0.55 : 0.8} {...thin} {...morph(pleat(i, 1), pleat(i, 0.28))} />)}
+      <g fill={c.face} {...stroke}>
+        <path d={faceZ(P, D, 0, W, H, H + bh)} />
+        <path d={faceX(P, W, H, H + bh, 0, D)} />
+        <path fillRule="evenodd" d={`${faceY(P, H + bh, 0, W, 0, D)} ${faceY(P, H + bh, f, W - f, f, D - f)}`} />
+      </g>
+      {post(W - t, D - t)}
+    </>
+  );
+}
+
 function ScreenSketch(morph: Morph, c: Palette, wall: boolean) {
   const stroke = strokeOf(c), thin = thinOf(c);
   const WW = 4.6, WH = 3.0, x0 = 0.9, x1 = 3.7, oh = 2.5, r = 0.08;
@@ -303,8 +332,9 @@ const SKETCHES: Record<CategoryKey, { draw: (morph: Morph, c: Palette, wall: boo
  * Dessin d'une famille. `decorative` (défaut) : masqué des lecteurs d'écran, le lien parent porte le nom.
  * `showWall={false}` : screen et store banne sans le bâtiment (sans effet sur la pergola).
  */
-export function FamilySketch({ kind, className = "", decorative = true, sun = true, animated = true, tone = "ink", showWall = true }: { kind: CategoryKey; className?: string; decorative?: boolean; sun?: boolean; animated?: boolean; tone?: "ink" | "light"; showWall?: boolean }) {
-  const s = SKETCHES[kind];
+export function FamilySketch({ kind, className = "", decorative = true, sun = true, animated = true, tone = "ink", showWall = true, roof }: { kind: CategoryKey; className?: string; decorative?: boolean; sun?: boolean; animated?: boolean; tone?: "ink" | "light"; showWall?: boolean; roof?: "louvres" | "fabric" }) {
+  // pergola à toiture en toile : dessin propre (jamais des lames pour une toile)
+  const s = kind === "PERGOLAS" && roof === "fabric" ? { draw: PergolaFabricSketch, label: "Dessin d'une pergola à toiture en toile" } : SKETCHES[kind];
   const c = PALETTES[tone];
   const body = s.draw(morpher(animated), c, showWall);
   return (

@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import Link from "@/i18n/link";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd } from "@/server/seo/structured-data";
+import { BRAND } from "@/config/brand";
+
 import { CATEGORIES, configuratorHref, productHref, type CategoryKey } from "@/domain/categories";
 import type { OptionDef, SystemRules } from "@/domain/system";
 import { prisma } from "@/lib/prisma";
@@ -37,6 +41,7 @@ export default async function AccessoriesPage() {
   return (
     <div className="container-x py-8">
       <Breadcrumbs items={[{ label: t.title }]} />
+      <JsonLd data={breadcrumbJsonLd(BRAND.siteUrl, [{ name: t.title, path: "/accessoires" }])} />
       <h1 className="mt-4 font-display text-display font-semibold">{t.title}</h1>
       <p className="mt-2 max-w-3xl text-stone-700 text-pretty">{t.intro}</p>
       <nav aria-label={t.sectionsNav} className="mt-6 flex flex-wrap gap-2 text-sm">{KINDS.map((k) => <a key={k.id} href={`#${k.id}`} className="btn-secondary px-3 py-1.5">{t.kinds[k.id].title}</a>)}<a href="#vent" className="btn-secondary px-3 py-1.5">{t.windNav}</a></nav>

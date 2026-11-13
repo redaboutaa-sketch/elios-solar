@@ -9,7 +9,11 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createHash, randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { applySupplierPrices } from "@/server/supplier-prices/import";
-import { deriveGridsFromImport, deriveSaleGrid, gridCells } from "@/server/tariffs/grids";
+import { derivePolicySaleGrid, deriveGridsFromImport, deriveSaleGrid, getGrid, gridCells, publishGrid, verifyGrid } from "@/server/tariffs/grids";
+import { publishDefaultPricing } from "@/server/market/default-pricing";
+import { loadCatalog } from "@/server/catalog/load";
+import { entryPrice } from "@/domain/entry-price";
+import { evaluate } from "@/domain/engine";
 import { loadPublicSystemPrices } from "@/server/pricing/system-prices";
 import { invalidateCatalogCache } from "@/server/catalog/load";
 import { createPolicyVersion, DEFAULT_DIRECT_COSTS, policyAt } from "@/server/market/policy";
@@ -51,10 +55,11 @@ beforeAll(async () => {
 });
 
 const FAM2 = `mkt2-${TAG}`;
+const FAM3 = `mkt3-${TAG}`;
 
 afterAll(async () => {
-  await prisma.supplierPriceList.deleteMany({ where: { familySlug: FAM2 } });
-  await prisma.productFamily.deleteMany({ where: { slug: FAM2 } });
+  await prisma.supplierPriceList.deleteMany({ where: { familySlug: { in: [FAM2, FAM3] } } });
+  await prisma.productFamily.deleteMany({ where: { slug: { in: [FAM2, FAM3] } } });
   await prisma.marketPriceProposal.deleteMany({ where: { familySlug: FAM } });
   await prisma.marketObservation.deleteMany({ where: { familySlug: FAM } });
   await prisma.costPolicyVersion.deleteMany({ where: { id: { in: policyIds } } });
@@ -167,3 +172,70 @@ describe("comparatif marché", () => {
     expect(r.cost!.knownNetMinor).toBe(504_000);
   });
 });
+
+describe("politique de vente par défaut : marge brute cible (moteur des grilles)", () => {
+  const q = (dim: number, w: number, amount: string) => `X;${FAM3};murale;grille;;Grille;projection;mm;${dim};${w};${w};${amount};EUR;HT;catalogue_fournisseur;;;;;;;${DOC} 3;p. 1, ligne ${dim}, colonne ${w};15/09/2026`;
+  const sp = (code: string, mode: string, amount: string, pct: string, applies: string) => `X;${FAM3};murale;option;${code};Supplément ${code};;;;;;${amount};EUR;HT;catalogue_fournisseur;${mode};${pct};${applies};;;;${DOC} 3;p. 2`;
+  const rule = { policyVersion: 99, discountBps: 3700, marginBps: 2500, eligibility: { structure: "ELIGIBLE" as const, "supplement:led": "ELIGIBLE" as const, "supplement:poteau": "NOT_ELIGIBLE" as const } };
+  let sale3 = "";
+  const quotesHash = async () => createHash("sha256").update(JSON.stringify(await prisma.quote.findMany({ select: { id: true, snapshot: true, status: true }, orderBy: { id: "asc" } }))).digest("hex");
+
+  it("aperçu puis brouillon : cellules × 0,84 (25 %), suppléments selon leur éligibilité, inconnu conservé, % inchangé ; idempotent", async () => {
+    const rules = (await prisma.productFamily.findUniqueOrThrow({ where: { slug: "marbella" }, select: { systemRules: true } })).systemRules as Record<string, unknown>;
+    await prisma.productFamily.create({ data: { slug: FAM3, name: `Test politique ${TAG}`, kind: "PERGOLA_SYSTEM", status: "DRAFT", systemRules: { ...rules, options: [], controls: undefined } as never } });
+    const { results } = await applySupplierPrices([{ fileName: `m3-${TAG}.csv`, bytes: new TextEncoder().encode([HEAD, q(4000, 4000, "4000"), q(4000, 3000, "3500"), sp("decor", "pourcentage", "", "20", "finition:WOOD_DECOR"), sp("centrale", "montant", "300", "", "toujours"), sp("led", "montant", "200", "", "option:led_perimeter"), sp("poteau", "montant", "300", "", "option:intermediate_post")].join("\n")), sourceKey: `market-test3-${TAG}` }], ACTOR);
+    const g = await deriveGridsFromImport(results[0]!.listId, { columns: { CATALOGUE_FOURNISSEUR: { enabled: true, nature: "SUPPLIER_LIST", currency: "EUR", taxBasis: "HT" } } }, ACTOR);
+    sale3 = (await deriveSaleGrid(g.created[0]!.id, { mode: "coefficient", value: "1" }, { vatRateBps: 2000 }, ACTOR)).id;
+    await verifyGrid(sale3, (await getGrid(sale3)).revision, ACTOR);
+    await publishGrid(sale3, (await getGrid(sale3)).revision, { at: null }, ACTOR);
+    const preview = await derivePolicySaleGrid(sale3, rule, ACTOR, { dryRun: true });
+    expect(preview).toMatchObject({ cells: 2, changedCells: 2, draft: null, refused: null, sample: { catalogue: 350_000, before: 350_000, after: 294_000 } });
+    expect(preview.supplements).toEqual({ eligible: ["led"], not_eligible: ["poteau"], unknown_kept: ["centrale"], percent: ["decor"], pending: [] });
+    const d = await derivePolicySaleGrid(sale3, rule, ACTOR);
+    expect(d.draft?.created).toBe(true);
+    expect((await gridCells(d.draft!.id)).map((c) => c.amountMinor).sort()).toEqual([294_000, 336_000]);
+    const fixed = Object.fromEntries((await prisma.supplierPriceRow.findMany({ where: { listId: d.draft!.id, kind: "FIXED" } })).map((r) => [r.code, r.amountMinor]));
+    expect(fixed).toMatchObject({ led: 16_800, poteau: 40_000, centrale: 30_000 });
+    expect((await prisma.supplierPriceList.findUniqueOrThrow({ where: { id: d.draft!.id } })).status).toBe("DRAFT");
+    // brouillon identique déjà présent : rien recréé
+    expect((await derivePolicySaleGrid(sale3, rule, ACTOR)).draft).toMatchObject({ id: d.draft!.id, created: false });
+    // journal sans montant ni taux
+    const log = await prisma.auditLog.findFirst({ where: { entity: "SupplierPriceList", entityId: d.draft!.id, action: "tariffs.derive" } });
+    expect(JSON.stringify(log?.after)).not.toMatch(/3360|2500|3700|336000/);
+  });
+
+  it("publication explicite : version précédente conservée (archivée), devis historiques inchangés", async () => {
+    const before = await quotesHash();
+    const draft = await prisma.supplierPriceList.findFirstOrThrow({ where: { familySlug: FAM3, nature: "SALE", status: "DRAFT" } });
+    const res = await publishDefaultPricing([draft.id], ACTOR);
+    expect(res[0]).toMatchObject({ ok: true });
+    expect((await prisma.supplierPriceList.findUniqueOrThrow({ where: { id: sale3 } })).status).toBe("ARCHIVED");
+    expect((await prisma.supplierPriceList.findUniqueOrThrow({ where: { id: draft.id } })).status).toBe("ACTIVE");
+    expect(await quotesHash()).toBe(before);
+    // un brouillon qui n'est pas issu de la politique est refusé
+    const other = await deriveSaleGrid((await prisma.supplierPriceList.findFirstOrThrow({ where: { familySlug: FAM3, nature: "SUPPLIER_LIST" } })).id, { mode: "coefficient", value: "1.1" }, { vatRateBps: 2000 }, ACTOR);
+    expect((await publishDefaultPricing([other.id], ACTOR))[0]).toMatchObject({ ok: false });
+  });
+
+  it("prix d'appel : configuration complète la moins chère calculée par le moteur sur la grille publiée", async () => {
+    // famille de test sans catégorie publique, passée « sur devis » le temps du calcul (catalogue du moteur)
+    await prisma.productFamily.update({ where: { slug: FAM3 }, data: { status: "QUOTE_ONLY" } });
+    try {
+      invalidateCatalogCache();
+      const catalog = await loadCatalog();
+      const e = entryPrice(catalog, FAM3)!;
+      // cellule la moins chère (3 000 × 4 000 : 2 940 €) + centrale « toujours » (300 €, prix conservé) ; TVA 20 %
+      expect(e).toMatchObject({ complete: true, missing: [], smallestIsCheapest: true });
+      expect(e.entry.htMinor).toBe(324_000);
+      expect(e.entry.ttcMinor).toBe(388_800);
+      expect(e.entry.input).toMatchObject({ widthMm: 3000, depthMm: 4000, options: [] });
+      expect(e.entry.breakdown.lines.map((l) => l.code)).toEqual(["structure", "centrale"]);
+      const r = evaluate(catalog, e.entry.input);
+      expect(r.priceBreakdown!.totalTtcMinor).toBe(e.entry.ttcMinor);
+    } finally {
+      await prisma.productFamily.update({ where: { slug: FAM3 }, data: { status: "DRAFT" } });
+      invalidateCatalogCache();
+    }
+  });
+});
+

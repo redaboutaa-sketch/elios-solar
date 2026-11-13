@@ -69,8 +69,9 @@ describe("robots.txt", () => {
     expect(robotsRules(false, SITE)).toEqual({ rules: { userAgent: "*", disallow: "/" } });
   });
   it("production : exploration autorisée hors espaces privés, ressources /_next non bloquées", () => {
-    const r = robotsRules(true, SITE) as { rules: { allow: string; disallow: string[] }; sitemap: string };
-    expect(r.rules.allow).toBe("/");
+    const r = robotsRules(true, SITE) as { rules: { allow: string[]; disallow: string[] }; sitemap: string };
+    // visuels publiés explorables (règle plus spécifique que « Disallow: /api/ »)
+    expect(r.rules.allow).toEqual(["/", "/api/media/"]);
     expect(r.sitemap).toBe("https://heliostores.com/sitemap.xml");
     for (const p of ["/admin", "/compte", "/panier", "/commande", "/projets/", "/api/"]) expect(r.rules.disallow).toContain(p);
     expect(r.rules.disallow.some((p) => "/_next/static/x.js".startsWith(p))).toBe(false);

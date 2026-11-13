@@ -13,7 +13,7 @@ export const forms = defineMessages(
     },
     quote: {
       metaTitle: "Demander un devis de pergola, store ou moustiquaire",
-      metaDescription: "Demandez un devis pour une pergola, un store screen, un store banne ou une moustiquaire sur mesure : décrivez votre projet et vos mesures, votre demande est enregistrée avec une référence.",
+      metaDescription: "Devis pour une pergola, un store screen, un store banne ou une moustiquaire sur mesure : décrivez projet et mesures ; demande enregistrée avec une référence.",
       breadcrumb: "Devis",
       title: "Demander un devis",
       describe: "Décrivez votre projet",

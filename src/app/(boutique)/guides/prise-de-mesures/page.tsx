@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd } from "@/server/seo/structured-data";
+import { BRAND } from "@/config/brand";
+
 import { MeasureTool, type MeasureModel } from "@/components/guides/measure-tool";
 import { prisma } from "@/lib/prisma";
 import { publicSystemRules } from "@/domain/public-sanitize";
@@ -15,6 +19,7 @@ export default async function MeasurePage() {
   return (
     <div className="container-x py-10">
       <Breadcrumbs items={[{ href: "/guides", label: "Guides et installation" }, { label: "Prise de mesures" }]} />
+      <JsonLd data={breadcrumbJsonLd(BRAND.siteUrl, [{ name: "Guides et installation", path: "/guides" }, { name: "Prise de mesures", path: "/guides/prise-de-mesures" }])} />
       <h1 className="mt-5 font-display text-display font-semibold">Prise de mesures</h1>
       <p className="mt-3 max-w-3xl text-stone-800 text-pretty">Choisissez votre famille, votre modèle et votre type de pose : le schéma indique ce qu'il faut mesurer. Vos mesures sont comparées aux dimensions documentées du modèle, puis reportées dans le configurateur. Elles restent indicatives : un conseiller les vérifie avec vous lors de l'étude du devis.</p>
       <div className="mt-8"><MeasureTool models={models} /></div>

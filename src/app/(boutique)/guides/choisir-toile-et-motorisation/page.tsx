@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd } from "@/server/seo/structured-data";
+import { BRAND } from "@/config/brand";
+
 import { prisma } from "@/lib/prisma";
 import { publicSystemRules } from "@/domain/public-sanitize";
 import { CATEGORIES, configuratorHref, type CategoryKey } from "@/domain/categories";
@@ -15,6 +19,7 @@ export default async function FabricGuide() {
   return (
     <div className="container-x py-10">
       <Breadcrumbs items={[{ href: "/guides", label: "Guides et installation" }, { label: "Toiles et motorisations" }]} />
+      <JsonLd data={breadcrumbJsonLd(BRAND.siteUrl, [{ name: "Guides et installation", path: "/guides" }, { name: "Toiles et motorisations", path: "/guides/choisir-toile-et-motorisation" }])} />
       <h1 className="mt-5 font-display text-display font-semibold">Choisir sa toile et sa motorisation</h1>
       <div className="mt-4 grid max-w-3xl gap-3 text-stone-800 text-pretty">
         <p><strong>Toile microperforée</strong> (screens) : elle filtre le soleil et la chaleur tout en gardant une vue vers l'extérieur ; plus son facteur d'ouverture est faible, plus elle occulte.</p>

@@ -13,6 +13,7 @@ export const ADMIN_NAV: NavItem[] = [
     children: [
       { href: "/admin/tarifs", label: "Grilles tarifaires" },
       { href: "/admin/tarifs/simulateur", label: "Simulateur" },
+      { href: "/admin/tarifs/prix-conseilles", label: "Mes prix conseillés" },
       { href: "/admin/tarifs/comparatif-marche", label: "Comparatif marché" },
     ],
   },

@@ -76,7 +76,7 @@ test("configuration → comparables → simulation → brouillon, sans changer u
     await p.getByLabel("Scénario").selectOption("manuel");
     await p.getByLabel("Prix proposé HT (€)").fill("99999");
     await p.getByRole("button", { name: /Préparer la proposition/ }).click();
-    const outcome = page.getByText(/Proposition enregistrée en brouillon|sous le plancher/);
+    const outcome = page.getByText(/Proposition enregistrée en brouillon|sous le plancher/).first();
     await expect(outcome).toBeVisible();
     if (await page.getByText("Proposition enregistrée en brouillon").isVisible()) {
       const row = page.getByTestId("proposals").getByRole("row").filter({ hasText: "99 999" }).first();

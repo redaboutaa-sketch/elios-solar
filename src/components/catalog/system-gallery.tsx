@@ -14,6 +14,8 @@ import { has3D } from "@/domain/scene-model";
 import { mediaSrcSet } from "@/components/ui/media-image";
 import { useT } from "@/i18n/client";
 import { fmt } from "@/i18n/format";
+import { FamilySketch } from "@/components/illustrations/sketches";
+import type { CategoryKey } from "@/domain/categories";
 
 function Loading3D() {
   const t = useT("catalog").gallery;
@@ -23,7 +25,7 @@ const SystemScene3D = dynamic(() => import("@/components/configurator/scene-3d/v
 
 type Mode = "photos" | "3d" | "technique";
 
-export function SystemGallery({ name, media, scene = null }: { name: string; media: PublishedMedia[]; scene?: SceneModel | null }) {
+export function SystemGallery({ name, media, scene = null, sketch }: { name: string; media: PublishedMedia[]; scene?: SceneModel | null; sketch?: { kind: CategoryKey; roof?: "louvres" | "fabric" } }) {
   const photos = media.filter((m) => m.role !== "technical");
   const drawings = media.filter((m) => m.role === "technical");
   const [mode, setMode] = useState<Mode>(photos.length ? "photos" : drawings.length ? "technique" : "photos");
@@ -35,7 +37,8 @@ export function SystemGallery({ name, media, scene = null }: { name: string; med
   if (!media.length) {
     // aucun visuel publiable (ex. modèle en demande d'étude) : vue 3D indicative chargée seulement à la demande
     if (scene && has3D(scene) && mode === "3d") return <div className="border border-sand-200 bg-white p-3" data-testid="gallery-3d"><SystemScene3D model={scene} fallback={<p className="p-6 text-sm text-stone-700">{t.unavailable3d}</p>} /><p className="mt-2 text-xs text-stone-700">{t.schematic}</p></div>;
-    return <div className="grid aspect-[4/3] place-items-center gap-3 border border-sand-200 bg-white p-6 text-center text-sm text-stone-700" data-testid="system-gallery-empty"><p>{t.empty}</p>{scene && has3D(scene) && <button type="button" className="btn-secondary" onClick={() => setMode("3d")}><Box className="size-4" aria-hidden="true" /> {t.show3d}</button>}</div>;
+    // aucune photo autorisée du modèle exact : illustration de principe qualifiée (jamais une photo d'un autre système)
+    return <div className="relative grid aspect-[4/3] place-items-center gap-3 border border-sand-200 bg-white p-6 pb-12 text-center text-sm text-stone-700" data-testid="system-gallery-empty">{sketch ? <FamilySketch kind={sketch.kind} roof={sketch.roof} showWall={false} className="w-2/3" /> : <p>{t.empty}</p>}{scene && has3D(scene) && <button type="button" className="btn-secondary" onClick={() => setMode("3d")}><Box className="size-4" aria-hidden="true" /> {t.show3d}</button>}{sketch && <span className="absolute bottom-2 left-3 right-3 text-left text-[11px] leading-tight text-stone-700" data-testid="principle-caption">{t.principle}</span>}</div>;
   }
   const list = mode === "technique" ? drawings : photos;
   const m = list[Math.min(i, list.length - 1)];

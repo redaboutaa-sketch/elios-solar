@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd } from "@/server/seo/structured-data";
+import { BRAND } from "@/config/brand";
 import { PUBLISHED_GUIDES } from "@/server/content/guides";
 
 const TITLE = "Préparer son projet et prendre les mesures";
-const DESCRIPTION = "Emplacement, cotes extérieur poteau à extérieur poteau, hauteur, pente, ancrage, câble 230 V, orientation, accès livraison et démarches : la liste de contrôle avant de commander.";
+const DESCRIPTION = "Emplacement, cotes, hauteur, pente, ancrage, câble 230 V, orientation, accès de livraison et démarches : la liste de contrôle avant de commander.";
 
 export const metadata: Metadata = { title: TITLE, description: DESCRIPTION, alternates: { canonical: "/guides/preparation-projet" } };
 
@@ -37,7 +40,8 @@ const Marker = () => (
 export default function Page() {
   return (
     <div className="container-x py-8 max-w-3xl">
-      <Breadcrumbs items={[{ label: "Guides" }, { label: TITLE }]} />
+      <Breadcrumbs items={[{ href: "/guides", label: "Guides et installation" }, { label: TITLE }]} />
+      <JsonLd data={breadcrumbJsonLd(BRAND.siteUrl, [{ name: "Guides et installation", path: "/guides" }, { name: TITLE, path: "/guides/preparation-projet" }])} />
       <h1 className="mt-4 font-display text-4xl">{TITLE}</h1>
       <p className="mt-2 text-stone-700">{DESCRIPTION}</p>
       <p className="mt-3 text-sm text-stone-700">Guide pratique original. Les valeurs propres à chaque modèle (hauteur de passage, dimensions des platines, alimentation) figurent sur la fiche technique et la notice du fournisseur : reportez-vous toujours à ces documents.</p>

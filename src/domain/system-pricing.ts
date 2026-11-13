@@ -135,7 +135,7 @@ export type SystemPriceLookup = { ok: true; price: SystemPrice } | { ok: false; 
 
 const MOUNTING_VARIANT: Partial<Record<SystemInput["mounting"], string>> = { wall: "murale", freestanding: "autoportante" };
 
-function variantFor(table: SystemPriceTable, mounting: SystemInput["mounting"]): string | null {
+export function variantFor(table: SystemPriceTable, mounting: SystemInput["mounting"]): string | null {
   const keys = new Set(table.cells.map((c) => c.variantKey));
   if (keys.size === 1 && keys.has("")) return "";
   const k = MOUNTING_VARIANT[mounting];

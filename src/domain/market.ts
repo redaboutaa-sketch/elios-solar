@@ -62,6 +62,38 @@ export const BASIS_FR: Record<CostBasis, string> = {
 
 export const discountedMinor = (catalogueMinor: number, discountBps: number) => catalogueMinor - applyBpsHalfUp(catalogueMinor, discountBps);
 
+/* ------------------------------------------------------------------ */
+/* Politique de vente par défaut (marge brute cible sur le prix de vente) */
+/* ------------------------------------------------------------------ */
+
+/** Base de calcul d'une ligne de la grille de vente dérivée de la politique. */
+export type SaleBasis = "eligible" | "not_eligible" | "unknown_kept" | "percent" | "pending";
+
+export const SALE_BASIS_FR: Record<SaleBasis, string> = {
+  eligible: "achat net (catalogue − remise) ÷ (1 − marge cible)",
+  not_eligible: "prix catalogue (non remisé) ÷ (1 − marge cible)",
+  unknown_kept: "éligibilité inconnue : prix de vente actuel conservé, marge non établie",
+  percent: "pourcentage inchangé, appliqué au prix de vente de la structure",
+  pending: "à chiffrer : inchangé",
+};
+
+/** Marge cible valide : 0 à 95 % (une marge sur prix de vente ne peut atteindre 100 %). */
+export const validMarginBps = (bps: number) => Number.isInteger(bps) && bps >= 0 && bps <= 9_500;
+
+/**
+ * Prix de vente HT d'un montant du catalogue selon la politique : achat net = catalogue × (1 − remise) si le poste est
+ * éligible (prix catalogue s'il est déclaré non remisé), puis vente = achat net ÷ (1 − marge cible), arrondie au
+ * centime (demi supérieur). Éligibilité inconnue → null : le coût n'est pas établi, la marge cible ne peut être promise.
+ * Contrôle : 4 000 € catalogue, remise 37 %, marge 25 % → achat 2 520 €, vente 3 360 €, marge 840 € (25 %).
+ */
+export function policySaleMinor(catalogueMinor: number, eligibility: Eligibility, discountBps: number, marginBps: number): number | null {
+  if (!validMarginBps(marginBps)) throw new Error("Marge cible invalide (0 à 95 %).");
+  if (eligibility === "UNKNOWN") return null;
+  const cost = eligibility === "ELIGIBLE" ? discountedMinor(catalogueMinor, discountBps) : catalogueMinor;
+  const den = 10_000 - marginBps;
+  return Math.floor((2 * cost * 10_000 + den) / (2 * den));
+}
+
 /**
  * Coût d'achat net d'une configuration, poste par poste, depuis la décomposition au prix catalogue fournisseur (même
  * moteur que la boutique) et les suppléments de la grille catalogue.

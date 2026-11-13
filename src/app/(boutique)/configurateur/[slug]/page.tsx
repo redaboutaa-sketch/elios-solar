@@ -1,5 +1,6 @@
 import { onlineSalesEnabled } from "@/server/payment/mode";
 import type { Metadata } from "next";
+import { entryPriceFor } from "@/server/pricing/entry-prices";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { SystemConfigurator } from "@/components/configurator/system-configurator";
@@ -57,7 +58,11 @@ export default async function SystemConfiguratorPage(props: PageProps<"/configur
   let existing: { id: string; token: string; title: string | null } | null = null;
   let cartLineId: string | null = null;
   let savedAt: string | null = null;
-  if (typeof sp.ligne === "string") {
+  if (sp.depart === "1") {
+    // configuration de départ du prix d'appel (« à partir de ») : même calcul que l'affichage, version publiée en vigueur
+    const e = await entryPriceFor(family.slug);
+    if (e) initial = e.entry.input;
+  } else if (typeof sp.ligne === "string") {
     // modification d'une ligne du panier : seule une ligne du panier du visiteur, pour ce produit
     const [session, guestKey] = await Promise.all([getSession(), getGuestKey()]);
     const line = await getLineForOwner({ userId: session?.user.id, guestKey }, sp.ligne);
@@ -80,7 +85,7 @@ export default async function SystemConfiguratorPage(props: PageProps<"/configur
     siblings: catalog.families.filter((f) => f.category === family.category && f.slug !== family.slug && !f.legacy && (f.status === "published" || f.status === "quote_only") && f.systemRules).map((f) => ({ slug: f.slug, name: f.name, href: configuratorHref(f.slug) })),
   };
   // eslint-disable-next-line @next/next/no-img-element -- média de la médiathèque
-  const art = hero ? <img src={hero.path} alt={hero.alt} className="aspect-[4/3] w-full bg-white object-contain" /> : withholdsSupplierMedia(family.systemRules as SystemRules) ? <div className="grid aspect-[4/3] place-items-center bg-white p-8"><FamilySketch kind={cat.key} showWall={false} className="w-2/3" /></div> : <div className="grid aspect-[4/3] place-items-center text-sm text-stone-700">{t.noVisual}</div>;
+  const art = hero ? <img src={hero.path} alt={hero.alt} className="aspect-[4/3] w-full bg-white object-contain" /> : <div className="relative grid aspect-[4/3] place-items-center bg-white p-8"><FamilySketch kind={cat.key} roof={(family.systemRules as SystemRules).roof} showWall={false} className="w-2/3" /><span className="absolute bottom-2 left-3 right-3 text-[11px] leading-tight text-stone-700" data-testid="principle-caption">{t.principle}</span></div>;
   return (
     <div className="container-x py-8">
       <Breadcrumbs items={[{ href: cat.href, label: catLabel }, { href: productHref(cat.key, family.slug), label: family.name }, { label: t.breadcrumb }]} />

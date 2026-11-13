@@ -1,3 +1,22 @@
+# Politique 25 %, prix d'appel, « Mes prix conseillés », visuels, SEO — 2026-11-13
+
+- Unitaires 471/471 (nouveau `default-pricing` : contrôle 4 000 € catalogue → achat 2 520 € → vente 3 360 € → marge
+  840 € = 25 % ; majoration 33,33 % distinguée ; ligne non éligible ÷ 0,75 ; éligibilité inconnue sans prix promis ;
+  coût déjà net jamais remisé deux fois ; `robots` : visuels publiés explorables).
+- Intégration 127/127 (nouveau bloc `market` : grille de vente recalculée par la politique, cellules × 0,84, supplément
+  éligible / non éligible / inconnu conservé / pourcentage inchangé ; idempotent ; journal sans montant ; publication
+  explicite, version précédente archivée, brouillon hors politique refusé ; **devis historiques inchangés** ; prix
+  d'appel = configuration complète la moins chère du moteur ; garde-fous : aucun module public ne lit coûts, marges ou
+  relevés).
+- Navigateur (base de développement, campagne complète, sans relance) : 112 réussis, 0 échec, 7 sautés par conception ;
+  nouveau `24-prix-conseilles` (tableau de bord → page, lignes expliquées, aucun prix public modifié ; visiteur, client
+  et gestionnaire refusés ; prix d'appel TTC puis HT, configuration décrite, `Offer` TTC, configurateur `?depart=1` au
+  même prix ; aucun « Visuel à venir », illustrations de principe qualifiées). Les 8 prix d'appel complets sont
+  retrouvés à l'identique dans le configurateur ; HelioSquare : sous-total partiel signalé.
+- Captures 390 / 768 / 1440 px (accueil, pergolas, fiches HelioMax et HelioLux, HelioSquare, moustiquaires, mentions
+  légales, configurateur de départ, page admin) : conservées hors dépôt.
+- Typage, lint (0 erreur), build : OK.
+
 # Comparatif marché, coût d'achat net — 2026-11-04
 
 - Unitaires 338/338 (nouveau `market` : contrôle catalogue 4 000 € HT − 37 % = achat 2 520 €, marge 1 480 € pour une

@@ -21,6 +21,18 @@
   SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
 
+## Politique 25 %, prix d'appel, « Mes prix conseillés » (2026-11-13) — `docs/pricing/prix-conseilles.md`
+
+- Politique de vente par défaut : marge brute produit 25 % du prix de vente HT (politique de coût v2), grilles de vente
+  recalculées par le moteur des grilles (catalogue × 0,84 sur les lignes éligibles ; suppléments d'éligibilité inconnue
+  conservés, marge non promise) ; publication autorisée par le client ; versions précédentes conservées.
+- Prix d'appel publics « À partir de … € TTC » (HT en second) d'une configuration réelle complète, décrite, ouverte par
+  « Configurer » (`?depart=1`) ; HelioSquare : sous-total partiel (moteur à chiffrer).
+- Administration → Tarifs → Mes prix conseillés : une ligne par produit, marge cible, marché, prix conseillé expliqué,
+  « Préparer ce prix » (brouillon d'une cellule, publication manuelle) ; relevés du 13/11 (105).
+- Visuels : illustrations originales de principe qualifiées (HelioMax, HelioLux « toiture en toile », HelioRoof,
+  moustiquaires) ; SEO : `docs/seo/audit-2026-11-13.md` ; mentions légales : `private/legal-2026-11-13/`.
+
 ## Comparatif marché et coût d'achat net (2026-11-04) — `docs/pricing/comparatif-marche.md`
 
 - Administration → Tarifs → Comparatif marché (`/admin/tarifs/comparatif-marche`, administrateurs seulement) : étude

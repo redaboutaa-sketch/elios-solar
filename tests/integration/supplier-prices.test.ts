@@ -148,7 +148,7 @@ describe("import des tarifs fournisseur", () => {
           || rel.startsWith("server/tariffs/") || rel.startsWith("app/admin/tarifs/") || rel === "server/actions/admin/tariffs.ts"
           || rel === "server/pricing/system-prices.ts"
           // comparatif marché (administrateurs) : brouillon de grille depuis une proposition
-          || rel.startsWith("server/market/") || rel === "server/actions/admin/market.ts";
+          || rel.startsWith("server/market/") || rel === "server/actions/admin/market.ts" || rel === "server/actions/admin/advice.ts";
         if (allowed) continue;
         const src = readFileSync(p, "utf8");
         // import du module ou accès Prisma aux modèles (les simples mentions en commentaire sont ignorées)
@@ -170,7 +170,9 @@ describe("import des tarifs fournisseur", () => {
         const rel = path.relative(root, p).split(path.sep).join("/");
         if (rel.startsWith("server/market/") || rel === "server/actions/admin/market.ts" || rel.startsWith("app/admin/tarifs/comparatif-marche/")
           // simulateur (administrateurs) : coût d'achat net selon la politique de coût
-          || rel === "app/admin/tarifs/simulateur/page.tsx") continue;
+          || rel === "app/admin/tarifs/simulateur/page.tsx"
+          // « Mes prix conseillés » (administrateurs) : page et actions
+          || rel.startsWith("app/admin/tarifs/prix-conseilles/") || rel === "server/actions/admin/advice.ts") continue;
         const src = readFileSync(p, "utf8");
         if (/from\s+["'][^"']*(server\/market|actions\/admin\/market)[^"']*["']|\.(costPolicyVersion|marketObservation|marketObservationRevision|marketPriceProposal)\b/.test(src)) offenders.push(rel);
       }

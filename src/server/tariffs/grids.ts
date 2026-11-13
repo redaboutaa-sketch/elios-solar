@@ -14,6 +14,7 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
 import { audit } from "@/server/audit";
 import { SUPPLEMENT_TARGET as TARGET } from "@/server/supplier-prices/normalized";
+import { policySaleMinor, type Eligibility, type SaleBasis } from "@/domain/market";
 import { checkGrid, clienteleOverlaps, deriveCells, deriveRatio, parseAmountInput, periodsOverlap, roundHalfUp, sameCells, type Clientele, type DeriveMode, type DimRule, type GridCheck, type Nature, type TariffCell, type TaxBasis } from "@/domain/tariffs";
 
 export interface Actor {
@@ -554,6 +555,118 @@ export async function deriveSaleGrid(baseId: string, rule: { mode: DeriveMode; v
   });
   await audit({ ...actor, action: "tariffs.derive", entity: "SupplierPriceList", entityId: created.id, after: { sourceKey, version: created.version, base: `${base.sourceKey} v${base.version}`, mode: rule.mode } });
   return { id: created.id, version: created.version, created: true };
+}
+
+/** Politique de vente appliquée à une grille : remise revendeur, marge brute cible, éligibilité par poste. */
+export interface SalePolicyRule {
+  policyVersion: number;
+  discountBps: number;
+  marginBps: number;
+  /** « structure » et « supplement:<code> » ; absent = inconnu (structure : éligible) */
+  eligibility: Record<string, Eligibility>;
+}
+
+export interface PolicyDerivation {
+  saleId: string;
+  sourceKey: string;
+  familySlug: string;
+  variantKey: string;
+  /** version active de la vente et catalogue de référence */
+  current: { id: string; version: number };
+  base: { id: string; version: number } | null;
+  /** brouillon créé (ou version identique déjà présente) ; null en aperçu ou en cas de refus */
+  draft: { id: string; version: number; created: boolean } | null;
+  refused: string | null;
+  cells: number;
+  changedCells: number;
+  /** lignes fixes par base de calcul (codes) */
+  supplements: Record<SaleBasis, string[]>;
+  /** aperçu (administration seulement) : prix de la plus petite cellule avant / après */
+  sample: { before: number; after: number; catalogue: number } | null;
+}
+
+/**
+ * Grille de VENTE recalculée selon la politique de coût (remise revendeur, marge brute cible) depuis le catalogue
+ * fournisseur dont la vente en vigueur est issue : cellules = achat net ÷ (1 − marge) ; suppléments fixes ou en tableau
+ * selon leur éligibilité déclarée (inconnue → montant de vente actuel conservé, jamais promis à la marge cible) ;
+ * pourcentages et « à chiffrer » inchangés (le pourcentage s'applique au prix de vente de la structure). Aucun doublon :
+ * si la dernière version de la lignée est identique, rien n'est créé. `dryRun` : aperçu sans écriture.
+ */
+export async function derivePolicySaleGrid(saleId: string, rule: SalePolicyRule, actor: Actor, opts: { dryRun?: boolean } = {}): Promise<PolicyDerivation> {
+  const sale = await getGrid(saleId);
+  const out: PolicyDerivation = { saleId, sourceKey: sale.sourceKey, familySlug: sale.familySlug!, variantKey: sale.variantKey, current: { id: sale.id, version: sale.version }, base: null, draft: null, refused: null, cells: 0, changedCells: 0, supplements: { eligible: [], not_eligible: [], unknown_kept: [], percent: [], pending: [] }, sample: null };
+  if (sale.nature !== "SALE" || sale.status !== "ACTIVE") return { ...out, refused: "seule une grille de vente publiée peut être recalculée" };
+  const structure = rule.eligibility.structure ?? "ELIGIBLE";
+  if (structure === "UNKNOWN") return { ...out, refused: "éligibilité de la structure inconnue : coût non établi" };
+  // catalogue de référence : celui dont la vente est issue, sinon la dernière liste catalogue de la même variante
+  const basedOn = sale.basedOnId ? await prisma.supplierPriceList.findUnique({ where: { id: sale.basedOnId }, select: { id: true, version: true, nature: true } }) : null;
+  const base = basedOn?.nature === "SUPPLIER_LIST" ? basedOn : await prisma.supplierPriceList.findFirst({ where: { scope: "GRID", nature: "SUPPLIER_LIST", familySlug: sale.familySlug, variantKey: sale.variantKey, status: { not: "REJECTED" } }, orderBy: { version: "desc" }, select: { id: true, version: true, nature: true } });
+  if (!base) return { ...out, refused: "aucun catalogue fournisseur de référence pour cette grille" };
+  out.base = { id: base.id, version: base.version };
+  const [baseCells, saleCells] = await Promise.all([gridCells(base.id), gridCells(sale.id)]);
+  const key = (c: TariffCell) => `${c.dimAmm}|${c.widthMinMm}|${c.widthMaxMm}`;
+  const saleByKey = new Map(saleCells.map((c) => [key(c), c]));
+  if (baseCells.length !== saleCells.length || baseCells.some((c) => !saleByKey.has(key(c)))) return { ...out, refused: "les cellules du catalogue ne correspondent pas à celles de la vente en vigueur" };
+  const price = (catalogueMinor: number, e: Eligibility) => policySaleMinor(catalogueMinor, e, rule.discountBps, rule.marginBps);
+  const cells = baseCells.map((c) => ({ ...c, amountMinor: c.amountMinor == null ? null : price(c.amountMinor, structure) }));
+  out.cells = cells.length;
+  out.changedCells = cells.filter((c) => c.amountMinor !== saleByKey.get(key(c))!.amountMinor).length;
+  const smallest = [...baseCells].filter((c) => c.amountMinor != null).sort((a, b) => a.amountMinor! - b.amountMinor!)[0];
+  if (smallest) out.sample = { catalogue: smallest.amountMinor!, before: saleByKey.get(key(smallest))!.amountMinor ?? 0, after: price(smallest.amountMinor!, structure)! };
+  // suppléments : ligne du catalogue, recalculée selon son éligibilité ; inconnue → ligne de vente actuelle conservée
+  const [baseFixed, saleFixed] = await Promise.all([
+    prisma.supplierPriceRow.findMany({ where: { listId: base.id, kind: "FIXED" }, orderBy: { code: "asc" } }),
+    prisma.supplierPriceRow.findMany({ where: { listId: sale.id, kind: "FIXED" }, orderBy: { code: "asc" } }),
+  ]);
+  const saleFixedByCode = new Map(saleFixed.map((f) => [f.code, f]));
+  const policyTag = { policy: { version: rule.policyVersion, discountBps: rule.discountBps, marginBps: rule.marginBps } };
+  const supplements: RowInput[] = [];
+  const keep = (f: (typeof saleFixed)[number], basis: SaleBasis) => {
+    out.supplements[basis].push(f.code);
+    supplements.push({ familySlug: f.familySlug, variantKey: f.variantKey, kind: "FIXED", code: f.code, label: f.label, conditions: { ...(f.conditions as Record<string, unknown>), saleBasis: basis } as Prisma.InputJsonValue, amountMinor: f.amountMinor, currency: sale.currency, amountRole: sale.amountRole ?? "VENTE", sourceRef: f.sourceRef, status: f.status, origin: f.origin });
+  };
+  for (const f of baseFixed) {
+    const cond = { ...(f.conditions as Record<string, unknown>) };
+    const m = cond.mode as string | undefined;
+    const current = saleFixedByCode.get(f.code);
+    if (m === "percent" || (m === "pending" && !cond.rangeMinor)) { keep(current ?? f, m === "percent" ? "percent" : "pending"); continue; }
+    const e = rule.eligibility[`supplement:${f.code}`] ?? "UNKNOWN";
+    if (e === "UNKNOWN") { keep(current ?? f, "unknown_kept"); continue; }
+    const basis: SaleBasis = e === "ELIGIBLE" ? "eligible" : "not_eligible";
+    out.supplements[basis].push(f.code);
+    const tbl = cond.table as { axis: string; cells: Array<{ amountMinor: number | null }> } | undefined;
+    if (m === "table" && tbl) cond.table = { ...tbl, cells: tbl.cells.map((c) => ({ ...c, amountMinor: c.amountMinor == null ? null : price(c.amountMinor, e) })) };
+    if (cond.rangeMinor) cond.rangeMinor = (cond.rangeMinor as [number, number]).map((x) => price(x, e));
+    const amount = f.amountMinor == null || m === "pending" ? f.amountMinor : price(f.amountMinor, e);
+    supplements.push({ familySlug: f.familySlug, variantKey: f.variantKey, kind: "FIXED", code: f.code, label: current?.label ?? f.label, conditions: { ...cond, saleBasis: basis, derive: { mode: "policy", baseId: base.id, ...policyTag } } as Prisma.InputJsonValue, amountMinor: amount, currency: sale.currency, amountRole: sale.amountRole ?? "VENTE", sourceRef: `Politique de coût v${rule.policyVersion} appliquée à ${f.sourceRef}`, status: f.status, origin: "DERIVED" });
+  }
+  // lignes propres à la vente (absentes du catalogue) : conservées telles quelles
+  for (const f of saleFixed) if (!baseFixed.some((b) => b.code === f.code)) keep(f, "unknown_kept");
+  // aucun doublon : dernière version de la lignée identique
+  const latest = await prisma.supplierPriceList.findFirst({ where: { sourceKey: sale.sourceKey, status: { not: "REJECTED" } }, orderBy: { version: "desc" }, select: { id: true, version: true } });
+  if (latest) {
+    const [lc, lf] = await Promise.all([gridCells(latest.id), prisma.supplierPriceRow.findMany({ where: { listId: latest.id, kind: "FIXED" }, select: { code: true, label: true, amountMinor: true, conditions: true } })]);
+    const fk = (x: { code: string | null; label: string | null; amountMinor: number | null; conditions: unknown }) => `${x.code}|${x.label ?? ""}|${x.amountMinor}|${canonicalJson({ ...(x.conditions as object), derive: undefined, saleBasis: undefined })}`;
+    const same = sameCells(lc, cells) && lf.length === supplements.length && lf.map(fk).sort().join() === supplements.map((x) => fk({ code: x.code ?? null, label: x.label ?? null, amountMinor: x.amountMinor ?? null, conditions: x.conditions })).sort().join();
+    if (same) return { ...out, draft: { id: latest.id, version: latest.version, created: false } };
+  }
+  if (opts.dryRun) return out;
+  const pct = (bps: number) => `${(bps / 100).toLocaleString("fr-FR")} %`;
+  const formula = structure === "ELIGIBLE" ? `catalogue × (1 − ${pct(rule.discountBps)}) ÷ (1 − ${pct(rule.marginBps)})` : `catalogue ÷ (1 − ${pct(rule.marginBps)})`;
+  const baseRows = await prisma.supplierPriceRow.findMany({ where: { listId: base.id, kind: "GRID" }, select: { dimAmm: true, widthMinMm: true, widthMaxMm: true, dimAKey: true, sourceRef: true, conditions: true } });
+  const refOf = (c: TariffCell) => baseRows.find((b) => b.dimAmm === c.dimAmm && (b.widthMinMm ?? b.widthMaxMm) === c.widthMinMm && b.widthMaxMm === c.widthMaxMm);
+  const note = `Politique de coût v${rule.policyVersion} : vente = ${formula} (marge brute cible ${pct(rule.marginBps)} du prix de vente HT), appliquée au catalogue v${base.version} ; arrondi au centime. Suppléments d'éligibilité inconnue : prix de vente conservé (${out.supplements.unknown_kept.length}).`;
+  const created = await prisma.$transaction(async (tx) => {
+    await lockContext(tx, sale.familySlug!, sale.variantKey);
+    return createDraft(tx, { ...paramsOf(sale), validFrom: null, validTo: null, basedOnId: base.id, createdBy: actor.actorEmail ?? null, notes: [note, sale.notes].filter(Boolean).join("\n") }, cells.map((c): RowInput => {
+      const b = refOf(c);
+      const requirement = (b?.conditions as { requirement?: string } | null)?.requirement;
+      return { familySlug: sale.familySlug!, variantKey: sale.variantKey, kind: "GRID", dimAKey: b?.dimAKey ?? null, dimAmm: c.dimAmm, widthMinMm: c.widthMinMm, widthMaxMm: c.widthMaxMm, amountMinor: c.amountMinor, currency: sale.currency, amountRole: sale.amountRole ?? "VENTE", sourceRef: `Politique de coût v${rule.policyVersion} (${formula}) de ${b?.sourceRef ?? "la grille catalogue"}`, status: "OK" as const, origin: "DERIVED", conditions: { derive: { mode: "policy", baseId: base.id, baseVersion: base.version, ...policyTag }, ...(requirement ? { requirement } : {}) } };
+    }).concat(supplements));
+  });
+  // journal : aucun montant ni taux
+  await audit({ ...actor, action: "tariffs.derive", entity: "SupplierPriceList", entityId: created.id, after: { sourceKey: sale.sourceKey, version: created.version, base: `catalogue v${base.version}`, mode: "policy", policyVersion: rule.policyVersion } });
+  return { ...out, draft: { id: created.id, version: created.version, created: true } };
 }
 
 /** Nouvelle grille vide (saisie manuelle), en brouillon. */

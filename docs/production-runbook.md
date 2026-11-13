@@ -114,6 +114,22 @@ $RUN --file /import/releves.json --policy-init 37 --valid-from 2026-11-04 --note
 La politique n'est créée que si aucune version n'existe ; ensuite : Administration → Tarifs → Comparatif marché →
 Politique de coût. Détail : `docs/pricing/comparatif-marche.md`.
 
+## 2 septies. Politique de vente par défaut, relevés du 13/11 et mentions légales (2026-11-13)
+
+Après sauvegarde (§ 6) et déploiement (aucune migration). Aucun montant imprimé ; empreinte des prix publics affichée.
+```bash
+DC="docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod"
+RUN="$DC run --rm --no-deps -e NODE_OPTIONS=--require=./scripts/lib/server-only-shim.cjs migrate node_modules/.bin/tsx"
+$RUN scripts/default-pricing.ts --policy-margin 25 --valid-from AAAA-MM-JJ --note "Mission du client du 2026-11-13"          # aperçu
+$RUN scripts/default-pricing.ts --policy-margin 25 --valid-from AAAA-MM-JJ --note "Mission du client du 2026-11-13" --apply  # politique v2
+$RUN scripts/default-pricing.ts --prepare                       # aperçu des grilles (comptes seulement)
+$RUN scripts/default-pricing.ts --prepare --publish --projects --apply   # brouillons, publication, projets réévalués
+```
+Relevés : même commande qu'au § 2 sexies avec `releves-2026-11-13.json` (l'ancien relevé d'une offre relue est archivé).
+Mentions légales : `docker exec -i heliostores-prod-postgres psql -U heliostores -d heliostores < private/legal-2026-11-13/apply.sql`
+(source hors dépôt : `private/legal-2026-11-13/`, version précédente `mentions-legales.v2.md`).
+Retour arrière des prix : Grilles tarifaires → version précédente → « Reprendre en brouillon » → vérifier → publier.
+
 ## 2 quater. Langues (aperçus de traduction)
 
 Variables du fichier d'environnement (lues à l'exécution, sans reconstruction) : `SITE_LOCALES` (langues servies,

@@ -204,6 +204,20 @@ export const observationKey = (o: { retailer: string; url: string; widthMm: numb
 export interface ImportReport { created: number; unchanged: number; rejected: { line: number; error: string }[] }
 
 /** Import de relevés : chaque relevé nouveau est créé (historique « create ») ; un relevé identique n'est pas dupliqué. */
+/**
+ * Relevé plus ancien d'une même offre (même revendeur, même URL, mêmes dimensions et pose) qu'un relevé plus récent :
+ * archivé (historique conservé) pour qu'une offre ne compte qu'une fois. `dryRun` : comptage seulement.
+ */
+export async function supersedeObservations(actor: Actor, opts: { dryRun?: boolean } = {}): Promise<number> {
+  const active = await prisma.marketObservation.findMany({ where: { status: "ACTIVE" }, select: { id: true, revision: true, retailer: true, url: true, widthMm: true, depthMm: true, mounting: true, observedAt: true } });
+  const k = (o: (typeof active)[number]) => [o.retailer, o.url, o.widthMm, o.depthMm, o.mounting].join("|");
+  const latest = new Map<string, Date>();
+  for (const o of active) if (!latest.has(k(o)) || latest.get(k(o))! < o.observedAt) latest.set(k(o), o.observedAt);
+  const older = active.filter((o) => o.observedAt < latest.get(k(o))!);
+  if (!opts.dryRun) for (const o of older) await setObservationStatus(o.id, o.revision, "ARCHIVED", `remplacé par le relevé du ${latest.get(k(o))!.toISOString().slice(0, 10)} (même offre)`, actor);
+  return older.length;
+}
+
 export async function importObservations(records: Array<{ line: number; input: unknown }>, source: string, actor: Actor, opts: { dryRun?: boolean } = {}): Promise<ImportReport> {
   const existing = new Set((await prisma.marketObservation.findMany({ select: { retailer: true, url: true, widthMm: true, depthMm: true, mounting: true, observedAt: true, priceMinor: true, model: true } })).map(observationKey));
   const report: ImportReport = { created: 0, unchanged: 0, rejected: [] };

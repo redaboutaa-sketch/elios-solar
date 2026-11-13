@@ -246,6 +246,7 @@ export const configurator = defineMessages(
       title: "Configurer {name}",
       intro: "Suivez les étapes : la visualisation de votre projet évolue avec vos choix. Le prix s'affiche lorsque vos dimensions figurent dans la grille tarifaire publiée ; sinon, et pour les options, la pose et la livraison, un conseiller établit votre devis.",
       noVisual: "Visuel à venir",
+      principle: "Illustration de principe — ne représente pas le modèle exact",
     },
   },
   {
@@ -478,6 +479,7 @@ export const configurator = defineMessages(
         title: "Configurar {name}",
         intro: "Siga los pasos: la visualización de su proyecto evoluciona con sus elecciones. El precio se muestra cuando sus medidas figuran en la tarifa publicada; si no, y para las opciones, la instalación y la entrega, un asesor elabora su presupuesto.",
         noVisual: "Imagen próximamente",
+        principle: "Ilustración de principio — no representa el modelo exacto",
       },
     },
     nl: {
@@ -709,6 +711,7 @@ export const configurator = defineMessages(
         title: "{name} configureren",
         intro: "Volg de stappen: de visualisatie van uw project verandert mee met uw keuzes. De prijs wordt getoond wanneer uw afmetingen in de gepubliceerde prijslijst staan; anders, en voor opties, montage en levering, stelt een adviseur uw offerte op.",
         noVisual: "Beeld volgt",
+        principle: "Principetekening — geen weergave van het exacte model",
       },
     },
     de: {
@@ -940,6 +943,7 @@ export const configurator = defineMessages(
         title: "{name} konfigurieren",
         intro: "Folgen Sie den Schritten: Die Visualisierung Ihres Projekts passt sich Ihrer Auswahl an. Der Preis wird angezeigt, wenn Ihre Maße in der veröffentlichten Preisliste enthalten sind; andernfalls sowie für Optionen, Montage und Lieferung erstellt ein Berater Ihr Angebot.",
         noVisual: "Bild folgt",
+        principle: "Prinzipdarstellung — zeigt nicht das genaue Modell",
       },
     },
     en: {
@@ -1171,6 +1175,7 @@ export const configurator = defineMessages(
         title: "Configure {name}",
         intro: "Follow the steps: the visualisation of your project updates with your choices. The price is shown when your dimensions are in the published price list; otherwise, and for options, fitting and delivery, an adviser prepares your quote.",
         noVisual: "Image coming soon",
+        principle: "Illustration of the principle — not the exact model",
       },
     },
   },

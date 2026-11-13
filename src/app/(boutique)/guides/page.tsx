@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd } from "@/server/seo/structured-data";
+import { BRAND } from "@/config/brand";
+
 import { PUBLISHED_GUIDES } from "@/server/content/guides";
 import { INSTALL_GUIDES } from "@/server/content/install-guides";
 import { guideStatuses } from "@/server/guides/status";
@@ -20,6 +24,7 @@ export default async function GuidesIndex() {
   return (
     <div className="container-x py-10">
       <Breadcrumbs items={[{ label: "Guides et installation" }]} />
+      <JsonLd data={breadcrumbJsonLd(BRAND.siteUrl, [{ name: "Guides et installation", path: "/guides" }])} />
       <h1 className="mt-5 font-display text-display font-semibold">Guides et installation</h1>
       <p className="mt-3 max-w-2xl text-stone-800">Les points à vérifier avant de configurer et de commander.</p>
       <ul className="mt-10 grid gap-px overflow-hidden border border-sand-200 bg-sand-200 md:grid-cols-2">

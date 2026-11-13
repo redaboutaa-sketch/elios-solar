@@ -6,7 +6,7 @@ import { PUBLIC_FORBIDDEN_NAMES, withoutSellerIdentity } from "../../src/domain/
 // fabricant, fournisseur et références (produits, moteurs) : jamais sur une page publique ni dans ses données
 const FORBIDDEN = PUBLIC_FORBIDDEN_NAMES;
 const AMOUNT = /\d[\d\s  ]*(,\d+)?[\s ]?(€|EUR|DH|MAD)/;
-const FROM_PRICE = /À partir de[\s ]+\d[\d\s  ]*(,\d+)?[\s ]€[\s ]HT/i;
+const FROM_PRICE = /À partir de[\s ]+\d[\d\s  ]*(,\d+)?[\s ]€[\s ]TTC/i;
 
 /** Page publique : aucune mention du fabricant ni du fournisseur (texte visible ET source HTML ; l'entité juridique du vendeur n'est admise que dans l'identité légale, hors contenu principal). */
 async function expectNoSupplier(page: Page) {

@@ -4,8 +4,8 @@ import type { CategoryKey } from "@/domain/categories";
 import type { SystemRules } from "@/domain/system";
 import type { SpecSource, TechnicalSpecValue } from "@/domain/technical-spec";
 import { publicSpecs, publicSystemRules } from "@/domain/public-sanitize";
-import { minSystemPrice } from "@/domain/system-pricing";
 import { loadPublicSystemPrices } from "@/server/pricing/system-prices";
+import { entryPriceFor, fromPriceOf, publicEntry } from "@/server/pricing/entry-prices";
 import { configuratorHref, productHref } from "@/domain/categories";
 import { HELIOSTORES_FAMILIES } from "./heliostores-data";
 import { canonicalFamilySlug } from "./legacy-slugs";
@@ -43,7 +43,9 @@ export async function listSystemFamilies(category: CategoryKey) {
   });
   const { tables } = await loadPublicSystemPrices();
   // page publique : ni fabricant, ni marque, ni référence fournisseur, ni règles brutes (sources), ni questions internes
-  return rows.map((f) => ({ ...f, brand: null, manufacturer: null, supplierRef: null, systemRules: null, openQuestions: [], rules: publicSystemRules(f.systemRules as unknown as SystemRules), hero: f.media[0]?.media ?? null, fromPrice: minSystemPrice(tables.get(f.slug)), pricedOnline: tables.has(f.slug) }));
+  const entries = await Promise.all(rows.map((f) => (tables.has(f.slug) ? entryPriceFor(f.slug) : null)));
+  // prix d'appel : configuration complète la moins chère (TTC), décrite ; sinon sous-total partiel signalé
+  return rows.map((f, i) => ({ ...f, brand: null, manufacturer: null, supplierRef: null, systemRules: null, openQuestions: [], rules: publicSystemRules(f.systemRules as unknown as SystemRules), hero: f.media[0]?.media ?? null, fromPrice: fromPriceOf(entries[i]!), entry: publicEntry(entries[i]!), pricedOnline: tables.has(f.slug) }));
 }
 
 /** Fiche d'un système publié de la famille publique demandée (null sinon : brouillon, archive, autre famille). */
@@ -53,6 +55,7 @@ export async function getSystemFamily(category: CategoryKey, slug: string) {
   // page publique : ni fabricant, ni marque, ni référence fournisseur ou de source (conservés pour l'administration)
   const specs: TechnicalSpecValue[] = publicSpecs(f.technicalSpecs.map((s) => ({ key: s.key, label: s.label, valueNum: s.valueNum, unit: s.unit, valueText: s.valueText, source: s.source.toLowerCase() as SpecSource, sourceRef: "", observedAt: null, variantSku: s.variantSku, note: s.note || null })));
   const { tables } = await loadPublicSystemPrices();
+  const entry = tables.has(f.slug) ? await entryPriceFor(f.slug) : null;
   return {
     ...f,
     // remplacées par `specValues` (sans clé interne ni référence de source)
@@ -63,7 +66,8 @@ export async function getSystemFamily(category: CategoryKey, slug: string) {
     systemRules: null,
     openQuestions: [],
     rules: publicSystemRules(f.systemRules as unknown as SystemRules),
-    fromPrice: minSystemPrice(tables.get(f.slug)),
+    fromPrice: fromPriceOf(entry),
+    entry: publicEntry(entry),
     /** grille de vente publiée : le configurateur calcule le prix (même sans « à partir de » quand un élément obligatoire reste à chiffrer) */
     pricedOnline: tables.has(f.slug),
     specValues: specs,

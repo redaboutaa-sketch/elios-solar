@@ -33,7 +33,8 @@ test("configurateur : étape dans l'adresse, Retour / Suivant du navigateur et a
 test("fiche → configurateur → Retour : retour à la fiche, configuration conservée au retour", async ({ page }) => {
   await page.goto("/pergolas/marbella");
   await acceptNecessaryOnly(page);
-  await page.locator('main a[href="/configurateur/marbella"]').first().click();
+  // « Configurer » ouvre la configuration de départ du prix d'appel (?depart=1) quand une grille est publiée
+  await page.locator('main a[href^="/configurateur/marbella"]').first().click();
   await expect(page.getByTestId(STEP.dims)).toBeVisible();
   await page.locator("[data-testid=system-configurator][data-ready]").waitFor();
   await setDim(page, "dim-width", 4000);

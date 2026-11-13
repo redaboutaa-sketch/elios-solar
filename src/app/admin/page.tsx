@@ -11,7 +11,7 @@ import { PageTitle, QUOTE_STATUS_FR, Section, Table, fmtDate } from "@/component
 export const metadata: Metadata = { title: "Tableau de bord" };
 
 export default async function AdminDashboard() {
-  await requireRole(["ADMIN", "MANAGER"]);
+  const { role } = await requireRole(["ADMIN", "MANAGER"]);
   const [paid, pending, newQuotes, newContacts, failedEmails, orders, quotes, blockers, unreadChats] = await Promise.all([
     prisma.order.count({ where: { status: { in: ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"] } } }),
     prisma.order.count({ where: { status: "PENDING_PAYMENT" } }),
@@ -33,7 +33,9 @@ export default async function AdminDashboard() {
   ];
   return (
     <div className="space-y-6">
-      <PageTitle title="Tableau de bord" />
+      <PageTitle title="Tableau de bord">
+        {role === "ADMIN" && <Link href="/admin/tarifs/prix-conseilles" className="btn-secondary" data-testid="dashboard-advice">Mes prix conseillés</Link>}
+      </PageTitle>
       <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
         {counters.map((c) => (
           <li key={c.label}>

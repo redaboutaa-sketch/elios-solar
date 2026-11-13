@@ -49,6 +49,10 @@ async function main() {
       console.log(`Relevés${apply ? "" : " (aperçu)"} : ${r.created} ${apply ? "créé(s)" : "à créer"}, ${r.unchanged} déjà présent(s), ${r.rejected.length} rejeté(s)`);
       for (const x of r.rejected) console.log(`  ligne ${x.line} : ${x.error}`);
       if (r.rejected.length) return 1;
+      // une offre relevée à nouveau ne compte qu'une fois : l'ancien relevé est archivé (historique conservé)
+      const { supersedeObservations } = await import("../src/server/market/observations");
+      const n = await supersedeObservations(actor, { dryRun: !apply });
+      console.log(`Relevés plus anciens d'une même offre${apply ? " archivés" : " à archiver"} : ${n}${apply ? "" : " (aperçu ; compte avant import)"}`);
     }
     const after = await fingerprint();
     console.log(`Prix publics après : empreinte ${after.hash} — ${after.hash === before.hash ? "inchangés" : "MODIFIÉS (anomalie)"}`);
