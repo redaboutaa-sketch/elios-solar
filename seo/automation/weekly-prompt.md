@@ -9,7 +9,8 @@ par des changements mesurables et vérifiables. Tu travailles dans un worktree i
 
 1. `AGENTS.md`, puis `seo/context.md`, `seo/backlog.md`, `seo/log.md`, `seo/keyword-map.csv`, `seo/ai-prompts.md`,
    le dernier `seo/reports/*.md`, `docs/seo/audit-2026-11-13.md`.
-2. Les contrôles quotidiens : `{{STATE_DIR}}/daily/*.json` (7 derniers) et `{{STATE_DIR}}/incidents.json`.
+2. Les contrôles quotidiens : `{{STATE_DIR}}/entree/daily/*.json` (7 derniers) et `{{STATE_DIR}}/entree/incidents.json`
+   (copies faites avant le passage) ; champ `observations` compris.
 3. `git log --oneline -20` et les PR ouvertes (`gh pr list --state open`). Un changement en PR n'est pas en production :
    la production est la branche `feat/heliostores` déployée (commit indiqué dans `docs/STATE.md`).
 4. Skills disponibles dans `.agents/skills/` (`seo-roast`, `internal-linking`, `seo-title-optimization`,
@@ -51,6 +52,9 @@ au moins trois liens entrants depuis des pages existantes, titre, description, c
   citées. Les autres moteurs restent « mesure indisponible ». Aucun score GEO.
 
 ## 5. Règles absolues
+
+- Outils : **une commande simple par appel Bash** (pas de `&&`, `|`, `;`, redirection ni sous-shell) : les commandes
+  composées ou non listées sont refusées automatiquement. Pour lire un fichier, utilise l'outil Read.
 
 - Vérifie chaque fait dans le code, la base de catalogue ou le site public. N'invente aucune caractéristique,
   certification, résistance au vent, garantie, réalisation, avis, zone desservie, pose, prix ou volume de recherche.

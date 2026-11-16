@@ -64,24 +64,28 @@ def hdr(h, name):
     return ""
 
 
-def page_checks(path, status, h, body):
+def page_checks(path, status, h, body, notes):
     url = SITE.rstrip("/") + ("/" if path == "/" else path)
     problems = []
     if status != 200:
         return [f"statut {status}"]
     head = body.split("</head>")[0]
-    can = re.search(r'<link rel="canonical" href="([^"]*)"', head)
+    # Next.js peut diffuser les métadonnées après le <head> (rendu en flux) pour un User-Agent non reconnu comme
+    # robot : on contrôle le document entier et on note la position, sans en faire un incident.
+    can = re.search(r'<link rel="canonical" href="([^"]*)"', body)
+    if can and can.start() > len(head):
+        notes.append(f"{path} : métadonnées diffusées hors <head>")
     expected = {url, url.rstrip("/")}
     if not can:
         problems.append("canonique absente")
     elif can.group(1) not in expected:
         problems.append(f"canonique inattendue {can.group(1)}")
-    robots = re.search(r'<meta name="robots" content="([^"]*)"', head)
+    robots = re.search(r'<meta name="robots" content="([^"]*)"', body)
     if robots and "noindex" in robots.group(1):
         problems.append("meta robots noindex")
     if "noindex" in hdr(h, "x-robots-tag"):
         problems.append("en-tête X-Robots-Tag noindex")
-    title = re.search(r"<title>([^<]*)</title>", head)
+    title = re.search(r"<title>([^<]*)</title>", body)
     if not title or not title.group(1).strip():
         problems.append("titre absent")
     h1 = len(re.findall(r"<h1[\s>]", body))
@@ -97,7 +101,7 @@ def page_checks(path, status, h, body):
 
 def main():
     started = dt.datetime.now().astimezone()
-    results, incidents = {}, {}
+    results, incidents, notes = {}, {}, []
 
     def flag(key, msg):
         incidents[key] = msg
@@ -152,7 +156,7 @@ def main():
     results["pages"] = {}
     for p in PRIORITY:
         s, h, body = fetch(SITE.rstrip("/") + ("/" if p == "/" else p))
-        pb = page_checks(p, s, h, body)
+        pb = page_checks(p, s, h, body, notes)
         results["pages"][p] = {"status": s, "problemes": pb}
         if pb:
             flag(f"page:{p}", f"{p} : {'; '.join(pb)}")
@@ -177,7 +181,7 @@ def main():
     known_path.write_text(json.dumps(known, ensure_ascii=False, indent=1))
 
     out = {"site": SITE, "debut": started.isoformat(), "fin": dt.datetime.now().astimezone().isoformat(),
-           "incidents_ouverts": known, "results": results}
+           "incidents_ouverts": known, "observations": notes, "results": results}
     (STATE / "daily" / f"{today}.json").write_text(json.dumps(out, ensure_ascii=False, indent=1))
     for f in (STATE / "daily").glob("*.json"):
         try:
@@ -191,6 +195,8 @@ def main():
           f"{ok_pages}/{len(PRIORITY)} pages prioritaires conformes, {len(known)} incident(s) ouvert(s)")
     for l in lines:
         print("  " + l)
+    for n in notes:
+        print("  observation : " + n)
     return 1 if known else 0
 
 

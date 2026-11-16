@@ -25,6 +25,11 @@ flock -n 9 || { echo "passage déjà en cours : abandon (verrou)"; exit 0; }
 command -v claude >/dev/null || { echo "PRÉREQUIS MANQUANT : CLI claude introuvable"; exit 2; }
 gh auth status >/dev/null 2>&1 || { echo "PRÉREQUIS MANQUANT : gh non authentifié"; exit 2; }
 
+# entrées de l'agent : copies réelles des 7 derniers contrôles quotidiens et des incidents ouverts
+DAILY_DIR="${DAILY_STATE:-/var/lib/heliostores-seo-daily}"
+rm -rf "$STATE_DIR/entree" && mkdir -p "$STATE_DIR/entree/daily"
+ls -1 "$DAILY_DIR/daily/"*.json 2>/dev/null | tail -7 | xargs -r cp -t "$STATE_DIR/entree/daily/"
+cp "$DAILY_DIR/incidents.json" "$STATE_DIR/entree/" 2>/dev/null || echo "{}" > "$STATE_DIR/entree/incidents.json"
 # données de mesure (lecture seule, agrégées)
 bash "$LIB/acquisition_counts.sh" || echo "comptes d'acquisition indisponibles (passage poursuivi)"
 
@@ -68,7 +73,7 @@ OUT="$STATE_DIR/weekly/$STAMP$([ "$DRY" = 1 ] && echo -essai).json"
 set +e
 timeout "$MAX_SECONDS" claude -p "$PROMPT" --model "$MODEL" --permission-mode dontAsk \
   --allowedTools "${ALLOWED[@]}" --disallowedTools "${DENY[@]}" \
-  --max-budget-usd "$BUDGET" --no-session-persistence --output-format json > "$OUT"
+  --add-dir "$STATE_DIR" --max-budget-usd "$BUDGET" --no-session-persistence --output-format json > "$OUT"
 RC=$?
 set -e
 python3 -I - "$OUT" "$RC" <<'PY'
