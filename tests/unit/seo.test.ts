@@ -23,6 +23,8 @@ describe("données structurées", () => {
   it("prix public : offre fidèle (devise, base fiscale)", () => {
     const j = productJsonLd(SITE, { name: "X", description: "", path: "/x", category: "c", images: [], price: { amountMinor: 123456, currency: "EUR", taxBasis: "HT" } }) as { offers: { priceSpecification: { minPrice: string; valueAddedTaxIncluded: boolean; priceCurrency: string } } };
     expect(j.offers.priceSpecification).toMatchObject({ minPrice: "1234.56", priceCurrency: "EUR", valueAddedTaxIncluded: false });
+    // prix « à partir de » : offre agrégée avec lowPrice (champ requis par Google ; minPrice seul n'est pas un prix)
+    expect(j.offers).toMatchObject({ "@type": "AggregateOffer", lowPrice: "1234.56", priceCurrency: "EUR" });
   });
   it("organisation : coordonnées seulement si renseignées", () => {
     const empty = organizationJsonLd({ name: "HELIOSTORES", siteUrl: SITE, logoPath: "/brand/logo.png" });

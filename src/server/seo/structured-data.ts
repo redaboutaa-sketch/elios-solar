@@ -3,7 +3,7 @@
  * - Organization : marque (name), entité juridique (legalName), URL et logo ; coordonnées commerciales publiques
  *   seulement (localité et e-mail renseignés dans les Réglages) : ni téléphone ni rue (décision du 2026-10-26).
  *   Aucun LocalBusiness tant qu'aucune adresse d'établissement recevant du public n'est validée.
- * - Product : jamais d'offre pour un produit sur devis (aucun prix 0), ni note, avis, stock, GTIN, marque ou fabricant.
+ * - Product : offre agrégée (« à partir de », lowPrice) ; jamais d'offre pour un produit sur devis (aucun prix 0), ni note, avis, stock, GTIN, marque ou fabricant.
  *   Une offre n'est émise que pour un prix public strictement positif, avec sa devise et sa base fiscale.
  * Le balisage valide ne rend pas une page éligible aux résultats enrichis de Google (Product sans offre : non éligible).
  */
@@ -51,9 +51,12 @@ export function productJsonLd(siteUrl: string, p: ProductInput) {
     ...(p.images.length ? { image: p.images.map((i) => abs(siteUrl, i)) } : {}),
     ...(priced
       ? {
+          // Prix « à partir de » : AggregateOffer.lowPrice (champ requis par Google pour une offre agrégée ; un Offer
+          // exige `price`, que minPrice ne remplace pas). Montant = prix d'appel affiché sur la page, base fiscale conservée.
           offers: {
-            "@type": "Offer",
+            "@type": "AggregateOffer",
             url,
+            lowPrice: (p.price!.amountMinor / 100).toFixed(2),
             priceCurrency: p.price!.currency,
             priceSpecification: { "@type": "PriceSpecification", minPrice: (p.price!.amountMinor / 100).toFixed(2), priceCurrency: p.price!.currency, valueAddedTaxIncluded: p.price!.taxBasis === "TTC" },
           },
