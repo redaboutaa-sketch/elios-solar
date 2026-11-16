@@ -21,6 +21,14 @@
   SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
 
+## SEO / GEO : première passe et automatisation (2026-11-16) — `seo/`
+
+- Production `8c082e5` (PR #3 fusionnée, CI verte) : sauvegarde `db_20261116_095522`, aucune migration ; offre
+  agrégée JSON-LD (`lowPrice` = prix d'appel affiché), conseils de mesure rendus côté serveur, liens des guides vers les
+  fiches ; devis existants inchangés (empreinte identique avant/après).
+- Automatisation serveur (`seo/automation/README.md`) : `heliostores-seo-daily.timer` (07:00, contrôle déterministe)
+  et `heliostores-seo-weekly.timer` (lundi 08:30, agent `claude -p`, PR en brouillon, jamais de fusion ni de déploiement).
+
 ## Arrondi commercial TTC à la terminaison 99 € (2026-11-13) — `docs/pricing/prix-conseilles.md` § 1 bis
 
 - Production `445edfb` : sauvegarde `db_20261113_131732`, migration additive `20261113120000_arrondi_commercial`,
