@@ -7,45 +7,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CategoryKey } from "@/domain/categories";
-import { defaultSystemInput, dimRangeText, MOUNTING_FR, type SystemInput, type SystemMounting, type SystemRules } from "@/domain/system";
+import { defaultSystemInput, dimRangeText, type SystemInput, type SystemMounting, type SystemRules } from "@/domain/system";
+import { measureAdvice as advice, MEASURE_FAMILY_LABEL as FAMILY_LABEL } from "@/domain/measure-advice";
 
 export interface MeasureModel { slug: string; name: string; category: CategoryKey; rules: SystemRules }
-
-const FAMILY_LABEL: Record<CategoryKey, string> = { PERGOLAS: "Pergola", SCREENS: "Screen", STORES_BANNES: "Store banne", MOUSTIQUAIRES: "Moustiquaire" };
-
-/** Ce qu'il faut mesurer, par famille et par pose (conseils génériques de relevé, sans valeur technique inventée). */
-function advice(cat: CategoryKey, mounting: SystemMounting, type: SystemRules["type"]): string[] {
-  const common = "Mesurez en millimètres, à plusieurs endroits, et notez la plus petite valeur pour une pose entre deux appuis ; le conseiller vérifie toujours les cotes avec vous lors de l'étude du devis.";
-  if (cat === "PERGOLAS") return [
-    "Largeur : la dimension hors tout souhaitée, le long du mur pour une pergola adossée.",
-    "Avancée (projection) : depuis le mur (ou l'arrière de la structure) jusqu'à l'avant des poteaux.",
-    "Hauteur : du sol fini au-dessous de la poutre ; repérez une pente éventuelle du sol.",
-    mounting === "wall" ? "Pose adossée : vérifiez la nature du mur (béton, maçonnerie) et les obstacles (fenêtres, gouttières, descentes d'eau)." : "Pose autoportante : repérez l'emplacement des poteaux et la nature du sol pour les ancrages.",
-    common,
-  ];
-  if (cat === "SCREENS" && type === "roof_blind") return [
-    "Largeur : la largeur de la toiture vitrée à couvrir, entre les appuis prévus pour les coulisses.",
-    "Projection : la longueur de toiture à couvrir, du coffre (côté haut) jusqu'à l'avant.",
-    "Notez la pente de la toiture et la structure porteuse (véranda, pergola).",
-    common,
-  ];
-  if (cat === "SCREENS") return [
-    mounting === "niche" ? "Pose en niche (dans le tableau) : largeur entre les deux tableaux, en haut, au milieu et en bas ; hauteur du linteau à l'appui." : "Pose en façade : largeur de la baie et débord souhaité de chaque côté ; hauteur du point de fixation du coffre jusqu'au sol ou à l'appui.",
-    "Repérez une alimentation électrique : le screen est motorisé.",
-    common,
-  ];
-  if (cat === "STORES_BANNES") return [
-    "Largeur : la largeur de toile souhaitée ; vérifiez la place disponible pour le coffre et les supports.",
-    "Avancée : choisissez parmi les avancées fabriquées ; une grande avancée demande une largeur minimale.",
-    `Pose ${MOUNTING_FR[mounting]} : vérifiez la nature et l'état du support, et la hauteur disponible au-dessus de la baie.`,
-    common,
-  ];
-  return [
-    mounting === "reveal" ? "Pose dans l'embrasure : largeur entre les tableaux et hauteur entre linteau et appui, à trois endroits ; retenez la plus petite valeur." : "Pose en applique : mesurez le dormant ou l'encadrement sur lequel la moustiquaire sera fixée.",
-    "Signalez un seuil, une poignée ou un volet qui pourrait gêner.",
-    common,
-  ];
-}
 
 /** Schéma simple de ce qui est mesuré (trait, lettres L / A / H). */
 function Schema({ cat, type }: { cat: CategoryKey; type: SystemRules["type"] }) {
