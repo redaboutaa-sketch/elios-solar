@@ -1,0 +1,19 @@
+[Unit]
+Description=HELIOSTORES — passage SEO/GEO hebdomadaire (agent claude -p, PR en brouillon)
+Documentation=file:///opt/pergola/seo/automation/README.md
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Environment=HOME=/root
+# l'agent lit les résultats du contrôle quotidien (StateDirectory du service quotidien)
+Environment=STATE_DIRECTORY=/var/lib/heliostores-seo
+Environment=DAILY_STATE=/var/lib/heliostores-seo-daily
+ExecStartPre=/bin/bash -c 'mkdir -p /var/lib/heliostores-seo && ln -sfn /var/lib/heliostores-seo-daily/daily /var/lib/heliostores-seo/daily && ln -sfn /var/lib/heliostores-seo-daily/incidents.json /var/lib/heliostores-seo/incidents.json'
+ExecStart=/bin/bash /usr/local/lib/heliostores-seo/weekly_run.sh
+StandardOutput=journal
+SyslogIdentifier=heliostores-seo-weekly
+TimeoutStartSec=2h
+Nice=10
