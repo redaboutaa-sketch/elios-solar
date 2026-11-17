@@ -24,6 +24,10 @@ from pathlib import Path
 
 SITE = os.environ.get("SEO_SITE", "https://heliostores.com")
 UA = "HeliostoresSEOCheck/1.0 (+https://heliostores.com; controle interne)"
+# Sonde « robot d'IA » : jetons reconnus par htmlLimitedBots (next.config.ts) ; les métadonnées doivent être dans
+# le <head>. Pages dynamiques où le rendu en flux a été observé le 2026-11-16 (B15).
+AI_PROBE_UA = "HeliostoresSEOCheck/1.0 (+https://heliostores.com; controle interne; compatible GPTBot ClaudeBot)"
+AI_PROBE_PAGES = ["/pergolas/malaga", "/stores-bannes/casablanca", "/screens/helioroof-screen"]
 DELAY_S = float(os.environ.get("SEO_DELAY_S", "1.0"))
 STATE = Path(os.environ.get("STATE_DIRECTORY", "/var/lib/heliostores-seo"))
 KEEP_DAYS = 90
@@ -45,9 +49,9 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 OPENER = urllib.request.build_opener(NoRedirect)
 
 
-def fetch(url):
+def fetch(url, ua=UA):
     time.sleep(DELAY_S)
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    req = urllib.request.Request(url, headers={"User-Agent": ua})
     try:
         with OPENER.open(req, timeout=20) as r:
             return r.status, dict(r.headers), r.read().decode("utf-8", "replace")
@@ -69,12 +73,9 @@ def page_checks(path, status, h, body, notes):
     problems = []
     if status != 200:
         return [f"statut {status}"]
-    head = body.split("</head>")[0]
-    # Next.js peut diffuser les métadonnées après le <head> (rendu en flux) pour un User-Agent non reconnu comme
-    # robot : on contrôle le document entier et on note la position, sans en faire un incident.
+    # Pour un User-Agent de navigateur (le nôtre), Next.js diffuse les métadonnées en flux, éventuellement après le
+    # <head> : c'est normal, on contrôle donc le document entier. La position est vérifiée par la sonde IA (main).
     can = re.search(r'<link rel="canonical" href="([^"]*)"', body)
-    if can and can.start() > len(head):
-        notes.append(f"{path} : métadonnées diffusées hors <head>")
     expected = {url, url.rstrip("/")}
     if not can:
         problems.append("canonique absente")
@@ -160,6 +161,17 @@ def main():
         results["pages"][p] = {"status": s, "problemes": pb}
         if pb:
             flag(f"page:{p}", f"{p} : {'; '.join(pb)}")
+
+    results["sonde_ia"] = {}
+    for p in AI_PROBE_PAGES:
+        s, _, body = fetch(SITE.rstrip("/") + p, ua=AI_PROBE_UA)
+        head = body.split("</head>")[0] if "</head>" in body else ""
+        dans_head = bool(re.search(r'<link rel="canonical"', head)) and bool(re.search(r"<title>[^<]+</title>", head))
+        results["sonde_ia"][p] = {"status": s, "metadonnees_dans_head": dans_head}
+        if s != 200:
+            flag(f"ia:{p}", f"{p} : statut {s} pour un robot d'IA")
+        elif not dans_head:
+            flag(f"ia:{p}", f"{p} : titre ou canonique hors <head> pour un robot d'IA (htmlLimitedBots)")
 
     # incidents : dédoublonnage par clé
     STATE.mkdir(parents=True, exist_ok=True)

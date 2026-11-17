@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { breadcrumbJsonLd, jsonLdString, organizationJsonLd, productJsonLd } from "@/server/seo/structured-data";
 import { productNature, productTitle, quoteSafeDescription } from "@/server/seo/product-nature";
 import { PRIVATE_PREFIXES, robotsRules } from "@/server/seo/robots-rules";
+import { HTML_LIMITED_BOTS } from "@/server/seo/html-limited-bots";
 import { GUIDE_REDIRECTS, GUIDES, PUBLISHED_GUIDES } from "@/server/content/guides";
 
 const SITE = "https://heliostores.com";
@@ -104,5 +105,24 @@ describe("contenus éditoriaux publics", () => {
       const t = readFileSync(f, "utf8");
       expect(t, f).not.toMatch(/aluprof|thysens|cortinadecor|sous \d+ ?(h|heures|jours)|\d+ ?€|garantie (\d|décennale|commerciale)|ans de garantie|livraison gratuite|partout en|intervenons|nos équipes|showroom|envío gratuito|gratis verzending|kostenlose lieferung|free delivery|wir liefern|we deliver/i);
     }
+  });
+});
+
+describe("robots à métadonnées bloquantes (htmlLimitedBots)", () => {
+  it("ajoute les robots d'IA sans retirer la liste Next.js, et laisse les navigateurs en flux", () => {
+    for (const ua of [
+      "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.2; +https://openai.com/gptbot)",
+      "Mozilla/5.0 (compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot)",
+      "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)",
+      "Claude-SearchBot/1.0",
+      "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)",
+      "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)",
+      "Mozilla/5.0 (Linux; Android 6.0.1) Chrome/120.0 Mobile Safari/537.36 (compatible; AdsBot-Google-Mobile)",
+      "facebookexternalhit/1.1",
+    ]) expect(HTML_LIMITED_BOTS.test(ua), ua).toBe(true);
+    for (const ua of [
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36",
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+    ]) expect(HTML_LIMITED_BOTS.test(ua), ua).toBe(false);
   });
 });
