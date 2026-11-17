@@ -1,11 +1,14 @@
 import type { NextConfig } from "next";
 import { legacyProductRedirects } from "./src/server/catalog/legacy-slugs";
+import { HTML_LIMITED_BOTS } from "./src/server/seo/html-limited-bots";
 
 const nextConfig: NextConfig = {
   output: "standalone",
   allowedDevOrigins: ["127.0.0.1", "localhost"],
   poweredByHeader: false,
   reactStrictMode: true,
+  // métadonnées dans le <head> (rendu bloquant) aussi pour les robots d'IA, en plus de la liste Next.js (SEO B15)
+  htmlLimitedBots: HTML_LIMITED_BOTS,
   // Téléversement de médias (8 Mo max. + marge multipart) via server action.
   experimental: { serverActions: { bodySizeLimit: "9mb" } },
   images: {
