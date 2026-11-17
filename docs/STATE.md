@@ -21,6 +21,14 @@
   SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
 
+## SEO / GEO B15 : métadonnées dans le `<head>` pour les robots d'IA (2026-11-17) — `seo/`
+
+- Production `8d8d424` (PR #4 fusionnée, CI verte) : sauvegarde `db_20261117_114947`, aucune migration ;
+  `htmlLimitedBots` = liste Next.js + robots d'IA (`src/server/seo/html-limited-bots.ts`). Après déploiement :
+  ClaudeBot et GPTBot 24/24 réponses avec titre et canonique dans le `<head>` (avant : 1/6 en flux pour ClaudeBot) ;
+  navigateurs toujours en flux. Devis inchangés ; automatisation réinstallée (sonde « robot d'IA » : 3/3 OK).
+- Retour arrière applicatif : `IMAGE_TAG=8c082e58ba41`.
+
 ## SEO / GEO : première passe et automatisation (2026-11-16) — `seo/`
 
 - Production `8c082e5` (PR #3 fusionnée, CI verte) : sauvegarde `db_20261116_095522`, aucune migration ; offre
