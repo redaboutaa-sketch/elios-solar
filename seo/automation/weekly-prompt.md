@@ -41,8 +41,13 @@ au moins trois liens entrants depuis des pages existantes, titre, description, c
 
 ## 4. Mesure
 
-- Search Console : aucun accès configuré → écrire « indexation non vérifiée ». Ne jamais déduire l'indexation d'un
-  HTTP 200, d'une recherche `site:` ou de la présence au sitemap.
+- Search Console (lecture seule, mesurée par le serveur avant ton passage) : lis `{{STATE_DIR}}/entree/gsc/*.json`
+  (deux dernières mesures : inspection d'URL de chaque URL du sitemap, état du sitemap, performances 28 jours,
+  champ `evolution` = URL nouvellement indexées ou sorties). Reporte dans le rapport : URL indexées / URL du sitemap,
+  évolution, clics et impressions, pages commerciales encore « inconnues de Google ». Si aucun fichier n'existe,
+  écris « indexation non vérifiée ». Ne déduis jamais l'indexation d'un HTTP 200, d'une recherche `site:` ou de la
+  présence au sitemap. Tu n'as pas d'accès en écriture à Search Console : les actions (renvoi du sitemap, demande
+  d'indexation) vont dans « Demandes au propriétaire ». Un titre ne se réécrit que si une page a des impressions.
 - Devis réellement reçus : lis `{{STATE_DIR}}/acquisition/*.txt` s'ils existent (comptes agrégés produits par le
   script du serveur ; aucune donnée personnelle). Compare 28 jours aux 28 précédents en rappelant que le site a ouvert
   fin octobre 2026 (périodes non comparables au début) et la saisonnalité (hiver = basse saison des protections

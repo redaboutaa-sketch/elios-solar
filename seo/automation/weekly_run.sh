@@ -32,6 +32,10 @@ ls -1 "$DAILY_DIR/daily/"*.json 2>/dev/null | tail -7 | xargs -r cp -t "$STATE_D
 cp "$DAILY_DIR/incidents.json" "$STATE_DIR/entree/" 2>/dev/null || echo "{}" > "$STATE_DIR/entree/incidents.json"
 # données de mesure (lecture seule, agrégées)
 bash "$LIB/acquisition_counts.sh" || echo "comptes d'acquisition indisponibles (passage poursuivi)"
+# mesure d'indexation Search Console (lecture seule) ; l'agent reçoit les deux dernières mesures
+python3 -I "$LIB/gsc_index_check.py" || echo "mesure Search Console indisponible (passage poursuivi)"
+mkdir -p "$STATE_DIR/entree/gsc"
+ls -1 "$STATE_DIR/gsc/"*.json 2>/dev/null | tail -2 | xargs -r cp -t "$STATE_DIR/entree/gsc/"
 
 git -C "$REPO" fetch -q origin --prune
 OPEN=$(gh pr list -R "$GH_REPO" --state open --json headRefName --jq '[.[] | select(.headRefName | startswith("seo/"))][0].headRefName // ""')

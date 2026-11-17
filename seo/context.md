@@ -64,6 +64,8 @@ toujours les citer depuis la page, jamais de mémoire.
   - sitemap : dernière lecture par Google le 2026-10-26 (34 URL soumises à l'époque, 37 aujourd'hui), 0 erreur ;
   - performances du 2026-10-19 au 2026-11-15 : 2 impressions, 0 clic, page `/` uniquement, position moyenne 6.
   Conséquence : le frein principal est la **découverte et l'indexation**, avant le contenu ou les titres.
+  Le même jour, une heure après le renvoi du sitemap par le propriétaire : 1 indexée, **8 « détectées, actuellement
+  non indexées »**, 28 inconnues. Suivi chaque semaine par `seo/automation/gsc_index_check.py`.
 - Bing Webmaster Tools : aucun accès.
 
 ## Robots

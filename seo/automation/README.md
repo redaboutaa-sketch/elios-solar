@@ -6,7 +6,7 @@ changements d'heure ; `Persistent=true` rattrape une échéance manquée après 
 | Tâche | Échéance | Ce qu'elle fait | LLM |
 |---|---|---|---|
 | `heliostores-seo-daily.timer` | chaque jour 07:00 (Paris) | `daily_check.py` : disponibilité, http→https, www→domaine, robots.txt, sitemap, 404, 19 URL commerciales (statut, canonique, noindex, titre, H1, JSON-LD), sonde « robot d'IA » sur 3 fiches (titre et canonique dans le `<head>`). ~28 requêtes à 1 s d'intervalle. Aucune écriture sur le site. | non |
-| `heliostores-seo-weekly.timer` | chaque lundi 08:30 (Paris) | `weekly_run.sh` : comptes agrégés des demandes (lecture seule), worktree dédié, agent `claude -p` avec `weekly-prompt.md`, lot ≤ 3 améliorations, PR en brouillon ; revue mensuelle le premier lundi du mois (≤ 2 guides/mois) | oui |
+| `heliostores-seo-weekly.timer` | chaque lundi 08:30 (Paris) | `weekly_run.sh` : comptes agrégés des demandes (lecture seule), mesure Search Console `gsc_index_check.py` (inspection d'URL des URL du sitemap, sitemap, performances 28 j ; scope `webmasters.readonly`, clé hors dépôt `private/gsc-service-account.json`), worktree dédié, agent `claude -p` avec `weekly-prompt.md`, lot ≤ 3 améliorations, PR en brouillon ; revue mensuelle le premier lundi du mois (≤ 2 guides/mois) | oui |
 
 ## Garde-fous
 

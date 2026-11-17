@@ -16,7 +16,7 @@ others=$(systemctl list-unit-files --no-legend 'heliostores-seo*' 2>/dev/null | 
 [ -z "$others" ] || { echo "DOUBLON : unités inattendues : $others" >&2; exit 1; }
 
 install -d -m 755 "$LIB"
-install -m 755 "$SRC/daily_check.py" "$SRC/weekly_run.sh" "$SRC/acquisition_counts.sh" "$LIB/"
+install -m 755 "$SRC/daily_check.py" "$SRC/weekly_run.sh" "$SRC/acquisition_counts.sh" "$SRC/gsc_index_check.py" "$LIB/"
 install -m 644 "$SRC/weekly-prompt.md" "$LIB/"
 install -m 644 "$SRC"/systemd/heliostores-seo-*.service "$SRC"/systemd/heliostores-seo-*.timer "$UNITS/"
 systemctl daemon-reload
