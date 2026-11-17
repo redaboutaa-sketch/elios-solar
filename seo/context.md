@@ -1,6 +1,6 @@
 # Contexte commercial vérifié (SEO / GEO)
 
-Dernière vérification : 2026-11-16. Chaque fait porte sa source. Dépôt public : **aucun montant, aucun nom de
+Dernière vérification : 2026-11-17 (Search Console), 2026-11-16 (reste). Chaque fait porte sa source. Dépôt public : **aucun montant, aucun nom de
 fournisseur, aucune donnée client** dans ce dossier (les prix se lisent sur les pages publiques).
 
 Statuts utilisés : **vérifié** (lu dans le code ou sur le site public à la date indiquée), **hypothèse** (à confirmer),
@@ -56,7 +56,15 @@ toujours les citer depuis la page, jamais de mémoire.
   (`ContactRequest`). Attribution transmise avec la demande (référent, utm, page d'entrée), sans cookie ; tableau
   `/admin/acquisition`. Un clic sur « Demander un devis » n'est **pas** un devis.
 - Pas de mesure d'audience (aucun cookie d'analyse : `/cookies`). Ne pas modifier le consentement.
-- Search Console : **aucun accès** dans l'environnement serveur (2026-11-16) → indexation et requêtes **non vérifiées**.
+- Search Console : accès en **lecture seule** depuis le 2026-11-17 (propriété de domaine `sc-domain:heliostores.com`,
+  compte de service, scope `webmasters.readonly` ; clé hors dépôt dans `private/`, jamais dans Git).
+  Mesure du 2026-11-17 (**vérifié**, API Search Console) :
+  - inspection d'URL des 37 URL du sitemap : **1 indexée** (`/`, dernière exploration 2026-10-10), **36 « inconnues
+    de Google »** (jamais explorées) ;
+  - sitemap : dernière lecture par Google le 2026-10-26 (34 URL soumises à l'époque, 37 aujourd'hui), 0 erreur ;
+  - performances du 2026-10-19 au 2026-11-15 : 2 impressions, 0 clic, page `/` uniquement, position moyenne 6.
+  Conséquence : le frein principal est la **découverte et l'indexation**, avant le contenu ou les titres.
+- Bing Webmaster Tools : aucun accès.
 
 ## Robots
 

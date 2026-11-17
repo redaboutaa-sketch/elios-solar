@@ -356,6 +356,9 @@ Mise à jour du 2026-11-17, à la demande du propriétaire : SIRET, numéro de T
 l'éditeur retirés des mentions légales (e-mail affiché : contact commercial) ; minimum de la LCEN (art. 6-III) conservé :
 dénomination, forme, capital, siège, RCS, téléphone, directeur de la publication, hébergeur. Sources hors dépôt :
 `private/legal-2026-11-17/` (version précédente `mentions-legales.v3.md`, SQL appliqué, trace `AuditLog`).
+Puis, le même jour, à la demande explicite du propriétaire après avertissement sur la LCEN : capital social, RCS et
+téléphone retirés aussi (restent : dénomination, forme, siège, e-mail, directeur de la publication, hébergeur ;
+`mentions-legales.v4.md`, `apply-2.sql`). **Écart à la LCEN art. 6-III assumé par le propriétaire.**
 
 ## 7. Retour arrière
 
