@@ -352,6 +352,10 @@ production (sources hors dépôt : `private/legal-2026-10-26/`, avec le SQL appl
 Numéro de TVA intracommunautaire non publié (VIES indisponible pour la France le 2026-10-26) : le vérifier sur
 `https://ec.europa.eu/taxation_customs/vies/`, puis le saisir (Administration → Réglages) et l'ajouter aux mentions.
 CGV et Livraison et installation restent en brouillon (noindex) tant qu'aucune condition n'est fournie.
+Mise à jour du 2026-11-17, à la demande du propriétaire : SIRET, numéro de TVA et adresse électronique personnelle de
+l'éditeur retirés des mentions légales (e-mail affiché : contact commercial) ; minimum de la LCEN (art. 6-III) conservé :
+dénomination, forme, capital, siège, RCS, téléphone, directeur de la publication, hébergeur. Sources hors dépôt :
+`private/legal-2026-11-17/` (version précédente `mentions-legales.v3.md`, SQL appliqué, trace `AuditLog`).
 
 ## 7. Retour arrière
 
