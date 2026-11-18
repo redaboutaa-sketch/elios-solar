@@ -37,6 +37,12 @@
   `catalogue-sync --apply`, build et e2e desktop/mobile. Audit chiffré privé : `private/audit-tranches-2026-11-18/`.
 - Restent au devis ou partiels (données fournisseur) : moteurs radio des stores bannes, supports plafond/chevrons,
   HelioScreen < 1 m de hauteur, HelioSlide (vitrage / grille absente), moustiquaires.
+- **Production `d361dcc`** (branche `fix/tranche-superieure-audit`, PR #7 **non fusionnée** à la demande, CI verte :
+  verify et e2e-docker) : sauvegarde `db_20261118_124220`, aucune migration, `catalogue-sync --apply` (sevilla,
+  helioscreen ; second aperçu : 0). Devis et prix actifs inchangés (empreintes identiques), paiement désactivé.
+  Vérifié en ligne (desktop, mobile) : HelioLux 1,5 × 2 m chiffrée (murale, autoportante), prix d'appel sur la plus
+  petite configuration, poses plafond des stores bannes en sous-total partiel.
+- Retour arrière : `scripts/deploy-production.sh 00ee7774c4d2`, puis `catalogue-sync --apply` depuis cette version.
 
 ## Gamme par prix d'appel croissant ; dimensions de la liste de prix 09.2026 (2026-11-18) — PR #5
 
