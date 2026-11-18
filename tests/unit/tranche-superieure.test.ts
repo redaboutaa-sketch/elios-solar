@@ -121,6 +121,38 @@ describe("HelioLux (SOLID) : tranche supérieure, première tranche comme minimu
   });
 });
 
+describe("HelioLux : cas signalé 3 700 × 3 990 mm (murale), panne du calcul", () => {
+  const r = rules("sevilla");
+  it("3 700 × 3 990 → cellule murale premier module 4 000 × 4 000 ; jamais l'autoportante ; cotes réelles conservées", () => {
+    const res = evaluate(withTable("sevilla", lux(true)), cfg("sevilla", { mounting: "wall", widthMm: 3700, depthMm: 3990, heightMm: 2450, finishCode: "RAL_9010_MAT" }));
+    expect(res.priceStatus).toBe("priced");
+    expect(res.issues.filter((i) => i.severity === "blocking")).toEqual([]);
+    expect(res.systemPrice).toMatchObject({ variantKey: "murale", amountMinor: luxAmount("murale", 4000, 4000), selection: "round_up", grid: { widthMm: 4000, dimMm: 4000 }, requested: { widthMm: 3700, dimMm: 3990 } });
+    // moteur, radio et télécommande compris : aucune ligne ni élément à chiffrer
+    expect(res.priceBreakdown?.pending).toEqual([]);
+    expect(res.priceBreakdown?.lines.filter((l) => l.code !== "arrondi").map((l) => l.code)).toEqual(["structure"]);
+    const ht = luxAmount("murale", 4000, 4000);
+    const ttc = ht + Math.floor((ht * 2000 + 5000) / 10_000);
+    const lower = Math.floor((ttc - 9900) / 10_000) * 10_000 + 9900;
+    expect(res.priceBreakdown?.totalTtcMinor).toBe(lower + 10_000 - ttc <= ttc - lower ? lower + 10_000 : lower);
+    expect(res.recap?.find((x) => x.label === "Largeur")?.value).toBe("3,7 m");
+    expect(res.recap?.find((x) => x.label === "Avancée")?.value).toBe("3,99 m");
+    expect(lookupSystemPrice(lux(), r, cfg("sevilla", { mounting: "wall", widthMm: 4000, depthMm: 4000 }))).toMatchObject({ ok: true, price: { selection: "exact", amountMinor: luxAmount("murale", 4000, 4000) } });
+  });
+  it("ancien brouillon (toile de l'ancien système) : blocage nommé sur le champ « toile », jamais une panne", () => {
+    const res = evaluate(withTable("sevilla", lux()), cfg("sevilla", { mounting: "wall", widthMm: 3700, depthMm: 3990, fabricCode: "serge_600" }));
+    expect(res.priceStatus).toBe("blocked");
+    expect(res.issues.filter((i) => i.severity === "blocking").map((i) => [i.code, i.path])).toEqual([["fabric_unavailable", "fabricCode"]]);
+  });
+  it("panne du calcul : statut « error » et point bloquant explicite, jamais une demande de devis ordinaire", () => {
+    const broken = { currency: "EUR", taxBasis: "HT", dimAKey: "projection", listVersion: 1, cells: null } as unknown as SystemPriceTable;
+    const res = evaluate(withTable("sevilla", broken), cfg("sevilla", { mounting: "wall", widthMm: 3700, depthMm: 3990 }));
+    expect(res.priceStatus).toBe("error");
+    expect(res.issues.map((i) => i.code)).toContain("calculation_error");
+    expect(res.systemPrice).toBeNull();
+  });
+});
+
 describe("HelioMax (SB 450) : minimums documentés 1 000 × 1 318 mm, grille 1 500 × 1 930 mm", () => {
   const dims = [1930, 2134, 2338];
   const widths = [1500, 2000];

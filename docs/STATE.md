@@ -21,6 +21,22 @@
   SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
 
+## HelioLux « Prix sur devis : corrigez les points signalés » sans point visible (2026-11-18)
+
+- Cause : un brouillon local antérieur à la révision du 2026-11-03 (toile `serge_600` de l'ancien système) écrase la
+  configuration de départ ; le serveur bloque à juste titre (`fabric_unavailable`), mais le point n'apparaît qu'à
+  l'étape « Pose », la liste « Toile » montre une toile valide (valeur absente → première option, impossible à
+  « rechoisir ») et l'avis de révision disparaît (date du brouillon réécrite à chaque visite). Le moteur chiffrait
+  correctement la configuration valide (murale 4 000 × 4 000).
+- Correctif : cadre de prix listant chaque point bloquant (ancien choix, saisie, non réalisable, erreur technique) avec
+  un lien vers l'étape ; pastille sur l'étape concernée ; liste affichant « choix enregistré plus proposé » ; date
+  d'origine du brouillon conservée ; panne du calcul = statut `error`, jamais une demande de devis ordinaire.
+- Tests : `tests/e2e/26-heliolux-cas-signale.spec.ts` (montant numérique, ancien brouillon), unitaires.
+- **Production `573d29b`** (PR #8 non fusionnée, CI verte) : sauvegarde `db_20261118_143309`, aucune migration ni
+  synchronisation ; empreintes devis et prix inchangées. Vérifié sur heliostores.com (desktop, mobile) : 3,70 × 3,99 m
+  murale, RAL 9010 mat → 6 799 € TTC (5 665,83 € HT) ; ancien brouillon → « Ancien choix à refaire : toile », lien vers
+  « Pose et finitions », puis 6 799 €. Retour arrière : `scripts/deploy-production.sh d361dcc933a0`.
+
 ## Tranche tarifaire supérieure, couverture des dimensions (2026-11-18) — `docs/pricing/audit-couverture-dimensions.md`
 
 - Règle commerciale HELIOSTORES : plus petite tranche ≥ cote réelle ; sous la première tranche, première tranche si la

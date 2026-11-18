@@ -27,8 +27,19 @@ import type { AreaMessages } from "@/i18n/messages";
 type T = AreaMessages<"configurator">;
 
 /** Prix de la grille publique pour la cote saisie, ou renvoi au devis avec son motif. */
-function SystemPriceBox({ result }: { result: EvaluationResult }) {
+/** Nature d'un point bloquant : ancien choix devenu invalide, saisie, configuration non réalisable, panne du calcul. */
+const STALE_CODES = new Set(["fabric_unavailable", "finish_unavailable", "control_unavailable", "option_unknown", "pack_unavailable", "size_unavailable", "closure_unavailable"]);
+const INPUT_CODES = new Set(["dimension_missing", "dimension_invalid", "dimension_step", "dimension_value", "option_qty", "option_value", "size_missing", "size_mismatch", "option_duplicate"]);
+function blockingKind(i: { code: string; message: string }): "stale" | "input" | "forbidden" | "error" {
+  if (i.code === "calculation_error") return "error";
+  // un choix enregistré qui n'est plus proposé (projet ou brouillon antérieur à une révision) ; sans valeur : saisie
+  if (STALE_CODES.has(i.code)) return /enregistr|n'est plus proposé|plus proposée/.test(i.message) ? "stale" : "input";
+  return INPUT_CODES.has(i.code) ? "input" : "forbidden";
+}
+
+function SystemPriceBox({ result, onFix }: { result: EvaluationResult; onFix?: (step: StepId) => void }) {
   const t = useT("configurator").price;
+  const ts = useT("configurator").steps;
   const intl = useIntl();
   const fmtM = (mm: number) => fmtMeters(mm, intl);
   const p = result.systemPrice;
@@ -38,6 +49,21 @@ function SystemPriceBox({ result }: { result: EvaluationResult }) {
     return (
       <div data-testid="system-price" data-priced="false" data-price-status={result.priceStatus ?? "no_table"} data-price-detail={result.priceDetail?.code ?? ""} className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink">
         <p><strong>{t.onQuote}</strong>{t.statusSep}{result.priceStatus === "out_of_grid" && result.priceDetail ? t.detail[result.priceDetail.code] : t.status[result.priceStatus ?? "no_table"]}</p>
+        {(result.priceStatus === "blocked" || result.priceStatus === "error") && (
+          // chaque point bloquant est nommé ici (le cadre de prix reste visible à toutes les étapes), avec un lien vers son étape
+          <ul className="mt-2 space-y-1.5 text-xs" data-testid="price-blockers">
+            {result.issues.filter((i) => i.severity === "blocking").map((i, k) => {
+              const stepId = stepOf(i.path);
+              const kind = blockingKind(i);
+              return (
+                <li key={`${i.code}-${i.path ?? ""}-${k}`} data-kind={kind} data-code={i.code} data-step={stepId}>
+                  <span className="font-semibold">{t.blockingKinds[kind]} : </span>{i.message.replace(/^Impossible : /, "")}
+                  {onFix && kind !== "error" ? <> <button type="button" className="link-brand underline" onClick={() => onFix(stepId)} data-testid="price-blocker-fix">{fmt(t.goToStep, { step: ts[stepId] })}</button></> : null}
+                </li>
+              );
+            })}
+          </ul>
+        )}
         {s && <p className="mt-1 text-xs text-stone-700" data-testid="priced-sizes">{fmt(t.pricedSizes, { widths: list(s.widths.map((w) => (w.min === w.max ? fmtM(w.max) : fmt(t.range, { min: fmtM(w.min), max: fmtM(w.max) })))), dimLabel: s.dimLabel.toLowerCase(), dims: list(s.dims.map(fmtM)) })}</p>}
       </div>
     );
@@ -139,13 +165,13 @@ const STEPS = ["dims", "pose", "equip", "recap"] as const;
 type StepId = (typeof STEPS)[number];
 
 /** Liste des étapes, toujours visible : l'étape courante est indiquée, chaque étape est accessible directement. */
-function StepNav({ step, onStep }: { step: number; onStep: (i: number) => void }) {
+function StepNav({ step, onStep, alerts }: { step: number; onStep: (i: number) => void; alerts?: Partial<Record<StepId, number>> }) {
   const t = useT("configurator");
   return (
     <nav aria-label={t.stepsNav} className="sticky top-[var(--header-h)] z-20 -mx-4 overflow-x-auto border-b border-sand-200 bg-sand-50/95 px-4 py-2 backdrop-blur sm:mx-0 sm:rounded-[3px] sm:border sm:px-2 lg:top-[calc(var(--header-h)+0.75rem)]" data-testid="config-steps">
       <ol className="flex min-w-max gap-1 text-sm">
         {STEPS.map((id, i) => (
-          <li key={id}><button type="button" onClick={() => onStep(i)} aria-current={step === i ? "step" : undefined} className={`inline-flex min-h-9 items-center gap-1 rounded-[2px] px-2.5 transition-colors duration-150 ${step === i ? "bg-anthracite text-sand-50" : "text-stone-800 hover:bg-white"}`}><span className="tabular-nums opacity-70">{i + 1}</span>{t.steps[id]}</button></li>
+          <li key={id}><button type="button" onClick={() => onStep(i)} aria-current={step === i ? "step" : undefined} className={`inline-flex min-h-9 items-center gap-1 rounded-[2px] px-2.5 transition-colors duration-150 ${step === i ? "bg-anthracite text-sand-50" : "text-stone-800 hover:bg-white"}`}><span className="tabular-nums opacity-70">{i + 1}</span>{t.steps[id]}{alerts?.[id] ? <span className="ml-1 inline-flex min-w-5 items-center justify-center rounded-full bg-danger px-1.5 text-xs font-semibold text-white" data-testid={`step-alert-${id}`} title={t.price.stepAlert}>{alerts[id]}<span className="sr-only"> {t.price.stepAlert}</span></span> : null}</button></li>
         ))}
       </ol>
     </nav>
@@ -171,18 +197,21 @@ const DRAFT_PREFIX = "heliostores:configuration:";
 function draftKey(slug: string, projectId?: string | null, cartLineId?: string | null): string {
   return DRAFT_PREFIX + slug + (projectId ? `@projet:${projectId}` : cartLineId ? `@ligne:${cartLineId}` : "");
 }
-function readDraft(key: string, slug: string): { input: SystemInput; at: string | null } | null {
+function readDraft(key: string, slug: string): { input: SystemInput; at: string | null; since: string | null } | null {
   try {
     const raw = window.localStorage.getItem(key);
     if (!raw) return null;
-    const v = JSON.parse(raw) as { input?: SystemInput; at?: string };
-    return v.input?.kind === "system" && v.input.familySlug === slug ? { input: v.input, at: typeof v.at === "string" ? v.at : null } : null;
+    const v = JSON.parse(raw) as { input?: SystemInput; at?: string; since?: string };
+    const at = typeof v.at === "string" ? v.at : null;
+    // `since` : date de création du brouillon (ancien format : sa dernière écriture), jamais rajeunie par une réécriture
+    return v.input?.kind === "system" && v.input.familySlug === slug ? { input: v.input, at, since: typeof v.since === "string" ? v.since : at } : null;
   } catch {
     return null;
   }
 }
-function writeDraft(key: string, input: SystemInput) {
-  try { window.localStorage.setItem(key, JSON.stringify({ input, at: new Date().toISOString() })); } catch { /* stockage indisponible : la configuration reste en mémoire */ }
+function writeDraft(key: string, input: SystemInput, since: string | null) {
+  const at = new Date().toISOString();
+  try { window.localStorage.setItem(key, JSON.stringify({ input, at, since: since ?? at })); } catch { /* stockage indisponible : la configuration reste en mémoire */ }
 }
 function clearDraft(key: string) {
   try { window.localStorage.removeItem(key); } catch { /* idem */ }
@@ -269,6 +298,8 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
   // une seule reprise par configuration ouverte : un nouveau rendu du serveur (ex. après une action serveur, qui
   // transmet de nouveaux objets en propriétés) ne doit ni recharger le brouillon ni ramener l'étape lue dans l'adresse
   const restoredFor = useRef<string | null>(null);
+  // date de création du brouillon conservée d'une écriture à l'autre (avis de révision des caractéristiques)
+  const draftSince = useRef<string | null>(null);
   useEffect(() => {
     if (restoredFor.current === key) return;
     // lecture différée (après hydratation) : le rendu serveur reste celui des valeurs ouvertes
@@ -276,13 +307,17 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
       restoredFor.current = key;
       const draft = readDraft(key, familySlug);
       const d = draft?.input;
-      if (d && inputKey({ ...defaults, ...d, kind: "system", familySlug }) !== openedKey) { setInput({ ...defaults, ...d, kind: "system", familySlug }); setRestored(true); setRestoredAt(draft.at); }
+      if (d && inputKey({ ...defaults, ...d, kind: "system", familySlug }) !== openedKey) { setInput({ ...defaults, ...d, kind: "system", familySlug }); setRestored(true); setRestoredAt(draft.since); draftSince.current = draft.since; }
       setStep(stepFromUrl());
       setDraftReady(true);
     }, 0);
     return () => window.clearTimeout(t);
   }, [key, familySlug, defaults, openedKey]);
-  useEffect(() => { if (draftReady) writeDraft(key, input); }, [draftReady, key, input]);
+  useEffect(() => {
+    if (!draftReady) return;
+    draftSince.current ??= new Date().toISOString();
+    writeDraft(key, input, draftSince.current);
+  }, [draftReady, key, input]);
   // bouton Retour / Suivant du navigateur : l'étape suit l'adresse (aucun rechargement)
   useEffect(() => {
     const onPop = () => setStep(stepFromUrl());
@@ -325,6 +360,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
     // seule action qui ferait perdre la configuration : confirmation si elle n'est pas enregistrée
     if (dirty && !window.confirm(t.resetConfirm)) return;
     clearDraft(key);
+    draftSince.current = null;
     setInput(defaults);
     setRestored(false);
     goStep(0);
@@ -365,6 +401,8 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
   const confirmed = rules.options.filter((o) => !o.wish);
   const wishes = rules.options.filter((o) => o.wish);
   const stepIssues = (id: StepId) => result.issues.filter((i) => i.severity === "blocking" && stepOf(i.path) === id);
+  // étapes portant un point bloquant (hors récapitulatif, qui liste tout) : signalées dans la navigation
+  const stepAlerts = Object.fromEntries((["dims", "pose", "equip"] as const).map((id) => [id, stepIssues(id).length]).filter(([, n]) => n)) as Partial<Record<StepId, number>>;
 
   const optionCard = (o: (typeof rules.options)[number]) => {
     const on = optionOn(o.code);
@@ -380,7 +418,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
         {o.prerequisite && <p className={`ml-6 mt-0.5 text-xs ${unmet ? "text-danger" : "text-stone-700"}`} data-testid={`prereq-${o.code}`}>{unmet ? t.option.unavailableWithControl : ""}{fmt(t.option.prerequisite, { text: o.prerequisite })}</p>}
         {on && (o.maxQty != null || o.values?.length) ? (
           <div className="ml-6 mt-1 flex flex-wrap gap-2">
-            {o.values?.length ? <select aria-label={fmt(t.option.valueAria, { label: o.label })} className="input max-w-56" value={on.value ?? ""} onChange={(e) => toggleOption(o.code, true, { qty: on.qty, value: e.target.value })}>{o.values.map((v) => <option key={v.code} value={v.code}>{v.label}</option>)}</select> : null}
+            {o.values?.length ? <select aria-label={fmt(t.option.valueAria, { label: o.label })} className="input max-w-56" value={on.value ?? ""} onChange={(e) => toggleOption(o.code, true, { qty: on.qty, value: e.target.value })}>{!o.values.some((v) => v.code === on.value) && <option value={on.value ?? ""} disabled>{t.price.staleChoice}</option>}{o.values.map((v) => <option key={v.code} value={v.code}>{v.label}</option>)}</select> : null}
             {o.maxQty != null ? <input aria-label={fmt(t.option.qtyAria, { label: o.label })} type="number" min={1} max={o.maxQty} className="input max-w-24" value={on.qty ?? 1} onChange={(e) => toggleOption(o.code, true, { qty: Math.round(Number(e.target.value)) || 1, value: on.value })} /> : null}
           </div>
         ) : null}
@@ -402,7 +440,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
               <div key={`${r.label}-${i}`} className="contents"><dt className="text-stone-700">{r.label}</dt><dd>{r.value}{r.status === "to_confirm" ? <span className="badge-warn ml-2">{t.recap.toConfirm}</span> : null}</dd></div>
             ))}
           </dl>
-          <div className="mt-4"><SystemPriceBox result={result} /></div>
+          <div className="mt-4"><SystemPriceBox result={result} onFix={(id) => goStep(STEPS.indexOf(id))} /></div>
           <p className="mt-3 text-xs text-stone-700" data-testid="recap-delivery-lead-time">{t.deliveryLeadTime} {t.deliveryTermsInQuote}</p>
         </section>
       </div>
@@ -417,7 +455,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
         )}
         {revisedSince && rules.revision && <div data-testid="revision-notice"><Notice tone="warn">{fmt(t.revised, { name: String(family.name), date: new Date(`${rules.revision.date}T12:00:00Z`).toLocaleDateString(intl, { day: "numeric", month: "long", year: "numeric" }), note: rules.revision.note })}</Notice></div>}
         {restored && <Notice tone="info">{fmt(t.restored, { name: String(family.name) })}<button type="button" className="underline" onClick={reset}>{t.restart}</button></Notice>}
-        <StepNav step={step} onStep={goStep} />
+        <StepNav step={step} onStep={goStep} alerts={stepAlerts} />
 
         {step === 0 && (
           <section className={cardCls} aria-labelledby="dims-title" data-testid="step-dims">
@@ -505,7 +543,9 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
             {rules.fabrics?.length ? (
               <div className="mt-4">
                 <label className="label" htmlFor="fabric">{rules.type === "insect_screen" ? t.pose.insectFabric : t.pose.fabric}</label>
-                <select id="fabric" className="input" value={input.fabricCode ?? ""} onChange={(e) => set({ fabricCode: e.target.value })}>
+                <select id="fabric" className="input" aria-invalid={!rules.fabrics.some((f) => f.code === input.fabricCode) || undefined} value={input.fabricCode ?? ""} onChange={(e) => set({ fabricCode: e.target.value })}>
+                  {/* choix enregistré plus proposé : affiché comme tel (jamais la première toile par défaut, sinon impossible à corriger) */}
+                  {!rules.fabrics.some((f) => f.code === input.fabricCode) && <option value={input.fabricCode ?? ""} disabled>{t.price.staleChoice}</option>}
                   {rules.fabrics.map((f) => <option key={f.code} value={f.code}>{f.label}{f.status === "to_confirm" ? t.pose.toConfirmDash : ""}</option>)}
                 </select>
                 {(() => { const f = rules.fabrics!.find((x) => x.code === input.fabricCode); return f?.description ? <p className="mt-1 text-xs text-stone-700">{f.description}</p> : null; })()}
@@ -536,12 +576,13 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
             {rules.controls?.length ? (
               <div className="mt-4">
                 <label className="label" htmlFor="control">{t.pose.control}</label>
-                <select id="control" className="input" value={input.controlCode ?? ""} onChange={(e) => {
+                <select id="control" className="input" aria-invalid={!rules.controls.some((c) => c.code === input.controlCode) || undefined} value={input.controlCode ?? ""} onChange={(e) => {
                   const kind = rules.controls!.find((x) => x.code === e.target.value)?.kind;
                   const cur = rules.packs?.find((p) => p.code === input.packCode);
                   const pack = kind && cur && !cur.controlKinds.includes(kind) ? rules.packs!.find((p) => !p.familySlug && p.controlKinds.includes(kind)) : undefined;
                   set({ controlCode: e.target.value, ...(pack ? { packCode: pack.code } : {}) });
                 }}>
+                  {!rules.controls.some((c) => c.code === input.controlCode) && <option value={input.controlCode ?? ""} disabled>{t.price.staleChoice}</option>}
                   {rules.controls.map((c) => <option key={c.code} value={c.code}>{c.label}{c.minWidthMm ? fmt(t.pose.minWidth, { cm: c.minWidthMm / 10 }) : ""}{c.status === "to_confirm" ? t.pose.toConfirmDash : ""}</option>)}
                 </select>
                 {(() => { const c = rules.controls!.find((x) => x.code === input.controlCode); return c ? <p className="mt-1 text-xs text-stone-700">{c.description ? `${c.description} ` : ""}{c.cable ? fmt(t.pose.suppliedWith, { cable: c.cable }) : ""}</p> : null; })()}

@@ -783,7 +783,15 @@ export function evaluate(catalog: CatalogSnapshot, input: ConfigurationInput, no
     case "accessory":
       return evaluateAccessory(catalog, input, now);
     case "system":
-      return evaluateSystem(catalog, input);
+      try {
+        return evaluateSystem(catalog, input);
+      } catch (e) {
+        // panne du calcul : jamais présentée comme une demande de devis ordinaire ; configuration conservée
+        console.error("[evaluate] calcul du système impossible", input.familySlug, e instanceof Error ? e.message : e);
+        const b = new Builder(catalog);
+        b.issue({ code: "calculation_error", severity: "blocking", message: "Erreur technique du calcul du prix : vos choix sont conservés ; réessayez dans un instant ou demandez un devis, un conseiller vérifiera le prix." });
+        return { ...finish(b, input, undefined, null, true), priceMode: "quote", systemPrice: null, priceBreakdown: null, priceStatus: "error" };
+      }
     default: {
       const b = new Builder(catalog);
       b.issue({ code: "kind_unknown", severity: "blocking", message: "Type de configuration inconnu." });

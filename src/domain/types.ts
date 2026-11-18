@@ -490,7 +490,7 @@ export interface EvaluationResult {
    */
   /** système : décomposition du prix (structure, suppléments, éléments à chiffrer, HT / TTC) */
   priceBreakdown?: import("./system-pricing").PriceBreakdown | null;
-  priceStatus?: "priced" | "no_table" | "incomplete" | "out_of_grid" | "blocked" | "custom";
+  priceStatus?: "priced" | "no_table" | "incomplete" | "out_of_grid" | "blocked" | "custom" | "error";
   /** cote non chiffrable : motif précis (dépassement, minimum non documenté, cellule vide ou interdite…) */
   priceDetail?: import("./system-pricing").OutOfGridDetail | null;
   /** système : commande en ligne possible (configuration entièrement tarifée) ou motifs du passage au devis */
