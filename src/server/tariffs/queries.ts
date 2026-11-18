@@ -221,4 +221,14 @@ function cellOf(table: SystemPriceTable, price: SystemPrice) {
   return c ? { variantKey: c.variantKey, dimAmm: c.dimAmm, widthMinMm: c.widthMinMm, widthMaxMm: c.widthMaxMm } : null;
 }
 
+/**
+ * Origine (fichier, page, ligne) de la cellule facturée d'un devis : version de grille, tranche et fin de plage de
+ * largeur figées dans l'instantané (détail administrateur seulement).
+ */
+export async function billedCellSource(sp: { versionId?: string; grid: { dimMm: number }; cellWidth?: { maxMm: number } } | null | undefined): Promise<string | null> {
+  if (!sp?.versionId || !sp.cellWidth) return null;
+  const row = await prisma.supplierPriceRow.findFirst({ where: { listId: sp.versionId, kind: "GRID", dimAmm: sp.grid.dimMm, widthMaxMm: sp.cellWidth.maxMm }, select: { sourceRef: true } });
+  return row?.sourceRef ?? null;
+}
+
 export { gridCells, CATEGORIES };
