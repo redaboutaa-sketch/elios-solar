@@ -70,7 +70,7 @@
   cellules catalogue = PDF ; ventes = catalogue × coefficient unique) ; dimensions corrigées (HelioMax avancée min.
   1 318 mm, HelioScreen 7 × 4 m sans réserve, HelioShade/HelioPro largeur min. 2,05 m puis selon l'avancée, HelioSun
   avancée + 40 cm). Devis et prix actifs inchangés (empreintes identiques avant/après).
-- Hauteur maximale de HelioMax non tranchée par le PDF (poteaux de 2,0 à 2,8 m) : 3,0 m conservé, à confirmer.
+- Hauteur maximale de HelioMax : 3,0 m sans réserve (décision du client du 2026-11-18) ; mentions « 2,81 m » retirées (règle, caractéristique, FAQ).
 - `scripts/pricing-check.ts` compare encore vente = catalogue (règle du 2026-11-02) : toutes les cellules signalées
   depuis la politique du 13/11, sans anomalie de prix ; à adapter.
 - Retour arrière applicatif : `IMAGE_TAG=8d8d424d6e6a`, puis `catalogue-sync` depuis cette version.
