@@ -1,0 +1,32 @@
+requete;groupe_intention;role;url_cible;source;date;volume_mensuel;position;difficulte;statut
+pergola bioclimatique sur mesure;pergola bioclimatique (achat);principale;/pergolas;hypothèse fondée sur le catalogue + docs/seo/keyword-page-map.csv;2026-11-16;N/D;non vérifiée;N/D;page existante
+pergola à lames orientables;pergola bioclimatique (achat);secondaire;/pergolas;hypothèse catalogue;2026-11-16;N/D;non vérifiée;N/D;page existante
+pergola bioclimatique adossée;pergola bioclimatique (achat);principale;/pergolas/marbella;hypothèse catalogue (HelioMax adossée ou autoportante);2026-11-16;N/D;non vérifiée;N/D;page existante
+pergola bioclimatique autoportante 3,5 m;pergola bioclimatique (tailles définies);principale;/pergolas/malaga;hypothèse catalogue (HelioSky);2026-11-16;N/D;non vérifiée;N/D;page existante
+pergola toiture toile rétractable;pergola toile (achat);principale;/pergolas/sevilla;hypothèse catalogue (HelioLux);2026-11-16;N/D;non vérifiée;N/D;page existante
+pergola bioclimatique ou toile;choix de toiture (comparaison);principale;/guides/choisir-sa-pergola;hypothèse + docs/seo/content-plan-90-days.md priorité 1;2026-11-16;N/D;non vérifiée;N/D;page existante (section 2) ; guide dédié = backlog
+pergola adossée ou autoportante;implantation (comparaison);principale;/guides/adossee-ou-autoportee;hypothèse;2026-11-16;N/D;non vérifiée;N/D;page existante
+autorisation pergola déclaration préalable;démarches;principale;/guides/autorisation-urbanisme;hypothèse;2026-11-16;N/D;non vérifiée;N/D;page existante
+comment mesurer pour une pergola;prise de mesures;principale;/guides/prise-de-mesures;hypothèse;2026-11-16;N/D;non vérifiée;N/D;page existante (conseils rendus côté serveur le 2026-11-16, en PR)
+comment mesurer un store banne;prise de mesures;secondaire;/guides/prise-de-mesures;hypothèse;2026-11-16;N/D;non vérifiée;N/D;page existante (même lot)
+mesurer une moustiquaire plissée;prise de mesures;secondaire;/guides/prise-de-mesures;hypothèse;2026-11-16;N/D;non vérifiée;N/D;page existante (même lot)
+préparer projet pergola checklist;préparation;principale;/guides/preparation-projet;hypothèse;2026-11-16;N/D;non vérifiée;N/D;page existante
+store screen extérieur sur mesure;screen (achat);principale;/screens;hypothèse catalogue;2026-11-16;N/D;non vérifiée;N/D;page existante
+store screen zip;screen (achat);principale;/screens/helioscreen;hypothèse catalogue (HelioScreen coulisses zip);2026-11-16;N/D;non vérifiée;N/D;page existante
+store de toiture véranda;screen toiture (achat);principale;/screens/helioroof-screen;hypothèse catalogue (HelioRoof);2026-11-16;N/D;non vérifiée;N/D;page existante
+choisir screen extérieur;screen (comparaison);principale;/guides/choisir-son-screen-exterieur;hypothèse;2026-11-16;N/D;non vérifiée;N/D;page existante
+store banne sur mesure;store banne (achat);principale;/stores-bannes;hypothèse catalogue;2026-11-16;N/D;non vérifiée;N/D;page existante
+store banne coffre intégral;store banne (achat);principale;/stores-bannes/casablanca;hypothèse catalogue (HelioSun);2026-11-16;N/D;non vérifiée;N/D;page existante
+store banne semi-coffre;store banne (achat);principale;/stores-bannes/corsica;hypothèse catalogue (HelioShade);2026-11-16;N/D;non vérifiée;N/D;page existante
+store banne sans coffre;store banne (achat);principale;/stores-bannes/jamaica;hypothèse catalogue (HelioPro);2026-11-16;N/D;non vérifiée;N/D;page existante
+store banne coffre carré motorisé;store banne (achat);principale;/stores-bannes/madera;hypothèse catalogue (HelioSquare);2026-11-16;N/D;non vérifiée;N/D;page existante
+store banne coffre ou semi-coffre;store banne (comparaison);principale;N/A;hypothèse;2026-11-16;N/D;non vérifiée;N/D;lacune : guide « choisir son store banne » au backlog (B4)
+store screen ou store banne;protection solaire (comparaison);principale;/guides/comparer-protections-solaires;hypothèse + content-plan priorité 1;2026-11-16;N/D;non vérifiée;N/D;page existante
+toile et motorisation store;options (comparaison);principale;/guides/choisir-toile-et-motorisation;hypothèse;2026-11-16;N/D;non vérifiée;N/D;page existante
+moustiquaire plissée sur mesure porte-fenêtre;moustiquaire (achat);principale;/moustiquaires;hypothèse catalogue;2026-11-16;N/D;non vérifiée;N/D;page existante
+moustiquaire plissée un vantail;moustiquaire (achat);principale;/moustiquaires/moskifold;hypothèse catalogue;2026-11-16;N/D;non vérifiée;N/D;page existante
+moustiquaire plissée deux vantaux baie;moustiquaire (achat);principale;/moustiquaires/moskifold-2;hypothèse catalogue;2026-11-16;N/D;non vérifiée;N/D;page existante
+quelle moustiquaire pour quelle fenêtre;moustiquaire (comparaison);principale;/guides/choisir-sa-moustiquaire;hypothèse;2026-11-16;N/D;non vérifiée;N/D;page existante
+capteur de vent store télécommande;options (achat);principale;/accessoires;hypothèse catalogue;2026-11-16;N/D;non vérifiée;N/D;page existante
+devis pergola store moustiquaire;devis (transaction);principale;/devis;hypothèse;2026-11-16;N/D;non vérifiée;N/D;page existante
+heliostores;marque (navigation);principale;/;marque;2026-11-16;N/D;non vérifiée;N/D;page existante

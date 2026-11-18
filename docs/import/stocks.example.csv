@@ -1,0 +1,4 @@
+sku,availability,stockQty,leadMinDays,leadMaxDays,leadUnit,supplierDays,preparationDays,productionDays,transportDays,preorderAllowed,partialShipAllowed,leadSource,source
+ES-SV-3M-ANT,AVAILABLE,8,,,BUSINESS_DAYS,0,2,0,4,true,true,DEMO,exemple fictif (aucune donnée fournisseur)
+ES-PV-4M-WHI-FIXED,ON_ORDER,,25,35,BUSINESS_DAYS,10,2,10,5,false,true,DEMO,exemple fictif (aucune donnée fournisseur)
+ES-PA-5M-ANT-AUT,TO_CONFIRM,,,,BUSINESS_DAYS,,,,,false,true,UNKNOWN,exemple fictif — assemblage à confirmer

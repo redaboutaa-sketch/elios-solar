@@ -24,3 +24,5 @@ logs
 .idea
 .vscode
 docker-compose.override.yml
+inputs
+private

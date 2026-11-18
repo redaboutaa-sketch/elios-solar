@@ -1,0 +1,83 @@
+{
+  "familySlug": "pergola-sur-mesure",
+  "name": "Exemple de grille (FICTIVE)",
+  "unit": "mm",
+  "currency": "EUR",
+  "priceUnit": "euros",
+  "validFrom": "2027-01-01",
+  "validTo": null,
+  "isDemo": true,
+  "dataStatus": "DEMO",
+  "source": "Exemple fictif ELIOS SOLAR — remplacer par la grille fournisseur",
+  "widthMm": {
+    "min": 2000,
+    "max": 4000,
+    "step": 10
+  },
+  "lengthMm": {
+    "min": 2000,
+    "max": 6000,
+    "step": 10
+  },
+  "heightMm": {
+    "min": 2200,
+    "max": 3000,
+    "step": 10
+  },
+  "mountings": [
+    "freestanding",
+    "wall"
+  ],
+  "finishCodes": [
+    "ANTHRACITE",
+    "WHITE"
+  ],
+  "cells": [
+    {
+      "widthMinMm": 2000,
+      "widthMaxMm": 3000,
+      "lengthMinMm": 2000,
+      "lengthMaxMm": 4000,
+      "mounting": "*",
+      "finishCode": "*",
+      "price": 3990
+    },
+    {
+      "widthMinMm": 2000,
+      "widthMaxMm": 3000,
+      "lengthMinMm": 4010,
+      "lengthMaxMm": 6000,
+      "mounting": "*",
+      "finishCode": "*",
+      "price": 4890
+    },
+    {
+      "widthMinMm": 3010,
+      "widthMaxMm": 4000,
+      "lengthMinMm": 2000,
+      "lengthMaxMm": 6000,
+      "mounting": "*",
+      "finishCode": "*",
+      "price": 5790
+    }
+  ],
+  "surcharges": [
+    {
+      "code": "mounting-wall",
+      "label": "Adossée",
+      "kind": "mounting",
+      "match": "wall",
+      "price": -100
+    },
+    {
+      "code": "height-above-2500",
+      "label": "Hauteur > 2,5 m",
+      "kind": "height_above",
+      "match": "*",
+      "thresholdMm": 2500,
+      "perStepMm": 100,
+      "perStep": 50,
+      "price": 0
+    }
+  ]
+}

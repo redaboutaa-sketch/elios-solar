@@ -1,0 +1,5379 @@
+{
+ "source": "https://pergolux.fr/products.json (endpoint public Shopify) et pages produits publiques",
+ "observed_at": "2026-10-19",
+ "currency": "EUR",
+ "note": "Relevé d'observation d'un concurrent. Prix TTC affichés le jour du relevé, promotion 'Jours d'automne' active (compare_at_price = prix barré). Ces données ne sont PAS nos tarifs ni notre catalogue autorisé. Descriptions marketing volontairement non reprises.",
+ "products": {
+  "store-banne": {
+   "title": "Store Banne PERGOLUX",
+   "type": "Awning",
+   "options": [
+    {
+     "name": "Taille",
+     "values": [
+      "2x1.5m",
+      "3x2m",
+      "3x2.5m",
+      "3.5x2.5m",
+      "3.5x3m",
+      "4x2.5m",
+      "4x3m",
+      "4x3.5m",
+      "5x2.5m",
+      "5x3m",
+      "5x3.5m",
+      "6x3m"
+     ]
+    },
+    {
+     "name": "Couleur du coffre",
+     "values": [
+      "Anthracite",
+      "Blanc"
+     ]
+    },
+    {
+     "name": "Couleur du tissu",
+     "values": [
+      "Gris",
+      "Beige"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "2x1.5m / Anthracite / Gris",
+     "sku": "AWN_MA_EU_ANT_2015_GRY_01",
+     "price_eur": 799.0,
+     "compare_at_eur": 999.0,
+     "available": true
+    },
+    {
+     "title": "2x1.5m / Anthracite / Beige",
+     "sku": "AWN_MA_EU_ANT_2015_BEG_01",
+     "price_eur": 799.0,
+     "compare_at_eur": 999.0,
+     "available": true
+    },
+    {
+     "title": "2x1.5m / Blanc / Gris",
+     "sku": "AWN_MA_EU_WHI_2015_GRY_01",
+     "price_eur": 799.0,
+     "compare_at_eur": 999.0,
+     "available": true
+    },
+    {
+     "title": "2x1.5m / Blanc / Beige",
+     "sku": "AWN_MA_EU_WHI_2015_BEG_01",
+     "price_eur": 799.0,
+     "compare_at_eur": 999.0,
+     "available": true
+    },
+    {
+     "title": "3x2m / Anthracite / Gris",
+     "sku": "AWN_MA_EU_ANT_3020_GRY_01",
+     "price_eur": 1039.0,
+     "compare_at_eur": 1299.0,
+     "available": true
+    },
+    {
+     "title": "3x2m / Anthracite / Beige",
+     "sku": "AWN_MA_EU_ANT_3020_BEG_01",
+     "price_eur": 1039.0,
+     "compare_at_eur": 1299.0,
+     "available": true
+    },
+    {
+     "title": "3x2m / Blanc / Gris",
+     "sku": "AWN_MA_EU_WHI_3020_GRY_01",
+     "price_eur": 1039.0,
+     "compare_at_eur": 1299.0,
+     "available": true
+    },
+    {
+     "title": "3x2m / Blanc / Beige",
+     "sku": "AWN_MA_EU_WHI_3020_BEG_01",
+     "price_eur": 1039.0,
+     "compare_at_eur": 1299.0,
+     "available": true
+    },
+    {
+     "title": "3x2.5m / Anthracite / Gris",
+     "sku": "AWN_MA_EU_ANT_3025_GRY_01",
+     "price_eur": 1119.0,
+     "compare_at_eur": 1399.0,
+     "available": true
+    },
+    {
+     "title": "3x2.5m / Anthracite / Beige",
+     "sku": "AWN_MA_EU_ANT_3025_BEG_01",
+     "price_eur": 1119.0,
+     "compare_at_eur": 1399.0,
+     "available": true
+    },
+    {
+     "title": "3x2.5m / Blanc / Gris",
+     "sku": "AWN_MA_EU_WHI_3025_GRY_01",
+     "price_eur": 1119.0,
+     "compare_at_eur": 1399.0,
+     "available": true
+    },
+    {
+     "title": "3x2.5m / Blanc / Beige",
+     "sku": "AWN_MA_EU_WHI_3025_BEG_01",
+     "price_eur": 1119.0,
+     "compare_at_eur": 1399.0,
+     "available": true
+    },
+    {
+     "title": "3.5x2.5m / Anthracite / Gris",
+     "sku": "AWN_MA_EU_ANT_3525_GRY_01",
+     "price_eur": 1279.0,
+     "compare_at_eur": 1599.0,
+     "available": true
+    },
+    {
+     "title": "3.5x2.5m / Anthracite / Beige",
+     "sku": "AWN_MA_EU_ANT_3525_BEG_01",
+     "price_eur": 1279.0,
+     "compare_at_eur": 1599.0,
+     "available": true
+    },
+    {
+     "title": "3.5x2.5m / Blanc / Gris",
+     "sku": "AWN_MA_EU_WHI_3525_GRY_01",
+     "price_eur": 1279.0,
+     "compare_at_eur": 1599.0,
+     "available": true
+    },
+    {
+     "title": "3.5x2.5m / Blanc / Beige",
+     "sku": "AWN_MA_EU_WHI_3525_BEG_01",
+     "price_eur": 1279.0,
+     "compare_at_eur": 1599.0,
+     "available": true
+    },
+    {
+     "title": "3.5x3m / Anthracite / Gris",
+     "sku": "AWN_MA_EU_ANT_3530_GRY_01",
+     "price_eur": 1359.0,
+     "compare_at_eur": 1699.0,
+     "available": true
+    },
+    {
+     "title": "3.5x3m / Anthracite / Beige",
+     "sku": "AWN_MA_EU_ANT_3530_BEG_01",
+     "price_eur": 1359.0,
+     "compare_at_eur": 1699.0,
+     "available": true
+    },
+    {
+     "title": "3.5x3m / Blanc / Gris",
+     "sku": "AWN_MA_EU_WHI_3530_GRY_01",
+     "price_eur": 1359.0,
+     "compare_at_eur": 1699.0,
+     "available": true
+    },
+    {
+     "title": "3.5x3m / Blanc / Beige",
+     "sku": "AWN_MA_EU_WHI_3530_BEG_01",
+     "price_eur": 1359.0,
+     "compare_at_eur": 1699.0,
+     "available": true
+    },
+    {
+     "title": "4x2.5m / Anthracite / Gris",
+     "sku": "AWN_MA_EU_ANT_4025_GRY_01",
+     "price_eur": 1439.0,
+     "compare_at_eur": 1799.0,
+     "available": true
+    },
+    {
+     "title": "4x2.5m / Anthracite / Beige",
+     "sku": "AWN_MA_EU_ANT_4025_BEG_01",
+     "price_eur": 1439.0,
+     "compare_at_eur": 1799.0,
+     "available": true
+    },
+    {
+     "title": "4x2.5m / Blanc / Gris",
+     "sku": "AWN_MA_EU_WHI_4025_GRY_01",
+     "price_eur": 1439.0,
+     "compare_at_eur": 1799.0,
+     "available": true
+    },
+    {
+     "title": "4x2.5m / Blanc / Beige",
+     "sku": "AWN_MA_EU_WHI_4025_BEG_01",
+     "price_eur": 1439.0,
+     "compare_at_eur": 1799.0,
+     "available": true
+    },
+    {
+     "title": "4x3m / Anthracite / Gris",
+     "sku": "AWN_MA_EU_ANT_4030_GRY_01",
+     "price_eur": 1439.0,
+     "compare_at_eur": 1799.0,
+     "available": true
+    },
+    {
+     "title": "4x3m / Anthracite / Beige",
+     "sku": "AWN_MA_EU_ANT_4030_BEG_01",
+     "price_eur": 1439.0,
+     "compare_at_eur": 1799.0,
+     "available": true
+    },
+    {
+     "title": "4x3m / Blanc / Gris",
+     "sku": "AWN_MA_EU_WHI_4030_GRY_01",
+     "price_eur": 1439.0,
+     "compare_at_eur": 1799.0,
+     "available": true
+    },
+    {
+     "title": "4x3m / Blanc / Beige",
+     "sku": "AWN_MA_EU_WHI_4030_BEG_01",
+     "price_eur": 1439.0,
+     "compare_at_eur": 1799.0,
+     "available": true
+    },
+    {
+     "title": "4x3.5m / Anthracite / Gris",
+     "sku": "AWN_MA_EU_ANT_4035_GRY_01",
+     "price_eur": 1519.0,
+     "compare_at_eur": 1899.0,
+     "available": true
+    },
+    {
+     "title": "4x3.5m / Anthracite / Beige",
+     "sku": "AWN_MA_EU_ANT_4035_BEG_01",
+     "price_eur": 1519.0,
+     "compare_at_eur": 1899.0,
+     "available": true
+    },
+    {
+     "title": "4x3.5m / Blanc / Gris",
+     "sku": "AWN_MA_EU_WHI_4035_GRY_01",
+     "price_eur": 1519.0,
+     "compare_at_eur": 1899.0,
+     "available": true
+    },
+    {
+     "title": "4x3.5m / Blanc / Beige",
+     "sku": "AWN_MA_EU_WHI_4035_BEG_01",
+     "price_eur": 1519.0,
+     "compare_at_eur": 1899.0,
+     "available": true
+    },
+    {
+     "title": "5x2.5m / Anthracite / Gris",
+     "sku": "AWN_MA_EU_ANT_5025_GRY_01",
+     "price_eur": 1519.0,
+     "compare_at_eur": 1899.0,
+     "available": true
+    },
+    {
+     "title": "5x2.5m / Anthracite / Beige",
+     "sku": "AWN_MA_EU_ANT_5025_BEG_01",
+     "price_eur": 1519.0,
+     "compare_at_eur": 1899.0,
+     "available": true
+    },
+    {
+     "title": "5x2.5m / Blanc / Gris",
+     "sku": "AWN_MA_EU_WHI_5025_GRY_01",
+     "price_eur": 1519.0,
+     "compare_at_eur": 1899.0,
+     "available": true
+    },
+    {
+     "title": "5x2.5m / Blanc / Beige",
+     "sku": "AWN_MA_EU_WHI_5025_BEG_01",
+     "price_eur": 1519.0,
+     "compare_at_eur": 1899.0,
+     "available": true
+    },
+    {
+     "title": "5x3m / Anthracite / Gris",
+     "sku": "AWN_MA_EU_ANT_5030_GRY_01",
+     "price_eur": 1599.0,
+     "compare_at_eur": 1999.0,
+     "available": true
+    },
+    {
+     "title": "5x3m / Anthracite / Beige",
+     "sku": "AWN_MA_EU_ANT_5030_BEG_01",
+     "price_eur": 1599.0,
+     "compare_at_eur": 1999.0,
+     "available": true
+    },
+    {
+     "title": "5x3m / Blanc / Gris",
+     "sku": "AWN_MA_EU_WHI_5030_GRY_01",
+     "price_eur": 1599.0,
+     "compare_at_eur": 1999.0,
+     "available": true
+    },
+    {
+     "title": "5x3m / Blanc / Beige",
+     "sku": "AWN_MA_EU_WHI_5030_BEG_01",
+     "price_eur": 1599.0,
+     "compare_at_eur": 1999.0,
+     "available": true
+    },
+    {
+     "title": "5x3.5m / Anthracite / Gris",
+     "sku": "AWN_MA_EU_ANT_5035_GRY_01",
+     "price_eur": 1679.0,
+     "compare_at_eur": 2099.0,
+     "available": true
+    },
+    {
+     "title": "5x3.5m / Anthracite / Beige",
+     "sku": "AWN_MA_EU_ANT_5035_BEG_01",
+     "price_eur": 1679.0,
+     "compare_at_eur": 2099.0,
+     "available": true
+    },
+    {
+     "title": "5x3.5m / Blanc / Gris",
+     "sku": "AWN_MA_EU_WHI_5035_GRY_01",
+     "price_eur": 1679.0,
+     "compare_at_eur": 2099.0,
+     "available": true
+    },
+    {
+     "title": "5x3.5m / Blanc / Beige",
+     "sku": "AWN_MA_EU_WHI_5035_BEG_01",
+     "price_eur": 1679.0,
+     "compare_at_eur": 2099.0,
+     "available": true
+    },
+    {
+     "title": "6x3m / Anthracite / Gris",
+     "sku": "AWN_MA_EU_ANT_6030_GRY_01",
+     "price_eur": 1839.0,
+     "compare_at_eur": 2299.0,
+     "available": true
+    },
+    {
+     "title": "6x3m / Anthracite / Beige",
+     "sku": "AWN_MA_EU_ANT_6030_BEG_01",
+     "price_eur": 1839.0,
+     "compare_at_eur": 2299.0,
+     "available": true
+    },
+    {
+     "title": "6x3m / Blanc / Gris",
+     "sku": "AWN_MA_EU_WHI_6030_GRY_01",
+     "price_eur": 1839.0,
+     "compare_at_eur": 2299.0,
+     "available": true
+    },
+    {
+     "title": "6x3m / Blanc / Beige",
+     "sku": "AWN_MA_EU_WHI_6030_BEG_01",
+     "price_eur": 1839.0,
+     "compare_at_eur": 2299.0,
+     "available": true
+    }
+   ]
+  },
+  "awning-eu-6m-cable": {
+   "title": "Câble de 6 m pour store EU",
+   "type": "",
+   "options": [
+    {
+     "name": "Title",
+     "values": [
+      "Default Title"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CAB_AC_EU_6M_XXX_02",
+     "price_eur": 0.0,
+     "compare_at_eur": null,
+     "available": true
+    }
+   ]
+  },
+  "weather-vibration-sensor": {
+   "title": "Anémomètre pour rétraction automatique",
+   "type": "Accessories",
+   "options": [
+    {
+     "name": "Couleur",
+     "values": [
+      "Noir",
+      "Blanc"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Noir",
+     "sku": "AWS_AC_GL_BLA_VIB_XXX_01",
+     "price_eur": 99.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "Blanc",
+     "sku": "AWS_AC_GL_WHI_VIB_XXX_01",
+     "price_eur": 99.0,
+     "compare_at_eur": null,
+     "available": true
+    }
+   ]
+  },
+  "pergolux-awning-brackets": {
+   "title": "Supports pour stores PERGOLUX",
+   "type": "Spare part",
+   "options": [
+    {
+     "name": "Option de montage",
+     "values": [
+      "Mur",
+      "Plafond"
+     ]
+    },
+    {
+     "name": "Brackets",
+     "values": [
+      "2",
+      "3"
+     ]
+    },
+    {
+     "name": "Couleur",
+     "values": [
+      "Anthracite",
+      "Blanc"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Mur / 2 / Anthracite",
+     "sku": "AWB_AC_GL_WAL_ANT_002_01",
+     "price_eur": 0.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "Mur / 2 / Blanc",
+     "sku": "AWB_AC_GL_WAL_WHI_002_01",
+     "price_eur": 0.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "Mur / 3 / Anthracite",
+     "sku": "AWB_AC_GL_WAL_ANT_003_01",
+     "price_eur": 0.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "Mur / 3 / Blanc",
+     "sku": "AWB_AC_GL_WAL_WHI_003_01",
+     "price_eur": 0.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "Plafond / 2 / Anthracite",
+     "sku": "AWB_AC_GL_CEL_ANT_002_01",
+     "price_eur": 0.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "Plafond / 2 / Blanc",
+     "sku": "AWB_AC_GL_CEL_WHI_002_01",
+     "price_eur": 0.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "Plafond / 3 / Anthracite",
+     "sku": "AWB_AC_GL_CEL_ANT_003_01",
+     "price_eur": 0.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "Plafond / 3 / Blanc",
+     "sku": "AWB_AC_GL_CEL_WHI_003_01",
+     "price_eur": 0.0,
+     "compare_at_eur": null,
+     "available": true
+    }
+   ]
+  },
+  "pergola-pro-max": {
+   "title": "Pergola 4 Pro Max",
+   "type": "Pergola",
+   "options": [
+    {
+     "name": "Couleur",
+     "values": [
+      "Anthracite",
+      "Blanc",
+      "Anthracite avec lames blanches"
+     ]
+    },
+    {
+     "name": "Dimensions",
+     "values": [
+      "3x3m",
+      "3x4m",
+      "3x5m",
+      "3x6m",
+      "4x4m",
+      "4x5m",
+      "4x6m"
+     ]
+    },
+    {
+     "name": "Type de construction",
+     "values": [
+      "Autoportée",
+      "Adossée"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Anthracite / 3x3m / Autoportée",
+     "sku": "SKY_MA_GL_ANT_3X3_FRE_04",
+     "price_eur": 5490.0,
+     "compare_at_eur": 7290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x3m / Adossée",
+     "sku": "SKY_MA_GL_ANT_3X3_WAL_04",
+     "price_eur": 5490.0,
+     "compare_at_eur": 7290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x4m / Autoportée",
+     "sku": "SKY_MA_GL_ANT_3X4_FRE_04",
+     "price_eur": 7090.0,
+     "compare_at_eur": 9490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x4m / Adossée",
+     "sku": "SKY_MA_GL_ANT_3X4_WAL_04",
+     "price_eur": 7090.0,
+     "compare_at_eur": 9490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x5m / Autoportée",
+     "sku": "SKY_MA_GL_ANT_3X5_FRE_04",
+     "price_eur": 8890.0,
+     "compare_at_eur": 11890.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x5m / Adossée",
+     "sku": "SKY_MA_GL_ANT_3X5_WAL_04",
+     "price_eur": 8890.0,
+     "compare_at_eur": 11890.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x6m / Autoportée",
+     "sku": "SKY_MA_GL_ANT_3X6_FRE_04",
+     "price_eur": 10390.0,
+     "compare_at_eur": 13890.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x6m / Adossée",
+     "sku": "SKY_MA_GL_ANT_3X6_WAL_04",
+     "price_eur": 10390.0,
+     "compare_at_eur": 13890.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x4m / Autoportée",
+     "sku": "SKY_MA_GL_ANT_4X4_FRE_04",
+     "price_eur": 9290.0,
+     "compare_at_eur": 12390.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x4m / Adossée",
+     "sku": "SKY_MA_GL_ANT_4X4_WAL_04",
+     "price_eur": 9290.0,
+     "compare_at_eur": 12390.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x5m / Autoportée",
+     "sku": "SKY_MA_GL_ANT_4X5_FRE_04",
+     "price_eur": 11590.0,
+     "compare_at_eur": 15490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x5m / Adossée",
+     "sku": "SKY_MA_GL_ANT_4X5_WAL_04",
+     "price_eur": 11590.0,
+     "compare_at_eur": 15490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x6m / Autoportée",
+     "sku": "SKY_MA_GL_ANT_4X6_FRE_04",
+     "price_eur": 13790.0,
+     "compare_at_eur": 18390.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x6m / Adossée",
+     "sku": "SKY_MA_GL_ANT_4X6_WAL_04",
+     "price_eur": 13790.0,
+     "compare_at_eur": 18390.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x3m / Autoportée",
+     "sku": "SKY_MA_GL_WHI_3X3_FRE_04",
+     "price_eur": 5490.0,
+     "compare_at_eur": 7290.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x3m / Adossée",
+     "sku": "SKY_MA_GL_WHI_3X3_WAL_04",
+     "price_eur": 5490.0,
+     "compare_at_eur": 7290.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x4m / Autoportée",
+     "sku": "SKY_MA_GL_WHI_3X4_FRE_04",
+     "price_eur": 7090.0,
+     "compare_at_eur": 9490.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x4m / Adossée",
+     "sku": "SKY_MA_GL_WHI_3X4_WAL_04",
+     "price_eur": 7090.0,
+     "compare_at_eur": 9490.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x5m / Autoportée",
+     "sku": "SKY_MA_GL_WHI_3X5_FRE_04",
+     "price_eur": 8890.0,
+     "compare_at_eur": 11890.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x5m / Adossée",
+     "sku": "SKY_MA_GL_WHI_3X5_WAL_04",
+     "price_eur": 8890.0,
+     "compare_at_eur": 11890.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x6m / Autoportée",
+     "sku": "SKY_MA_GL_WHI_3X6_FRE_04",
+     "price_eur": 10390.0,
+     "compare_at_eur": 13890.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x6m / Adossée",
+     "sku": "SKY_MA_GL_WHI_3X6_WAL_04",
+     "price_eur": 10390.0,
+     "compare_at_eur": 13890.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x4m / Autoportée",
+     "sku": "SKY_MA_GL_WHI_4X4_FRE_04",
+     "price_eur": 9290.0,
+     "compare_at_eur": 12390.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x4m / Adossée",
+     "sku": "SKY_MA_GL_WHI_4X4_WAL_04",
+     "price_eur": 9290.0,
+     "compare_at_eur": 12390.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x5m / Autoportée",
+     "sku": "SKY_MA_GL_WHI_4X5_FRE_04",
+     "price_eur": 11590.0,
+     "compare_at_eur": 15490.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x5m / Adossée",
+     "sku": "SKY_MA_GL_WHI_4X5_WAL_04",
+     "price_eur": 11590.0,
+     "compare_at_eur": 15490.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x6m / Autoportée",
+     "sku": "SKY_MA_GL_WHI_4X6_FRE_04",
+     "price_eur": 13790.0,
+     "compare_at_eur": 18390.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x6m / Adossée",
+     "sku": "SKY_MA_GL_WHI_4X6_WAL_04",
+     "price_eur": 13790.0,
+     "compare_at_eur": 18390.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x3m / Autoportée",
+     "sku": "SKY_MA_GL_ANW_3X3_FRE_04",
+     "price_eur": 5490.0,
+     "compare_at_eur": 7290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x3m / Adossée",
+     "sku": "SKY_MA_GL_ANW_3X3_WAL_04",
+     "price_eur": 5490.0,
+     "compare_at_eur": 7290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x4m / Autoportée",
+     "sku": "SKY_MA_GL_ANW_3X4_FRE_04",
+     "price_eur": 7090.0,
+     "compare_at_eur": 9490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x4m / Adossée",
+     "sku": "SKY_MA_GL_ANW_3X4_WAL_04",
+     "price_eur": 7090.0,
+     "compare_at_eur": 9490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x5m / Autoportée",
+     "sku": "SKY_MA_GL_ANW_3X5_FRE_04",
+     "price_eur": 8890.0,
+     "compare_at_eur": 11890.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x5m / Adossée",
+     "sku": "SKY_MA_GL_ANW_3X5_WAL_04",
+     "price_eur": 8890.0,
+     "compare_at_eur": 11890.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x6m / Autoportée",
+     "sku": "SKY_MA_GL_ANW_3X6_FRE_04",
+     "price_eur": 10390.0,
+     "compare_at_eur": 13890.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x6m / Adossée",
+     "sku": "SKY_MA_GL_ANW_3X6_WAL_04",
+     "price_eur": 10390.0,
+     "compare_at_eur": 13890.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x4m / Autoportée",
+     "sku": "SKY_MA_GL_ANW_4X4_FRE_04",
+     "price_eur": 9290.0,
+     "compare_at_eur": 12390.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x4m / Adossée",
+     "sku": "SKY_MA_GL_ANW_4X4_WAL_04",
+     "price_eur": 9290.0,
+     "compare_at_eur": 12390.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x5m / Autoportée",
+     "sku": "SKY_MA_GL_ANW_4X5_FRE_04",
+     "price_eur": 11590.0,
+     "compare_at_eur": 15490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x5m / Adossée",
+     "sku": "SKY_MA_GL_ANW_4X5_WAL_04",
+     "price_eur": 11590.0,
+     "compare_at_eur": 15490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x6m / Autoportée",
+     "sku": "SKY_MA_GL_ANW_4X6_FRE_04",
+     "price_eur": 13790.0,
+     "compare_at_eur": 18390.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x6m / Adossée",
+     "sku": "SKY_MA_GL_ANW_4X6_WAL_04",
+     "price_eur": 13790.0,
+     "compare_at_eur": 18390.0,
+     "available": true
+    }
+   ]
+  },
+  "pergola-pro": {
+   "title": "Pergola 4 Pro",
+   "type": "Pergola",
+   "options": [
+    {
+     "name": "Couleur",
+     "values": [
+      "Anthracite",
+      "Blanc",
+      "Anthracite avec lames blanches",
+      "Noir"
+     ]
+    },
+    {
+     "name": "Dimensions",
+     "values": [
+      "3x3m",
+      "3x4m",
+      "3x5m",
+      "3x6m",
+      "4x4m",
+      "4x5m",
+      "4x6m"
+     ]
+    },
+    {
+     "name": "Type de construction",
+     "values": [
+      "Autoportée",
+      "Adossée"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Anthracite / 3x3m / Autoportée",
+     "sku": "SUN_MA_GL_ANT_3X3_FRE_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x3m / Adossée",
+     "sku": "SUN_MA_GL_ANT_3X3_WAL_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x4m / Autoportée",
+     "sku": "SUN_MA_GL_ANT_3X4_FRE_04",
+     "price_eur": 5290.0,
+     "compare_at_eur": 7090.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x4m / Adossée",
+     "sku": "SUN_MA_GL_ANT_3X4_WAL_04",
+     "price_eur": 5290.0,
+     "compare_at_eur": 7090.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x5m / Autoportée",
+     "sku": "SUN_MA_GL_ANT_3X5_FRE_04",
+     "price_eur": 6590.0,
+     "compare_at_eur": 8790.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x5m / Adossée",
+     "sku": "SUN_MA_GL_ANT_3X5_WAL_04",
+     "price_eur": 6590.0,
+     "compare_at_eur": 8790.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x6m / Autoportée",
+     "sku": "SUN_MA_GL_ANT_3X6_FRE_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x6m / Adossée",
+     "sku": "SUN_MA_GL_ANT_3X6_WAL_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x4m / Autoportée",
+     "sku": "SUN_MA_GL_ANT_4X4_FRE_04",
+     "price_eur": 6990.0,
+     "compare_at_eur": 9290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x4m / Adossée",
+     "sku": "SUN_MA_GL_ANT_4X4_WAL_04",
+     "price_eur": 6990.0,
+     "compare_at_eur": 9290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x5m / Autoportée",
+     "sku": "SUN_MA_GL_ANT_4X5_FRE_04",
+     "price_eur": 8690.0,
+     "compare_at_eur": 11590.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x5m / Adossée",
+     "sku": "SUN_MA_GL_ANT_4X5_WAL_04",
+     "price_eur": 8690.0,
+     "compare_at_eur": 11590.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x6m / Autoportée",
+     "sku": "SUN_MA_GL_ANT_4X6_FRE_04",
+     "price_eur": 10090.0,
+     "compare_at_eur": 13490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x6m / Adossée",
+     "sku": "SUN_MA_GL_ANT_4X6_WAL_04",
+     "price_eur": 10090.0,
+     "compare_at_eur": 13490.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x3m / Autoportée",
+     "sku": "SUN_MA_GL_WHI_3X3_FRE_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x3m / Adossée",
+     "sku": "SUN_MA_GL_WHI_3X3_WAL_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x4m / Autoportée",
+     "sku": "SUN_MA_GL_WHI_3X4_FRE_04",
+     "price_eur": 5290.0,
+     "compare_at_eur": 7090.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x4m / Adossée",
+     "sku": "SUN_MA_GL_WHI_3X4_WAL_04",
+     "price_eur": 5290.0,
+     "compare_at_eur": 7090.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x5m / Autoportée",
+     "sku": "SUN_MA_GL_WHI_3X5_FRE_04",
+     "price_eur": 6590.0,
+     "compare_at_eur": 8790.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x5m / Adossée",
+     "sku": "SUN_MA_GL_WHI_3X5_WAL_04",
+     "price_eur": 6590.0,
+     "compare_at_eur": 8790.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x6m / Autoportée",
+     "sku": "SUN_MA_GL_WHI_3X6_FRE_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x6m / Adossée",
+     "sku": "SUN_MA_GL_WHI_3X6_WAL_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x4m / Autoportée",
+     "sku": "SUN_MA_GL_WHI_4X4_FRE_04",
+     "price_eur": 6990.0,
+     "compare_at_eur": 9290.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x4m / Adossée",
+     "sku": "SUN_MA_GL_WHI_4X4_WAL_04",
+     "price_eur": 6990.0,
+     "compare_at_eur": 9290.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x5m / Autoportée",
+     "sku": "SUN_MA_GL_WHI_4X5_FRE_04",
+     "price_eur": 8690.0,
+     "compare_at_eur": 11590.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x5m / Adossée",
+     "sku": "SUN_MA_GL_WHI_4X5_WAL_04",
+     "price_eur": 8690.0,
+     "compare_at_eur": 11590.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x6m / Autoportée",
+     "sku": "SUN_MA_GL_WHI_4X6_FRE_04",
+     "price_eur": 10090.0,
+     "compare_at_eur": 13490.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x6m / Adossée",
+     "sku": "SUN_MA_GL_WHI_4X6_WAL_04",
+     "price_eur": 10090.0,
+     "compare_at_eur": 13490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x3m / Autoportée",
+     "sku": "SUN_MA_GL_ANW_3X3_FRE_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x3m / Adossée",
+     "sku": "SUN_MA_GL_ANW_3X3_WAL_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x4m / Autoportée",
+     "sku": "SUN_MA_GL_ANW_3X4_FRE_04",
+     "price_eur": 5290.0,
+     "compare_at_eur": 7090.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x4m / Adossée",
+     "sku": "SUN_MA_GL_ANW_3X4_WAL_04",
+     "price_eur": 5290.0,
+     "compare_at_eur": 7090.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x5m / Autoportée",
+     "sku": "SUN_MA_GL_ANW_3X5_FRE_04",
+     "price_eur": 6590.0,
+     "compare_at_eur": 8790.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x5m / Adossée",
+     "sku": "SUN_MA_GL_ANW_3X5_WAL_04",
+     "price_eur": 6590.0,
+     "compare_at_eur": 8790.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x6m / Autoportée",
+     "sku": "SUN_MA_GL_ANW_3X6_FRE_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x6m / Adossée",
+     "sku": "SUN_MA_GL_ANW_3X6_WAL_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x4m / Autoportée",
+     "sku": "SUN_MA_GL_ANW_4X4_FRE_04",
+     "price_eur": 6990.0,
+     "compare_at_eur": 9290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x4m / Adossée",
+     "sku": "SUN_MA_GL_ANW_4X4_WAL_04",
+     "price_eur": 6990.0,
+     "compare_at_eur": 9290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x5m / Autoportée",
+     "sku": "SUN_MA_GL_ANW_4X5_FRE_04",
+     "price_eur": 8690.0,
+     "compare_at_eur": 11590.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x5m / Adossée",
+     "sku": "SUN_MA_GL_ANW_4X5_WAL_04",
+     "price_eur": 8690.0,
+     "compare_at_eur": 11590.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x6m / Autoportée",
+     "sku": "SUN_MA_GL_ANW_4X6_FRE_04",
+     "price_eur": 10090.0,
+     "compare_at_eur": 13490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x6m / Adossée",
+     "sku": "SUN_MA_GL_ANW_4X6_WAL_04",
+     "price_eur": 10090.0,
+     "compare_at_eur": 13490.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x3m / Autoportée",
+     "sku": "SUN_MA_GL_BLA_3X3_FRE_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x3m / Adossée",
+     "sku": "SUN_MA_GL_BLA_3X3_WAL_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x4m / Autoportée",
+     "sku": "SUN_MA_GL_BLA_3X4_FRE_04",
+     "price_eur": 5290.0,
+     "compare_at_eur": 7090.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x4m / Adossée",
+     "sku": "SUN_MA_GL_BLA_3X4_WAL_04",
+     "price_eur": 5290.0,
+     "compare_at_eur": 7090.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x5m / Autoportée",
+     "sku": "SUN_MA_GL_BLA_3X5_FRE_04",
+     "price_eur": 6590.0,
+     "compare_at_eur": 8790.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x5m / Adossée",
+     "sku": "SUN_MA_GL_BLA_3X5_WAL_04",
+     "price_eur": 6590.0,
+     "compare_at_eur": 8790.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x6m / Autoportée",
+     "sku": "SUN_MA_GL_BLA_3X6_FRE_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x6m / Adossée",
+     "sku": "SUN_MA_GL_BLA_3X6_WAL_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x4m / Autoportée",
+     "sku": "SUN_MA_GL_BLA_4X4_FRE_04",
+     "price_eur": 6990.0,
+     "compare_at_eur": 9290.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x4m / Adossée",
+     "sku": "SUN_MA_GL_BLA_4X4_WAL_04",
+     "price_eur": 6990.0,
+     "compare_at_eur": 9290.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x5m / Autoportée",
+     "sku": "SUN_MA_GL_BLA_4X5_FRE_04",
+     "price_eur": 8690.0,
+     "compare_at_eur": 11590.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x5m / Adossée",
+     "sku": "SUN_MA_GL_BLA_4X5_WAL_04",
+     "price_eur": 8690.0,
+     "compare_at_eur": 11590.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x6m / Autoportée",
+     "sku": "SUN_MA_GL_BLA_4X6_FRE_04",
+     "price_eur": 10090.0,
+     "compare_at_eur": 13490.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x6m / Adossée",
+     "sku": "SUN_MA_GL_ANW_4X6_WAL_04",
+     "price_eur": 10090.0,
+     "compare_at_eur": 13490.0,
+     "available": true
+    }
+   ]
+  },
+  "pergola": {
+   "title": "Pergola 4",
+   "type": "Pergola",
+   "options": [
+    {
+     "name": "Couleur",
+     "values": [
+      "Anthracite",
+      "Blanc",
+      "Anthracite avec lames blanches",
+      "Noir"
+     ]
+    },
+    {
+     "name": "Dimensions",
+     "values": [
+      "3x3m",
+      "3x4m",
+      "3x5m",
+      "3x6m",
+      "4x4m",
+      "4x5m",
+      "4x6m"
+     ]
+    },
+    {
+     "name": "Type de construction",
+     "values": [
+      "Autoportée",
+      "Adossée"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Anthracite / 3x3m / Autoportée",
+     "sku": "PER_MA_GL_ANT_3X3_FRE_04",
+     "price_eur": 3190.0,
+     "compare_at_eur": 4290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x3m / Adossée",
+     "sku": "PER_MA_GL_ANT_3X3_WAL_04",
+     "price_eur": 3190.0,
+     "compare_at_eur": 4290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x4m / Autoportée",
+     "sku": "PER_MA_GL_ANT_3X4_FRE_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x4m / Adossée",
+     "sku": "PER_MA_GL_ANT_3X4_WAL_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x5m / Autoportée",
+     "sku": "PER_MA_GL_ANT_3X5_FRE_04",
+     "price_eur": 5090.0,
+     "compare_at_eur": 6790.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x5m / Adossée",
+     "sku": "PER_MA_GL_ANT_3X5_WAL_04",
+     "price_eur": 5090.0,
+     "compare_at_eur": 6790.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x6m / Autoportée",
+     "sku": "PER_MA_GL_ANT_3X6_FRE_04",
+     "price_eur": 5990.0,
+     "compare_at_eur": 7990.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x6m / Adossée",
+     "sku": "PER_MA_GL_ANT_3X6_WAL_04",
+     "price_eur": 5990.0,
+     "compare_at_eur": 7990.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x4m / Autoportée",
+     "sku": "PER_MA_GL_ANT_4X4_FRE_04",
+     "price_eur": 5390.0,
+     "compare_at_eur": 7190.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x4m / Adossée",
+     "sku": "PER_MA_GL_ANT_4X4_WAL_04",
+     "price_eur": 5390.0,
+     "compare_at_eur": 7190.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x5m / Autoportée",
+     "sku": "PER_MA_GL_ANT_4X5_FRE_04",
+     "price_eur": 6690.0,
+     "compare_at_eur": 8890.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x5m / Adossée",
+     "sku": "PER_MA_GL_ANT_4X5_WAL_04",
+     "price_eur": 6690.0,
+     "compare_at_eur": 8890.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x6m / Autoportée",
+     "sku": "PER_MA_GL_ANT_4X6_FRE_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x6m / Adossée",
+     "sku": "PER_MA_GL_ANT_4X6_WAL_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x3m / Autoportée",
+     "sku": "PER_MA_GL_WHI_3X3_FRE_04",
+     "price_eur": 3190.0,
+     "compare_at_eur": 4290.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x3m / Adossée",
+     "sku": "PER_MA_GL_WHI_3X3_WAL_04",
+     "price_eur": 3190.0,
+     "compare_at_eur": 4290.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x4m / Autoportée",
+     "sku": "PER_MA_GL_WHI_3X4_FRE_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x4m / Adossée",
+     "sku": "PER_MA_GL_WHI_3X4_WAL_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x5m / Autoportée",
+     "sku": "PER_MA_GL_WHI_3X5_FRE_04",
+     "price_eur": 5090.0,
+     "compare_at_eur": 6790.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x5m / Adossée",
+     "sku": "PER_MA_GL_WHI_3X5_WAL_04",
+     "price_eur": 5090.0,
+     "compare_at_eur": 6790.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x6m / Autoportée",
+     "sku": "PER_MA_GL_WHI_3X6_FRE_04",
+     "price_eur": 5990.0,
+     "compare_at_eur": 7990.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x6m / Adossée",
+     "sku": "PER_MA_GL_WHI_3X6_WAL_04",
+     "price_eur": 5990.0,
+     "compare_at_eur": 7990.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x4m / Autoportée",
+     "sku": "PER_MA_GL_WHI_4X4_FRE_04",
+     "price_eur": 5390.0,
+     "compare_at_eur": 7190.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x4m / Adossée",
+     "sku": "PER_MA_GL_WHI_4X4_WAL_04",
+     "price_eur": 5390.0,
+     "compare_at_eur": 7190.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x5m / Autoportée",
+     "sku": "PER_MA_GL_WHI_4X5_FRE_04",
+     "price_eur": 6690.0,
+     "compare_at_eur": 8890.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x5m / Adossée",
+     "sku": "PER_MA_GL_WHI_4X5_WAL_04",
+     "price_eur": 6690.0,
+     "compare_at_eur": 8890.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x6m / Autoportée",
+     "sku": "PER_MA_GL_WHI_4X6_FRE_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x6m / Adossée",
+     "sku": "PER_MA_GL_WHI_4X6_WAL_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x3m / Autoportée",
+     "sku": "PER_MA_GL_ANW_3X3_FRE_04",
+     "price_eur": 3190.0,
+     "compare_at_eur": 4290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x3m / Adossée",
+     "sku": "PER_MA_GL_ANW_3X3_WAL_04",
+     "price_eur": 3190.0,
+     "compare_at_eur": 4290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x4m / Autoportée",
+     "sku": "PER_MA_GL_ANW_3X4_FRE_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x4m / Adossée",
+     "sku": "PER_MA_GL_ANW_3X4_WAL_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x5m / Autoportée",
+     "sku": "PER_MA_GL_ANW_3X5_FRE_04",
+     "price_eur": 5090.0,
+     "compare_at_eur": 6790.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x5m / Adossée",
+     "sku": "PER_MA_GL_ANW_3X5_WAL_04",
+     "price_eur": 5090.0,
+     "compare_at_eur": 6790.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x6m / Autoportée",
+     "sku": "PER_MA_GL_ANW_3X6_FRE_04",
+     "price_eur": 5990.0,
+     "compare_at_eur": 7990.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x6m / Adossée",
+     "sku": "PER_MA_GL_ANW_3X6_WAL_04",
+     "price_eur": 5990.0,
+     "compare_at_eur": 7990.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x4m / Autoportée",
+     "sku": "PER_MA_GL_ANW_4X4_FRE_04",
+     "price_eur": 5390.0,
+     "compare_at_eur": 7190.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x4m / Adossée",
+     "sku": "PER_MA_GL_ANW_4X4_WAL_04",
+     "price_eur": 5390.0,
+     "compare_at_eur": 7190.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x5m / Autoportée",
+     "sku": "PER_MA_GL_ANW_4X5_FRE_04",
+     "price_eur": 6690.0,
+     "compare_at_eur": 8890.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x5m / Adossée",
+     "sku": "PER_MA_GL_ANW_4X5_WAL_04",
+     "price_eur": 6690.0,
+     "compare_at_eur": 8890.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x6m / Autoportée",
+     "sku": "PER_MA_GL_ANW_4X6_FRE_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x6m / Adossée",
+     "sku": "PER_MA_GL_ANW_4X6_WAL_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x3m / Autoportée",
+     "sku": "PER_MA_GL_BLA_3X3_FRE_04",
+     "price_eur": 3190.0,
+     "compare_at_eur": 4290.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x3m / Adossée",
+     "sku": "PER_MA_GL_BLA_3X3_WAL_04",
+     "price_eur": 3190.0,
+     "compare_at_eur": 4290.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x4m / Autoportée",
+     "sku": "PER_MA_GL_BLA_3X4_FRE_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x4m / Adossée",
+     "sku": "PER_MA_GL_BLA_3X4_WAL_04",
+     "price_eur": 4090.0,
+     "compare_at_eur": 5490.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x5m / Autoportée",
+     "sku": "PER_MA_GL_BLA_3X5_FRE_04",
+     "price_eur": 5090.0,
+     "compare_at_eur": 6790.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x5m / Adossée",
+     "sku": "PER_MA_GL_BLA_3X5_WAL_04",
+     "price_eur": 5090.0,
+     "compare_at_eur": 6790.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x6m / Autoportée",
+     "sku": "PER_MA_GL_BLA_3X6_FRE_04",
+     "price_eur": 5990.0,
+     "compare_at_eur": 7990.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x6m / Adossée",
+     "sku": "PER_MA_GL_BLA_3X6_WAL_04",
+     "price_eur": 5990.0,
+     "compare_at_eur": 7990.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x4m / Autoportée",
+     "sku": "PER_MA_GL_BLA_4X4_FRE_04",
+     "price_eur": 5390.0,
+     "compare_at_eur": 7190.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x4m / Adossée",
+     "sku": "PER_MA_GL_BLA_4X4_WAL_04",
+     "price_eur": 5390.0,
+     "compare_at_eur": 7190.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x5m / Autoportée",
+     "sku": "PER_MA_GL_BLA_4X5_FRE_04",
+     "price_eur": 6690.0,
+     "compare_at_eur": 8890.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x5m / Adossée",
+     "sku": "PER_MA_GL_BLA_4X5_WAL_04",
+     "price_eur": 6690.0,
+     "compare_at_eur": 8890.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x6m / Autoportée",
+     "sku": "PER_MA_GL_BLA_4X6_FRE_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x6m / Adossée",
+     "sku": "PER_MA_GL_BLA_4X6_WAL_04",
+     "price_eur": 7790.0,
+     "compare_at_eur": 10390.0,
+     "available": true
+    }
+   ]
+  },
+  "slatwall-custom-design": {
+   "title": "Persienne - Sur mesure",
+   "type": "Custom Design",
+   "options": [
+    {
+     "name": "ID",
+     "values": [
+      "1750",
+      "1815",
+      "1880",
+      "1945",
+      "2010",
+      "2075",
+      "2140",
+      "2205",
+      "2270",
+      "2335",
+      "2400",
+      "2465",
+      "2530",
+      "2595",
+      "2660",
+      "2725",
+      "2790",
+      "2855",
+      "2920",
+      "2985",
+      "3050",
+      "3115",
+      "3180",
+      "3245",
+      "3310",
+      "3375",
+      "3440",
+      "3505",
+      "3570",
+      "3635",
+      "3700",
+      "3765",
+      "3830",
+      "3895",
+      "3960",
+      "4025",
+      "4090",
+      "4155",
+      "4220",
+      "4285",
+      "4350",
+      "4415",
+      "4480",
+      "4545",
+      "4610",
+      "4675",
+      "4740",
+      "4805",
+      "4870",
+      "4935",
+      "5000",
+      "5065",
+      "5130",
+      "5195",
+      "5260",
+      "5325",
+      "5390",
+      "5455",
+      "5520",
+      "5585",
+      "5650",
+      "5715",
+      "5780",
+      "5845",
+      "5910",
+      "5975",
+      "6040"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "1750",
+     "sku": "TM_ASW_03",
+     "price_eur": 1750.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1815",
+     "sku": "TM_ASW_03",
+     "price_eur": 1815.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1880",
+     "sku": "TM_ASW_03",
+     "price_eur": 1880.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1945",
+     "sku": "TM_ASW_03",
+     "price_eur": 1945.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2010",
+     "sku": "TM_ASW_03",
+     "price_eur": 2010.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2075",
+     "sku": "TM_ASW_03",
+     "price_eur": 2075.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2140",
+     "sku": "TM_ASW_03",
+     "price_eur": 2140.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2205",
+     "sku": "TM_ASW_03",
+     "price_eur": 2205.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2270",
+     "sku": "TM_ASW_03",
+     "price_eur": 2270.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2335",
+     "sku": "TM_ASW_03",
+     "price_eur": 2335.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2400",
+     "sku": "TM_ASW_03",
+     "price_eur": 2400.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2465",
+     "sku": "TM_ASW_03",
+     "price_eur": 2465.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2530",
+     "sku": "TM_ASW_03",
+     "price_eur": 2530.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2595",
+     "sku": "TM_ASW_03",
+     "price_eur": 2595.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2660",
+     "sku": "TM_ASW_03",
+     "price_eur": 2660.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2725",
+     "sku": "TM_ASW_03",
+     "price_eur": 2725.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2790",
+     "sku": "TM_ASW_03",
+     "price_eur": 2790.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2855",
+     "sku": "TM_ASW_03",
+     "price_eur": 2855.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2920",
+     "sku": "TM_ASW_03",
+     "price_eur": 2920.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2985",
+     "sku": "TM_ASW_03",
+     "price_eur": 2985.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3050",
+     "sku": "TM_ASW_03",
+     "price_eur": 3050.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3115",
+     "sku": "TM_ASW_03",
+     "price_eur": 3115.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3180",
+     "sku": "TM_ASW_03",
+     "price_eur": 3180.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3245",
+     "sku": "TM_ASW_03",
+     "price_eur": 3245.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3310",
+     "sku": "TM_ASW_03",
+     "price_eur": 3310.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3375",
+     "sku": "TM_ASW_03",
+     "price_eur": 3375.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3440",
+     "sku": "TM_ASW_03",
+     "price_eur": 3440.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3505",
+     "sku": "TM_ASW_03",
+     "price_eur": 3505.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3570",
+     "sku": "TM_ASW_03",
+     "price_eur": 3570.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3635",
+     "sku": "TM_ASW_03",
+     "price_eur": 3635.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3700",
+     "sku": "TM_ASW_03",
+     "price_eur": 3700.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3765",
+     "sku": "TM_ASW_03",
+     "price_eur": 3765.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3830",
+     "sku": "TM_ASW_03",
+     "price_eur": 3830.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3895",
+     "sku": "TM_ASW_03",
+     "price_eur": 3895.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3960",
+     "sku": "TM_ASW_03",
+     "price_eur": 3960.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4025",
+     "sku": "TM_ASW_03",
+     "price_eur": 4025.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4090",
+     "sku": "TM_ASW_03",
+     "price_eur": 4090.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4155",
+     "sku": "TM_ASW_03",
+     "price_eur": 4155.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4220",
+     "sku": "TM_ASW_03",
+     "price_eur": 4220.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4285",
+     "sku": "TM_ASW_03",
+     "price_eur": 4285.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4350",
+     "sku": "TM_ASW_03",
+     "price_eur": 4350.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4415",
+     "sku": "TM_ASW_03",
+     "price_eur": 4415.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4480",
+     "sku": "TM_ASW_03",
+     "price_eur": 4480.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4545",
+     "sku": "TM_ASW_03",
+     "price_eur": 4545.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4610",
+     "sku": "TM_ASW_03",
+     "price_eur": 4610.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4675",
+     "sku": "TM_ASW_03",
+     "price_eur": 4675.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4740",
+     "sku": "TM_ASW_03",
+     "price_eur": 4740.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4805",
+     "sku": "TM_ASW_03",
+     "price_eur": 4805.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4870",
+     "sku": "TM_ASW_03",
+     "price_eur": 4870.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4935",
+     "sku": "TM_ASW_03",
+     "price_eur": 4935.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5000",
+     "sku": "TM_ASW_03",
+     "price_eur": 5000.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5065",
+     "sku": "TM_ASW_03",
+     "price_eur": 1685.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5130",
+     "sku": "TM_ASW_03",
+     "price_eur": 1620.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5195",
+     "sku": "TM_ASW_03",
+     "price_eur": 1555.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5260",
+     "sku": "TM_ASW_03",
+     "price_eur": 1490.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5325",
+     "sku": "TM_ASW_03",
+     "price_eur": 1425.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5390",
+     "sku": "TM_ASW_03",
+     "price_eur": 1360.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5455",
+     "sku": "TM_ASW_03",
+     "price_eur": 1295.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5520",
+     "sku": "TM_ASW_03",
+     "price_eur": 1230.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5585",
+     "sku": "TM_ASW_03",
+     "price_eur": 1165.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5650",
+     "sku": "TM_ASW_03",
+     "price_eur": 1100.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5715",
+     "sku": "TM_ASW_03",
+     "price_eur": 1035.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5780",
+     "sku": "TM_ASW_03",
+     "price_eur": 970.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5845",
+     "sku": "TM_ASW_03",
+     "price_eur": 905.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5910",
+     "sku": "TM_ASW_03",
+     "price_eur": 840.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "5975",
+     "sku": "TM_ASW_03",
+     "price_eur": 775.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "6040",
+     "sku": "TM_ASW_03",
+     "price_eur": 710.0,
+     "compare_at_eur": null,
+     "available": true
+    }
+   ]
+  },
+  "glass-wall-custom-made": {
+   "title": "Paroi vitrée - Sur mesure",
+   "type": "Custom Design",
+   "options": [
+    {
+     "name": "Size",
+     "values": [
+      "1750",
+      "1815",
+      "1880",
+      "1945",
+      "2010",
+      "2075",
+      "2140",
+      "2205",
+      "2270",
+      "2335",
+      "2400",
+      "2465",
+      "2530",
+      "2595",
+      "2660",
+      "2725",
+      "2790",
+      "2855",
+      "2920",
+      "2985",
+      "3050",
+      "3115",
+      "3180",
+      "3245",
+      "3310",
+      "3375",
+      "3440",
+      "3505",
+      "3570",
+      "3635",
+      "3700",
+      "3765",
+      "3830",
+      "3895",
+      "3960",
+      "4025",
+      "4090",
+      "4155"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "1750",
+     "sku": "TM_GWA_03",
+     "price_eur": 1750.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1815",
+     "sku": "TM_GWA_03",
+     "price_eur": 1815.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1880",
+     "sku": "TM_GWA_03",
+     "price_eur": 1880.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1945",
+     "sku": "TM_GWA_03",
+     "price_eur": 1945.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2010",
+     "sku": "TM_GWA_03",
+     "price_eur": 2010.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2075",
+     "sku": "TM_GWA_03",
+     "price_eur": 2075.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2140",
+     "sku": "TM_GWA_03",
+     "price_eur": 2140.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2205",
+     "sku": "TM_GWA_03",
+     "price_eur": 2205.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2270",
+     "sku": "TM_GWA_03",
+     "price_eur": 2270.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2335",
+     "sku": "TM_GWA_03",
+     "price_eur": 2335.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2400",
+     "sku": "TM_GWA_03",
+     "price_eur": 2400.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2465",
+     "sku": "TM_GWA_03",
+     "price_eur": 2465.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2530",
+     "sku": "TM_GWA_03",
+     "price_eur": 2530.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2595",
+     "sku": "TM_GWA_03",
+     "price_eur": 2595.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2660",
+     "sku": "TM_GWA_03",
+     "price_eur": 2660.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2725",
+     "sku": "TM_GWA_03",
+     "price_eur": 2725.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2790",
+     "sku": "TM_GWA_03",
+     "price_eur": 2790.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2855",
+     "sku": "TM_GWA_03",
+     "price_eur": 2855.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2920",
+     "sku": "TM_GWA_03",
+     "price_eur": 2920.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "2985",
+     "sku": "TM_GWA_03",
+     "price_eur": 2985.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3050",
+     "sku": "TM_GWA_03",
+     "price_eur": 3050.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3115",
+     "sku": "TM_GWA_03",
+     "price_eur": 3115.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3180",
+     "sku": "TM_GWA_03",
+     "price_eur": 3180.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3245",
+     "sku": "TM_GWA_03",
+     "price_eur": 3245.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3310",
+     "sku": "TM_GWA_03",
+     "price_eur": 3310.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3375",
+     "sku": "TM_GWA_03",
+     "price_eur": 3375.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3440",
+     "sku": "TM_GWA_03",
+     "price_eur": 3440.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3505",
+     "sku": "TM_GWA_03",
+     "price_eur": 3505.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3570",
+     "sku": "TM_GWA_03",
+     "price_eur": 3570.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3635",
+     "sku": "TM_GWA_03",
+     "price_eur": 3635.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3700",
+     "sku": "TM_GWA_03",
+     "price_eur": 3700.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3765",
+     "sku": "TM_GWA_03",
+     "price_eur": 3765.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3830",
+     "sku": "TM_GWA_03",
+     "price_eur": 3830.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3895",
+     "sku": "TM_GWA_03",
+     "price_eur": 3895.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3960",
+     "sku": "TM_GWA_03",
+     "price_eur": 3960.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4025",
+     "sku": "TM_GWA_03",
+     "price_eur": 4025.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4090",
+     "sku": "TM_GWA_03",
+     "price_eur": 4090.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "4155",
+     "sku": "TM_GWA_03",
+     "price_eur": 4155.0,
+     "compare_at_eur": null,
+     "available": true
+    }
+   ]
+  },
+  "led-stripes-custom-design": {
+   "title": "LED - Sur mesure",
+   "type": "Custom Design",
+   "options": [
+    {
+     "name": "Couleur",
+     "values": [
+      "Blanc chaud",
+      "RGB"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Blanc chaud",
+     "sku": "TM_LED_03",
+     "price_eur": 496.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "RGB",
+     "sku": "TM_LED_03",
+     "price_eur": 496.0,
+     "compare_at_eur": null,
+     "available": true
+    }
+   ]
+  },
+  "screen-custom-design": {
+   "title": "Store verticaux - Sur mesure",
+   "type": "Custom Design",
+   "options": [
+    {
+     "name": "ID",
+     "values": [
+      "992",
+      "1018",
+      "1044",
+      "1070",
+      "1096",
+      "1122",
+      "1148",
+      "1174",
+      "1200",
+      "1226",
+      "1252",
+      "1278",
+      "1304",
+      "1330",
+      "1356",
+      "1382",
+      "1408",
+      "1434",
+      "1460",
+      "1486",
+      "1512",
+      "1538",
+      "1564",
+      "1590",
+      "1616",
+      "3999"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "992",
+     "sku": "TM_SCR_03",
+     "price_eur": 992.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1018",
+     "sku": "TM_SCR_03",
+     "price_eur": 1018.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1044",
+     "sku": "TM_SCR_03",
+     "price_eur": 1044.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1070",
+     "sku": "TM_SCR_03",
+     "price_eur": 1070.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1096",
+     "sku": "TM_SCR_03",
+     "price_eur": 1096.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1122",
+     "sku": "TM_SCR_03",
+     "price_eur": 1122.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1148",
+     "sku": "TM_SCR_03",
+     "price_eur": 1148.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1174",
+     "sku": "TM_SCR_03",
+     "price_eur": 1174.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1200",
+     "sku": "TM_SCR_03",
+     "price_eur": 1200.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1226",
+     "sku": "TM_SCR_03",
+     "price_eur": 1226.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1252",
+     "sku": "TM_SCR_03",
+     "price_eur": 1252.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1278",
+     "sku": "TM_SCR_03",
+     "price_eur": 1278.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1304",
+     "sku": "TM_SCR_03",
+     "price_eur": 1304.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1330",
+     "sku": "TM_SCR_03",
+     "price_eur": 1330.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1356",
+     "sku": "TM_SCR_03",
+     "price_eur": 1356.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1382",
+     "sku": "TM_SCR_03",
+     "price_eur": 1382.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1408",
+     "sku": "TM_SCR_03",
+     "price_eur": 1408.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1434",
+     "sku": "TM_SCR_03",
+     "price_eur": 1434.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1460",
+     "sku": "TM_SCR_03",
+     "price_eur": 1460.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1486",
+     "sku": "TM_SCR_03",
+     "price_eur": 1486.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1512",
+     "sku": "TM_SCR_03",
+     "price_eur": 1512.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1538",
+     "sku": "TM_SCR_03",
+     "price_eur": 1538.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1564",
+     "sku": "TM_SCR_03",
+     "price_eur": 1564.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1590",
+     "sku": "TM_SCR_03",
+     "price_eur": 1590.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "1616",
+     "sku": "TM_SCR_03",
+     "price_eur": 1616.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "3999",
+     "sku": "TM_SCR_03",
+     "price_eur": 1642.0,
+     "compare_at_eur": null,
+     "available": true
+    }
+   ]
+  },
+  "pergola-custom-design": {
+   "title": "PERGOLUX Pergola Série 4 Sur Mesure",
+   "type": "Custom Design",
+   "options": [
+    {
+     "name": "ID",
+     "values": [
+      "2249",
+      "2434",
+      "2619",
+      "2804",
+      "2989",
+      "3174",
+      "3359",
+      "3544",
+      "3729",
+      "3914",
+      "4099",
+      "4284",
+      "4469",
+      "4654",
+      "4839",
+      "5024",
+      "5209",
+      "5394",
+      "5579",
+      "5764",
+      "5949",
+      "6134",
+      "6319",
+      "6504",
+      "6689",
+      "6874",
+      "7059",
+      "7244",
+      "7429",
+      "7614",
+      "7799",
+      "7984",
+      "8169",
+      "8354",
+      "8539",
+      "8724",
+      "8909",
+      "9094",
+      "9279",
+      "9464",
+      "9649",
+      "9834",
+      "10019",
+      "10204",
+      "10389",
+      "10574",
+      "10759",
+      "10944",
+      "11129",
+      "11314",
+      "11499",
+      "11684",
+      "11869",
+      "12054",
+      "12239",
+      "12424",
+      "12609",
+      "12794",
+      "12979",
+      "13164",
+      "13349",
+      "13534",
+      "13719",
+      "13904",
+      "14089",
+      "14274",
+      "14459",
+      "14644",
+      "14829",
+      "15014",
+      "15199",
+      "15384",
+      "15569",
+      "15754",
+      "15939",
+      "16124",
+      "16309",
+      "16494",
+      "16679",
+      "16864",
+      "17049",
+      "17234",
+      "17419",
+      "17604",
+      "17789",
+      "17974",
+      "18159",
+      "18344",
+      "18529",
+      "18714",
+      "18899",
+      "19084",
+      "19269",
+      "19454",
+      "19639",
+      "19824",
+      "20009",
+      "20194",
+      "20379",
+      "20564"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "2249",
+     "sku": "TM_SUN_04",
+     "price_eur": 4590.0,
+     "compare_at_eur": 4590.0,
+     "available": true
+    },
+    {
+     "title": "2434",
+     "sku": "TM_SUN_04",
+     "price_eur": 4590.0,
+     "compare_at_eur": 4590.0,
+     "available": true
+    },
+    {
+     "title": "2619",
+     "sku": "TM_SUN_04",
+     "price_eur": 4590.0,
+     "compare_at_eur": 4590.0,
+     "available": true
+    },
+    {
+     "title": "2804",
+     "sku": "TM_SUN_04",
+     "price_eur": 4590.0,
+     "compare_at_eur": 4590.0,
+     "available": true
+    },
+    {
+     "title": "2989",
+     "sku": "TM_SUN_04",
+     "price_eur": 4630.0,
+     "compare_at_eur": 4630.0,
+     "available": true
+    },
+    {
+     "title": "3174",
+     "sku": "TM_SUN_04",
+     "price_eur": 4984.0,
+     "compare_at_eur": 4984.0,
+     "available": true
+    },
+    {
+     "title": "3359",
+     "sku": "TM_SUN_04",
+     "price_eur": 5339.0,
+     "compare_at_eur": 5339.0,
+     "available": true
+    },
+    {
+     "title": "3544",
+     "sku": "TM_SUN_04",
+     "price_eur": 5693.0,
+     "compare_at_eur": 5693.0,
+     "available": true
+    },
+    {
+     "title": "3729",
+     "sku": "TM_SUN_04",
+     "price_eur": 6047.0,
+     "compare_at_eur": 6047.0,
+     "available": true
+    },
+    {
+     "title": "3914",
+     "sku": "TM_SUN_04",
+     "price_eur": 6401.0,
+     "compare_at_eur": 6401.0,
+     "available": true
+    },
+    {
+     "title": "4099",
+     "sku": "TM_SUN_04",
+     "price_eur": 6756.0,
+     "compare_at_eur": 6756.0,
+     "available": true
+    },
+    {
+     "title": "4284",
+     "sku": "TM_SUN_04",
+     "price_eur": 7110.0,
+     "compare_at_eur": 7110.0,
+     "available": true
+    },
+    {
+     "title": "4469",
+     "sku": "TM_SUN_04",
+     "price_eur": 7464.0,
+     "compare_at_eur": 7464.0,
+     "available": true
+    },
+    {
+     "title": "4654",
+     "sku": "TM_SUN_04",
+     "price_eur": 7819.0,
+     "compare_at_eur": 7819.0,
+     "available": true
+    },
+    {
+     "title": "4839",
+     "sku": "TM_SUN_04",
+     "price_eur": 8173.0,
+     "compare_at_eur": 8173.0,
+     "available": true
+    },
+    {
+     "title": "5024",
+     "sku": "TM_SUN_04",
+     "price_eur": 8527.0,
+     "compare_at_eur": 8527.0,
+     "available": true
+    },
+    {
+     "title": "5209",
+     "sku": "TM_SUN_04",
+     "price_eur": 8881.0,
+     "compare_at_eur": 8881.0,
+     "available": true
+    },
+    {
+     "title": "5394",
+     "sku": "TM_SUN_04",
+     "price_eur": 9236.0,
+     "compare_at_eur": 9236.0,
+     "available": true
+    },
+    {
+     "title": "5579",
+     "sku": "TM_SUN_04",
+     "price_eur": 9590.0,
+     "compare_at_eur": 9590.0,
+     "available": true
+    },
+    {
+     "title": "5764",
+     "sku": "TM_SUN_04",
+     "price_eur": 9944.0,
+     "compare_at_eur": 9944.0,
+     "available": true
+    },
+    {
+     "title": "5949",
+     "sku": "TM_SUN_04",
+     "price_eur": 10299.0,
+     "compare_at_eur": 10299.0,
+     "available": true
+    },
+    {
+     "title": "6134",
+     "sku": "TM_SUN_04",
+     "price_eur": 10653.0,
+     "compare_at_eur": 10653.0,
+     "available": true
+    },
+    {
+     "title": "6319",
+     "sku": "TM_SUN_04",
+     "price_eur": 11007.0,
+     "compare_at_eur": 11007.0,
+     "available": true
+    },
+    {
+     "title": "6504",
+     "sku": "TM_SUN_04",
+     "price_eur": 11361.0,
+     "compare_at_eur": 11361.0,
+     "available": true
+    },
+    {
+     "title": "6689",
+     "sku": "TM_SUN_04",
+     "price_eur": 11716.0,
+     "compare_at_eur": 11716.0,
+     "available": true
+    },
+    {
+     "title": "6874",
+     "sku": "TM_SUN_04",
+     "price_eur": 12070.0,
+     "compare_at_eur": 12070.0,
+     "available": true
+    },
+    {
+     "title": "7059",
+     "sku": "TM_SUN_04",
+     "price_eur": 12424.0,
+     "compare_at_eur": 12424.0,
+     "available": true
+    },
+    {
+     "title": "7244",
+     "sku": "TM_SUN_04",
+     "price_eur": 12779.0,
+     "compare_at_eur": 12779.0,
+     "available": true
+    },
+    {
+     "title": "7429",
+     "sku": "TM_SUN_04",
+     "price_eur": 13133.0,
+     "compare_at_eur": 13133.0,
+     "available": true
+    },
+    {
+     "title": "7614",
+     "sku": "TM_SUN_04",
+     "price_eur": 13487.0,
+     "compare_at_eur": 13487.0,
+     "available": true
+    },
+    {
+     "title": "7799",
+     "sku": "TM_SUN_04",
+     "price_eur": 13841.0,
+     "compare_at_eur": 13841.0,
+     "available": true
+    },
+    {
+     "title": "7984",
+     "sku": "TM_SUN_04",
+     "price_eur": 14196.0,
+     "compare_at_eur": 14196.0,
+     "available": true
+    },
+    {
+     "title": "8169",
+     "sku": "TM_SUN_04",
+     "price_eur": 14550.0,
+     "compare_at_eur": 14550.0,
+     "available": true
+    },
+    {
+     "title": "8354",
+     "sku": "TM_SUN_04",
+     "price_eur": 14904.0,
+     "compare_at_eur": 14904.0,
+     "available": true
+    },
+    {
+     "title": "8539",
+     "sku": "TM_SUN_04",
+     "price_eur": 15259.0,
+     "compare_at_eur": 15259.0,
+     "available": true
+    },
+    {
+     "title": "8724",
+     "sku": "TM_SUN_04",
+     "price_eur": 15613.0,
+     "compare_at_eur": 15613.0,
+     "available": true
+    },
+    {
+     "title": "8909",
+     "sku": "TM_SUN_04",
+     "price_eur": 15967.0,
+     "compare_at_eur": 15967.0,
+     "available": true
+    },
+    {
+     "title": "9094",
+     "sku": "TM_SUN_04",
+     "price_eur": 16321.0,
+     "compare_at_eur": 16321.0,
+     "available": true
+    },
+    {
+     "title": "9279",
+     "sku": "TM_SUN_04",
+     "price_eur": 16676.0,
+     "compare_at_eur": 16676.0,
+     "available": true
+    },
+    {
+     "title": "9464",
+     "sku": "TM_SUN_04",
+     "price_eur": 17030.0,
+     "compare_at_eur": 17030.0,
+     "available": true
+    },
+    {
+     "title": "9649",
+     "sku": "TM_SUN_04",
+     "price_eur": 17384.0,
+     "compare_at_eur": 17384.0,
+     "available": true
+    },
+    {
+     "title": "9834",
+     "sku": "TM_SUN_04",
+     "price_eur": 17739.0,
+     "compare_at_eur": 17739.0,
+     "available": true
+    },
+    {
+     "title": "10019",
+     "sku": "TM_SUN_04",
+     "price_eur": 18093.0,
+     "compare_at_eur": 18093.0,
+     "available": true
+    },
+    {
+     "title": "10204",
+     "sku": "TM_SUN_04",
+     "price_eur": 18447.0,
+     "compare_at_eur": 18447.0,
+     "available": true
+    },
+    {
+     "title": "10389",
+     "sku": "TM_SUN_04",
+     "price_eur": 18801.0,
+     "compare_at_eur": 18801.0,
+     "available": true
+    },
+    {
+     "title": "10574",
+     "sku": "TM_SUN_04",
+     "price_eur": 19156.0,
+     "compare_at_eur": 19156.0,
+     "available": true
+    },
+    {
+     "title": "10759",
+     "sku": "TM_SUN_04",
+     "price_eur": 19510.0,
+     "compare_at_eur": 19510.0,
+     "available": true
+    },
+    {
+     "title": "10944",
+     "sku": "TM_SUN_04",
+     "price_eur": 19864.0,
+     "compare_at_eur": 19864.0,
+     "available": true
+    },
+    {
+     "title": "11129",
+     "sku": "TM_SUN_04",
+     "price_eur": 20219.0,
+     "compare_at_eur": 20219.0,
+     "available": true
+    },
+    {
+     "title": "11314",
+     "sku": "TM_SUN_04",
+     "price_eur": 20573.0,
+     "compare_at_eur": 20573.0,
+     "available": true
+    },
+    {
+     "title": "11499",
+     "sku": "TM_SUN_04",
+     "price_eur": 20927.0,
+     "compare_at_eur": 20927.0,
+     "available": true
+    },
+    {
+     "title": "11684",
+     "sku": "TM_SUN_04",
+     "price_eur": 21281.0,
+     "compare_at_eur": 21281.0,
+     "available": true
+    },
+    {
+     "title": "11869",
+     "sku": "TM_SUN_04",
+     "price_eur": 21636.0,
+     "compare_at_eur": 21636.0,
+     "available": true
+    },
+    {
+     "title": "12054",
+     "sku": "TM_SUN_04",
+     "price_eur": 21990.0,
+     "compare_at_eur": 21990.0,
+     "available": true
+    },
+    {
+     "title": "12239",
+     "sku": "TM_SUN_04",
+     "price_eur": 22344.0,
+     "compare_at_eur": 22344.0,
+     "available": true
+    },
+    {
+     "title": "12424",
+     "sku": "TM_SUN_04",
+     "price_eur": 22699.0,
+     "compare_at_eur": 22699.0,
+     "available": true
+    },
+    {
+     "title": "12609",
+     "sku": "TM_SUN_04",
+     "price_eur": 23053.0,
+     "compare_at_eur": 23053.0,
+     "available": true
+    },
+    {
+     "title": "12794",
+     "sku": "TM_SUN_04",
+     "price_eur": 23407.0,
+     "compare_at_eur": 23407.0,
+     "available": true
+    },
+    {
+     "title": "12979",
+     "sku": "TM_SUN_04",
+     "price_eur": 23761.0,
+     "compare_at_eur": 23761.0,
+     "available": true
+    },
+    {
+     "title": "13164",
+     "sku": "TM_SUN_04",
+     "price_eur": 24116.0,
+     "compare_at_eur": 24116.0,
+     "available": true
+    },
+    {
+     "title": "13349",
+     "sku": "TM_SUN_04",
+     "price_eur": 24470.0,
+     "compare_at_eur": 24470.0,
+     "available": true
+    },
+    {
+     "title": "13534",
+     "sku": "TM_SUN_04",
+     "price_eur": 24824.0,
+     "compare_at_eur": 24824.0,
+     "available": true
+    },
+    {
+     "title": "13719",
+     "sku": "TM_SUN_04",
+     "price_eur": 25179.0,
+     "compare_at_eur": 25179.0,
+     "available": true
+    },
+    {
+     "title": "13904",
+     "sku": "TM_SUN_04",
+     "price_eur": 25533.0,
+     "compare_at_eur": 25533.0,
+     "available": true
+    },
+    {
+     "title": "14089",
+     "sku": "TM_SUN_04",
+     "price_eur": 25887.0,
+     "compare_at_eur": 25887.0,
+     "available": true
+    },
+    {
+     "title": "14274",
+     "sku": "TM_SUN_04",
+     "price_eur": 26241.0,
+     "compare_at_eur": 26241.0,
+     "available": true
+    },
+    {
+     "title": "14459",
+     "sku": "TM_SUN_04",
+     "price_eur": 26596.0,
+     "compare_at_eur": 26596.0,
+     "available": true
+    },
+    {
+     "title": "14644",
+     "sku": "TM_SUN_04",
+     "price_eur": 26950.0,
+     "compare_at_eur": 26950.0,
+     "available": true
+    },
+    {
+     "title": "14829",
+     "sku": "TM_SUN_04",
+     "price_eur": 27304.0,
+     "compare_at_eur": 27304.0,
+     "available": true
+    },
+    {
+     "title": "15014",
+     "sku": "TM_SUN_04",
+     "price_eur": 27659.0,
+     "compare_at_eur": 27659.0,
+     "available": true
+    },
+    {
+     "title": "15199",
+     "sku": "TM_SUN_04",
+     "price_eur": 28013.0,
+     "compare_at_eur": 28013.0,
+     "available": true
+    },
+    {
+     "title": "15384",
+     "sku": "TM_SUN_04",
+     "price_eur": 28367.0,
+     "compare_at_eur": 28367.0,
+     "available": true
+    },
+    {
+     "title": "15569",
+     "sku": "TM_SUN_04",
+     "price_eur": 28721.0,
+     "compare_at_eur": 28721.0,
+     "available": true
+    },
+    {
+     "title": "15754",
+     "sku": "TM_SUN_04",
+     "price_eur": 29076.0,
+     "compare_at_eur": 29076.0,
+     "available": true
+    },
+    {
+     "title": "15939",
+     "sku": "TM_SUN_04",
+     "price_eur": 29430.0,
+     "compare_at_eur": 29430.0,
+     "available": true
+    },
+    {
+     "title": "16124",
+     "sku": "TM_SUN_04",
+     "price_eur": 29784.0,
+     "compare_at_eur": 29784.0,
+     "available": true
+    },
+    {
+     "title": "16309",
+     "sku": "TM_SUN_04",
+     "price_eur": 30139.0,
+     "compare_at_eur": 30139.0,
+     "available": true
+    },
+    {
+     "title": "16494",
+     "sku": "TM_SUN_04",
+     "price_eur": 30493.0,
+     "compare_at_eur": 30493.0,
+     "available": true
+    },
+    {
+     "title": "16679",
+     "sku": "TM_SUN_04",
+     "price_eur": 30847.0,
+     "compare_at_eur": 30847.0,
+     "available": true
+    },
+    {
+     "title": "16864",
+     "sku": "TM_SUN_04",
+     "price_eur": 31201.0,
+     "compare_at_eur": 31201.0,
+     "available": true
+    },
+    {
+     "title": "17049",
+     "sku": "TM_SUN_04",
+     "price_eur": 31556.0,
+     "compare_at_eur": 31556.0,
+     "available": true
+    },
+    {
+     "title": "17234",
+     "sku": "TM_SUN_04",
+     "price_eur": 31910.0,
+     "compare_at_eur": 31910.0,
+     "available": true
+    },
+    {
+     "title": "17419",
+     "sku": "TM_SUN_04",
+     "price_eur": 32264.0,
+     "compare_at_eur": 32264.0,
+     "available": true
+    },
+    {
+     "title": "17604",
+     "sku": "TM_SUN_04",
+     "price_eur": 32619.0,
+     "compare_at_eur": 32619.0,
+     "available": true
+    },
+    {
+     "title": "17789",
+     "sku": "TM_SUN_04",
+     "price_eur": 32973.0,
+     "compare_at_eur": 32973.0,
+     "available": true
+    },
+    {
+     "title": "17974",
+     "sku": "TM_SUN_04",
+     "price_eur": 33327.0,
+     "compare_at_eur": 33327.0,
+     "available": true
+    },
+    {
+     "title": "18159",
+     "sku": "TM_SUN_04",
+     "price_eur": 33681.0,
+     "compare_at_eur": 33681.0,
+     "available": true
+    },
+    {
+     "title": "18344",
+     "sku": "TM_SUN_04",
+     "price_eur": 34036.0,
+     "compare_at_eur": 34036.0,
+     "available": true
+    },
+    {
+     "title": "18529",
+     "sku": "TM_SUN_04",
+     "price_eur": 34390.0,
+     "compare_at_eur": 34390.0,
+     "available": true
+    },
+    {
+     "title": "18714",
+     "sku": "TM_SUN_04",
+     "price_eur": 34744.0,
+     "compare_at_eur": 34744.0,
+     "available": true
+    },
+    {
+     "title": "18899",
+     "sku": "TM_SUN_04",
+     "price_eur": 35099.0,
+     "compare_at_eur": 35099.0,
+     "available": true
+    },
+    {
+     "title": "19084",
+     "sku": "TM_SUN_04",
+     "price_eur": 35453.0,
+     "compare_at_eur": 35453.0,
+     "available": true
+    },
+    {
+     "title": "19269",
+     "sku": "TM_SUN_04",
+     "price_eur": 35807.0,
+     "compare_at_eur": 35807.0,
+     "available": true
+    },
+    {
+     "title": "19454",
+     "sku": "TM_SUN_04",
+     "price_eur": 36161.0,
+     "compare_at_eur": 36161.0,
+     "available": true
+    },
+    {
+     "title": "19639",
+     "sku": "TM_SUN_04",
+     "price_eur": 36516.0,
+     "compare_at_eur": 36516.0,
+     "available": true
+    },
+    {
+     "title": "19824",
+     "sku": "TM_SUN_04",
+     "price_eur": 36870.0,
+     "compare_at_eur": 36870.0,
+     "available": true
+    },
+    {
+     "title": "20009",
+     "sku": "TM_SUN_04",
+     "price_eur": 37224.0,
+     "compare_at_eur": 37224.0,
+     "available": true
+    },
+    {
+     "title": "20194",
+     "sku": "TM_SUN_04",
+     "price_eur": 37579.0,
+     "compare_at_eur": 37579.0,
+     "available": true
+    },
+    {
+     "title": "20379",
+     "sku": "TM_SUN_04",
+     "price_eur": 37933.0,
+     "compare_at_eur": 37933.0,
+     "available": true
+    },
+    {
+     "title": "20564",
+     "sku": "TM_SUN_04",
+     "price_eur": 38287.0,
+     "compare_at_eur": 38287.0,
+     "available": true
+    }
+   ]
+  },
+  "panneau-mural-a-lattes-daluminium": {
+   "title": "Persienne aluminium",
+   "type": "Accessories",
+   "options": [
+    {
+     "name": "Couleur",
+     "values": [
+      "Anthracite",
+      "Blanc"
+     ]
+    },
+    {
+     "name": "Dimensions",
+     "values": [
+      "3m",
+      "4m",
+      "5m",
+      "6m"
+     ]
+    },
+    {
+     "name": "Type de construction",
+     "values": [
+      "Autoportée",
+      "Adossée"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Anthracite / 3m / Autoportée",
+     "sku": "ASW_AC_EU_ROS_300_FRE_01",
+     "price_eur": 1259.0,
+     "compare_at_eur": 1799.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3m / Adossée",
+     "sku": "ASW_AC_EU_ROS_300_WAL_01",
+     "price_eur": 1259.0,
+     "compare_at_eur": 1799.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4m / Autoportée",
+     "sku": "ASW_AC_EU_ROS_400_FRE_01",
+     "price_eur": 1609.0,
+     "compare_at_eur": 2299.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4m / Adossée",
+     "sku": "ASW_AC_EU_ROS_400_WAL_01",
+     "price_eur": 1609.0,
+     "compare_at_eur": 2299.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 5m / Autoportée",
+     "sku": "ASW_AC_EU_ROS_500_FRE_01",
+     "price_eur": 2029.0,
+     "compare_at_eur": 2899.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 6m / Autoportée",
+     "sku": "ASW_AC_EU_ROS_600_FRE_01",
+     "price_eur": 2379.0,
+     "compare_at_eur": 3399.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3m / Autoportée",
+     "sku": "ASW_AC_EU_ROS_300_FRE_01",
+     "price_eur": 1259.0,
+     "compare_at_eur": 1799.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3m / Adossée",
+     "sku": "ASW_AC_EU_ROS_300_WAL_01",
+     "price_eur": 1259.0,
+     "compare_at_eur": 1799.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4m / Autoportée",
+     "sku": "ASW_AC_EU_ROS_400_FRE_01",
+     "price_eur": 1609.0,
+     "compare_at_eur": 2299.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4m / Adossée",
+     "sku": "ASW_AC_EU_ROS_400_WAL_01",
+     "price_eur": 1609.0,
+     "compare_at_eur": 2299.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 5m / Adossée",
+     "sku": "ASW_AC_EU_ROS_500_WAL_01",
+     "price_eur": 2029.0,
+     "compare_at_eur": 2899.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 6m / Adossée",
+     "sku": "ASW_AC_EU_ROS_600_WAL_01",
+     "price_eur": 2379.0,
+     "compare_at_eur": 3399.0,
+     "available": true
+    }
+   ]
+  },
+  "bache-impermeable-pergolux-pour-pergola": {
+   "title": "Bâche imperméable PERGOLUX pour pergola",
+   "type": "Accessories",
+   "options": [
+    {
+     "name": "Couleur",
+     "values": [
+      "Noir",
+      "Blanc"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Noir",
+     "sku": "TAR_AC_BLA_700_02",
+     "price_eur": 9.0,
+     "compare_at_eur": null,
+     "available": true
+    },
+    {
+     "title": "Blanc",
+     "sku": "TAR_AC_WHI_700_02",
+     "price_eur": 9.0,
+     "compare_at_eur": null,
+     "available": true
+    }
+   ]
+  },
+  "pergolux-sundream-s3": {
+   "title": "Sundream S3",
+   "type": "Pergola",
+   "options": [
+    {
+     "name": "Couleur",
+     "values": [
+      "Anthracite",
+      "Blanc",
+      "Noir",
+      "Anthracite avec lames blanches"
+     ]
+    },
+    {
+     "name": "Dimensions",
+     "values": [
+      "3x3m",
+      "3x4m",
+      "3x5m",
+      "3x6m",
+      "4x4m",
+      "4x5m",
+      "4x6m"
+     ]
+    },
+    {
+     "name": "Type de construction",
+     "values": [
+      "Autoportée",
+      "Adossée"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Anthracite / 3x3m / Autoportée",
+     "sku": "SUN_MA_ANT_3X3_FRE_03",
+     "price_eur": 3439.0,
+     "compare_at_eur": 5290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x3m / Adossée",
+     "sku": "SUN_MA_ANT_3X3_WAL_03",
+     "price_eur": 3439.0,
+     "compare_at_eur": 5290.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite / 3x4m / Autoportée",
+     "sku": "SUN_MA_ANT_3X4_FRE_03",
+     "price_eur": 4089.0,
+     "compare_at_eur": 6290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x4m / Adossée",
+     "sku": "SUN_MA_ANT_3X4_WAL_03",
+     "price_eur": 4089.0,
+     "compare_at_eur": 6290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x5m / Autoportée",
+     "sku": "SUN_MA_ANT_3X5_FRE_03",
+     "price_eur": 5389.0,
+     "compare_at_eur": 8290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x5m / Adossée",
+     "sku": "SUN_MA_ANT_3X5_WAL_03",
+     "price_eur": 5389.0,
+     "compare_at_eur": 8290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x6m / Autoportée",
+     "sku": "SUN_MA_ANT_3X6_FRE_03",
+     "price_eur": 7290.0,
+     "compare_at_eur": 11290.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite / 3x6m / Adossée",
+     "sku": "SUN_MA_ANT_3X6_WAL_03",
+     "price_eur": 7290.0,
+     "compare_at_eur": 11290.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite / 4x4m / Autoportée",
+     "sku": "SUN_MA_ANT_4X4_FRE_03",
+     "price_eur": 6039.0,
+     "compare_at_eur": 9290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x4m / Adossée",
+     "sku": "SUN_MA_ANT_4X4_WAL_03",
+     "price_eur": 6039.0,
+     "compare_at_eur": 9290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x5m / Autoportée",
+     "sku": "SUN_MA_ANT_4X5_FRE_03",
+     "price_eur": 7339.0,
+     "compare_at_eur": 11290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x5m / Adossée",
+     "sku": "SUN_MA_ANT_4X5_WAL_03",
+     "price_eur": 7339.0,
+     "compare_at_eur": 11290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x6m / Autoportée",
+     "sku": "SUN_MA_ANT_4X6_FRE_03",
+     "price_eur": 7989.0,
+     "compare_at_eur": 12290.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite / 4x6m / Adossée",
+     "sku": "SUN_MA_ANT_4X6_WAL_03",
+     "price_eur": 7989.0,
+     "compare_at_eur": 12290.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 3x3m / Autoportée",
+     "sku": "SUN_MA_WHI_3X3_FRE_03",
+     "price_eur": 3439.0,
+     "compare_at_eur": 5290.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 3x3m / Adossée",
+     "sku": "SUN_MA_WHI_3X3_WAL_03",
+     "price_eur": 3439.0,
+     "compare_at_eur": 5290.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x4m / Autoportée",
+     "sku": "SUN_MA_WHI_3X4_FRE_03",
+     "price_eur": 4089.0,
+     "compare_at_eur": 6290.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 3x4m / Adossée",
+     "sku": "SUN_MA_WHI_3X4_WAL_03",
+     "price_eur": 4089.0,
+     "compare_at_eur": 6290.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x5m / Autoportée",
+     "sku": "SUN_MA_WHI_3X5_FRE_03",
+     "price_eur": 5389.0,
+     "compare_at_eur": 8290.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 3x5m / Adossée",
+     "sku": "SUN_MA_WHI_3X5_WAL_03",
+     "price_eur": 5389.0,
+     "compare_at_eur": 8290.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 3x6m / Autoportée",
+     "sku": "SUN_MA_WHI_3X6_FRE_03",
+     "price_eur": 7290.0,
+     "compare_at_eur": 11290.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 3x6m / Adossée",
+     "sku": "SUN_MA_WHI_3X6_WAL_03",
+     "price_eur": 7290.0,
+     "compare_at_eur": 11290.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 4x4m / Autoportée",
+     "sku": "SUN_MA_WHI_4X4_FRE_03",
+     "price_eur": 6039.0,
+     "compare_at_eur": 9290.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 4x4m / Adossée",
+     "sku": "SUN_MA_WHI_4X4_WAL_03",
+     "price_eur": 6039.0,
+     "compare_at_eur": 9290.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 4x5m / Autoportée",
+     "sku": "SUN_MA_WHI_4X5_FRE_03",
+     "price_eur": 7339.0,
+     "compare_at_eur": 11290.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 4x5m / Adossée",
+     "sku": "SUN_MA_WHI_4X5_WAL_03",
+     "price_eur": 7339.0,
+     "compare_at_eur": 11290.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 4x6m / Autoportée",
+     "sku": "SUN_MA_WHI_4X6_FRE_03",
+     "price_eur": 7989.0,
+     "compare_at_eur": 12290.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 4x6m / Adossée",
+     "sku": "SUN_MA_WHI_4X6_WAL_03",
+     "price_eur": 7989.0,
+     "compare_at_eur": 12290.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x3m / Autoportée",
+     "sku": "SUN_MA_BLA_3X3_FRE_03",
+     "price_eur": 3439.0,
+     "compare_at_eur": 5290.0,
+     "available": false
+    },
+    {
+     "title": "Noir / 3x3m / Adossée",
+     "sku": "SUN_MA_BLA_3X3_WAL_03",
+     "price_eur": 3439.0,
+     "compare_at_eur": 5290.0,
+     "available": false
+    },
+    {
+     "title": "Noir / 3x4m / Autoportée",
+     "sku": "SUN_MA_BLA_3X4_FRE_03",
+     "price_eur": 4089.0,
+     "compare_at_eur": 6290.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x4m / Adossée",
+     "sku": "SUN_MA_BLA_3X4_WAL_03",
+     "price_eur": 4089.0,
+     "compare_at_eur": 6290.0,
+     "available": false
+    },
+    {
+     "title": "Noir / 3x5m / Autoportée",
+     "sku": "SUN_MA_BLA_3X5_FRE_03",
+     "price_eur": 5389.0,
+     "compare_at_eur": 8290.0,
+     "available": false
+    },
+    {
+     "title": "Noir / 3x5m / Adossée",
+     "sku": "SUN_MA_BLA_3X5_WAL_03",
+     "price_eur": 5389.0,
+     "compare_at_eur": 8290.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x6m / Autoportée",
+     "sku": "SUN_MA_BLA_3X6_FRE_03",
+     "price_eur": 7290.0,
+     "compare_at_eur": 11290.0,
+     "available": false
+    },
+    {
+     "title": "Noir / 3x6m / Adossée",
+     "sku": "SUN_MA_BLA_3X6_WAL_03",
+     "price_eur": 7290.0,
+     "compare_at_eur": 11290.0,
+     "available": false
+    },
+    {
+     "title": "Noir / 4x4m / Autoportée",
+     "sku": "SUN_MA_BLA_4X4_FRE_03",
+     "price_eur": 6039.0,
+     "compare_at_eur": 9290.0,
+     "available": false
+    },
+    {
+     "title": "Noir / 4x4m / Adossée",
+     "sku": "SUN_MA_BLA_4X4_WAL_03",
+     "price_eur": 6039.0,
+     "compare_at_eur": 9290.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x5m / Autoportée",
+     "sku": "SUN_MA_BLA_4X5_FRE_03",
+     "price_eur": 7339.0,
+     "compare_at_eur": 11290.0,
+     "available": false
+    },
+    {
+     "title": "Noir / 4x5m / Adossée",
+     "sku": "SUN_MA_BLA_4X5_WAL_03",
+     "price_eur": 7339.0,
+     "compare_at_eur": 11290.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x6m / Autoportée",
+     "sku": "SUN_MA_BLA_4X6_FRE_03",
+     "price_eur": 7989.0,
+     "compare_at_eur": 12290.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x6m / Adossée",
+     "sku": "SUN_MA_BLA_4X6_WAL_03",
+     "price_eur": 7989.0,
+     "compare_at_eur": 12290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x3m / Autoportée",
+     "sku": "SUN_MA_ANW_3X3_FRE_03",
+     "price_eur": 3439.0,
+     "compare_at_eur": 5290.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x3m / Adossée",
+     "sku": "SUN_MA_ANW_3X3_WAL_03",
+     "price_eur": 3439.0,
+     "compare_at_eur": 5290.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x4m / Autoportée",
+     "sku": "SUN_MA_ANW_3X4_FRE_03",
+     "price_eur": 4089.0,
+     "compare_at_eur": 6290.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x4m / Adossée",
+     "sku": "SUN_MA_ANW_3X4_WAL_03",
+     "price_eur": 4089.0,
+     "compare_at_eur": 6290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x5m / Autoportée",
+     "sku": "SUN_MA_ANW_3X5_FRE_03",
+     "price_eur": 5389.0,
+     "compare_at_eur": 8290.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x5m / Adossée",
+     "sku": "SUN_MA_ANW_3X5_WAL_03",
+     "price_eur": 5389.0,
+     "compare_at_eur": 8290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x6m / Autoportée",
+     "sku": "SUN_MA_ANW_3X6_FRE_03",
+     "price_eur": 7290.0,
+     "compare_at_eur": 11290.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x6m / Adossée",
+     "sku": "SUN_MA_ANW_3X6_WAL_03",
+     "price_eur": 7290.0,
+     "compare_at_eur": 11290.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x4m / Autoportée",
+     "sku": "SUN_MA_ANW_4X4_FRE_03",
+     "price_eur": 6039.0,
+     "compare_at_eur": 9290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x4m / Adossée",
+     "sku": "SUN_MA_ANW_4X4_WAL_03",
+     "price_eur": 6039.0,
+     "compare_at_eur": 9290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x5m / Autoportée",
+     "sku": "SUN_MA_ANW_4X5_FRE_03",
+     "price_eur": 7339.0,
+     "compare_at_eur": 11290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x5m / Adossée",
+     "sku": "SUN_MA_ANW_4X5_WAL_03",
+     "price_eur": 7339.0,
+     "compare_at_eur": 11290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x6m / Autoportée",
+     "sku": "SUN_MA_ANW_4X6_FRE_03",
+     "price_eur": 7989.0,
+     "compare_at_eur": 12290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x6m / Adossée",
+     "sku": "SUN_MA_ANW_4X6_WAL_03",
+     "price_eur": 7989.0,
+     "compare_at_eur": 12290.0,
+     "available": true
+    }
+   ]
+  },
+  "pergolux-bandes-led": {
+   "title": "Bandes LED",
+   "type": "Accessories",
+   "options": [
+    {
+     "name": "Couleur de l'éclairage",
+     "values": [
+      "Blanc chaud",
+      "RGB"
+     ]
+    },
+    {
+     "name": "Dimensions",
+     "values": [
+      "3x3m",
+      "3x4m",
+      "3x5m",
+      "3x6m",
+      "4x4m",
+      "4x5m",
+      "4x6m"
+     ]
+    },
+    {
+     "name": "Type de construction",
+     "values": [
+      "Autoportée",
+      "Adossée"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Blanc chaud / 3x3m / Autoportée",
+     "sku": "PLE_ACEU_WHI_3X3_FRE_03",
+     "price_eur": 299.0,
+     "compare_at_eur": 430.0,
+     "available": true
+    },
+    {
+     "title": "Blanc chaud / 3x3m / Adossée",
+     "sku": "PLE_ACEU_WHI_3X3_WAL_03",
+     "price_eur": 299.0,
+     "compare_at_eur": 430.0,
+     "available": true
+    },
+    {
+     "title": "Blanc chaud / 3x4m / Autoportée",
+     "sku": "PLE_ACEU_WHI_3X4_FRE_03",
+     "price_eur": 409.0,
+     "compare_at_eur": 580.0,
+     "available": true
+    },
+    {
+     "title": "Blanc chaud / 3x4m / Adossée",
+     "sku": "PLE_ACEU_WHI_3X4_WAL_03",
+     "price_eur": 409.0,
+     "compare_at_eur": 580.0,
+     "available": true
+    },
+    {
+     "title": "Blanc chaud / 3x5m / Autoportée",
+     "sku": "PLE_ACEU_WHI_3X5_FRE_03",
+     "price_eur": 499.0,
+     "compare_at_eur": 710.0,
+     "available": true
+    },
+    {
+     "title": "Blanc chaud / 3x5m / Adossée",
+     "sku": "PLE_ACEU_WHI_3X5_WAL_03",
+     "price_eur": 499.0,
+     "compare_at_eur": 710.0,
+     "available": true
+    },
+    {
+     "title": "Blanc chaud / 3x6m / Autoportée",
+     "sku": "PLE_ACEU_WHI_3X6_FRE_03",
+     "price_eur": 599.0,
+     "compare_at_eur": 850.0,
+     "available": true
+    },
+    {
+     "title": "Blanc chaud / 3x6m / Adossée",
+     "sku": "PLE_ACEU_WHI_3X6_WAL_03",
+     "price_eur": 599.0,
+     "compare_at_eur": 850.0,
+     "available": true
+    },
+    {
+     "title": "Blanc chaud / 4x4m / Autoportée",
+     "sku": "PLE_ACEU_WHI_4X4_FRE_03",
+     "price_eur": 529.0,
+     "compare_at_eur": 750.0,
+     "available": true
+    },
+    {
+     "title": "Blanc chaud / 4x4m / Adossée",
+     "sku": "PLE_ACEU_WHI_4X4_WAL_03",
+     "price_eur": 529.0,
+     "compare_at_eur": 750.0,
+     "available": true
+    },
+    {
+     "title": "Blanc chaud / 4x5m / Autoportée",
+     "sku": "PLE_ACEU_WHI_4X5_FRE_03",
+     "price_eur": 669.0,
+     "compare_at_eur": 950.0,
+     "available": true
+    },
+    {
+     "title": "Blanc chaud / 4x5m / Adossée",
+     "sku": "PLE_ACEU_WHI_4X5_WAL_03",
+     "price_eur": 669.0,
+     "compare_at_eur": 950.0,
+     "available": true
+    },
+    {
+     "title": "Blanc chaud / 4x6m / Autoportée",
+     "sku": "PLE_ACEU_WHI_4X6_FRE_03",
+     "price_eur": 789.0,
+     "compare_at_eur": 1130.0,
+     "available": true
+    },
+    {
+     "title": "Blanc chaud / 4x6m / Adossée",
+     "sku": "PLE_ACEU_WHI_4X6_WAL_03",
+     "price_eur": 789.0,
+     "compare_at_eur": 1130.0,
+     "available": true
+    },
+    {
+     "title": "RGB / 3x3m / Autoportée",
+     "sku": "PLE_ACEU_RGB_3X3_FRE_03",
+     "price_eur": 299.0,
+     "compare_at_eur": 430.0,
+     "available": true
+    },
+    {
+     "title": "RGB / 3x3m / Adossée",
+     "sku": "PLE_ACEU_RGB_3X3_WAL_03",
+     "price_eur": 299.0,
+     "compare_at_eur": 430.0,
+     "available": true
+    },
+    {
+     "title": "RGB / 3x4m / Autoportée",
+     "sku": "PLE_ACEU_RGB_3X4_FRE_03",
+     "price_eur": 409.0,
+     "compare_at_eur": 580.0,
+     "available": true
+    },
+    {
+     "title": "RGB / 3x4m / Adossée",
+     "sku": "PLE_ACEU_RGB_3X4_WAL_03",
+     "price_eur": 409.0,
+     "compare_at_eur": 580.0,
+     "available": true
+    },
+    {
+     "title": "RGB / 3x5m / Autoportée",
+     "sku": "PLE_ACEU_RGB_3X5_FRE_03",
+     "price_eur": 499.0,
+     "compare_at_eur": 710.0,
+     "available": true
+    },
+    {
+     "title": "RGB / 3x5m / Adossée",
+     "sku": "PLE_ACEU_RGB_3X5_WAL_03",
+     "price_eur": 499.0,
+     "compare_at_eur": 710.0,
+     "available": true
+    },
+    {
+     "title": "RGB / 3x6m / Autoportée",
+     "sku": "PLE_ACEU_RGB_3X6_FRE_03",
+     "price_eur": 599.0,
+     "compare_at_eur": 850.0,
+     "available": true
+    },
+    {
+     "title": "RGB / 3x6m / Adossée",
+     "sku": "PLE_ACEU_RGB_3X6_WAL_03",
+     "price_eur": 599.0,
+     "compare_at_eur": 850.0,
+     "available": true
+    },
+    {
+     "title": "RGB / 4x4m / Autoportée",
+     "sku": "PLE_ACEU_RGB_4X4_FRE_03",
+     "price_eur": 529.0,
+     "compare_at_eur": 750.0,
+     "available": true
+    },
+    {
+     "title": "RGB / 4x4m / Adossée",
+     "sku": "PLE_ACEU_RGB_4X4_WAL_03",
+     "price_eur": 529.0,
+     "compare_at_eur": 750.0,
+     "available": true
+    },
+    {
+     "title": "RGB / 4x5m / Autoportée",
+     "sku": "PLE_ACEU_RGB_4X5_FRE_03",
+     "price_eur": 669.0,
+     "compare_at_eur": 950.0,
+     "available": true
+    },
+    {
+     "title": "RGB / 4x5m / Adossée",
+     "sku": "PLE_ACEU_RGB_4X5_WAL_03",
+     "price_eur": 669.0,
+     "compare_at_eur": 950.0,
+     "available": true
+    },
+    {
+     "title": "RGB / 4x6m / Autoportée",
+     "sku": "PLE_ACEU_RGB_4X6_FRE_03",
+     "price_eur": 789.0,
+     "compare_at_eur": 1130.0,
+     "available": true
+    },
+    {
+     "title": "RGB / 4x6m / Adossée",
+     "sku": "PLE_ACEU_RGB_4X6_WAL_03",
+     "price_eur": 789.0,
+     "compare_at_eur": 1130.0,
+     "available": true
+    }
+   ]
+  },
+  "pergolux-skydance-s3": {
+   "title": "Skydance S3",
+   "type": "Pergola",
+   "options": [
+    {
+     "name": "Couleur",
+     "values": [
+      "Anthracite",
+      "Blanc",
+      "Anthracite avec lames blanches"
+     ]
+    },
+    {
+     "name": "Dimensions",
+     "values": [
+      "3x3m",
+      "3x4m",
+      "4x4m",
+      "4x6m"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Anthracite / 3x3m",
+     "sku": "SKY_MAEU_ANT_3X3_FRE_03",
+     "price_eur": 4739.0,
+     "compare_at_eur": 7290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x4m",
+     "sku": "SKY_MAEU_ANT_3X4_FRE_03",
+     "price_eur": 6229.0,
+     "compare_at_eur": 9590.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x4m",
+     "sku": "SKY_MAEU_ANT_4X4_FRE_03",
+     "price_eur": 8639.0,
+     "compare_at_eur": 13290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4x6m",
+     "sku": "SKY_MAEU_ANT_4X6_FRE_03",
+     "price_eur": 12209.0,
+     "compare_at_eur": 18790.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x3m",
+     "sku": "SKY_MAEU_WHI_3X3_FRE_03",
+     "price_eur": 4739.0,
+     "compare_at_eur": 7290.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 3x4m",
+     "sku": "SKY_MAEU_WHI_3X4_FRE_03",
+     "price_eur": 6229.0,
+     "compare_at_eur": 9590.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x4m",
+     "sku": "SKY_MAEU_WHI_4X4_FRE_03",
+     "price_eur": 8639.0,
+     "compare_at_eur": 13290.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x6m",
+     "sku": "SKY_MAEU_WHI_4X6_FRE_03",
+     "price_eur": 12209.0,
+     "compare_at_eur": 18790.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x3m",
+     "sku": "SKY_MAEU_ANW_3X3_FRE_03",
+     "price_eur": 4739.0,
+     "compare_at_eur": 7290.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x4m",
+     "sku": "SKY_MAEU_ANW_3X4_FRE_03",
+     "price_eur": 6229.0,
+     "compare_at_eur": 9590.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x4m",
+     "sku": "SKY_MAEU_ANW_4X4_FRE_03",
+     "price_eur": 8639.0,
+     "compare_at_eur": 13290.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x6m",
+     "sku": "SKY_MAEU_ANW_4X6_FRE_03",
+     "price_eur": 12209.0,
+     "compare_at_eur": 18790.0,
+     "available": true
+    }
+   ]
+  },
+  "pergolux-pergola-s3": {
+   "title": "Pergola S3",
+   "type": "Pergola",
+   "options": [
+    {
+     "name": "Couleur",
+     "values": [
+      "Anthracite",
+      "Blanc",
+      "Noir",
+      "Anthracite avec lames blanches"
+     ]
+    },
+    {
+     "name": "Dimensions",
+     "values": [
+      "3x3m",
+      "3x4m",
+      "3x5m",
+      "3x6m",
+      "4x4m",
+      "4x5m",
+      "4x6m"
+     ]
+    },
+    {
+     "name": "Type de construction",
+     "values": [
+      "Autoportée",
+      "Adossé"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Anthracite / 3x3m / Autoportée",
+     "sku": "PER_MA_ANT_3X3_FRE_03",
+     "price_eur": 2589.0,
+     "compare_at_eur": 3990.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite / 3x3m / Adossé",
+     "sku": "PER_MA_ANT_3X3_WAL_03",
+     "price_eur": 2589.0,
+     "compare_at_eur": 3990.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite / 3x4m / Autoportée",
+     "sku": "PER_MA_ANT_3X4_FRE_03",
+     "price_eur": 3239.0,
+     "compare_at_eur": 4990.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite / 3x4m / Adossé",
+     "sku": "PER_MA_ANT_3X4_WAL_03",
+     "price_eur": 3239.0,
+     "compare_at_eur": 4990.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x5m / Autoportée",
+     "sku": "PER_MA_ANT_3X5_FRE_03",
+     "price_eur": 4349.0,
+     "compare_at_eur": 6690.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite / 3x5m / Adossé",
+     "sku": "PER_MA_ANT_3X5_WAL_03",
+     "price_eur": 4349.0,
+     "compare_at_eur": 6690.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite / 3x6m / Autoportée",
+     "sku": "PER_MA_ANT_3X6_FRE_03",
+     "price_eur": 5189.0,
+     "compare_at_eur": 7990.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3x6m / Adossé",
+     "sku": "PER_MA_ANT_3X6_WAL_03",
+     "price_eur": 5189.0,
+     "compare_at_eur": 7990.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite / 4x4m / Autoportée",
+     "sku": "PER_MA_ANT_4X4_FRE_03",
+     "price_eur": 4539.0,
+     "compare_at_eur": 6990.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite / 4x4m / Adossé",
+     "sku": "PER_MA_ANT_4X4_WAL_03",
+     "price_eur": 4539.0,
+     "compare_at_eur": 6990.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite / 4x5m / Autoportée",
+     "sku": "PER_MA_ANT_4X5_FRE_03",
+     "price_eur": 5579.0,
+     "compare_at_eur": 8590.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite / 4x5m / Adossé",
+     "sku": "PER_MA_ANT_4X5_WAL_03",
+     "price_eur": 5579.0,
+     "compare_at_eur": 8590.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite / 4x6m / Autoportée",
+     "sku": "PER_MA_ANT_4X6_FRE_03",
+     "price_eur": 6489.0,
+     "compare_at_eur": 9990.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite / 4x6m / Adossé",
+     "sku": "PER_MA_ANT_4X6_WAL_03",
+     "price_eur": 6489.0,
+     "compare_at_eur": 9990.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 3x3m / Autoportée",
+     "sku": "PER_MA_WHI_3X3_FRE_03",
+     "price_eur": 2589.0,
+     "compare_at_eur": 3990.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x3m / Adossé",
+     "sku": "PER_MA_WHI_3X3_WAL_03",
+     "price_eur": 2589.0,
+     "compare_at_eur": 3990.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x4m / Autoportée",
+     "sku": "PER_MA_WHI_3X4_FRE_03",
+     "price_eur": 3239.0,
+     "compare_at_eur": 4990.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x4m / Adossé",
+     "sku": "PER_MA_WHI_3X4_WAL_03",
+     "price_eur": 3239.0,
+     "compare_at_eur": 4990.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 3x5m / Autoportée",
+     "sku": "PER_MA_WHI_3X5_FRE_03",
+     "price_eur": 4349.0,
+     "compare_at_eur": 6690.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 3x5m / Adossé",
+     "sku": "PER_MA_WHI_3X5_WAL_03",
+     "price_eur": 4349.0,
+     "compare_at_eur": 6690.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 3x6m / Autoportée",
+     "sku": "PER_MA_WHI_3X6_FRE_03",
+     "price_eur": 5189.0,
+     "compare_at_eur": 7990.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3x6m / Adossé",
+     "sku": "PER_MA_WHI_3X6_WAL_03",
+     "price_eur": 5189.0,
+     "compare_at_eur": 7990.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x4m / Autoportée",
+     "sku": "PER_MA_WHI_4X4_FRE_03",
+     "price_eur": 4539.0,
+     "compare_at_eur": 6990.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x4m / Adossé",
+     "sku": "PER_MA_WHI_4X4_WAL_03",
+     "price_eur": 4539.0,
+     "compare_at_eur": 6990.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x5m / Autoportée",
+     "sku": "PER_MA_WHI_4X5_FRE_03",
+     "price_eur": 5579.0,
+     "compare_at_eur": 8590.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 4x5m / Adossé",
+     "sku": "PER_MA_WHI_4X5_WAL_03",
+     "price_eur": 5579.0,
+     "compare_at_eur": 8590.0,
+     "available": false
+    },
+    {
+     "title": "Blanc / 4x6m / Autoportée",
+     "sku": "PER_MA_WHI_4X6_FRE_03",
+     "price_eur": 6489.0,
+     "compare_at_eur": 9990.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4x6m / Adossé",
+     "sku": "PER_MA_WHI_4X6_WAL_03",
+     "price_eur": 6489.0,
+     "compare_at_eur": 9990.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x3m / Autoportée",
+     "sku": "PER_MA_BLA_3X3_FRE_03",
+     "price_eur": 2589.0,
+     "compare_at_eur": 3990.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x3m / Adossé",
+     "sku": "PER_MA_BLA_3X3_WAL_03",
+     "price_eur": 2589.0,
+     "compare_at_eur": 3990.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x4m / Autoportée",
+     "sku": "PER_MA_BLA_3X4_FRE_03",
+     "price_eur": 3239.0,
+     "compare_at_eur": 4990.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x4m / Adossé",
+     "sku": "PER_MA_BLA_3X4_WAL_03",
+     "price_eur": 3239.0,
+     "compare_at_eur": 4990.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x5m / Autoportée",
+     "sku": "PER_MA_BLA_3X5_FRE_03",
+     "price_eur": 4349.0,
+     "compare_at_eur": 6690.0,
+     "available": false
+    },
+    {
+     "title": "Noir / 3x5m / Adossé",
+     "sku": "PER_MA_BLA_3X5_WAL_03",
+     "price_eur": 4290.0,
+     "compare_at_eur": 6690.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x6m / Autoportée",
+     "sku": "PER_MA_BLA_3X6_FRE_03",
+     "price_eur": 5189.0,
+     "compare_at_eur": 7990.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3x6m / Adossé",
+     "sku": "PER_MA_BLA_3X6_WAL_03",
+     "price_eur": 5189.0,
+     "compare_at_eur": 7990.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x4m / Autoportée",
+     "sku": "PER_MA_BLA_4X4_FRE_03",
+     "price_eur": 4539.0,
+     "compare_at_eur": 6990.0,
+     "available": false
+    },
+    {
+     "title": "Noir / 4x4m / Adossé",
+     "sku": "PER_MA_BLA_4X4_WAL_03",
+     "price_eur": 4539.0,
+     "compare_at_eur": 6990.0,
+     "available": false
+    },
+    {
+     "title": "Noir / 4x5m / Autoportée",
+     "sku": "PER_MA_BLA_4X5_FRE_03",
+     "price_eur": 5579.0,
+     "compare_at_eur": 8590.0,
+     "available": false
+    },
+    {
+     "title": "Noir / 4x5m / Adossé",
+     "sku": "PER_MA_BLA_4X5_WAL_03",
+     "price_eur": 5579.0,
+     "compare_at_eur": 8590.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x6m / Autoportée",
+     "sku": "PER_MA_BLA_4X6_FRE_03",
+     "price_eur": 6489.0,
+     "compare_at_eur": 9990.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4x6m / Adossé",
+     "sku": "PER_MA_BLA_4X6_WAL_03",
+     "price_eur": 6489.0,
+     "compare_at_eur": 9990.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x3m / Autoportée",
+     "sku": "PER_MA_ANW_3X3_FRE_03",
+     "price_eur": 2589.0,
+     "compare_at_eur": 3990.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x3m / Adossé",
+     "sku": "PER_MA_ANW_3X3_WAL_03",
+     "price_eur": 2589.0,
+     "compare_at_eur": 3990.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x4m / Autoportée",
+     "sku": "PER_MA_ANW_3X4_FRE_03",
+     "price_eur": 3239.0,
+     "compare_at_eur": 4990.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x4m / Adossé",
+     "sku": "PER_MA_ANW_3X4_WAL_03",
+     "price_eur": 3239.0,
+     "compare_at_eur": 4990.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x5m / Autoportée",
+     "sku": "PER_MA_ANW_3X5_FRE_03",
+     "price_eur": 4349.0,
+     "compare_at_eur": 6690.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x5m / Adossé",
+     "sku": "PER_MA_ANW_3X5_WAL_03",
+     "price_eur": 4349.0,
+     "compare_at_eur": 6690.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x6m / Autoportée",
+     "sku": "PER_MA_ANW_3X6_FRE_03",
+     "price_eur": 5189.0,
+     "compare_at_eur": 7990.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite avec lames blanches / 3x6m / Adossé",
+     "sku": "PER_MA_ANW_3X6_WAL_03",
+     "price_eur": 5189.0,
+     "compare_at_eur": 7990.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x4m / Autoportée",
+     "sku": "PER_MA_ANW_4X4_FRE_03",
+     "price_eur": 4539.0,
+     "compare_at_eur": 6990.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x4m / Adossé",
+     "sku": "PER_MA_ANW_4X4_WAL_03",
+     "price_eur": 4539.0,
+     "compare_at_eur": 6990.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x5m / Autoportée",
+     "sku": "PER_MA_ANW_4X5_FRE_03",
+     "price_eur": 5579.0,
+     "compare_at_eur": 8590.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x5m / Adossé",
+     "sku": "PER_MA_ANW_4X5_WAL_03",
+     "price_eur": 5579.0,
+     "compare_at_eur": 8590.0,
+     "available": false
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x6m / Autoportée",
+     "sku": "PER_MA_ANW_4X6_FRE_03",
+     "price_eur": 6489.0,
+     "compare_at_eur": 9990.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite avec lames blanches / 4x6m / Adossé",
+     "sku": "PER_MA_ANW_4X6_WAL_03",
+     "price_eur": 6489.0,
+     "compare_at_eur": 9990.0,
+     "available": false
+    }
+   ]
+  },
+  "paroi-vitree-pergolux": {
+   "title": "Paroi vitrée",
+   "type": "Accessories",
+   "options": [
+    {
+     "name": "Couleur",
+     "values": [
+      "Anthracite",
+      "Blanc"
+     ]
+    },
+    {
+     "name": "Dimensions",
+     "values": [
+      "3m",
+      "4m",
+      "5m",
+      "6m"
+     ]
+    },
+    {
+     "name": "Options",
+     "values": [
+      "Vitrage coulissant sans cadre",
+      "Vitrage coulissant avec cadre",
+      "Vitrage fixe"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Anthracite / 3m / Vitrage coulissant sans cadre",
+     "sku": "GWA_AC_ANT_300_FRL_02",
+     "price_eur": 1449.0,
+     "compare_at_eur": 2070.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3m / Vitrage coulissant avec cadre",
+     "sku": "GWA_AC_ANT_300_FRA_02",
+     "price_eur": 1449.0,
+     "compare_at_eur": 2070.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 3m / Vitrage fixe",
+     "sku": "GWA_AC_ANT_300_FIX_02",
+     "price_eur": 1449.0,
+     "compare_at_eur": 2070.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4m / Vitrage coulissant sans cadre",
+     "sku": "GWA_AC_ANT_400_FRL_02",
+     "price_eur": 1879.0,
+     "compare_at_eur": 2680.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4m / Vitrage coulissant avec cadre",
+     "sku": "GWA_AC_ANT_400_FRA_02",
+     "price_eur": 1879.0,
+     "compare_at_eur": 2680.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4m / Vitrage fixe",
+     "sku": "GWA_AC_ANT_400_FIX_02",
+     "price_eur": 1879.0,
+     "compare_at_eur": 2680.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 5m / Vitrage coulissant sans cadre",
+     "sku": "GWA_AC_ANT_500_FRL_02",
+     "price_eur": 2419.0,
+     "compare_at_eur": 3450.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 5m / Vitrage coulissant avec cadre",
+     "sku": "GWA_AC_ANT_500_FRA_02",
+     "price_eur": 2419.0,
+     "compare_at_eur": 3450.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 5m / Vitrage fixe",
+     "sku": "GWA_AC_ANT_500_FIX_02",
+     "price_eur": 2419.0,
+     "compare_at_eur": 3450.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 6m / Vitrage coulissant sans cadre",
+     "sku": "GWA_AC_ANT_600_FRL_02",
+     "price_eur": 2899.0,
+     "compare_at_eur": 4140.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 6m / Vitrage coulissant avec cadre",
+     "sku": "GWA_AC_ANT_600_FRA_02",
+     "price_eur": 2899.0,
+     "compare_at_eur": 4140.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 6m / Vitrage fixe",
+     "sku": "GWA_AC_ANT_600_FIX_02",
+     "price_eur": 2899.0,
+     "compare_at_eur": 4140.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3m / Vitrage coulissant sans cadre",
+     "sku": "GWA_AC_WHI_300_FRL_02",
+     "price_eur": 1449.0,
+     "compare_at_eur": 2070.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3m / Vitrage coulissant avec cadre",
+     "sku": "GWA_AC_WHI_300_FRA_02",
+     "price_eur": 1449.0,
+     "compare_at_eur": 2070.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3m / Vitrage fixe",
+     "sku": "GWA_AC_WHI_300_FIX_02",
+     "price_eur": 1449.0,
+     "compare_at_eur": 2070.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4m / Vitrage coulissant sans cadre",
+     "sku": "GWA_AC_WHI_400_FRL_02",
+     "price_eur": 1879.0,
+     "compare_at_eur": 2680.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4m / Vitrage coulissant avec cadre",
+     "sku": "GWA_AC_WHI_400_FRA_02",
+     "price_eur": 1879.0,
+     "compare_at_eur": 2680.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4m / Vitrage fixe",
+     "sku": "GWA_AC_WHI_400_FIX_02",
+     "price_eur": 1879.0,
+     "compare_at_eur": 2680.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 5m / Vitrage coulissant sans cadre",
+     "sku": "GWA_AC_WHI_500_FRL_02",
+     "price_eur": 2419.0,
+     "compare_at_eur": 3450.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 5m / Vitrage coulissant avec cadre",
+     "sku": "GWA_AC_WHI_500_FRA_02",
+     "price_eur": 2419.0,
+     "compare_at_eur": 3450.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 5m / Vitrage fixe",
+     "sku": "GWA_AC_WHI_500_FIX_02",
+     "price_eur": 2419.0,
+     "compare_at_eur": 3450.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 6m / Vitrage coulissant sans cadre",
+     "sku": "GWA_AC_WHI_600_FRL_02",
+     "price_eur": 2899.0,
+     "compare_at_eur": 4140.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 6m / Vitrage coulissant avec cadre",
+     "sku": "GWA_AC_WHI_600_FRA_02",
+     "price_eur": 2899.0,
+     "compare_at_eur": 4140.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 6m / Vitrage fixe",
+     "sku": "GWA_AC_WHI_600_FIX_02",
+     "price_eur": 2899.0,
+     "compare_at_eur": 4140.0,
+     "available": true
+    }
+   ]
+  },
+  "pergolux-everglow": {
+   "title": "Everglow",
+   "type": "Accessories",
+   "options": [
+    {
+     "name": "Couleur",
+     "values": [
+      "Anthracite",
+      "Blanc"
+     ]
+    },
+    {
+     "name": "Taille",
+     "values": [
+      "Moyen",
+      "Grande"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Anthracite / Moyen",
+     "sku": "EVE_AC_ANT_MED_XXX_01",
+     "price_eur": 339.0,
+     "compare_at_eur": 490.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / Grande",
+     "sku": "EVE_AC_ANT_LAR_XXX_01",
+     "price_eur": 369.0,
+     "compare_at_eur": 530.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / Moyen",
+     "sku": "EVE_AC_WHI_MED_XXX_01",
+     "price_eur": 339.0,
+     "compare_at_eur": 490.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / Grande",
+     "sku": "EVE_AC_WHI_LAR_XXX_01",
+     "price_eur": 369.0,
+     "compare_at_eur": 530.0,
+     "available": true
+    }
+   ]
+  },
+  "store-vertical-pergolux": {
+   "title": "Store vertical",
+   "type": "Accessories",
+   "options": [
+    {
+     "name": "Couleur",
+     "values": [
+      "Anthracite",
+      "Blanc",
+      "Noir"
+     ]
+    },
+    {
+     "name": "Dimensions",
+     "values": [
+      "3m",
+      "4m",
+      "5m",
+      "6m"
+     ]
+    },
+    {
+     "name": "Fonction ZIP",
+     "values": [
+      "Store ZIP"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Anthracite / 3m / Store ZIP",
+     "sku": "PSC_AC_ANT_300_ZIP_02",
+     "price_eur": 809.0,
+     "compare_at_eur": 1150.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 4m / Store ZIP",
+     "sku": "PSC_AC_ANT_400_ZIP_02",
+     "price_eur": 1019.0,
+     "compare_at_eur": 1450.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 5m / Store ZIP",
+     "sku": "PSC_AC_ANT_500_ZIP_02",
+     "price_eur": 1489.0,
+     "compare_at_eur": 2130.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 6m / Store ZIP",
+     "sku": "PSC_AC_ANT_600_ZIP_02",
+     "price_eur": 1769.0,
+     "compare_at_eur": 2530.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 3m / Store ZIP",
+     "sku": "PSC_AC_WHI_300_ZIP_02",
+     "price_eur": 809.0,
+     "compare_at_eur": 1150.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 4m / Store ZIP",
+     "sku": "PSC_AC_WHI_400_ZIP_02",
+     "price_eur": 1019.0,
+     "compare_at_eur": 1450.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 5m / Store ZIP",
+     "sku": "PSC_AC_WHI_500_ZIP_02",
+     "price_eur": 1489.0,
+     "compare_at_eur": 2130.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 6m / Store ZIP",
+     "sku": "PSC_AC_WHI_600_ZIP_02",
+     "price_eur": 1769.0,
+     "compare_at_eur": 2530.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 3m / Store ZIP",
+     "sku": "PSC_AC_BLA_300_ZIP_02",
+     "price_eur": 809.0,
+     "compare_at_eur": 1150.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 4m / Store ZIP",
+     "sku": "PSC_AC_BLA_400_ZIP_02",
+     "price_eur": 1019.0,
+     "compare_at_eur": 1450.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 5m / Store ZIP",
+     "sku": "PSC_AC_BLA_500_ZIP_02",
+     "price_eur": 1489.0,
+     "compare_at_eur": 2130.0,
+     "available": true
+    },
+    {
+     "title": "Noir / 6m / Store ZIP",
+     "sku": "PSC_AC_BLA_600_ZIP_02",
+     "price_eur": 1769.0,
+     "compare_at_eur": 2530.0,
+     "available": true
+    }
+   ]
+  },
+  "pergolux-heater": {
+   "title": "Lampe chauffante",
+   "type": "Accessories",
+   "options": [
+    {
+     "name": "Couleur",
+     "values": [
+      "Anthracite",
+      "Blanc"
+     ]
+    },
+    {
+     "name": "Watt",
+     "values": [
+      "1500W",
+      "2000W"
+     ]
+    }
+   ],
+   "variants": [
+    {
+     "title": "Anthracite / 1500W",
+     "sku": "HEA_AC_ANT_150_XXX_01",
+     "price_eur": 249.0,
+     "compare_at_eur": 360.0,
+     "available": true
+    },
+    {
+     "title": "Blanc / 1500W",
+     "sku": "HEA_AC_WHI_150_XXX_01",
+     "price_eur": 249.0,
+     "compare_at_eur": 360.0,
+     "available": true
+    },
+    {
+     "title": "Anthracite / 2000W",
+     "sku": "HEA_AC_ANT_200_XXX_01",
+     "price_eur": 269.0,
+     "compare_at_eur": 390.0,
+     "available": true
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,10 @@
+[Unit]
+Description=HELIOSTORES — passage SEO/GEO chaque lundi à 08:30 heure de Paris
+
+[Timer]
+OnCalendar=Mon *-*-* 08:30:00 Europe/Paris
+Persistent=true
+Unit=heliostores-seo-weekly.service
+
+[Install]
+WantedBy=timers.target
