@@ -359,6 +359,8 @@ dénomination, forme, capital, siège, RCS, téléphone, directeur de la publica
 Puis, le même jour, à la demande explicite du propriétaire après avertissement sur la LCEN : capital social, RCS et
 téléphone retirés aussi (restent : dénomination, forme, siège, e-mail, directeur de la publication, hébergeur ;
 `mentions-legales.v4.md`, `apply-2.sql`). **Écart à la LCEN art. 6-III assumé par le propriétaire.**
+Le 2026-11-18, toujours à sa demande : section « Directeur de la publication » retirée (restent : dénomination,
+forme, siège, e-mail, hébergeur ; `mentions-legales.v5.md`, `apply-3.sql`).
 
 ## 7. Retour arrière
 
