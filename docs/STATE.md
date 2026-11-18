@@ -32,6 +32,10 @@
   un lien vers l'étape ; pastille sur l'étape concernée ; liste affichant « choix enregistré plus proposé » ; date
   d'origine du brouillon conservée ; panne du calcul = statut `error`, jamais une demande de devis ordinaire.
 - Tests : `tests/e2e/26-heliolux-cas-signale.spec.ts` (montant numérique, ancien brouillon), unitaires.
+- **Production `573d29b`** (PR #8 non fusionnée, CI verte) : sauvegarde `db_20261118_143309`, aucune migration ni
+  synchronisation ; empreintes devis et prix inchangées. Vérifié sur heliostores.com (desktop, mobile) : 3,70 × 3,99 m
+  murale, RAL 9010 mat → 6 799 € TTC (5 665,83 € HT) ; ancien brouillon → « Ancien choix à refaire : toile », lien vers
+  « Pose et finitions », puis 6 799 €. Retour arrière : `scripts/deploy-production.sh d361dcc933a0`.
 
 ## Tranche tarifaire supérieure, couverture des dimensions (2026-11-18) — `docs/pricing/audit-couverture-dimensions.md`
 
