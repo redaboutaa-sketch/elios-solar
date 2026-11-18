@@ -63,7 +63,7 @@ test("store banne HelioSun : avancées et largeurs documentées, mode de command
   await openConfigurator(page, "casablanca");
   await setDim(page, "dim-width", 3000);
   await page.getByTestId("dim-depth-values").getByText("3,1 m", { exact: true }).click();
-  await expect(stepIssues(page, "dims")).toContainText("Avancée 3,1 m : largeur minimale 3,51 m");
+  await expect(stepIssues(page, "dims")).toContainText("Avancée 3,1 m : largeur minimale 3,5 m");
   await setDim(page, "dim-width", 4200);
   await expect(page.getByTestId("step-dims")).not.toContainText("Impossible");
   await goStep(page, "pose");
