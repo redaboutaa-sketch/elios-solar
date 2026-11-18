@@ -28,24 +28,29 @@ export async function publicPricesActive(): Promise<boolean> {
 }
 
 /**
- * Montant de la cellule publiée lue pour une cote (unités mineures), ou null — même règle que le moteur de la boutique :
- * lecture exacte (dimension de la grille, largeur ponctuelle ou dans une plage), ou, pour une grille publiée avec la
- * règle « dimension supérieure », valeurs de grille immédiatement supérieures (largeur sous le début de la première
- * plage d'une avancée : non proposée).
+ * Montant de la cellule publiée lue pour une cote (unités mineures), ou null — règle recalculée ici indépendamment du
+ * moteur : lecture exacte, ou, pour une grille publiée avec la règle « tranche supérieure », plus petite tranche
+ * supérieure ou égale sur chaque axe ; sous la première tranche, première tranche seulement si la cote respecte le
+ * minimum technique documenté passé en paramètre (`techMin`) ; au-delà de la dernière : null ; cellule absente de la
+ * ligne (vide ou interdite) : null ; largeur sous le début de la première plage d'une avancée : null.
  */
-export async function publicCell(familySlug: string, variantKey: string, dimMm: number, widthMm: number): Promise<number | null> {
+export async function publicCell(familySlug: string, variantKey: string, dimMm: number, widthMm: number, techMin: { widthMm?: number; dimMm?: number } = {}): Promise<number | null> {
   const list = await one<{ id: string; dimRule: string }>(`SELECT l.id, l."dimRule" FROM "SupplierPriceList" l WHERE ${IN_FORCE} AND l."familySlug" = $1 AND l."variantKey" = $2 ORDER BY l."publishedAt" DESC LIMIT 1`, [familySlug, variantKey]);
   if (!list) return null;
   const cells = await many<{ dimAmm: number; widthMinMm: number; widthMaxMm: number; amountMinor: number }>(`SELECT r."dimAmm", COALESCE(r."widthMinMm", r."widthMaxMm") AS "widthMinMm", r."widthMaxMm", r."amountMinor" FROM "SupplierPriceRow" r WHERE r."listId" = $1 AND r.kind = 'GRID' AND r."amountMinor" IS NOT NULL AND r.status <> 'REJECTED'`, [list.id]);
   if (list.dimRule !== "ROUND_UP") return cells.find((c) => c.dimAmm === dimMm && c.widthMinMm <= widthMm && widthMm <= c.widthMaxMm)?.amountMinor ?? null;
   const dims = [...new Set(cells.map((c) => c.dimAmm))].sort((a, b) => a - b);
-  // cote sous la première valeur de la grille : hors grille (la règle ne vaut qu'entre deux valeurs)
-  if (!dims.length || dimMm < dims[0]! || widthMm < Math.min(...cells.map((c) => c.widthMinMm))) return null;
-  const dim = dims.find((d) => d >= dimMm);
-  if (dim == null) return null;
+  const cols = [...new Set(cells.map((c) => c.widthMaxMm))].sort((a, b) => a - b);
+  if (!dims.length || dimMm > dims[dims.length - 1]! || widthMm > cols[cols.length - 1]!) return null;
+  if (dimMm < dims[0]! && !(techMin.dimMm != null && dimMm >= techMin.dimMm)) return null;
+  const dim = dims.find((d) => d >= dimMm)!;
   const row = cells.filter((c) => c.dimAmm === dim).sort((a, b) => a.widthMaxMm - b.widthMaxMm);
-  const cell = row.find((c) => c.widthMaxMm >= widthMm);
-  if (!cell || (cell === row[0] && cell.widthMinMm < cell.widthMaxMm && widthMm < cell.widthMinMm)) return null;
+  const cell = row.find((c) => c.widthMaxMm === cols.find((x) => x >= widthMm));
+  if (!cell) return null;
+  if (cell === row[0] && widthMm < cell.widthMinMm) {
+    if (cell.widthMinMm < cell.widthMaxMm) return null;
+    if (!(techMin.widthMm != null && widthMm >= techMin.widthMm)) return null;
+  }
   return cell.amountMinor;
 }
 

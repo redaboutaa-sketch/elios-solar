@@ -409,12 +409,12 @@ const PRICE_LIST = { id: "liste-prix-2026-09", label: "Liste des prix des produi
  * par un numéro : il découle du mode et du couple exigé par les dimensions (cellules « 20 Nm » de la grille).
  */
 const SCREEN_CONTROL_MODES: ControlChoice[] = [
-  { code: "wired_mech", label: "Filaire — fins de course mécaniques", kind: "electric", status: "established", description: "Interrupteur mural ; les fins de course se règlent sur le moteur.", sources: [{ ...PRICE_LIST, loc: "p. 69" }] },
-  { code: "wired_elec", label: "Filaire — fins de course électroniques", kind: "electric", status: "established", description: "Interrupteur mural ; réglage électronique des positions haute et basse.", sources: [{ ...PRICE_LIST, loc: "p. 69" }] },
-  { code: "wired_obstacle", label: "Filaire — avec détection d'obstacles", kind: "electric", status: "established", description: "Interrupteur mural ; le moteur s'arrête s'il rencontre un obstacle.", sources: [{ ...PRICE_LIST, loc: "p. 69" }] },
-  { code: "radio_rts", label: "Radio RTS — télécommande", kind: "electric", status: "established", description: "Récepteur radio intégré au moteur ; télécommande RTS, compatible box smartphone.", sources: [{ ...PRICE_LIST, loc: "p. 69" }] },
-  { code: "radio_io", label: "Radio io — télécommande", kind: "electric", status: "established", description: "Récepteur radio io intégré ; télécommandes, capteurs et box smartphone io.", sources: [{ ...PRICE_LIST, loc: "p. 69" }] },
-  { code: "radio_io_obstacle", label: "Radio io — avec détection d'obstacles", kind: "electric", status: "established", description: "Radio io et arrêt du moteur s'il rencontre un obstacle.", sources: [{ ...PRICE_LIST, loc: "p. 69" }] },
+  { code: "wired_mech", label: "Filaire — fins de course mécaniques", kind: "electric", status: "established", description: "Interrupteur mural ; les fins de course se règlent sur le moteur.", minWidthMm: 640, sources: [{ ...PRICE_LIST, loc: "p. 69 — moteurs possibles : largeurs minimales 61, 64 et 64 cm (valeur la plus exigeante retenue)" }] },
+  { code: "wired_elec", label: "Filaire — fins de course électroniques", kind: "electric", status: "established", description: "Interrupteur mural ; réglage électronique des positions haute et basse.", minWidthMm: 750, sources: [{ ...PRICE_LIST, loc: "p. 69 — moteurs possibles : largeurs minimales 63 et 75 cm (valeur la plus exigeante retenue)" }] },
+  { code: "wired_obstacle", label: "Filaire — avec détection d'obstacles", kind: "electric", status: "established", description: "Interrupteur mural ; le moteur s'arrête s'il rencontre un obstacle.", minWidthMm: 700, sources: [{ ...PRICE_LIST, loc: "p. 69 — largeur minimale du système 70 cm" }] },
+  { code: "radio_rts", label: "Radio RTS — télécommande", kind: "electric", status: "established", description: "Récepteur radio intégré au moteur ; télécommande RTS, compatible box smartphone.", minWidthMm: 700, sources: [{ ...PRICE_LIST, loc: "p. 69 — largeur minimale du système 70 cm" }] },
+  { code: "radio_io", label: "Radio io — télécommande", kind: "electric", status: "established", description: "Récepteur radio io intégré ; télécommandes, capteurs et box smartphone io.", minWidthMm: 700, sources: [{ ...PRICE_LIST, loc: "p. 69 — largeur minimale du système 70 cm" }] },
+  { code: "radio_io_obstacle", label: "Radio io — avec détection d'obstacles", kind: "electric", status: "established", description: "Radio io et arrêt du moteur s'il rencontre un obstacle.", minWidthMm: 700, sources: [{ ...PRICE_LIST, loc: "p. 69 — largeur minimale du système 70 cm" }] },
 ];
 
 const refleksol: HelioFamily = {
@@ -437,10 +437,12 @@ const refleksol: HelioFamily = {
     dims: {
       width: {
         label: "Largeur",
-        minMm: null,
+        // plus petite largeur minimale parmi les modes proposés (fins de course mécaniques : 64 cm, chaque moteur possible
+        // compris) ; chaque mode porte la sienne (`minWidthMm`). Valeurs du tableau en cm, normalisées en mm.
+        minMm: 640,
         maxMm: 7000,
-        sources: [at(PRICE_LIST, "p. 69 — largeur maximale 700 cm ; grille de 100 à 700 cm ; largeur minimale selon le moteur (61 à 80 cm)"), T("p. 66 — largeur maximale 7 m")],
-        note: "Largeur minimale selon le mode de commande (moteur), d'après la liste de prix.",
+        sources: [at(PRICE_LIST, "p. 69 — largeur maximale 700 cm ; grille de 100 à 700 cm ; largeur minimale du système selon le moteur (61 cm au minimum, 64 à 75 cm selon les moteurs proposés)"), T("p. 66 — largeur maximale 7 m")],
+        note: "Largeur minimale selon le mode de commande (moteur), d'après la liste de prix : de 0,64 m à 0,75 m.",
       },
       height: { label: "Hauteur", minMm: null, maxMm: 4000, sources: [at(PRICE_LIST, "p. 69 — grille de 100 à 400 cm de hauteur ; hauteur maximale 400 cm"), T("p. 66 — hauteur maximale 4 m")] },
     },
@@ -497,7 +499,7 @@ const refleksol: HelioFamily = {
   faq: [
     { q: "Le prix est-il affiché en ligne ?", a: "Oui, pour les dimensions de la grille de prix : le configurateur affiche le prix de vente HT et TTC, avec le détail des suppléments connus. Un élément sans prix établi (selon le cas : moteur, option), la livraison et la pose sont chiffrés sur devis." },
     { q: "Peut-on commander en ligne ?", a: "Non : chaque projet est établi sur devis. Configurez votre modèle puis envoyez votre demande depuis le configurateur ; elle est enregistrée avec une référence. Délai de livraison : entre 4 et 7 semaines selon le lieu de livraison." },
-    { q: "Quelle largeur maximale ?", a: "Jusqu'à 7 m de largeur et 4 m de hauteur, d'après la liste de prix du fabricant. La largeur minimale dépend du moteur choisi." },
+    { q: "Quelle largeur maximale ?", a: "Jusqu'à 7 m de largeur et 4 m de hauteur, d'après la liste de prix du fabricant. La largeur minimale dépend du mode de commande : de 0,64 m à 0,75 m. Sous 1 m de largeur, le prix est celui de la plus petite taille de la grille." },
     { q: "Peut-on le manœuvrer à la main ?", a: "Non : HelioScreen est uniquement à commande électrique. Le moteur est défini avec vous au devis." },
     { q: "Peut-il fermer le côté d'une pergola ?", a: "Un screen vendu seul n'est pas automatiquement compatible avec une pergola : l'intégration se vérifie au devis selon les ouvertures et les fixations." },
   ],

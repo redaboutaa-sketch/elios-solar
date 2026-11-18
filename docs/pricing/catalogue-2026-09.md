@@ -55,7 +55,7 @@ FTS, BSO, autres screens, accessoires non proposés sur le site. Les pages 100�
 | HelioPro | JAMAICA | p. 96 | **prix complets** en manivelle ; motorisé : moteur à chiffrer (fourchette) ; auvent chiffré |
 | HelioShade | CORSICA | p. 96 | **prix complet** en commande filaire ; radio : moteur obligatoire à chiffrer (fourchette) |
 | HelioSquare | MADEIRA | p. 96 | **sous-total partiel** : un seul mode (radio io avec secours), plusieurs moteurs selon le couple |
-| HelioLux | SOLID (confirmé le 2026-11-03) | p. 17 | **prix affichés** (autoportante, adossée) de 3 à 7 m d'avancée ; 2 à 3 m : devis |
+| HelioLux | SOLID (confirmé le 2026-11-03) | p. 17 | **prix affichés** (autoportante, adossée) de 2 à 7 m d'avancée (2 à 3 m : première tranche, décision du 2026-11-18) |
 | HelioRoof | VÉRANDA V ZiiiP (confirmé le 2026-11-03) | p. 90 | **prix affichés** ; jamais de donnée VERANDA FTS ni « Veranda » standard |
 | HelioSlide VERRE | OPEN SLIDE | p. 24 | données tracées dans l'import, aucune grille (souhait de fermeture, vitrage non inclus) |
 | HelioSlide ALU | SYSTEM SLIDE | absent | seul « PAROIS LATÉRALES SLIDE » (p. 22) existe : données tracées, correspondance à confirmer |
@@ -90,7 +90,8 @@ pour le modèle (HelioSky, HelioMax vent-soleil, HelioLux, stores : vibrations),
    paramètre de coût interne versionné (prix d'achat net, marges), sans effet sur le prix public — `comparatif-marche.md`.
 2. **Cote intermédiaire** : valeur de grille immédiatement supérieure, sur chaque axe ; une cote au-delà de la dernière
    valeur reste hors grille (devis) ; une largeur sous le début de la première plage d'une avancée n'est pas proposée.
-   Aucune interpolation.
+   Aucune interpolation. **Sous la première valeur** (décision du 2026-11-18) : première tranche, si la cote respecte le
+   minimum technique documenté — `audit-couverture-dimensions.md`.
 3. **Suppléments** (versionnés avec chaque grille) :
    - pourcentage : appliqué au prix de la structure (cellule) — assiette « prix du système après remise » du
      catalogue, la remise étant nulle pour le client ; chaque pourcentage arrondi au centime (demi supérieur), sans cumul ;

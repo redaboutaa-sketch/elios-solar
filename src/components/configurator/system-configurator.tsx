@@ -36,8 +36,8 @@ function SystemPriceBox({ result }: { result: EvaluationResult }) {
     const s = result.pricedSizes;
     const list = (xs: string[]) => (xs.length > 8 ? `${xs.slice(0, 4).join(", ")} … ${xs.slice(-2).join(", ")}` : xs.join(", "));
     return (
-      <div data-testid="system-price" data-priced="false" data-price-status={result.priceStatus ?? "no_table"} className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink">
-        <p><strong>{t.onQuote}</strong>{t.statusSep}{t.status[result.priceStatus ?? "no_table"]}</p>
+      <div data-testid="system-price" data-priced="false" data-price-status={result.priceStatus ?? "no_table"} data-price-detail={result.priceDetail?.code ?? ""} className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink">
+        <p><strong>{t.onQuote}</strong>{t.statusSep}{result.priceStatus === "out_of_grid" && result.priceDetail ? t.detail[result.priceDetail.code] : t.status[result.priceStatus ?? "no_table"]}</p>
         {s && <p className="mt-1 text-xs text-stone-700" data-testid="priced-sizes">{fmt(t.pricedSizes, { widths: list(s.widths.map((w) => (w.min === w.max ? fmtM(w.max) : fmt(t.range, { min: fmtM(w.min), max: fmtM(w.max) })))), dimLabel: s.dimLabel.toLowerCase(), dims: list(s.dims.map(fmtM)) })}</p>}
       </div>
     );
@@ -51,7 +51,8 @@ function SystemPriceBox({ result }: { result: EvaluationResult }) {
     <div data-testid="system-price" data-priced="true" data-price-status="priced" data-partial={b?.partial ? "true" : "false"} className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink">
       <p className="flex flex-wrap items-baseline justify-between gap-2"><span>{b?.partial ? (ttcFirst ? t.totalPartialTtc : t.totalPartial) : b && b.lines.length > 1 ? (ttcFirst ? t.totalTtc : t.total) : t.structure}</span><strong className="font-display text-2xl font-semibold tabular-nums" data-testid="system-price-amount">{ttcFirst ? formatSystemPrice(b!.totalTtcMinor!, p.currency, "TTC") : money(total)}</strong></p>
       {ttcFirst && <p className="text-right text-xs text-stone-700 tabular-nums" data-testid="system-price-ht">{fmt(t.htLine, { amount: formatSystemPrice(total, p.currency, null), vat: formatSystemPrice(b!.totalTtcMinor! - total, p.currency, null), rate: (b!.vatRateBps / 100).toLocaleString(intl) })}</p>}
-      <p className="mt-1 text-xs text-stone-700">{fmt(t.tariffFor, { width: fmtM(p.grid.widthMm), dim: fmtM(p.grid.dimMm), dimLabel: p.grid.dimLabel.toLowerCase(), rounded: p.roundedUp ? t.roundedUp : "" })}</p>
+      {/* tranche facturée : détail administrateur ; public : mention simple, cotes réelles conservées partout ailleurs */}
+      {(p.roundedUp || (p.selection != null && p.selection !== "exact")) && <p className="mt-1 text-xs text-stone-700" data-testid="system-price-tier">{t.tierNote}</p>}
       {b && b.lines.length > 1 && (
         <details className="mt-2 text-xs" data-testid="price-breakdown" open>
           <summary className="cursor-pointer font-medium">{t.breakdown}</summary>

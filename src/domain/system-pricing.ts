@@ -11,7 +11,7 @@
  * Une cote hors de la plage couverte par la grille n'a pas de prix : elle reste chiffrée au devis. Les options sont
  * chiffrées au devis.
  */
-import type { SystemInput, SystemRules } from "./system";
+import type { DimRule, SystemInput, SystemRules } from "./system";
 
 export interface SystemPriceCell {
   /** variante tarifaire du classeur (« murale », « autoportante ») ; vide = unique */
@@ -61,26 +61,31 @@ export interface SupplementTable {
 }
 
 /**
- * Lecture d'un tableau de supplément : valeur dans une plage, sinon valeur immédiatement supérieure si la cote est
- * située entre deux valeurs du tableau (même décision que les grilles) ; hors du tableau : null.
+ * Lecture d'un tableau de supplément (LED selon l'avancée, poteau selon la hauteur…) : valeur dans une plage, sinon
+ * valeur immédiatement supérieure entre deux valeurs du tableau (même décision que les grilles) ; sous la première
+ * valeur de l'axe PRINCIPAL du tableau, première valeur seulement si la cote reste dans le domaine technique documenté
+ * (`rules`, décision du 2026-11-18) ; sur la largeur secondaire d'un tableau à deux axes, jamais (compatibilité de
+ * l'équipement sous sa première largeur non confirmée, ex. spots sous 1,50 m) ; au-delà de la dernière : null.
  */
-export function lookupSupplementTable(t: SupplementTable, input: SystemInput): number | null {
+export function lookupSupplementTable(t: SupplementTable, input: SystemInput, rules?: SystemRules): number | null {
   const v = t.axis === "largeur" ? input.widthMm : t.axis === "avancee" ? input.depthMm : input.heightMm;
   if (v == null) return null;
-  const pick = (cells: SupplementTable["cells"], x: number) => {
+  const axisRule = (axis: SupplementTable["axis"]) => (axis === "largeur" ? rules?.dims.width : axis === "avancee" ? rules?.dims.depth : rules?.dims.height);
+  const pick = (cells: SupplementTable["cells"], x: number, axis: SupplementTable["axis"] | null) => {
     const sorted = [...cells].sort((a, b) => a.dimMin - b.dimMin);
-    if (!sorted.length || x < sorted[0]!.dimMin || x > sorted[sorted.length - 1]!.dimMax) return [];
+    if (!sorted.length || x > sorted[sorted.length - 1]!.dimMax) return [];
+    if (x < sorted[0]!.dimMin) return axis && technicallyAdmissible(axisRule(axis), x) ? sorted.filter((c) => c.dimMin === sorted[0]!.dimMin) : [];
     const inRange = sorted.filter((c) => c.dimMin <= x && x <= c.dimMax);
     if (inRange.length) return inRange;
     const next = sorted.find((c) => c.dimMin >= x);
     return next ? sorted.filter((c) => c.dimMin === next.dimMin) : [];
   };
-  const row = pick(t.cells, v);
+  const row = pick(t.cells, v, t.axis);
   if (!row.length) return null;
   if (row.every((c) => c.widthMin == null)) return row[0]!.amountMinor;
   const w = input.widthMm;
   const byWidth = row.map((c) => ({ ...c, dimMin: c.widthMin!, dimMax: c.widthMax! }));
-  return pick(byWidth, w)[0]?.amountMinor ?? null;
+  return pick(byWidth, w, null)[0]?.amountMinor ?? null;
 }
 
 export type SystemDimRule = "exact" | "round_up";
@@ -180,9 +185,37 @@ export interface SystemPrice {
   vatRateBps?: number | null;
   /** exigence de la cellule retenue (ex. moteur 20 Nm minimum) */
   requirement?: string;
+  /**
+   * Traçabilité (détail administrateur, devis figé) : cotes réelles demandées (elles seules alimentent champs, dessin,
+   * 3D, récapitulatif et devis), plage de largeur de la cellule facturée et règle de sélection.
+   */
+  requested?: { widthMm: number; dimMm: number };
+  cellWidth?: { minMm: number; maxMm: number };
+  selection?: SystemPriceSelection;
 }
 
-export type SystemPriceLookup = { ok: true; price: SystemPrice } | { ok: false; reason: "no_table" | "incomplete" | "out_of_grid" };
+/**
+ * Motif précis d'une cote non chiffrable (« out_of_grid ») :
+ * - above_max : au-delà de la dernière tranche de la grille (aucune extrapolation) ;
+ * - below_technical_min : sous le minimum technique documenté (la configuration est aussi bloquée par ses règles) ;
+ * - below_min_undocumented : sous la première tranche, sans minimum technique documenté qui l'admette ;
+ * - below_row_min : largeur sous le début de la première plage de la ligne (largeur minimale selon l'avancée) ;
+ * - cell_forbidden : la cellule supérieure immédiate est vide ou interdite (jamais comblée par une cellule voisine) ;
+ * - not_round_up : cote entre deux valeurs, grille en lecture exacte (règle de la tranche supérieure non confirmée).
+ */
+export type OutOfGridCode = "above_max" | "below_technical_min" | "below_min_undocumented" | "below_row_min" | "cell_forbidden" | "not_round_up";
+export interface OutOfGridDetail { code: OutOfGridCode; axis: "largeur" | "dimension" }
+
+export type SystemPriceLookup = { ok: true; price: SystemPrice } | { ok: false; reason: "no_table" | "incomplete" | "out_of_grid"; detail?: OutOfGridDetail };
+
+/**
+ * Règle ayant conduit à la cellule retenue :
+ * - exact : cotes de la grille ;
+ * - round_up : tranche immédiatement supérieure entre deux valeurs de la grille ;
+ * - first_tranche : cote sous la première tranche de la grille, mais dans le domaine technique documenté → première
+ *   tranche comme minimum de facturation (décision commerciale HELIOSTORES du 2026-11-18, jamais une règle fournisseur).
+ */
+export type SystemPriceSelection = "exact" | "round_up" | "first_tranche";
 
 const MOUNTING_VARIANT: Partial<Record<SystemInput["mounting"], string>> = { wall: "murale", freestanding: "autoportante" };
 
@@ -203,6 +236,20 @@ export function gridMeta(table: SystemPriceTable, variantKey: string): SystemPri
   return table.variants?.[variantKey] ?? { currency: table.currency, taxBasis: table.taxBasis, dimRule: table.dimRule ?? "exact", vatRateBps: table.vatRateBps ?? null, listVersion: table.listVersion };
 }
 
+/**
+ * Une cote sous la première tranche est-elle dans le domaine technique DOCUMENTÉ de l'axe ? (minimum établi par les
+ * sources, ou valeur discrète documentée). Minimum non documenté : jamais admise (aucun prix inventé).
+ */
+function belowDocumentedMin(rule: DimRule | undefined, v: number): boolean {
+  return !!rule && !rule.valuesMm?.length && rule.minMm != null && v < rule.minMm;
+}
+
+function technicallyAdmissible(rule: DimRule | undefined, v: number): boolean {
+  if (!rule || rule.maxMm <= 0) return false;
+  if (rule.valuesMm?.length) return rule.valuesMm.includes(v);
+  return rule.minMm != null && v >= rule.minMm && v <= rule.maxMm;
+}
+
 export function lookupSystemPrice(table: SystemPriceTable | null | undefined, rules: SystemRules, input: SystemInput): SystemPriceLookup {
   if (!table || !table.cells.length) return { ok: false, reason: "no_table" };
   const variant = variantFor(table, input.mounting);
@@ -213,21 +260,53 @@ export function lookupSystemPrice(table: SystemPriceTable | null | undefined, ru
   const dims = [...new Set(cells.map((c) => c.dimAmm))].sort((a, b) => a - b);
   const roundUp = meta.dimRule === "round_up";
   if (!dims.length) return { ok: false, reason: "out_of_grid" };
-  // lecture exacte : la cote doit figurer dans la grille ; dimension supérieure (décision écrite du 2026-11-02, « cote
-  // située entre deux valeurs de la grille ») : valeur de grille immédiatement supérieure. Une cote sous la première
-  // valeur ou au-delà de la dernière n'est pas « entre deux valeurs » : hors grille (devis).
-  if (dim < dims[0]! || input.widthMm < Math.min(...cells.map((c) => c.widthMinMm))) return { ok: false, reason: "out_of_grid" };
-  const gridDim = roundUp ? dims.find((d) => d >= dim) : dims.find((d) => d === dim);
-  if (gridDim == null) return { ok: false, reason: "out_of_grid" };
-  const row = cells.filter((c) => c.dimAmm === gridDim).sort((a, b) => a.widthMaxMm - b.widthMaxMm);
-  // plage de largeur (store banne) : la cote doit y tomber ; largeur ponctuelle : cote exacte, ou supérieure si la règle l'autorise.
-  // Une largeur inférieure au début de la première plage d'une ligne n'est pas proposée pour cette cote (largeur minimale
-  // selon l'avancée) : elle n'est jamais « arrondie » vers le haut.
-  let cell = roundUp ? row.find((c) => c.widthMaxMm >= input.widthMm) : row.find((c) => c.widthMinMm <= input.widthMm && input.widthMm <= c.widthMaxMm);
-  if (cell && roundUp && cell === row[0] && cell.widthMinMm < cell.widthMaxMm && input.widthMm < cell.widthMinMm) cell = undefined;
-  if (!cell) return { ok: false, reason: "out_of_grid" };
+  const out = (code: OutOfGridCode, axis: OutOfGridDetail["axis"]): SystemPriceLookup => ({ ok: false, reason: "out_of_grid", detail: { code, axis } });
   const dimRule = table.dimAKey === "hauteur" ? rules.dims.height : rules.dims.depth;
-  const gridWidth = cell.widthMinMm === cell.widthMaxMm ? cell.widthMaxMm : input.widthMm;
+  // Lecture exacte : la cote doit figurer dans la grille. Tranche supérieure (décision écrite du 2026-11-02, étendue le
+  // 2026-11-18) : plus petite tranche supérieure ou égale à la cote réelle, sur chaque axe ; sous la première tranche,
+  // seulement si la cote reste dans le domaine technique documenté (première tranche = minimum de facturation). Au-delà
+  // de la dernière tranche : jamais de prix (aucune extrapolation).
+  let selection: SystemPriceSelection = "exact";
+  if (dim > dims[dims.length - 1]!) return out("above_max", "dimension");
+  let gridDim: number | undefined;
+  if (dim < dims[0]!) {
+    if (!roundUp) return out("not_round_up", "dimension");
+    if (!technicallyAdmissible(dimRule, dim)) return out(belowDocumentedMin(dimRule, dim) ? "below_technical_min" : "below_min_undocumented", "dimension");
+    gridDim = dims[0]!;
+    selection = "first_tranche";
+  } else {
+    gridDim = roundUp ? dims.find((d) => d >= dim) : dims.find((d) => d === dim);
+    if (gridDim == null) return out("not_round_up", "dimension");
+    if (gridDim !== dim) selection = "round_up";
+  }
+  const row = cells.filter((c) => c.dimAmm === gridDim).sort((a, b) => a.widthMaxMm - b.widthMaxMm);
+  // colonnes de largeur de la variante (fin de plage, ou largeur ponctuelle) : la colonne immédiatement supérieure ou
+  // égale est cherchée sur toute la grille, puis dans la ligne — une cellule absente de la ligne est vide ou interdite,
+  // jamais remplacée par une cellule voisine.
+  const w = input.widthMm;
+  const columns = [...new Set(cells.map((c) => c.widthMaxMm))].sort((a, b) => a - b);
+  if (w > columns[columns.length - 1]!) return out("above_max", "largeur");
+  let cell: SystemPriceCell | undefined;
+  if (!roundUp) {
+    cell = row.find((c) => c.widthMinMm <= w && w <= c.widthMaxMm);
+    if (!cell) return out("not_round_up", "largeur");
+  } else {
+    const col = columns.find((x) => x >= w)!;
+    cell = row.find((c) => c.widthMaxMm === col);
+    const first = row[0];
+    if (first && w < first.widthMinMm) {
+      if (first.widthMinMm < first.widthMaxMm) return out("below_row_min", "largeur"); // largeur minimale selon l'avancée (plages)
+      // largeurs ponctuelles : sous la première colonne, seulement dans le domaine technique documenté
+      if (!technicallyAdmissible(rules.dims.width, w)) return out(belowDocumentedMin(rules.dims.width, w) ? "below_technical_min" : "below_min_undocumented", "largeur");
+      if (columns[0] !== first.widthMaxMm) return out("cell_forbidden", "largeur");
+      cell = first;
+      selection = "first_tranche";
+    }
+    if (!cell) return out(w > (row[row.length - 1]?.widthMaxMm ?? 0) ? "above_max" : "cell_forbidden", "largeur");
+    // largeur ponctuelle supérieure, ou largeur dans l'écart entre deux plages (ex. 2,905 m → plage 2,91–3,50 m)
+    if (selection === "exact" && ((cell.widthMinMm === cell.widthMaxMm && cell.widthMaxMm !== w) || w < cell.widthMinMm)) selection = "round_up";
+  }
+  const gridWidth = cell.widthMinMm === cell.widthMaxMm ? cell.widthMaxMm : w;
   return {
     ok: true,
     price: {
@@ -236,12 +315,15 @@ export function lookupSystemPrice(table: SystemPriceTable | null | undefined, ru
       taxBasis: meta.taxBasis,
       variantKey: variant,
       grid: { widthMm: gridWidth, dimMm: gridDim, dimLabel: dimRule?.label ?? (table.dimAKey === "hauteur" ? "Hauteur" : "Projection") },
-      roundedUp: gridDim !== dim || gridWidth !== input.widthMm,
+      roundedUp: gridDim !== dim || gridWidth !== w,
       listVersion: meta.listVersion,
       versionId: meta.versionId,
       dimRule: meta.dimRule,
       vatRateBps: meta.vatRateBps,
       ...(cell.requirement ? { requirement: cell.requirement } : {}),
+      requested: { widthMm: w, dimMm: dim },
+      cellWidth: { minMm: cell.widthMinMm, maxMm: cell.widthMaxMm },
+      selection,
     },
   };
 }
@@ -382,7 +464,7 @@ export function priceBreakdown(table: SystemPriceTable, rules: SystemRules, inpu
   const eur = (m: number) => `${(m / 100).toLocaleString("fr-FR", { minimumFractionDigits: m % 100 ? 2 : 0, maximumFractionDigits: 2 })} €`;
   for (const s of matched) {
     const qty = s.perOptionQty ? Math.max(1, input.options.find((o) => o.code === s.perOptionQty)?.qty ?? 1) : 1;
-    const unit = s.mode === "fixed" ? s.amountMinor ?? null : s.mode === "table" && s.table ? lookupSupplementTable(s.table, input) : null;
+    const unit = s.mode === "fixed" ? s.amountMinor ?? null : s.mode === "table" && s.table ? lookupSupplementTable(s.table, input, rules) : null;
     if ((s.mode === "fixed" || s.mode === "table") && unit != null) lines.push({ code: s.code, label: qty > 1 ? `${s.label} × ${qty}` : s.label, amountMinor: unit * qty, ...(qty > 1 ? { detail: `${qty} × ${eur(unit)}` } : {}) });
     else if (s.mode === "percent" && s.percentBps != null) lines.push({ code: s.code, label: s.label, amountMinor: applyBpsHalfUp(price.amountMinor, s.percentBps), detail: `${(s.percentBps / 100).toLocaleString("fr-FR")} % du prix de la structure` });
     else if (s.mode === "table") pending.push({ code: s.code, label: s.label, reason: "cote hors des valeurs du tarif de cet équipement" });
@@ -404,6 +486,12 @@ export function priceBreakdown(table: SystemPriceTable, rules: SystemRules, inpu
     pending.push({ code: `cote:${side}`, label: wish?.label ?? slug, reason: "fermeture souhaitée, étudiée au devis" });
   }
   if (input.multiModule) pending.push({ code: "modules", label: "Installation en plusieurs modules", reason: "étudiée au devis" });
+  // store banne : la grille comprend les supports MURAUX (liste de prix p. 96) ; une pose au plafond (support posé sur le
+  // support mural) ou sur chevrons exige des supports supplémentaires (p. 99) — composant obligatoire jamais omis : à
+  // chiffrer tant qu'aucun supplément de la grille ne vise cette pose
+  if (rules.type === "awning" && input.mounting !== "wall" && !covered("pose", input.mounting)) {
+    pending.push({ code: `pose:${input.mounting}`, label: input.mounting === "ceiling" ? "Supports de pose au plafond" : input.mounting === "rafter" ? "Supports de pose sur chevrons" : "Supports de pose", reason: "le prix de la grille comprend les supports muraux ; supports de cette pose chiffrés au devis selon leur nombre" });
+  }
   const computedMinor = lines.reduce((a, l) => a + l.amountMinor, 0);
   const vatRateBps = price.vatRateBps ?? catalogVatRateBps;
   // arrondi commercial TTC : une seule fois, sur le total d'une configuration complète (jamais un sous-total partiel,

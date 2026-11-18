@@ -40,7 +40,7 @@ export interface EntryPrice {
   summary: { dims: string; mounting: string; equipment: string[] };
 }
 
-const m = (mm: number) => `${(mm / 1000).toLocaleString("fr-FR", { minimumFractionDigits: mm % 1000 ? 2 : 0, maximumFractionDigits: 2 })} m`;
+const m = (mm: number) => `${(mm / 1000).toLocaleString("fr-FR", { minimumFractionDigits: mm % 1000 ? 2 : 0, maximumFractionDigits: 3 })} m`;
 
 /** Cellules les moins chères examinées par variante (les suppléments peuvent dépendre de la cote). */
 const CHEAPEST_CELLS = 12;
@@ -61,7 +61,9 @@ export function entryPrice(catalog: CatalogSnapshot, familySlug: string): EntryP
     for (const mt of rules.mountings) {
       const variant = variantFor(table, mt.code);
       if (variant == null) continue;
-      const cells = table.cells.filter((c) => c.variantKey === variant && !c.requirement);
+      // toutes les cellules, exigences comprises (ex. « barre élargie incluse ») : l'évaluation décide si la configuration
+      // est complète (une exigence non chiffrée, ex. moteur 20 Nm sans tarif, la rend partielle)
+      const cells = table.cells.filter((c) => c.variantKey === variant);
       const area = (c: SystemPriceCell) => Math.max(c.widthMinMm, rules.dims.width.minMm ?? 0) * c.dimAmm;
       const picked = new Set([...cells].sort((a, b) => a.amountMinor - b.amountMinor).slice(0, CHEAPEST_CELLS));
       const smallestCell = [...cells].sort((a, b) => area(a) - area(b) || a.amountMinor - b.amountMinor)[0];
@@ -70,6 +72,16 @@ export function entryPrice(catalog: CatalogSnapshot, familySlug: string): EntryP
         const widthMm = Math.max(c.widthMinMm, rules.dims.width.minMm ?? 0);
         if (widthMm > c.widthMaxMm) continue;
         shapes.push(table.dimAKey === "hauteur" ? { mounting: mt.code, widthMm, heightMm: c.dimAmm, depthMm: base.depthMm } : { mounting: mt.code, widthMm, depthMm: c.dimAmm, heightMm: base.heightMm });
+      }
+      // plus petite configuration technique documentée (minimums des sources) : chiffrée à la première tranche quand elle
+      // est sous la grille (décision commerciale du 2026-11-18) ; à prix égal, la plus petite surface est retenue
+      const dr = table.dimAKey === "hauteur" ? rules.dims.height : rules.dims.depth;
+      const firstDim = Math.min(...cells.map((c) => c.dimAmm));
+      const techDim = dr?.valuesMm?.length ? Math.min(...dr.valuesMm) : dr?.minMm ?? firstDim;
+      const techW = rules.dims.width.minMm;
+      if (techW != null && cells.length) {
+        const widthMm = Math.max(techW, rules.depthWidthMin?.find((x) => x.depthMm === techDim)?.widthMinMm ?? 0);
+        shapes.push(table.dimAKey === "hauteur" ? { mounting: mt.code, widthMm, heightMm: techDim, depthMm: base.depthMm } : { mounting: mt.code, widthMm, depthMm: techDim, heightMm: base.heightMm });
       }
     }
   }
@@ -84,7 +96,9 @@ export function entryPrice(catalog: CatalogSnapshot, familySlug: string): EntryP
   };
   for (const shape of shapes) {
     for (const controlCode of controls) {
-      const input: SystemInput = { ...base, ...shape, finishCode: finish.code, controlCode, options: [], sides: {} };
+      // largeur minimale imposée par le mode de commande (moteur), documentée par la source
+      const minW = rules.controls?.find((c) => c.code === controlCode)?.minWidthMm ?? 0;
+      const input: SystemInput = { ...base, ...shape, widthMm: rules.fixedSizes?.length ? shape.widthMm : Math.max(shape.widthMm, minW), finishCode: finish.code, controlCode, options: [], sides: {} };
       const first = run(input);
       if (!first) continue;
       choices.push(first);

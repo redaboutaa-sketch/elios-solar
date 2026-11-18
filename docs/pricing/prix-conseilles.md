@@ -60,8 +60,11 @@ grille) : aucune ventilation multi-taux n'est nécessaire aujourd'hui.
 Calcul serveur (`src/domain/entry-price.ts`) avec le moteur de la boutique et la version publiée en vigueur, recalculé
 à chaque nouvelle version du catalogue ; aucun montant saisi dans les composants.
 
-- configuration de départ : cellule de la grille (ou taille fabriquée), première teinte standard, première toile, chaque
-  mode de commande proposé, aucune option facultative ; un choix rendu obligatoire par la grille (ex. télécommande à
+- configuration de départ : cellule de la grille (ou taille fabriquée) **et plus petite configuration technique
+  documentée** (minimums des sources, largeur minimale du moteur ; chiffrée à la première tranche — décision du
+  2026-11-18, `audit-couverture-dimensions.md`), première teinte standard, première toile, chaque mode de commande
+  proposé, aucune option facultative ; toutes les cellules, exigences comprises (l'évaluation décide de la complétude) ;
+  à prix égal, la plus petite configuration est retenue ; un choix rendu obligatoire par la grille (ex. télécommande à
   choisir) est complété par chaque valeur chiffrée ; un composant obligatoire n'est jamais retiré ;
 - seules les configurations sans blocage ni élément « à chiffrer » donnent un prix d'appel complet ; la moins chère est
   retenue et la plus petite configuration valide est comparée (écart documenté s'il existe) ;

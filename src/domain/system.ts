@@ -312,7 +312,8 @@ export function defaultSystemInput(familySlug: string, rules: SystemRules): Syst
     depthMm: d.depth ? mid(d.depth) : undefined,
     heightMm: d.height ? Math.max(d.height.minMm ?? 0, Math.min(d.height.maxMm > 0 ? d.height.maxMm : 2200, rules.type === "pergola" ? 2500 : rules.type === "insect_screen" ? 2200 : 2200)) : undefined,
     mounting: rules.mountings[0]!.code,
-    finishCode: rules.finishes[0]!.code,
+    // première teinte standard établie (sans supplément) ; à défaut la première de la liste
+    finishCode: (rules.finishes.find((f) => (f.tier ?? "standard") === "standard" && f.status === "established") ?? rules.finishes[0]!).code,
     fabricCode: rules.fabrics?.[0]?.code,
     controlCode: rules.controls?.[0]?.code,
     packCode: rules.packs?.find((p) => !p.familySlug && p.controlKinds.includes(rules.controls?.[0]?.kind ?? "manual"))?.code,

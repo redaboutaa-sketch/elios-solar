@@ -1,6 +1,6 @@
 /**
  * Pergolas (noms publics du 2026-10-31) : HelioSky (SB 350, ex-Malaga), HelioMax (SB 450, ex-Marbella), HelioLux
- * (ex-Sevilla ; correspondance client SOLID, données actuelles PERGOLA V ZiiiP à confirmer).
+ * (ex-Sevilla ; système SOLID, correspondance confirmée par le client le 2026-11-03).
  *
  * Trois produits DIFFÉRENTS des anciennes fiches SB 400 / SB 500 (retirées, conservées pour l'historique) : aucune valeur,
  * limite, teinte ni option n'est reprise d'un autre modèle. Chaque règle cite sa source (documents du fabricant
@@ -196,7 +196,7 @@ const marbella: HelioFamily = {
 };
 
 /* ------------------------------------------------------------------ */
-/* HelioLux (ex-Sevilla) — correspondance client SOLID ; données V ZiiiP à confirmer */
+/* HelioLux (ex-Sevilla) — système SOLID (confirmé le 2026-11-03) ; jamais les données de PERGOLA V ZiiiP */
 /* ------------------------------------------------------------------ */
 
 const sevilla: HelioFamily = {
@@ -224,7 +224,7 @@ const sevilla: HelioFamily = {
     mediaWithheld: "photos enregistrées issues d'un autre système : dessin du modèle en attendant les visuels du système correspondant",
     dims: {
       width: { label: "Largeur", minMm: 1500, maxMm: 4000, sources: [at(S.suppPergolas, "p. 123 — largeur jusqu'à 4 000 mm"), at(S.brochurePergolas, "p. 7 — 1,5 à 4 m"), at(S.priceList, "p. 17 — dimensions minimales")], note: "Par module ; plusieurs modules s'assemblent pour une plus grande largeur." },
-      depth: { label: "Avancée", minMm: 2000, maxMm: 7000, sources: [at(S.suppPergolas, "p. 123 — avancée jusqu'à 7 000 mm"), at(S.brochurePergolas, "p. 7"), at(S.priceList, "p. 17 — projection minimale 2 000 mm")], note: "La grille de prix commence à 3 m d'avancée : en dessous, prix sur devis." },
+      depth: { label: "Avancée", minMm: 2000, maxMm: 7000, sources: [at(S.suppPergolas, "p. 123 — avancée jusqu'à 7 000 mm"), at(S.brochurePergolas, "p. 7"), at(S.priceList, "p. 17 — projection minimale 2 000 mm")], note: "La grille de prix commence à 3 m d'avancée : de 2 à 3 m, le prix est celui de la première tranche (3 m), l'avancée réelle est conservée." },
       height: { label: "Hauteur libre", minMm: null, maxMm: 3000, confirmAboveMm: 2500, confirmNote: "au-delà de 2,50 m (jusqu'à 3,00 m) : hauteur hors norme avec supplément et exclusions partielles de garantie", sources: [at(S.suppPergolas, "p. 123 — hauteur libre 2 500 mm"), at(S.brochurePergolas, "p. 7"), at(S.priceList, "p. 6 — Solid : 2 501–3 000 mm avec supplément")] },
     },
     mountings: [
@@ -277,11 +277,10 @@ const sevilla: HelioFamily = {
     { q: "HelioLux protège-t-elle de la pluie ?", a: "Oui : la toile est étanche et l'eau est évacuée par la gouttière et les poteaux avant. Elle ne protège pas des chutes de neige." },
     { q: "Peut-on la poser sans mur ?", a: "Oui : HelioLux existe en version autoportante et en version adossée au mur." },
     { q: "Peut-on fermer les côtés ?", a: "Des fermetures latérales sont prévues par le fabricant pour ce modèle ; elles sont étudiées au devis." },
-    { q: "Le prix est-il affiché en ligne ?", a: "Oui, pour les dimensions de la grille de prix (de 3 à 7 m d'avancée) : le configurateur affiche le prix HT et TTC. Un élément sans prix établi, la livraison et la pose sont chiffrés sur devis." },
+    { q: "Le prix est-il affiché en ligne ?", a: "Oui, de 2 à 7 m d'avancée et de 1,5 à 4 m de largeur : le configurateur affiche le prix HT et TTC, calculé selon la tranche de dimensions supérieure (sous 3 m d'avancée, celle de 3 m). Un élément sans prix établi, la livraison et la pose sont chiffrés sur devis." },
   ],
   openQuestions: [
     { field: "Vent et neige", question: "Classe de résistance au vent et charge de neige de SOLID (aucune déclaration de performances dans la documentation).", sources: ["supp-pergolas p. 123"], blocks: "communication sur le vent" },
-    { field: "Prix", question: "Prix des avancées de 2 000 à 2 999 mm (la grille commence à 3 000 mm).", sources: ["liste de prix p. 17"], blocks: "prix en ligne sous 3 m d'avancée (devis)" },
     { field: "Teintes", question: "Décors bois pour SOLID (supplément documenté pour SB 400 / SB 450 / SB 550 seulement).", sources: ["liste de prix p. 6–7"], blocks: "décor bois (non proposé)" },
     { field: "Capteurs", question: "Modèle et prix des capteurs météo compatibles avec la commande fournie.", sources: ["supp-pergolas p. 123"], blocks: "automatisme (devis)" },
     { field: "Modules", question: "Nombre maximal de modules et surface maximale.", sources: [], blocks: "grandes largeurs (devis)" },

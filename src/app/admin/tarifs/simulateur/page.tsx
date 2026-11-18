@@ -12,7 +12,8 @@ import { ConfidentialNote, fmtMm, variantLabel } from "../labels";
 
 export const metadata: Metadata = { title: "Simulateur de prix" };
 
-const REASON_FR: Record<string, string> = { no_table: "aucune grille de vente en vigueur pour ce produit (à cette date, pour cette clientèle)", incomplete: "configuration incomplète ou variante sans grille (implantation non tarifée)", out_of_grid: "cote absente de la grille (aucune interpolation ; lecture exacte sauf règle confirmée) : devis" };
+const REASON_FR: Record<string, string> = { no_table: "aucune grille de vente en vigueur pour ce produit (à cette date, pour cette clientèle)", incomplete: "configuration incomplète ou variante sans grille (implantation non tarifée)", out_of_grid: "cote non chiffrable (aucune interpolation ni extrapolation) : devis" };
+const DETAIL_FR: Record<string, string> = { above_max: "au-delà de la dernière tranche", below_technical_min: "sous le minimum technique documenté", below_min_undocumented: "sous la première tranche sans minimum technique documenté", below_row_min: "largeur sous la largeur minimale de l'avancée", cell_forbidden: "cellule supérieure vide ou interdite", not_round_up: "cote entre deux valeurs, grille en lecture exacte" };
 
 export default async function SimulatorPage(props: PageProps<"/admin/tarifs/simulateur">) {
   await requireRole(["ADMIN"]);
@@ -63,13 +64,13 @@ export default async function SimulatorPage(props: PageProps<"/admin/tarifs/simu
                 <Table caption="Détail du calcul">
                   <tbody>
                     <tr><th>Cote saisie</th><td>{fmtMm(sim.input.widthMm)} × {fmtMm(sim.input.depthMm ?? sim.input.heightMm ?? 0)} ({sim.rules.dimLabel.toLowerCase()}), pose {MOUNTING_FR[sim.input.mounting]}</td></tr>
-                    <tr><th>Cellule retenue</th><td>variante « {sim.price.variantKey || "unique"} » · {sim.price.grid.dimLabel} {fmtMm(sim.price.grid.dimMm)} × largeur {fmtMm(sim.price.grid.widthMm)}{sim.price.roundedUp ? " (dimension supérieure, règle de la grille)" : " (cote de la grille)"}</td></tr>
+                    <tr><th>Cellule retenue</th><td>variante « {sim.price.variantKey || "unique"} » · {sim.price.grid.dimLabel} {fmtMm(sim.price.grid.dimMm)} × largeur {fmtMm(sim.price.grid.widthMm)}{sim.price.selection === "first_tranche" ? " (première tranche : cote réelle sous la grille, dans le domaine technique documenté — décision commerciale HELIOSTORES)" : sim.price.roundedUp ? " (tranche immédiatement supérieure, règle de la grille)" : " (cote de la grille)"}{sim.price.requested ? ` — cotes réelles ${fmtMm(sim.price.requested.dimMm)} × largeur ${fmtMm(sim.price.requested.widthMm)}` : ""}</td></tr>
                     <tr><th>Prix de la grille</th><td><strong data-testid="sim-amount">{formatAmount(sim.price.amountMinor, sim.price.currency)}</strong> {sim.price.taxBasis}</td></tr>
                     <tr><th>TVA</th><td>{sim.vatRateBps != null ? `${(sim.vatRateBps / 100).toLocaleString("fr-FR")} %` : "—"} {sim.vatFromCatalog ? "(taux du catalogue)" : "(taux de la grille)"}</td></tr>
                     <tr><th>Prix TTC</th><td>{formatAmount(sim.ttcMinor, sim.price.currency)} {sim.price.taxBasis === "HT" ? "= HT + TVA arrondie au centime" : "(montant TTC de la grille)"}</td></tr>
                   </tbody>
                 </Table>
-              ) : <p className="text-sm">Pas de prix de grille : {REASON_FR[sim.lookup.ok ? "" : sim.lookup.reason] ?? "—"}.</p>}
+              ) : <p className="text-sm">Pas de prix de grille : {REASON_FR[sim.lookup.ok ? "" : sim.lookup.reason] ?? "—"}{!sim.lookup.ok && sim.lookup.detail ? ` — ${DETAIL_FR[sim.lookup.detail.code]} (${sim.lookup.detail.axis})` : ""}.</p>}
               {sim.table && <p className="mt-2 text-xs text-stone-700">Cotes tarifées : {sim.rules.dimLabel.toLowerCase()} {sim.table.dims.map(fmtMm).join(", ")} ; largeurs {sim.table.widths.length} colonne(s).</p>}
             </div>
           </Section>

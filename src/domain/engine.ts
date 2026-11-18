@@ -746,6 +746,7 @@ function evaluateSystem(catalog: CatalogSnapshot, input: SystemInput): Evaluatio
     priceBreakdown: priceBreakdownResult,
     pricedSizes: lookup && !lookup.ok && lookup.reason === "out_of_grid" ? pricedSizes(family.systemPrices, rules, input) : null,
     priceStatus: rules.studyOnly ? "custom" : lookup ? (lookup.ok ? "priced" : lookup.reason) : blocked ? "blocked" : "custom",
+    priceDetail: lookup && !lookup.ok ? lookup.detail ?? null : null,
     onlineOrder: { ok: orderable, reasons },
   };
 }

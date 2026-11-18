@@ -7,7 +7,7 @@ test.use({ launchOptions: { args: ["--use-gl=angle", "--use-angle=swiftshader", 
 test("screen HelioScreen : largeur contradictoire signalée, mode de commande, télécommande selon la commande, toile, 3D et devis", async ({ page }) => {
   await openConfigurator(page, "helioscreen");
   await setDim(page, "dim-width", 7200);
-  await expect(stepIssues(page, "dims")).toContainText("Largeur : jusqu'à 7 m");
+  await expect(stepIssues(page, "dims")).toContainText("Largeur : de 0,64 m à 7 m");
   await setDim(page, "dim-width", 4500);
   await setDim(page, "dim-height", 2600);
   await expect(page.getByTestId("step-dims")).not.toContainText("Impossible");
@@ -17,10 +17,13 @@ test("screen HelioScreen : largeur contradictoire signalée, mode de commande, t
   await expect(issues).not.toContainText("Largeur supérieure à 4 m");
   await expect(issues).not.toContainText("divergent");
   await goStep(page, "dims");
-  await setDim(page, "dim-width", 700);
+  await setDim(page, "dim-width", 650);
   await goStep(page, "pose");
-  // modes de commande compréhensibles ; aucune largeur minimale inventée pour un moteur
-  await page.getByLabel("Manœuvre et commande").selectOption({ label: "Filaire — fins de course mécaniques" });
+  // largeur minimale propre au moteur de chaque mode (liste de prix, valeurs en cm) : 0,70 m en radio io, 0,64 m en
+  // filaire à fins de course mécaniques — jamais un autre moteur choisi pour obtenir un prix
+  await page.getByLabel("Manœuvre et commande").selectOption("radio_io");
+  await expect(page.getByTestId("step-pose")).toContainText("largeur minimale du système 0,7 m");
+  await page.getByLabel("Manœuvre et commande").selectOption("wired_mech");
   await goStep(page, "recap");
   await expect(issues).not.toContainText("largeur minimale");
   await goStep(page, "dims");
@@ -38,7 +41,7 @@ test("screen HelioScreen : largeur contradictoire signalée, mode de commande, t
   await expect(page.getByTestId("prereq-remote_io")).toContainText("nécessite une commande radio io");
   await expect(page.getByTestId("option-remote_io").getByRole("checkbox")).toBeDisabled();
   await goStep(page, "pose");
-  await page.getByLabel("Manœuvre et commande").selectOption({ label: "Radio io — télécommande" });
+  await page.getByLabel("Manœuvre et commande").selectOption("radio_io");
   await goStep(page, "equip");
   await expect(page.getByTestId("option-remote_io").getByRole("checkbox")).toBeEnabled();
   await page.getByTestId("option-remote_io").getByRole("checkbox").check();

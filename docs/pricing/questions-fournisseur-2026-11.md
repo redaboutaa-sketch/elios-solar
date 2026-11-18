@@ -30,3 +30,6 @@
 | HelioSlide VERRE | OPEN SLIDE (p. 24) | Prix par baie, nombre de panneaux, vitrage | Souhait de fermeture au devis |
 | HelioSlide ALU | SYSTEM SLIDE | Correspondance avec « parois latérales SLIDE » (p. 22) ; teintes RAL | Souhait de fermeture au devis |
 | Moustiquaires | — | Aucune moustiquaire dans le catalogue 09.2026 | Demandes d'étude |
+| Stores bannes | supports (p. 99) | Supports plafond et chevrons applicables à CORSICA / JAMAICA ; « paire » = un point de fixation ? | Supports de ces poses à chiffrer (sous-total partiel) |
+| HelioSquare | MADEIRA (p. 96) | Largeur minimale à 2,10 m d'avancée : 2,50 m (grille) ou 2,55 m (projection + 0,45 m) ? | 2,55 m conservé |
+| HelioScreen | R 120 ZiiiP (p. 69) | Hauteur minimale de fabrication | Hauteur < 1 m au devis |

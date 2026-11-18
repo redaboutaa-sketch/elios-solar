@@ -69,11 +69,14 @@ describe("lecture de la grille : dimension supérieure (décision écrite), limi
   it("cote intermédiaire : valeurs immédiatement supérieures sur chaque axe, jamais d'interpolation", () => {
     expect(at({ widthMm: 1501, depthMm: 1931 })).toMatchObject({ ok: true, price: { amountMinor: 1_166_67, roundedUp: true, grid: { widthMm: 2000, dimMm: 2134 } } });
   });
-  it("cote sous la première valeur ou au-delà de la dernière : hors grille (devis) — la règle ne vaut qu'entre deux valeurs", () => {
-    expect(at({ widthMm: 1000, depthMm: 1930 })).toEqual({ ok: false, reason: "out_of_grid" });
-    expect(at({ widthMm: 1500, depthMm: 1400 })).toEqual({ ok: false, reason: "out_of_grid" });
-    expect(at({ widthMm: 2001, depthMm: 1930 })).toEqual({ ok: false, reason: "out_of_grid" });
-    expect(at({ widthMm: 1500, depthMm: 2135 })).toEqual({ ok: false, reason: "out_of_grid" });
+  it("cote sous la première tranche mais dans le domaine technique documenté : première tranche ; au-delà de la dernière : hors grille", () => {
+    // HelioMax : minimums techniques documentés 1 000 mm (largeur) et 1 318 mm (avancée, lame F)
+    expect(at({ widthMm: 1000, depthMm: 1930 })).toMatchObject({ ok: true, price: { selection: "first_tranche", grid: { widthMm: 1500, dimMm: 1930 }, requested: { widthMm: 1000, dimMm: 1930 } } });
+    expect(at({ widthMm: 1500, depthMm: 1400 })).toMatchObject({ ok: true, price: { selection: "first_tranche", grid: { widthMm: 1500, dimMm: 1930 }, requested: { widthMm: 1500, dimMm: 1400 } } });
+    expect(at({ widthMm: 999, depthMm: 1930 })).toEqual({ ok: false, reason: "out_of_grid", detail: { code: "below_technical_min", axis: "largeur" } });
+    expect(at({ widthMm: 1500, depthMm: 1317 })).toEqual({ ok: false, reason: "out_of_grid", detail: { code: "below_technical_min", axis: "dimension" } });
+    expect(at({ widthMm: 2001, depthMm: 1930 })).toEqual({ ok: false, reason: "out_of_grid", detail: { code: "above_max", axis: "largeur" } });
+    expect(at({ widthMm: 1500, depthMm: 2135 })).toEqual({ ok: false, reason: "out_of_grid", detail: { code: "above_max", axis: "dimension" } });
   });
   it("pose sans grille publiée : prix incomplet (jamais la grille d'une autre pose)", () => {
     const t = { ...pergola, variants: { autoportante: pergola.variants!.autoportante! }, cells: pergola.cells.filter((c) => c.variantKey === "autoportante") };
@@ -82,7 +85,7 @@ describe("lecture de la grille : dimension supérieure (décision écrite), limi
   it("plages de largeur : largeur dans l'écart entre deux plages → plage supérieure ; sous la largeur minimale de l'avancée → hors grille", () => {
     const a = rules("corsica");
     expect(lookupSystemPrice(awning(true), a, cfg("corsica", { widthMm: 2905, depthMm: 1600 }))).toMatchObject({ ok: true, price: { amountMinor: 600_00 } });
-    expect(lookupSystemPrice(awning(true), a, cfg("corsica", { widthMm: 3000, depthMm: 2600 }))).toEqual({ ok: false, reason: "out_of_grid" });
+    expect(lookupSystemPrice(awning(true), a, cfg("corsica", { widthMm: 3000, depthMm: 2600 }))).toEqual({ ok: false, reason: "out_of_grid", detail: { code: "below_row_min", axis: "largeur" } });
     expect(lookupSystemPrice(awning(true), a, cfg("corsica", { widthMm: 3050, depthMm: 2600 }))).toMatchObject({ ok: true, price: { amountMinor: 700_00 } });
   });
 });

@@ -21,6 +21,23 @@
   SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
 
+## Tranche tarifaire supérieure, couverture des dimensions (2026-11-18) — `docs/pricing/audit-couverture-dimensions.md`
+
+- Règle commerciale HELIOSTORES : plus petite tranche ≥ cote réelle ; sous la première tranche, première tranche si la
+  cote respecte le minimum technique documenté (jamais d'extrapolation, de cellule voisine ni d'autre pose).
+- Devenues chiffrables : HelioLux avancée 2–3 m (murale et autoportante, cellule 1,5 × 3 m pour 1,5 × 2 m), HelioMax
+  largeur 1–1,5 m et avancée 1,318–1,93 m, HelioScreen largeur 0,64–1 m selon le moteur du mode, éclairage HelioLux et
+  auvent HelioPro sous la première valeur de leur tableau.
+- Corrigés : cellule absente jamais remplacée par une voisine ; stores bannes au plafond / sur chevrons : supports à
+  chiffrer (sous-total partiel, plus de faux prix complet) ; HelioRoof démarre sur une teinte standard ; motif précis
+  de chaque devis ; prix d'appel = plus petite configuration valide complète (cellules « barre élargie incluse »
+  comprises) ; traçabilité dans l'instantané du devis (cotes réelles, tranche, règle, source) ; public : « Tarif calculé
+  selon la tranche de dimensions supérieure. » ; devis et PDF émis inchangés.
+- Validation isolée : copie de la sauvegarde `db_20261118_115642` (base `tranche_check`, Postgres de développement),
+  `catalogue-sync --apply`, build et e2e desktop/mobile. Audit chiffré privé : `private/audit-tranches-2026-11-18/`.
+- Restent au devis ou partiels (données fournisseur) : moteurs radio des stores bannes, supports plafond/chevrons,
+  HelioScreen < 1 m de hauteur, HelioSlide (vitrage / grille absente), moustiquaires.
+
 ## Gamme par prix d'appel croissant ; dimensions de la liste de prix 09.2026 (2026-11-18) — PR #5
 
 - Production `c4b11b4` (PR #5 fusionnée, CI verte) : sauvegarde `db_20261118_092210`, aucune migration ;

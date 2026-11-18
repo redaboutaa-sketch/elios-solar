@@ -153,12 +153,12 @@ export async function buildConfigurationPdf(opts: {
         text(bd.partial ? "Sous-total partiel" : "Total", 40, 12, bold, GREEN); text(clean(formatSystemPrice(bd.totalMinor, bd.currency, bd.taxBasis)), 455, 12, bold, GREEN); line(14);
         if (bd.totalTtcMinor != null && bd.taxBasis === "HT") { text(clean(`soit ${formatSystemPrice(bd.totalTtcMinor, bd.currency, "TTC")} (TVA ${bd.vatRateBps / 100} %)`), 40, 9); line(12); }
       }
-      text(clean(`Grille tarifaire HELIOSTORES v${sp.listVersion} : ${sp.grid.widthMm / 1000} m de largeur x ${sp.grid.dimMm / 1000} m (${sp.grid.dimLabel.toLowerCase()})${sp.roundedUp ? ", dimension de grille immediatement superieure" : ""}.`), 40, 9); line(12);
+      text(clean(tariffNote(sp, true)), 40, 9); line(12);
       if (bd.pending.length) { text("Reste a chiffrer sur le devis :", 40, 9, bold); line(11); for (const x of bd.pending) { text(clean(`- ${x.label} : ${x.reason}`).slice(0, 110), 40, 8); line(11); } }
       text("Livraison et pose : chiffrees sur le devis.", 40, 9); line(20);
     } else if (sp) {
       text("Prix de la structure", 40, 12, bold, GREEN); text(clean(formatSystemPrice(sp.amountMinor, sp.currency, sp.taxBasis)), 455, 12, bold, GREEN); line(14);
-      text(clean(`Grille tarifaire HELIOSTORES : ${sp.grid.widthMm / 1000} m de largeur x ${sp.grid.dimMm / 1000} m (${sp.grid.dimLabel.toLowerCase()})${sp.roundedUp ? ", dimension de grille immediatement superieure" : ""}.`), 40, 9); line(12);
+      text(clean(tariffNote(sp, false)), 40, 9); line(12);
       text("Options, pose et livraison : chiffrees sur le devis.", 40, 9); line(20);
     } else {
       text("Prix : sur devis pour ces dimensions", 40, 12, bold, GREEN); line(20);
@@ -179,4 +179,14 @@ export async function buildConfigurationPdf(opts: {
   line(10);
   text("Ce document n'est ni un plan d'execution ni une validation structurelle. Fixations et raccordement electrique non inclus.", 40, 7, font, rgb(0.4, 0.4, 0.4));
   return pdf.save();
+}
+
+/**
+ * Mention tarifaire du PDF. Un instantané émis avant le 2026-11-18 (sans `selection`) garde exactement son ancienne
+ * présentation (devis et PDF émis jamais modifiés) ; ensuite : cotes réelles seules, tranche facturée réservée au détail
+ * administrateur, mention simple quand une tranche supérieure est appliquée.
+ */
+export function tariffNote(sp: NonNullable<EvaluationResult["systemPrice"]>, withVersion: boolean): string {
+  if (sp.selection == null) return `Grille tarifaire HELIOSTORES${withVersion ? ` v${sp.listVersion}` : ""} : ${sp.grid.widthMm / 1000} m de largeur x ${sp.grid.dimMm / 1000} m (${sp.grid.dimLabel.toLowerCase()})${sp.roundedUp ? ", dimension de grille immediatement superieure" : ""}.`;
+  return `Grille tarifaire HELIOSTORES${withVersion ? ` v${sp.listVersion}` : ""}.${sp.selection !== "exact" ? " Tarif calcule selon la tranche de dimensions superieure." : ""}`;
 }
