@@ -21,6 +21,21 @@
   SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
 
+## Gamme par prix d'appel croissant ; dimensions de la liste de prix 09.2026 (2026-11-18) — PR #5
+
+- Production `c4b11b4` (PR #5 fusionnée, CI verte) : sauvegarde `db_20261118_092210`, aucune migration ;
+  `catalogue-sync --apply` (5 familles : `systemRules` de marbella, helioscreen, casablanca, corsica, jamaica).
+- Ordre : produits par prix d'appel TTC croissant (`listSystemFamilies`), avatars et onglets de l'accueil par prix
+  d'appel le plus bas (stores bannes, screens, pergolas, moustiquaires).
+- Liste de prix 09.2026 = référence des dimensions et des prix (décision du client) : prix déjà conformes (1 557
+  cellules catalogue = PDF ; ventes = catalogue × coefficient unique) ; dimensions corrigées (HelioMax avancée min.
+  1 318 mm, HelioScreen 7 × 4 m sans réserve, HelioShade/HelioPro largeur min. 2,05 m puis selon l'avancée, HelioSun
+  avancée + 40 cm). Devis et prix actifs inchangés (empreintes identiques avant/après).
+- Hauteur maximale de HelioMax non tranchée par le PDF (poteaux de 2,0 à 2,8 m) : 3,0 m conservé, à confirmer.
+- `scripts/pricing-check.ts` compare encore vente = catalogue (règle du 2026-11-02) : toutes les cellules signalées
+  depuis la politique du 13/11, sans anomalie de prix ; à adapter.
+- Retour arrière applicatif : `IMAGE_TAG=8d8d424d6e6a`, puis `catalogue-sync` depuis cette version.
+
 ## SEO / GEO B15 : métadonnées dans le `<head>` pour les robots d'IA (2026-11-17) — `seo/`
 
 - Production `8d8d424` (PR #4 fusionnée, CI verte) : sauvegarde `db_20261117_114947`, aucune migration ;
