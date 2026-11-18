@@ -62,10 +62,12 @@ export async function checkoutAction(_prev: CheckoutState, formData: FormData): 
     const order = await createOrderFromCart({ owner: o, email: parsed.data.email, shippingAddress: parsed.data.shipping, billingAddress: parsed.data.billing, customerNotes: parsed.data.customerNotes });
     // Moyen de paiement choisi : l'éligibilité au paiement fractionné est revalidée par startPayment
     // à partir du total recalculé de la commande (jamais d'un montant envoyé par le navigateur).
-    const paymentMethod = get("paymentMethod") === "installments" ? "installments" : "card";
+    const pm = get("paymentMethod");
+    const paymentMethod = pm === "installments" ? "installments" : pm === "bank_transfer" ? "bank_transfer" : "card";
+    const customerType = get("customerType") === "B2B" ? "B2B" : get("customerType") === "B2C" ? "B2C" : null;
     const installments = paymentMethod === "installments" ? Number(get("installments") ?? "") : undefined;
     if (paymentMethod === "installments" && (!Number.isInteger(installments) || installments! < 2)) return { error: "Choisissez un nombre d'échéances valide." };
-    const { checkoutUrl } = await startPayment(order.id, { method: paymentMethod, installments });
+    const { checkoutUrl } = await startPayment(order.id, { method: paymentMethod, installments, customerType });
     redirect(checkoutUrl);
   } catch (e) {
     if (e instanceof OrderError) return { error: e.message };

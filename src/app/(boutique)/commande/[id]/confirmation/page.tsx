@@ -8,6 +8,7 @@ import { getGuestKey } from "@/server/guest";
 import { getOrderForOwner } from "@/server/order/service";
 import { OrderDetail } from "@/components/account/order-detail";
 import { PaymentMethodLine } from "@/components/checkout/payment-method-line";
+import { mailDeliveryReal } from "@/server/mail/transport";
 
 export const metadata: Metadata = { title: "Confirmation de commande", robots: { index: false } };
 
@@ -21,7 +22,7 @@ export default async function ConfirmationPage(props: PageProps<"/commande/[id]/
   return (
     <div className="container-x py-10 max-w-3xl">
       {paid ? (
-        <><h1 className="font-display text-4xl">Merci, votre commande est confirmée.</h1><p className="mt-2 text-stone-700">Commande <strong>{order.number}</strong> · <Price cents={order.totalCents} /> · un e-mail de confirmation vous est envoyé.</p>{order.isDemo && <div className="mt-3"><Notice tone="warn">Commande de test : paiement simulé, aucune transaction réelle.</Notice></div>}</>
+        <><h1 className="font-display text-4xl">Merci, votre commande est confirmée.</h1><p className="mt-2 text-stone-700">Commande <strong>{order.number}</strong> · <Price cents={order.totalCents} />{mailDeliveryReal() ? " · un e-mail de confirmation vous est envoyé." : ""}</p>{order.isDemo && <div className="mt-3"><Notice tone="warn">Commande de test : paiement simulé, aucune transaction réelle.</Notice></div>}</>
       ) : (
         <><h1 className="font-display text-4xl">Paiement en attente de confirmation</h1><p className="mt-2 text-stone-700">Le retour du navigateur ne prouve pas le paiement : la commande {order.number} sera confirmée dès réception de la notification du prestataire. Statut actuel : {order.status}.</p>{order.status === "PENDING_PAYMENT" && <Link href={order.payments[0]?.checkoutUrl ?? "/panier"} className="btn-accent mt-4">Reprendre le paiement</Link>}</>
       )}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ingestPaymentEvent } from "@/server/payment";
 import { normalizeSimEvent, simVerify } from "@/server/payment/installments-sim";
+import { salesMode } from "@/server/payment/mode";
 
 /**
  * Webhook du SIMULATEUR de paiement fractionné : même contrat que le webhook de démonstration
@@ -8,7 +9,7 @@ import { normalizeSimEvent, simVerify } from "@/server/payment/installments-sim"
  * Désactivé dès que Stripe est le prestataire actif.
  */
 export async function POST(req: Request) {
-  if (process.env.PAYMENT_PROVIDER === "stripe") return NextResponse.json({ error: "simulateur désactivé" }, { status: 404 });
+  if (salesMode() !== "demo") return NextResponse.json({ error: "simulateur désactivé" }, { status: 404 });
   const raw = await req.text();
   if (!simVerify(raw, req.headers.get("x-instsim-signature"))) return NextResponse.json({ error: "signature invalide" }, { status: 400 });
   let body: { id?: string; type?: string; data?: { providerRef?: string; orderId?: string; amountCents?: number; installments?: number; reason?: string; refundRef?: string } };

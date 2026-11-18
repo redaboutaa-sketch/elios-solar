@@ -69,7 +69,7 @@ services:
       # et préproduction non indexable. Sans REVIEW_BASIC_AUTH, le middleware est invalide : le routeur reste fermé.
       traefik.http.routers.elios-solar.middlewares: "elios-solar-auth,elios-solar-headers"
       traefik.http.middlewares.elios-solar-auth.basicauth.users: "${REVIEW_BASIC_AUTH:-}"
-      traefik.http.middlewares.elios-solar-auth.basicauth.realm: "ELIOS SOLAR - revue"
+      traefik.http.middlewares.elios-solar-auth.basicauth.realm: "HELIOSTORES - revue"
       traefik.http.middlewares.elios-solar-auth.basicauth.removeheader: "true"
       traefik.http.middlewares.elios-solar-headers.headers.customresponseheaders.X-Robots-Tag: "noindex, nofollow, noarchive"
       traefik.docker.network: "traefik-public"

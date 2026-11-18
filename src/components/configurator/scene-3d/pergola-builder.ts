@@ -9,8 +9,6 @@ import { INDICATIVE_BEAM_HEIGHT_MM, INDICATIVE_POST_SECTION_MM } from "@/domain/
 import { DAY, NIGHT, disposeTree, type BuiltScene } from "./scene-engine";
 
 const M = 1 / 1000;
-const POST = INDICATIVE_POST_SECTION_MM * M;
-const BEAM_H = INDICATIVE_BEAM_HEIGHT_MM * M;
 const WARM = 0xffcf8a;
 const SELECT = 0xb5693c;
 
@@ -55,6 +53,11 @@ export function buildPergolaScene(model: PergolaSceneModel): BuiltScene {
   const L = model.lengthMm * M;
   const W = model.widthMm * M;
   const H = model.heightMm * M;
+  // sections du catalogue quand le modèle les fournit (systèmes HELIOSTORES), sinon valeurs indicatives
+  const sec = model.sections;
+  const POST = (sec ? Math.max(sec.postAcrossMm, sec.postAlongMm) : INDICATIVE_POST_SECTION_MM) * M;
+  const BEAM_H = (sec?.beamHeightMm ?? INDICATIVE_BEAM_HEIGHT_MM) * M;
+  const along = model.blades.orientation === "along_length";
   const group = new THREE.Group();
   group.name = "pergola";
   const pickables: THREE.Object3D[] = [];
@@ -116,15 +119,28 @@ export function buildPergolaScene(model: PergolaSceneModel): BuiltScene {
     }
   }
 
-  /* Lames orientables (instanciées) */
-  const innerL = L - POST * 2;
-  const span = W - POST * 2;
+  /* Lames orientables (instanciées) : réparties sur la longueur, ou parallèles au mur et réparties sur la projection */
+  const innerL = (along ? W : L) - POST * 2;
+  const span = (along ? L : W) - POST * 2;
   const pitch = innerL / model.blades.count;
-  const bladeGeo = new THREE.BoxGeometry(pitch * 0.98, 0.022, span);
+  const bladeT = Math.max(0.018, (sec?.bladeThicknessMm ?? 22) * M * 0.6);
+  const bladeGeo = along ? new THREE.BoxGeometry(span, bladeT, pitch * 0.98) : new THREE.BoxGeometry(pitch * 0.98, bladeT, span);
   const blades = new THREE.InstancedMesh(bladeGeo, bladeMat, model.blades.count);
   blades.castShadow = true;
   blades.receiveShadow = false; // évite l'acné d'ombre sur les lames fines
   group.add(blades);
+  // toiture toile (HelioLux) : pas de lames, une toile tendue inclinée du mur vers la poutre avant (pente indicative)
+  if (model.roof === "fabric") {
+    blades.visible = false;
+    const fabricMat = new THREE.MeshStandardMaterial({ color: model.roofFabricColor ?? "#8d8f8c", roughness: 0.95, side: THREE.DoubleSide });
+    const rise = W * Math.tan(THREE.MathUtils.degToRad(10));
+    const len = Math.hypot(W - POST * 2, rise);
+    const roofMesh = new THREE.Mesh(new THREE.PlaneGeometry(L - POST * 2, len), fabricMat);
+    roofMesh.rotation.x = -Math.PI / 2 + Math.atan2(rise, W - POST * 2);
+    roofMesh.position.set(L / 2, H + rise / 2 + 0.02, W / 2);
+    roofMesh.castShadow = true;
+    group.add(roofMesh);
+  }
   let bladeLeds: THREE.InstancedMesh | null = null;
   if (model.lighting.blades) {
     const g = new THREE.BoxGeometry(0.018, 0.006, span * 0.94);
@@ -135,10 +151,15 @@ export function buildPergolaScene(model: PergolaSceneModel): BuiltScene {
   const bladeY = H - BEAM_H * 0.4;
   const tmp = new THREE.Object3D();
   const setBladeAngle = (deg: number) => {
-    const a = THREE.MathUtils.degToRad(THREE.MathUtils.clamp(deg, 0, 90));
+    const a = THREE.MathUtils.degToRad(THREE.MathUtils.clamp(deg, 0, model.blades.maxAngleDeg ?? 90));
     for (let i = 0; i < model.blades.count; i += 1) {
-      tmp.position.set(POST + pitch * (i + 0.5), bladeY, W / 2);
-      tmp.rotation.set(0, 0, a);
+      if (along) {
+        tmp.position.set(L / 2, bladeY, POST + pitch * (i + 0.5));
+        tmp.rotation.set(a, 0, 0);
+      } else {
+        tmp.position.set(POST + pitch * (i + 0.5), bladeY, W / 2);
+        tmp.rotation.set(0, 0, a);
+      }
       tmp.updateMatrix();
       blades.setMatrixAt(i, tmp.matrix);
       bladeLeds?.setMatrixAt(i, tmp.matrix);
@@ -197,9 +218,24 @@ export function buildPergolaScene(model: PergolaSceneModel): BuiltScene {
     group.add(box(0.22 * s, 0.03, 0.22 * s, structure, x, 0.03 + 0.3 * s + 0.015, z));
   }
 
+  /* Spots LED dans les lames : nombre documenté, répartition indicative en grille */
+  const spotMat = new THREE.MeshBasicMaterial({ color: 0x9a948a });
+  if (model.lighting.spots) {
+    const n = model.lighting.spots;
+    const cols = n <= 4 ? 2 : 3;
+    const rows = Math.ceil(n / cols);
+    for (let k = 0; k < n; k += 1) {
+      const c = k % cols;
+      const r = Math.floor(k / cols);
+      const spot = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.01, 16), spotMat);
+      spot.position.set(POST + ((L - 2 * POST) * (c + 0.5)) / cols, bladeY - bladeT, POST + ((W - 2 * POST) * (r + 0.5)) / rows);
+      group.add(spot);
+    }
+  }
+
   /* Lumières ponctuelles nocturnes (nombre fixe pour éviter les recompilations de shaders) */
   const nightLights: Array<{ light: THREE.PointLight; night: number }> = [];
-  if (model.lighting.gutter || model.lighting.blades) {
+  if (model.lighting.gutter || model.lighting.blades || model.lighting.spots) {
     const rgb = model.lighting.color === "rgb";
     for (const [i, fx] of [0.3, 0.7].entries()) {
       const light = new THREE.PointLight(rgb ? (i === 0 ? 0xff5fd2 : 0x55d6ff) : WARM, 0, Math.max(L, W) * 2.5, 2);
@@ -225,8 +261,9 @@ export function buildPergolaScene(model: PergolaSceneModel): BuiltScene {
   const setNight = (night: boolean) => {
     groundMat.color.set(night ? NIGHT.ground : DAY.ground);
     const rgb = model.lighting.color === "rgb";
-    ledMat.color.set(night ? (rgb ? 0xffffff : WARM) : rgb ? 0x777777 : 0x9a948a);
-    bladeLedMat.color.set(night ? WARM : 0x9a948a);
+    ledMat.color.set(rgb ? 0xffffff : WARM); // éclairages choisis représentés allumés (pas d'ambiance nuit)
+    bladeLedMat.color.set(WARM);
+    spotMat.color.set(WARM);
     heaterGlowMat.emissiveIntensity = night ? 1.6 : 0.15;
     lanternGlowMat.emissiveIntensity = night ? 1.8 : 0.1;
     for (const { light, night: intensity } of nightLights) light.intensity = night ? intensity : 0;
@@ -245,7 +282,6 @@ export function buildPergolaScene(model: PergolaSceneModel): BuiltScene {
       front: { position: [L / 2, 1.7, W + d * 0.95 + 1.5], target: [L / 2, H * 0.55, W / 2] },
       three_quarter: { position: [L + d * 0.45 + 1, H + 1.3, W + d * 0.65 + 1.5], target: [L / 2, H * 0.45, W / 2] },
       top: { position: [L / 2, d * 1.6 + 3, W / 2 + 0.01], target: [L / 2, 0, W / 2] },
-      interior: { position: [L / 2, 1.6, W * 0.82], target: [L / 2, H * 0.92, W * 0.18] },
     },
     pickables,
     setNight,

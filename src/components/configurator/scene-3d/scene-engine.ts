@@ -8,13 +8,12 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-export type ViewPreset = "front" | "three_quarter" | "top" | "interior";
+export type ViewPreset = "front" | "three_quarter" | "top";
 
 export const VIEW_PRESETS: Array<{ id: ViewPreset; label: string }> = [
   { id: "front", label: "Face" },
   { id: "three_quarter", label: "Trois quarts" },
   { id: "top", label: "Dessus" },
-  { id: "interior", label: "Intérieur" },
 ];
 
 export interface CameraPose {

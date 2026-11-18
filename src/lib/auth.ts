@@ -19,7 +19,7 @@ const SIGN_IN_PATH = "/sign-in/email";
 const trustedProxies = (process.env.TRUSTED_PROXIES ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 
 export const auth = betterAuth({
-  appName: process.env.NEXT_PUBLIC_BRAND_NAME ?? "ELIOS SOLAR",
+  appName: process.env.NEXT_PUBLIC_BRAND_NAME ?? "HELIOSTORES",
   baseURL: process.env.BETTER_AUTH_URL,
   secret: process.env.BETTER_AUTH_SECRET,
   database: prismaAdapter(prisma, { provider: "postgresql" }),

@@ -5,12 +5,11 @@
  * modifient jamais la configuration (`input`) ni le prix.
  */
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Download, Moon, Sun } from "lucide-react";
-import type { AwningSceneModel, PergolaSceneModel, SceneModel } from "@/domain/scene-model";
+import { Download } from "lucide-react";
+import type { AwningSceneModel, PergolaSceneModel, Scene3DModel as SceneModel, ScreenSceneModel } from "@/domain/scene-model";
 import { SIDE_LABELS } from "@/domain/layout";
 import { SceneEngine, VIEW_PRESETS, supportsWebGL, type ViewPreset } from "./scene-engine";
-import { buildPergolaScene } from "./pergola-builder";
-import { buildAwningScene } from "./awning-builder";
+import { buildScene } from "./build-scene";
 import { captionOf, composeProjectImage, downloadDataUrl, EXPORT_FILENAME } from "./export-image";
 
 const UNAVAILABLE = "La vue 3D n'est pas disponible sur cet appareil (WebGL désactivé ou non pris en charge). L'illustration et le plan 2D restent disponibles et le configurateur reste entièrement utilisable.";
@@ -18,14 +17,17 @@ const UNAVAILABLE = "La vue 3D n'est pas disponible sur cet appareil (WebGL dés
 const CLOSURE_NAMES: Record<string, string> = { glass: "paroi vitrée", slats: "persienne", screen: "store ZIP" };
 
 function describe(model: SceneModel): string {
+  if (model.kind === "screen") {
+    return `${model.familyName} ${model.dimensionLabel} (largeur × hauteur), pose ${model.mounting === "niche" ? "en niche" : "en façade"}, structure ${model.finishLabel}, toile ${model.fabric.label}, ${model.control}.`;
+  }
   if (model.kind === "awning") {
-    return `Store banne ${model.dimensionLabel} (largeur × avancée), ${model.finishLabel}, ${model.bracketCount} supports ${model.bracketMount === "wall" ? "muraux" : "plafond"}${model.anemometer ? ", anémomètre" : ""}.`;
+    return `${model.familyName} ${model.dimensionLabel} (largeur × avancée), ${model.finishLabel}, ${model.bracketCount} supports ${model.bracketMount === "wall" ? "muraux" : model.bracketMount === "rafter" ? "sur chevrons" : "plafond"}${model.control ? `, commande ${model.control === "manual" ? "manuelle" : "électrique"}` : ""}${model.led ? ", LED sous le coffre" : ""}${model.ledArms ? ", LED dans les bras" : ""}${model.anemometer ? ", capteur de vent" : ""}.`;
   }
   const closures = model.closures.map((c) => `${CLOSURE_NAMES[c.type]} ${SIDE_LABELS[c.side].toLowerCase()}${model.openings.filter((o) => o.side === c.side).length > 1 ? ` ${c.index}` : ""}${c.assembly.kind === "modular" ? ` (${c.assembly.modules} modules${c.assembly.toConfirm ? ", assemblage à confirmer" : ""})` : ""}`);
-  const light = model.lighting.blades ? "LED intégrées aux lames" : model.lighting.gutter ? `LED de gouttière ${model.lighting.color === "rgb" ? "RGB" : "blanc chaud"}` : "sans éclairage";
+  const light = [model.lighting.blades ? "LED intégrées aux lames" : model.lighting.gutter ? `LED ${model.sections ? "périphérique" : "de gouttière"} ${model.lighting.color === "rgb" ? "RGB" : "blanc chaud"}` : null, model.lighting.spots ? `${model.lighting.spots} spots LED` : null].filter(Boolean).join(", ") || "sans éclairage";
   return [
-    `${model.familyName} ${model.dimensionLabel}, ${model.mounting === "wall" ? "adossée au mur" : "autoportée"}, ${model.finishLabel.toLowerCase()}`,
-    `${model.posts.length} poteaux, ${model.blades.count} lames (indicatif)`,
+    `${model.familyName} ${model.dimensionLabel}, ${model.mounting === "wall" ? "adossée au mur" : "autoportante"}, ${model.sections ? model.finishLabel : model.finishLabel.toLowerCase()}`,
+    model.roof === "fabric" ? `${model.posts.length} poteaux, toiture en toile` : `${model.posts.length} poteaux, ${model.blades.count} lames (indicatif)`,
     closures.length ? closures.join(", ") : "aucune fermeture",
     light,
     model.heaters.count ? `${model.heaters.count} lampe${model.heaters.count > 1 ? "s" : ""} chauffante${model.heaters.count > 1 ? "s" : ""}` : null,
@@ -34,7 +36,9 @@ function describe(model: SceneModel): string {
 }
 
 function frameKeyOf(model: SceneModel): string {
-  return model.kind === "pergola" ? `p-${model.lengthMm}-${model.widthMm}-${model.mounting}` : `a-${model.widthMm}-${model.projectionMm}-${model.bracketMount}`;
+  if (model.kind === "pergola") return `p-${model.lengthMm}-${model.widthMm}-${model.mounting}`;
+  if (model.kind === "screen") return `s-${model.widthMm}-${model.heightMm}-${model.mounting}`;
+  return `a-${model.widthMm}-${model.projectionMm}-${model.bracketMount}`;
 }
 
 interface ViewerProps {
@@ -53,7 +57,6 @@ function Viewer3D({ model, selected = null, onSelect, onImage, fallback, onCaptu
   const [failed, setFailed] = useState(() => !supportsWebGL());
   const [engine, setEngine] = useState<SceneEngine | null>(null);
   const [view, setView] = useState<ViewPreset>("three_quarter");
-  const [night, setNight] = useState(false);
   const [bladeAngle, setBladeAngle] = useState(0);
   const [deployment, setDeployment] = useState(100);
   const [exportState, setExportState] = useState<"idle" | "busy" | "done" | "error">("idle");
@@ -92,12 +95,13 @@ function Viewer3D({ model, selected = null, onSelect, onImage, fallback, onCaptu
 
   useEffect(() => {
     if (!engine) return;
-    engine.setBuilt(model.kind === "pergola" ? buildPergolaScene(model) : buildAwningScene(model));
+    engine.setBuilt(buildScene(model));
   }, [engine, model]);
   useEffect(() => { engine?.current?.setBladeAngle?.(bladeAngle); engine?.invalidate(); }, [engine, model, bladeAngle]);
   useEffect(() => { engine?.current?.setDeployment?.(deployment / 100); engine?.invalidate(); }, [engine, model, deployment]);
   useEffect(() => { engine?.current?.setSelected?.(selected); engine?.invalidate(); }, [engine, model, selected]);
-  useEffect(() => { engine?.setNight(night); }, [engine, night]);
+  // ambiance nuit retirée : rendu de jour, éclairages choisis représentés allumés (voir builders)
+  useEffect(() => { engine?.setNight(false); }, [engine, model]);
   const frameKey = frameKeyOf(model);
   useEffect(() => {
     if (!engine || !frameKey) return;
@@ -159,45 +163,50 @@ function Viewer3D({ model, selected = null, onSelect, onImage, fallback, onCaptu
       <div className="flex flex-wrap items-center gap-2">
         <div role="group" aria-label="Vues prédéfinies" className="flex flex-wrap gap-1">
           {VIEW_PRESETS.map((p) => (
-            <button key={p.id} type="button" aria-pressed={view === p.id} onClick={() => { setView(p.id); if (view === p.id) engine?.setView(p.id); }} className={`rounded-full border px-3 py-1.5 text-xs min-h-9 ${view === p.id ? "border-ink bg-anthracite text-sand-50" : "border-sand-300 bg-white"}`}>{p.label}</button>
+            <button key={p.id} type="button" aria-pressed={view === p.id} onClick={() => { setView(p.id); if (view === p.id) engine?.setView(p.id); }} className={`rounded-[2px] border px-3 py-1.5 text-xs min-h-9 ${view === p.id ? "border-ink bg-anthracite text-sand-50" : "border-sand-300 bg-white"}`}>{p.label}</button>
           ))}
         </div>
-        <button type="button" aria-pressed={night} onClick={() => setNight((n) => !n)} className="inline-flex items-center gap-1 rounded-full border border-sand-300 bg-white px-3 py-1.5 text-xs min-h-9">
-          {night ? <Sun className="size-3.5" aria-hidden="true" /> : <Moon className="size-3.5" aria-hidden="true" />} {night ? "Ambiance jour" : "Ambiance nuit"}
-        </button>
       </div>
 
-      {model.kind === "pergola" ? (
+      {model.kind === "pergola" && model.roof !== "fabric" ? (
         <label className="flex items-center gap-3 text-xs text-stone-800">
           <span className="whitespace-nowrap">Ouverture des lames</span>
-          <input type="range" min={0} max={90} step={1} value={bladeAngle} onChange={(e) => setBladeAngle(Number(e.target.value))} className="flex-1 accent-copper-600" aria-valuetext={`${bladeAngle} degrés`} />
+          <input type="range" min={0} max={model.blades.maxAngleDeg ?? 90} step={1} value={bladeAngle} onChange={(e) => setBladeAngle(Number(e.target.value))} className="flex-1 accent-brand-600" aria-valuetext={`${bladeAngle} degrés`} />
           <span className="w-10 text-right tabular-nums">{bladeAngle}°</span>
         </label>
-      ) : (
+      ) : model.kind !== "pergola" ? (
         <label className="flex items-center gap-3 text-xs text-stone-800">
-          <span className="whitespace-nowrap">Déploiement de la toile</span>
-          <input type="range" min={0} max={100} step={1} value={deployment} onChange={(e) => setDeployment(Number(e.target.value))} className="flex-1 accent-copper-600" aria-valuetext={`${deployment} %`} />
+          <span className="whitespace-nowrap">{model.kind === "screen" ? "Descente de la toile" : "Déploiement de la toile"}</span>
+          <input type="range" min={0} max={100} step={1} value={deployment} onChange={(e) => setDeployment(Number(e.target.value))} className="flex-1 accent-brand-600" aria-valuetext={`${deployment} %`} />
           <span className="w-10 text-right tabular-nums">{deployment} %</span>
         </label>
-      )}
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" className="btn-secondary py-1.5 text-sm" onClick={exportImage} disabled={!engine || exportState === "busy"}><Download className="size-4" aria-hidden="true" /> Exporter l'image du projet</button>
         <span aria-live="polite" className="text-xs text-stone-700">{exportState === "done" ? "Image exportée." : exportState === "error" ? "Export impossible sur ce navigateur." : ""}</span>
       </div>
       <p className="text-xs text-stone-700">Faites glisser pour tourner, molette ou pincement pour zoomer{onSelect ? ", touchez une ouverture pour l'équiper" : ""}. Réglages d'affichage uniquement : ils ne modifient ni la configuration ni le prix.</p>
-      {model.kind === "pergola" && model.toConfirm.length > 0 && (
+      {(model.kind === "awning" ? model.toConfirm ?? [] : model.toConfirm).length > 0 && (
         <div data-testid="scene-3d-to-confirm" className="rounded-lg border border-warning/40 bg-white p-3 text-xs text-stone-800">
           <p className="font-medium">Représenté à titre indicatif, à confirmer sur devis :</p>
-          <ul className="mt-1 list-disc pl-4">{model.toConfirm.map((t) => <li key={t}>{t}</li>)}</ul>
+          <ul className="mt-1 list-disc pl-4">{(model.kind === "awning" ? model.toConfirm ?? [] : model.toConfirm).map((t) => <li key={t}>{t}</li>)}</ul>
         </div>
       )}
-      <p className="text-xs font-medium text-stone-800">{model.disclaimer} — {model.kind === "pergola" && !model.indicative.heightMm ? `hauteur saisie (${(model.heightMm / 1000).toLocaleString("fr-FR")} m), sections indicatives.` : `hauteur (${(model.heightMm / 1000).toLocaleString("fr-FR")} m) et sections indicatives.`}</p>
+      <p className="text-xs font-medium text-stone-800">{model.disclaimer} — {model.kind === "screen" ? `cotes saisies, coffre selon le catalogue, teinte de toile indicative.` : model.kind === "pergola" && !model.indicative.heightMm ? `hauteur saisie (${(model.heightMm / 1000).toLocaleString("fr-FR")} m), ${model.sections ? "sections du catalogue" : "sections indicatives"}.` : `hauteur (${(model.heightMm / 1000).toLocaleString("fr-FR")} m) et sections indicatives.`}</p>
     </div>
   );
 }
 
 export function PergolaScene3D(props: Omit<ViewerProps, "model"> & { model: PergolaSceneModel }) {
+  return <Viewer3D {...props} />;
+}
+
+export function SystemScene3D(props: Omit<ViewerProps, "model"> & { model: SceneModel }) {
+  return <Viewer3D {...props} />;
+}
+
+export function ScreenScene3D(props: Omit<ViewerProps, "model" | "selected" | "onSelect"> & { model: ScreenSceneModel }) {
   return <Viewer3D {...props} />;
 }
 

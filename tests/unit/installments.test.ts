@@ -58,7 +58,7 @@ describe("frais et libellé « sans frais »", () => {
 });
 
 describe("matrice d'éligibilité", () => {
-  const ok = (over: Partial<InstallmentRules>, total = 250_000, env: "test" | "prod" = "test", country = "FR") => installmentEligibility({ totalCents: total, countryCode: country, env, settings: rules(over) });
+  const ok = (over: Partial<InstallmentRules>, total = 250_000, env: "test" | "prod" = "test", country = "FR", customerType: "B2C" | "B2B" | null = "B2C") => installmentEligibility({ totalCents: total, countryCode: country, env, settings: rules(over), customerType, merchantCountry: "FR" });
 
   it("simulateur activé en test : éligible", () => {
     const r = ok({});
@@ -94,6 +94,13 @@ describe("matrice d'éligibilité", () => {
     expect(ok(a, 500_000).plans.map((p) => p.count)).toEqual([2, 3, 4]);
     expect(ok({ ...a, maxCents: 900_000 }, 600_000).eligible).toBe(false);
     expect(ok({ ...a, countries: ["FR", "DE"] }, 200_000, "test", "DE").reasons.join()).toMatch(/non accepté par Alma/);
+  });
+  it("Alma : particuliers seulement, paiement domestique (documentation Stripe revérifiée le 2026-10-25)", () => {
+    const a = { provider: "stripe_alma", installmentCounts: [2, 3, 4], maxCents: 500_000, countries: ["FR", "BE"] };
+    expect(ok(a, 200_000, "test", "FR", "B2B").reasons.join()).toMatch(/réservé aux particuliers/);
+    expect(ok(a, 200_000, "test", "FR", null).eligible).toBe(false);
+    expect(ok(a, 200_000, "test", "BE", "B2C").reasons.join()).toMatch(/transfrontaliers/);
+    expect(ok(a, 200_000, "test", "FR", "B2C").eligible).toBe(true);
   });
   it("pays hors réglages et devise non EUR", () => {
     expect(ok({}, 250_000, "test", "BE").eligible).toBe(false);

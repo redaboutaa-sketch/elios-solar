@@ -62,3 +62,12 @@ docker-compose.override.yml
 src/generated/
 tests/e2e/.auth/
 .claude/
+
+# Sources client et extractions confidentielles (tarifs d'achat, fiches internes) — jamais dans le dépôt public
+/inputs/
+/private/
+# capture de la page des tarifs internes : jamais commitée (noms et empreintes des sources confidentielles)
+tests/e2e/screenshots/admin-tarifs-fournisseur-*.png
+
+# captures de recette (jamais commitées)
+tests/e2e/screenshots/*.png

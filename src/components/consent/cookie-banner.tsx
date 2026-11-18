@@ -1,6 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { saveConsentAction } from "@/server/actions/consent";
+import { useT } from "@/i18n/client";
+
+/** Aucun traceur publicitaire ni service marketing n'est intégré : la catégorie reste refusée tant qu'il n'en existe pas. */
+const MARKETING_AVAILABLE = false;
 
 export const CONSENT_VERSION = "2026-10";
 const KEY = "es_consent_v";
@@ -20,6 +24,7 @@ function write(prefs: Prefs) {
 }
 
 export function CookieBanner({ analyticsAvailable }: { analyticsAvailable: boolean }) {
+  const t = useT("layout").consent;
   const [visible, setVisible] = useState(false);
   const [custom, setCustom] = useState(false);
   const [prefs, setPrefs] = useState<Prefs>({ analytics: false, marketing: false });
@@ -39,24 +44,24 @@ export function CookieBanner({ analyticsAvailable }: { analyticsAvailable: boole
     <div role="dialog" aria-modal="false" aria-labelledby="consent-title" className="fixed inset-x-0 bottom-0 z-50 border-t border-sand-300 bg-white shadow-soft">
       <div className="container-x py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="text-sm">
-          <p id="consent-title" className="font-medium">Cookies et mesure d'audience</p>
-          <p className="text-stone-700">Seuls les cookies nécessaires sont actifs. {analyticsAvailable ? "La mesure d'audience et le marketing ne s'activent qu'avec votre accord." : "Aucun service de mesure d'audience ni de marketing n'est configuré pour le moment."}</p>
+          <p id="consent-title" className="font-medium">{t.title}</p>
+          <p className="text-stone-700">{t.intro} {analyticsAvailable ? t.withAnalytics : t.noAnalytics}</p>
           {custom && (
             <div className="mt-2 flex flex-col gap-1">
-              <label className="flex items-center gap-2"><input type="checkbox" checked disabled /> Nécessaires (toujours actifs)</label>
-              <label className="flex items-center gap-2"><input type="checkbox" checked={prefs.analytics} onChange={(e) => setPrefs({ ...prefs, analytics: e.target.checked })} disabled={!analyticsAvailable} /> Mesure d'audience</label>
-              <label className="flex items-center gap-2"><input type="checkbox" checked={prefs.marketing} onChange={(e) => setPrefs({ ...prefs, marketing: e.target.checked })} /> Marketing</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked disabled /> {t.necessary}</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={prefs.analytics} onChange={(e) => setPrefs({ ...prefs, analytics: e.target.checked })} disabled={!analyticsAvailable} /> {t.analytics}</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={prefs.marketing} onChange={(e) => setPrefs({ ...prefs, marketing: e.target.checked })} disabled={!MARKETING_AVAILABLE} /> {t.marketing}{MARKETING_AVAILABLE ? "" : t.noService}</label>
             </div>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" className="btn-secondary" onClick={() => commit({ analytics: false, marketing: false })}>Tout refuser</button>
+          <button type="button" className="btn-secondary" onClick={() => commit({ analytics: false, marketing: false })}>{t.refuse}</button>
           {custom ? (
-            <button type="button" className="btn-primary" onClick={() => commit(prefs)}>Enregistrer</button>
+            <button type="button" className="btn-primary" onClick={() => commit(prefs)}>{t.save}</button>
           ) : (
-            <button type="button" className="btn-ghost" onClick={() => setCustom(true)}>Personnaliser</button>
+            <button type="button" className="btn-ghost" onClick={() => setCustom(true)}>{t.customize}</button>
           )}
-          <button type="button" className="btn-primary" onClick={() => commit({ analytics: analyticsAvailable, marketing: true })}>Tout accepter</button>
+          <button type="button" className="btn-primary" onClick={() => commit({ analytics: analyticsAvailable, marketing: MARKETING_AVAILABLE })}>{t.accept}</button>
         </div>
       </div>
     </div>
@@ -64,9 +69,10 @@ export function CookieBanner({ analyticsAvailable }: { analyticsAvailable: boole
 }
 
 export function CookiePreferencesButton() {
+  const t = useT("layout").consent;
   return (
     <button type="button" className="underline hover:text-ink" onClick={() => window.dispatchEvent(new CustomEvent("es:consent-open"))}>
-      Gérer les cookies
+      {t.manage}
     </button>
   );
 }

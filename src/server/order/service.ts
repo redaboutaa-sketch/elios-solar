@@ -8,6 +8,7 @@ import { consumeReservations, expireReservations, releaseReservations, reserveSt
 import { logger } from "@/lib/logger";
 import { loadCatalog } from "@/server/catalog/load";
 import { estimateCartDelivery } from "@/server/stock/delivery";
+import { ONLINE_SALES_CLOSED, onlineSalesEnabled } from "@/server/payment/mode";
 
 export const ORDER_TTL_MINUTES = 30;
 
@@ -35,6 +36,7 @@ export class OrderError extends Error {
  * Le total est recalculé côté serveur ; rien n'est pris du navigateur.
  */
 export async function createOrderFromCart(opts: { owner: Owner; email: string; shippingAddress: AddressInput; billingAddress?: AddressInput; customerNotes?: string }) {
+  if (!onlineSalesEnabled()) throw new OrderError(ONLINE_SALES_CLOSED, "sales_disabled");
   await expireReservations();
   await expirePendingOrders();
   const cart = await findActiveCart(opts.owner);
@@ -45,7 +47,7 @@ export async function createOrderFromCart(opts: { owner: Owner; email: string; s
   }
   const evaluation = await evaluateCart(cart);
   if (!evaluation.purchasable) throw new CartError("Une ligne du panier n'est plus valide : vérifiez votre panier.", evaluation.lines.flatMap((l) => l.result.issues.filter((i) => i.severity !== "info")));
-  if (evaluation.shippingStatus !== "ok" || evaluation.shippingCents === null) throw new OrderError("La livraison vers cette adresse nécessite un devis.", "shipping_quote");
+  if ((evaluation.shippingStatus !== "ok" && evaluation.shippingStatus !== "not_included") || evaluation.shippingCents === null) throw new OrderError("La livraison vers cette adresse nécessite un devis.", "shipping_quote");
   // Revalidation disponibilité et délai au moment du checkout (stock relu en base)
   const leadEstimate = await estimateCartDelivery(evaluation, await loadCatalog());
   if (leadEstimate.status === "blocked") throw new OrderError(`Disponibilité modifiée : ${leadEstimate.blocked.map((b) => `${b.label} (${b.reason})`).join(" ; ")}. Votre panier est conservé.`, "unavailable");
@@ -78,7 +80,7 @@ export async function createOrderFromCart(opts: { owner: Owner; email: string; s
           totalCents: evaluation.totalCents,
           shippingAddress: opts.shippingAddress as never,
           billingAddress: billing as never,
-          delivery: { ...delivery, shippingLabel: evaluation.shippingLabel, estimate: { status: leadEstimate.status, policy: leadEstimate.policy, explanation: leadEstimate.explanation, shipments: leadEstimate.shipments, unknown: leadEstimate.unknown, computedAt: new Date().toISOString() } } as never,
+          delivery: { ...delivery, shippingLabel: evaluation.shippingLabel, shippingIncluded: evaluation.shippingStatus !== "not_included", estimate: { status: leadEstimate.status, policy: leadEstimate.policy, explanation: leadEstimate.explanation, shipments: leadEstimate.shipments, unknown: leadEstimate.unknown, computedAt: new Date().toISOString() } } as never,
           isDemo,
           containsDemoData: evaluation.containsDemoData,
           customerNotes: opts.customerNotes?.slice(0, 2000) ?? null,
@@ -108,7 +110,7 @@ export async function createOrderFromCart(opts: { owner: Owner; email: string; s
           if (pl.sku && !pl.included && (pl.kind === "base" || pl.kind === "closure" || pl.kind === "option")) stockItems.push({ sku: pl.sku, qty: pl.qty * l.line.qty });
         }
       }
-      if (evaluation.shippingCents !== null) {
+      if (evaluation.shippingCents !== null && evaluation.shippingStatus === "ok") {
         await tx.orderLine.create({ data: { orderId: created.id, kind: "shipping", label: evaluation.shippingLabel ?? "Livraison", qty: 1, unitGrossCents: evaluation.shippingCents, totalGrossCents: evaluation.shippingCents, taxRateBps: 2000, sortOrder: sort++ } });
       }
       await reserveStock(tx, created.id, stockItems, ORDER_TTL_MINUTES);
@@ -142,7 +144,7 @@ async function notifyOrderPaid(orderId: string) {
   if (!order) return;
   const addr = order.shippingAddress as unknown as AddressInput;
   const lines = order.lines.filter((l) => l.kind !== "discount" || l.totalGrossCents !== 0).map((l) => ({ label: l.label, qty: l.qty, totalGrossCents: l.totalGrossCents, included: l.included }));
-  await enqueueEmail({ to: order.email, subject: `Commande ${order.number} confirmée`, template: "order-confirmation", payload: { number: order.number, orderId: order.id, firstName: addr.firstName, totalCents: order.totalCents, lines, demo: order.isDemo || order.containsDemoData }, dedupeKey: `order-confirmation:${order.id}` });
+  await enqueueEmail({ to: order.email, subject: `Commande ${order.number} confirmée`, template: "order-confirmation", payload: { number: order.number, orderId: order.id, firstName: addr.firstName, totalCents: order.totalCents, lines, demo: order.isDemo || order.containsDemoData, deliveryNote: (order.delivery as { shippingIncluded?: boolean; shippingLabel?: string } | null)?.shippingIncluded === false ? (order.delivery as { shippingLabel?: string }).shippingLabel : undefined }, dedupeKey: `order-confirmation:${order.id}` });
   const admin = process.env.ADMIN_NOTIFICATION_EMAIL;
   if (admin) await enqueueEmail({ to: admin, subject: `Nouvelle commande ${order.number}`, template: "order-admin-notification", payload: { number: order.number, orderId: order.id, email: order.email, totalCents: order.totalCents, demo: order.isDemo }, dedupeKey: `order-admin:${order.id}` });
 }

@@ -14,12 +14,12 @@ test("chat : un visiteur écrit, un conseiller répond, le visiteur voit la rép
   const vp = await visitor.newPage();
   await vp.goto("/aide");
   await acceptNecessaryOnly(vp);
-  await vp.getByRole("button", { name: "Ouvrir le chat avec un conseiller" }).click();
-  const panel = vp.getByRole("dialog", { name: "Discuter avec un conseiller" });
+  await vp.getByRole("button", { name: "Ouvrir l'aide et le chat" }).click();
+  const panel = vp.getByRole("dialog", { name: /Discuter avec un conseiller|Aide et demande/ });
   await expect(panel).toBeVisible();
   await expect(panel.getByRole("button", { name: "Fermer le chat" })).toBeFocused();
   // état de présence honnête : l'un ou l'autre des deux libellés, jamais autre chose
-  await expect(panel.getByText(/Un conseiller est disponible|Nos conseillers ne sont pas connectés/).first()).toBeVisible();
+  await expect(panel.getByTestId("chat-status")).toHaveText(/^(Un conseiller est connecté|Aucun conseiller connecté : .+)$/);
   await expect(panel.getByText(/\bIA\b|intelligence artificielle/i)).toHaveCount(0);
   await panel.getByLabel(/^Prénom/).fill(name);
   await panel.getByLabel(/^E-mail/).fill(`chat-${id}@test.invalid`);
@@ -56,7 +56,7 @@ test("chat : un visiteur écrit, un conseiller répond, le visiteur voit la rép
   // 3. le visiteur voit la réponse par rafraîchissement automatique (polling 6 s)
   await expect(thread.getByText(answer)).toBeVisible({ timeout: 20_000 });
   // un conseiller vient d'être actif : la présence est désormais affichée
-  await expect(panel.getByText("Un conseiller est disponible")).toBeVisible({ timeout: 20_000 });
+  await expect(panel.getByTestId("chat-status")).toHaveText("Un conseiller est connecté", { timeout: 20_000 });
   await shot(vp, "chat-widget-reponse");
   await visitor.close();
 });

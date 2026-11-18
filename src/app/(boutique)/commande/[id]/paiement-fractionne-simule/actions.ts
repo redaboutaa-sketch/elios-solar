@@ -7,13 +7,14 @@ import { getGuestKey } from "@/server/guest";
 import { getOrderForOwner } from "@/server/order/service";
 import { simSign } from "@/server/payment/installments-sim";
 import { randomCode } from "@/server/ids";
+import { salesMode } from "@/server/payment/mode";
 
 /**
  * Boutons de la page de paiement fractionné SIMULÉ : chaque choix envoie un événement SIGNÉ au
  * webhook du simulateur via HTTP (même chemin que la production : signature, idempotence).
  */
 export async function installmentsSimAction(formData: FormData) {
-  if (process.env.PAYMENT_PROVIDER === "stripe") redirect("/");
+  if (salesMode() !== "demo") redirect("/");
   const [session, guestKey] = await Promise.all([getSession(), getGuestKey()]);
   const orderId = String(formData.get("orderId") ?? "");
   const order = await getOrderForOwner(orderId, { userId: session?.user.id, guestKey });

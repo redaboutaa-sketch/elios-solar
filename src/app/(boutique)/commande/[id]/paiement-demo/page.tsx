@@ -6,6 +6,7 @@ import { getSession } from "@/lib/session";
 import { getGuestKey } from "@/server/guest";
 import { getOrderForOwner } from "@/server/order/service";
 import { demoPaymentAction } from "@/server/actions/demo-payment";
+import { salesMode } from "@/server/payment/mode";
 
 export const metadata: Metadata = { title: "Paiement simulé", robots: { index: false } };
 
@@ -17,7 +18,7 @@ export default async function DemoPaymentPage(props: PageProps<"/commande/[id]/p
   if (!order) notFound();
   if (order.status === "PAID") redirect(`/commande/${order.id}/confirmation`);
   const ref = typeof sp.ref === "string" ? sp.ref : order.payments[0]?.providerRef ?? "";
-  if (process.env.PAYMENT_PROVIDER === "stripe") redirect(`/commande/${order.id}/confirmation`);
+  if (salesMode() !== "demo") redirect(`/commande/${order.id}/confirmation`);
   return (
     <div className="container-x py-12 max-w-xl">
       <div className="card p-8 border-warning">

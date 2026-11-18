@@ -4,6 +4,7 @@ import type { ConfigurationInput, EvaluationResult } from "@/domain/types";
 import { loadCatalog } from "@/server/catalog/load";
 import { shareToken } from "@/server/ids";
 import type { ConfigurationStatus } from "@/generated/prisma/enums";
+import { onlineSalesEnabled } from "@/server/payment/mode";
 
 export function statusFor(result: EvaluationResult): ConfigurationStatus {
   if (result.purchasable) return "VALID";
@@ -14,7 +15,13 @@ export function statusFor(result: EvaluationResult): ConfigurationStatus {
 
 export async function evaluateInput(input: ConfigurationInput): Promise<EvaluationResult> {
   const catalog = await loadCatalog();
-  return evaluate(catalog, input);
+  return withSalesMode(evaluate(catalog, input));
+}
+
+/** Commande en ligne fermée sur l'environnement : la configuration reste explorable, elle passe au devis. */
+function withSalesMode(r: EvaluationResult): EvaluationResult {
+  if (onlineSalesEnabled() || !r.purchasable) return r;
+  return { ...r, purchasable: false, quoteRecommended: true, onlineOrder: r.onlineOrder ? { ok: false, reasons: [...r.onlineOrder.reasons, "la commande en ligne n'est pas ouverte"] } : r.onlineOrder };
 }
 
 export async function saveConfiguration(opts: { input: ConfigurationInput; ownerUserId?: string | null; guestKey?: string | null; title?: string; parentId?: string | null }) {

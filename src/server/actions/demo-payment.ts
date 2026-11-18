@@ -7,13 +7,14 @@ import { getGuestKey } from "@/server/guest";
 import { getOrderForOwner } from "@/server/order/service";
 import { demoSign } from "@/server/payment";
 import { randomCode } from "@/server/ids";
+import { salesMode } from "@/server/payment/mode";
 
 /**
  * Le bouton de la page de paiement simulé envoie un événement SIGNÉ au webhook de
  * démonstration (même chemin que la production : signature, idempotence) via HTTP.
  */
 export async function demoPaymentAction(formData: FormData) {
-  if (process.env.PAYMENT_PROVIDER === "stripe") redirect("/");
+  if (salesMode() !== "demo") redirect("/");
   const [session, guestKey] = await Promise.all([getSession(), getGuestKey()]);
   const orderId = String(formData.get("orderId") ?? "");
   const order = await getOrderForOwner(orderId, { userId: session?.user.id, guestKey });

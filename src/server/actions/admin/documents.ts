@@ -34,7 +34,7 @@ async function attachPdf(fd: FormData, session: { user: { id: string; email: str
   const res = await storeUploadedFile(file, { accept: ["application/pdf"] });
   if (!res.ok) back(path, res.error, "err");
   const s = res.stored;
-  const media = await prisma.media.create({ data: { kind: "document", nature: "DOCUMENT", status: "VALIDATED", path: s.path, mimeType: s.mimeType, sizeBytes: s.sizeBytes, alt: title, title, source: source || "Téléversé via l'espace Documents", license: "à préciser", credit: "ELIOS SOLAR", validatedBy: session.user.email, validatedAt: new Date() } });
+  const media = await prisma.media.create({ data: { kind: "document", nature: "DOCUMENT", status: "VALIDATED", path: s.path, mimeType: s.mimeType, sizeBytes: s.sizeBytes, alt: title, title, source: source || "Téléversé via l'espace Documents", license: "à préciser", credit: "HELIOSTORES", validatedBy: session.user.email, validatedAt: new Date() } });
   await audit({ ...actorOf(session), action: "media.upload", entity: "Media", entityId: media.id, after: { path: media.path, mimeType: s.mimeType, sizeBytes: s.sizeBytes, via: "documents" } });
   return media.id;
 }

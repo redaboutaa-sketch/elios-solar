@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { GUIDES } from "@/server/content/guides";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd } from "@/server/seo/structured-data";
+import { BRAND } from "@/config/brand";
+import { PUBLISHED_GUIDES } from "@/server/content/guides";
 
 const TITLE = "Préparer son projet et prendre les mesures";
-const DESCRIPTION = "Emplacement, cotes extérieur poteau à extérieur poteau, hauteur, pente, ancrage, câble 230 V, orientation, accès livraison et démarches : la liste de contrôle avant de commander.";
+const DESCRIPTION = "Emplacement, cotes, hauteur, pente, ancrage, câble 230 V, orientation, accès de livraison et démarches : la liste de contrôle avant de commander.";
 
 export const metadata: Metadata = { title: TITLE, description: DESCRIPTION, alternates: { canonical: "/guides/preparation-projet" } };
 
@@ -37,7 +40,8 @@ const Marker = () => (
 export default function Page() {
   return (
     <div className="container-x py-8 max-w-3xl">
-      <Breadcrumbs items={[{ label: "Guides" }, { label: TITLE }]} />
+      <Breadcrumbs items={[{ href: "/guides", label: "Guides et installation" }, { label: TITLE }]} />
+      <JsonLd data={breadcrumbJsonLd(BRAND.siteUrl, [{ name: "Guides et installation", path: "/guides" }, { name: TITLE, path: "/guides/preparation-projet" }])} />
       <h1 className="mt-4 font-display text-4xl">{TITLE}</h1>
       <p className="mt-2 text-stone-700">{DESCRIPTION}</p>
       <p className="mt-3 text-sm text-stone-700">Guide pratique original. Les valeurs propres à chaque modèle (hauteur de passage, dimensions des platines, alimentation) figurent sur la fiche technique et la notice du fournisseur : reportez-vous toujours à ces documents.</p>
@@ -48,7 +52,7 @@ export default function Page() {
           <li>Repérez la zone à couvrir et l'usage (repas, salon, bord de piscine) : prévoyez un dégagement pour circuler autour du mobilier.</li>
           <li>Adossée : le mur doit être porteur, plan et disponible sur toute la longueur de la pergola (sans fenêtre, volet ou descente d'eau gênant la poutre).</li>
           <li>Autoportée : quatre poteaux, à placer sur un sol capable de recevoir les fixations.</li>
-          <li>Pensez à l'évacuation de l'eau : elle descend par les poteaux, vérifiez où elle s'écoulera.</li>
+          <li>Pensez à l'évacuation de l'eau des modèles à lames : la fiche du modèle indique par où elle s'écoule, vérifiez où elle aboutira.</li>
         </ul>
 
         <h2>2. Mesurer : extérieur poteau à extérieur poteau</h2>
@@ -109,7 +113,7 @@ export default function Page() {
         <path d="M180 120 C 200 120, 210 90, 232 82" fill="none" stroke="#c9a227" strokeWidth="3" strokeDasharray="8 4" />
         <text x="186" y="60" fontSize="13" fontFamily="sans-serif" fill={INK}>Câble 230 V</text>
         <path d="M600 280 L600 240 Q 600 230 590 230 L470 230" fill="none" stroke={ACCENT} strokeWidth="2" markerEnd="url(#g-a)" />
-        <text x="560" y="270" fontSize="13" fontFamily="sans-serif" textAnchor="end" fill={INK}>Accès livraison (palette)</text>
+        <text x="560" y="270" fontSize="13" fontFamily="sans-serif" textAnchor="end" fill={INK}>Accès livraison</text>
         <g transform="translate(580 60)"><circle r="26" fill="none" stroke={INK} /><path d="M0 -22 L7 0 L0 -5 L-7 0 Z" fill={INK} /><text y="-30" fontSize="13" fontFamily="sans-serif" textAnchor="middle" fill={INK}>N</text></g>
         <path d="M470 270 Q 560 120 520 20" fill="none" stroke="#e0a73b" strokeWidth="2" strokeDasharray="2 6" />
         <text x="512" y="130" fontSize="13" fontFamily="sans-serif" fill={INK}>Soleil</text>
@@ -124,7 +128,7 @@ export default function Page() {
 
         <h2>7. Accès pour la livraison</h2>
         <ul>
-          <li>La livraison se fait sur palette, sur rendez-vous : vérifiez la largeur des accès (portail, allée, passage latéral), les marches et la possibilité de stationner un camion.</li>
+          <li>Les modalités de livraison sont précisées au devis : vérifiez dès maintenant la largeur des accès (portail, allée, passage latéral), les marches et la possibilité de stationner un véhicule de livraison.</li>
           <li>Les profilés sont longs : prévoyez un chemin dégagé jusqu'à l'emplacement et un lieu de stockage à l'abri avant la pose.</li>
           <li>Prévoyez au moins deux personnes et du matériel adapté pour le montage (voir notice du fournisseur).</li>
         </ul>
@@ -132,7 +136,7 @@ export default function Page() {
         <h2>8. Démarches administratives</h2>
         <p>Une pergola peut nécessiter une autorisation d'urbanisme selon sa surface, son implantation et les règles locales (plan local d'urbanisme, secteur protégé, règlement de copropriété ou de lotissement). <strong>Renseignez-vous auprès de votre mairie</strong> avant de commander et conservez une trace de sa réponse. Voir aussi notre <Link href="/guides/autorisation-urbanisme">guide sur l'autorisation d'urbanisme</Link> (indicatif, ne constitue pas un conseil juridique).</p>
 
-        <h2>Liste de contrôle avant commande</h2>
+        <h2>Liste de contrôle avant la demande de devis</h2>
         <ul>
           <li>Rectangle tracé au sol, cotes extérieur poteau à extérieur poteau et diagonales relevées.</li>
           <li>Hauteur disponible sous l'obstacle le plus bas mesurée.</li>
@@ -145,7 +149,7 @@ export default function Page() {
         </ul>
       </div>
 
-      <nav aria-label="Autres guides" className="mt-10 card p-5"><p className="font-medium">Autres guides</p><ul className="mt-2 list-disc pl-5">{Object.entries(GUIDES).map(([k, v]) => <li key={k}><Link href={`/guides/${k}`} className="underline">{v.title}</Link></li>)}</ul></nav>
+      <nav aria-label="Autres guides" className="mt-10 card p-5"><p className="font-medium">Autres guides</p><ul className="mt-2 list-disc pl-5">{PUBLISHED_GUIDES.filter((g) => g.href !== "/guides/preparation-projet").map((g) => <li key={g.href}><Link href={g.href} className="underline">{g.title}</Link></li>)}</ul></nav>
       <p className="mt-6 flex flex-wrap gap-3"><Link href="/configurateur" className="btn-accent">Configurer ma pergola</Link><Link href="/devis" className="btn-ghost">Demander un devis</Link></p>
     </div>
   );

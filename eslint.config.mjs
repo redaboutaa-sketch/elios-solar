@@ -5,7 +5,7 @@ import nextTs from "eslint-config-next/typescript";
 export default defineConfig([
   ...nextVitals,
   ...nextTs,
-  globalIgnores(["src/generated/**", ".next/**", "playwright-report/**", "test-results/**", "node_modules/**"]),
+  globalIgnores(["src/generated/**", ".next/**", "playwright-report/**", "test-results/**", "node_modules/**", "private/**", "inputs/**"]),
   {
     rules: {
       // Textes français en JSX : les apostrophes typographiques sont volontaires.

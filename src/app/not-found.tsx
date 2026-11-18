@@ -1,4 +1,9 @@
-import Link from "next/link";
+import type { Metadata } from "next";
+import { NotFoundContent } from "@/components/layout/not-found-content";
+
+export const metadata: Metadata = { title: "Page introuvable", robots: { index: false, follow: true } };
+
+/** 404 hors boutique (URL inconnue) : statut 404. */
 export default function NotFound() {
-  return <div className="container-x py-24 text-center"><h1 className="font-display text-4xl">Page introuvable</h1><p className="mt-2 text-stone-700">Cette page n'existe pas ou n'est plus disponible.</p><Link href="/" className="btn-primary mt-6">Retour à l'accueil</Link></div>;
+  return <NotFoundContent />;
 }

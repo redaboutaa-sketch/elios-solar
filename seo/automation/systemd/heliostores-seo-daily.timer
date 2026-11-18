@@ -1,0 +1,12 @@
+[Unit]
+Description=HELIOSTORES — contrôle SEO quotidien à 07:00 heure de Paris
+
+[Timer]
+# fuseau explicite : suit les changements d'heure (07:00 n'est jamais dans la plage de bascule 02:00-03:00)
+OnCalendar=*-*-* 07:00:00 Europe/Paris
+Persistent=true
+RandomizedDelaySec=60
+Unit=heliostores-seo-daily.service
+
+[Install]
+WantedBy=timers.target
