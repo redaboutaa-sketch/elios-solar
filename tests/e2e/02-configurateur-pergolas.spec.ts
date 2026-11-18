@@ -42,7 +42,8 @@ test("HelioMax : règles de cotes, options, fermeture souhaitée, 3D, projet enr
   // 4. récapitulatif : points à confirmer, prix de la grille (aucune grille HelioMax : sur devis)
   await page.getByTestId("step-next").click();
   const issues = stepIssues(page, "recap").first();
-  await expect(issues).toContainText("Hauteur supérieure à 2,81 m");
+  // hauteur maximale 3,00 m sans réserve (décision du client du 2026-11-18)
+  await expect(issues).not.toContainText("Hauteur supérieure");
   // spots + LED linéaire dans les lames : cumul déclaré « à confirmer » par la fiche du modèle
   await expect(issues, "cumul spots LED + LED linéaire signalé").toContainText("cumul non documenté");
   await expect(issues).toContainText("HelioSlide VERRE — fermeture vitrée coulissante côté avant");

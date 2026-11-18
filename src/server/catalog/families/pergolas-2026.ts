@@ -134,7 +134,9 @@ const marbella: HelioFamily = {
     dims: {
       width: { label: "Largeur", minMm: 1000, maxMm: 4000, sources: [at(S.priceList, "p. 10–11 — dimensions minimales : largeur 1 000 mm ; grille jusqu'à 4 000 mm"), at(S.suppPergolas, "p. 60–62 — B ≤ 4 000 mm")], note: "Sous 1 500 mm de largeur ou 1 930 mm d'avancée, prix de la première ligne ou colonne de la grille (dimension supérieure) ; selon le type de mur, la largeur maximale descend à 3 996 mm." },
       depth: { label: "Avancée", minMm: 1318, maxMm: 6010, sources: [at(S.priceList, "p. 10–11 — dimensions minimales : projection 1 318 mm (lame F) ; grille jusqu'à 6 010 mm"), at(S.suppPergolas, "p. 60–62 — L ≤ 6 010 mm")], note: "L'avancée réelle dépend du nombre de lames (pas de 204 ou 220 mm) : ajustée au devis." },
-      height: { label: "Hauteur", minMm: null, maxMm: 3000, confirmAboveMm: 2810, confirmNote: "la brochure indique 2,81 m (hauteur libre), le supplément technique 3,00 m de structure", sources: [at(S.suppPergolas, "p. 59–60"), at(S.brochurePergolas, "p. 4")] },
+      // décision du client (2026-11-18) : hauteur maximale 3,00 m (supplément technique), sans réserve ; la valeur de 2,81 m
+      // de la brochure (hauteur libre) n'est plus affichée
+      height: { label: "Hauteur", minMm: null, maxMm: 3000, sources: [at(S.suppPergolas, "p. 59–60")] },
     },
     mountings: [
       { code: "freestanding", label: "Autoportante", status: "established", sources: [at(S.iuikSB450, "p. 7–10"), at(S.brochurePergolas, "p. 4")] },
@@ -175,14 +177,13 @@ const marbella: HelioFamily = {
     { key: "width_max", label: "Largeur maximale", valueNum: 4000, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Supplément PERGOLAS p. 60–62" },
     { key: "projection_max", label: "Avancée maximale", valueNum: 6010, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Supplément PERGOLAS p. 60–62" },
     { key: "height_max", label: "Hauteur maximale", valueNum: 3000, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Supplément PERGOLAS p. 59–60" },
-    { key: "height_max", label: "Hauteur maximale", valueNum: 2810, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "Brochure Pergolas p. 4", note: "correspond à la hauteur libre du supplément technique" },
     { key: "blade_rotation", label: "Rotation des lames", valueText: "jusqu'à 135° (lame S) ou 110° (lame FLAT)", source: "SUPPLIER_DOCUMENT", sourceRef: "Notice d'utilisation SB 450 p. 6" },
     { key: "drainage", label: "Évacuation", valueText: "jusqu'à 57 l/min (4 points d'évacuation)", source: "SUPPLIER_DOCUMENT", sourceRef: "Notice d'utilisation SB 450 p. 11" },
     { key: "snow", label: "Charge de neige", valueText: "72 kg/m² aux dimensions maximales", source: "SUPPLIER_DOCUMENT", sourceRef: "Notice d'utilisation SB 450 p. 6" },
     { key: "wind_class", label: "Résistance au vent (EN 13561)", valueText: "classe 3 (propriété additionnelle : classe 6)", source: "SUPPLIER_DOCUMENT", sourceRef: "DoP PD/SB450/25" },
   ],
   faq: [
-    { q: "Quelles dimensions sont possibles ?", a: "Jusqu'à 4 m de largeur et 6 m d'avancée environ ; l'avancée exacte dépend du nombre de lames et la hauteur maximale (2,81 m ou 3 m selon le document) est confirmée au devis." },
+    { q: "Quelles dimensions sont possibles ?", a: "Jusqu'à 4 m de largeur, 6 m d'avancée environ et 3 m de hauteur ; l'avancée exacte dépend du nombre de lames." },
     { q: "Autoportante ou adossée ?", a: "Les deux : HelioMax se pose seule sur ses poteaux ou contre un ou deux murs. Le type de fixation murale est établi à l'étude du projet." },
     { q: "Peut-on fermer les côtés ?", a: "Le fabricant cite des fermetures vitrées coulissantes, des panneaux coulissants et des screens latéraux. Les dimensions et fixations sont étudiées au devis ; les fermetures réduisent la résistance au vent." },
     { q: "Quel éclairage ?", a: "Éclairage LED linéaire ou spots dans les lames, et éclairage périphérique, en option." },

@@ -298,7 +298,10 @@ describe("HelioSky (SB 350) : produit prêt à poser en tailles fixes", () => {
 describe("HelioMax, HelioLux, HelioRoof, stores bannes, moustiquaires", () => {
   it("HelioMax : sur mesure jusqu'à 4 × 6,01 m, adossée ou autoportante ; fermetures coulissantes en souhait étudié", () => {
     expect(codes("marbella", { widthMm: 4100 })).toContain("blocking:dimension_out_of_bounds");
-    expect(codes("marbella", { heightMm: 2950 })).toContain("review:dimension_to_confirm");
+    // hauteur maximale 3,00 m sans réserve (décision du client du 2026-11-18)
+    expect(codes("marbella", { heightMm: 2950 })).not.toContain("review:dimension_to_confirm");
+    expect(codes("marbella", { heightMm: 3000 }).some((c) => c.startsWith("blocking:"))).toBe(false);
+    expect(codes("marbella", { heightMm: 3001 })).toContain("blocking:dimension_out_of_bounds");
     expect(codes("marbella", { mounting: "wall", sides: { front: "sliding_glass" } })).toContain("review:closure_to_confirm");
   });
   it("HelioLux (SOLID) : toiture toile, autoportante ou adossée, 1,5–4 × 2–7 m, hauteur > 2,5 m à confirmer", () => {
