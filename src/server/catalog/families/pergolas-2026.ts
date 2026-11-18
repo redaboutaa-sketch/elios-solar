@@ -132,8 +132,8 @@ const marbella: HelioFamily = {
     type: "pergola",
     roof: "louvres",
     dims: {
-      width: { label: "Largeur", minMm: 1000, maxMm: 4000, sources: [at(S.suppPergolas, "p. 60–62 — B ≤ 4 000 mm"), at(S.brochurePergolas, "p. 4 — minimum 1 m")], note: "Minimum indiqué par la brochure seulement ; selon le type de mur, la largeur maximale descend à 3 996 mm." },
-      depth: { label: "Avancée", minMm: 1390, maxMm: 6010, sources: [at(S.suppPergolas, "p. 60–62 — L ≤ 6 010 mm"), at(S.brochurePergolas, "p. 4 — minimum 1,39 m")], note: "L'avancée réelle dépend du nombre de lames (pas de 204 ou 220 mm) : ajustée au devis." },
+      width: { label: "Largeur", minMm: 1000, maxMm: 4000, sources: [at(S.priceList, "p. 10–11 — dimensions minimales : largeur 1 000 mm ; grille jusqu'à 4 000 mm"), at(S.suppPergolas, "p. 60–62 — B ≤ 4 000 mm")], note: "Sous 1 500 mm de largeur ou 1 930 mm d'avancée, prix de la première ligne ou colonne de la grille (dimension supérieure) ; selon le type de mur, la largeur maximale descend à 3 996 mm." },
+      depth: { label: "Avancée", minMm: 1318, maxMm: 6010, sources: [at(S.priceList, "p. 10–11 — dimensions minimales : projection 1 318 mm (lame F) ; grille jusqu'à 6 010 mm"), at(S.suppPergolas, "p. 60–62 — L ≤ 6 010 mm")], note: "L'avancée réelle dépend du nombre de lames (pas de 204 ou 220 mm) : ajustée au devis." },
       height: { label: "Hauteur", minMm: null, maxMm: 3000, confirmAboveMm: 2810, confirmNote: "la brochure indique 2,81 m (hauteur libre), le supplément technique 3,00 m de structure", sources: [at(S.suppPergolas, "p. 59–60"), at(S.brochurePergolas, "p. 4")] },
     },
     mountings: [

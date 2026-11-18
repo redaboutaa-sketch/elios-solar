@@ -87,10 +87,10 @@ const corsica: HelioFamily = {
   rules: {
     type: "awning",
     dims: {
-      width: { label: "Largeur", minMm: 2100, maxMm: 7000, sources: [at(S.supp, "p. 51–52"), at(S.dteCorsica, "p. 6")], note: "La brochure indique 2,05 m minimum ; la largeur minimale dépend de l'avancée." },
+      width: { label: "Largeur", minMm: 2050, maxMm: 7000, sources: [at(PRICE_LIST, "p. 96 — grille CORSICA de 205 à 700 cm"), at(S.supp, "p. 51–52")], note: "La largeur minimale dépend de l'avancée (grille de la liste de prix)." },
       depth: { label: "Avancée", minMm: 1600, maxMm: 3600, valuesMm: DEPTHS, sources: [at(S.dteCorsica, "p. 6"), at(S.dopCorsica, "« CORSICA.700x160-210-260-310-360 »"), at(S.supp, "p. 52, 54")] },
     },
-    depthWidthMin: minWidth([[1600, 2100], [2100, 2600], [2600, 3100], [3100, 3600], [3600, 4100]], [at(S.dteCorsica, "p. 6 — avancée + 0,5 m"), at(S.supp, "p. 52")]),
+    depthWidthMin: minWidth([[1600, 2050], [2100, 2550], [2600, 3050], [3100, 3550], [3600, 4100]], [at(PRICE_LIST, "p. 96 — grille CORSICA : de 205, 255, 305, 355 et 410 cm")]),
     mountings: [
       { code: "wall", label: "Murale", status: "established", sources: [at(S.supp, "p. 55"), at(S.dteCorsica, "p. 6")] },
       { code: "ceiling", label: "Au plafond", status: "established", sources: [at(S.supp, "p. 55")] },
@@ -161,10 +161,10 @@ const jamaica: HelioFamily = {
   rules: {
     type: "awning",
     dims: {
-      width: { label: "Largeur", minMm: 2100, maxMm: 7000, sources: [at(S.supp, "p. 17–18"), at(S.dteJamaica, "p. 6")], note: "La brochure indique 2,05 m minimum ; la largeur minimale dépend de l'avancée." },
-      depth: { label: "Avancée", minMm: 1600, maxMm: 3600, valuesMm: DEPTHS, confirmAboveMm: 3000, confirmNote: "une page du supplément technique indique 3,0 m maximum, toutes les autres sources 3,6 m", sources: [at(S.dteJamaica, "p. 6"), at(S.dopJamaica, "« JAMAICA.700x160-210-260-310-360 »")] },
+      width: { label: "Largeur", minMm: 2050, maxMm: 7000, sources: [at(PRICE_LIST, "p. 96 — grille JAMAICA de 205 à 700 cm"), at(S.supp, "p. 17–18")], note: "La largeur minimale dépend de l'avancée (grille de la liste de prix)." },
+      depth: { label: "Avancée", minMm: 1600, maxMm: 3600, valuesMm: DEPTHS, sources: [at(PRICE_LIST, "p. 96 — grille JAMAICA jusqu'à 360 cm d'avancée"), at(S.dteJamaica, "p. 6"), at(S.dopJamaica, "« JAMAICA.700x160-210-260-310-360 »")] },
     },
-    depthWidthMin: minWidth([[1600, 2100], [2100, 2600], [2600, 3100], [3100, 3600], [3600, 4100]], [at(S.dteJamaica, "p. 6 — avancée + 0,5 m"), at(S.supp, "p. 18")]),
+    depthWidthMin: minWidth([[1600, 2050], [2100, 2550], [2600, 3050], [3100, 3550], [3600, 4100]], [at(PRICE_LIST, "p. 96 — grille JAMAICA : de 205, 255, 305, 355 et 410 cm")]),
     mountings: [
       { code: "wall", label: "Murale", status: "established", sources: [at(S.supp, "p. 23")] },
       { code: "ceiling", label: "Au plafond (sans auvent)", status: "established", sources: [at(S.supp, "p. 20, 23 — l'auvent ne s'utilise pas avec les supports de plafond")] },

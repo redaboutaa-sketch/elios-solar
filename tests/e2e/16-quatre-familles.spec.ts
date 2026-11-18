@@ -138,9 +138,10 @@ test("configurateur : largeur, avancée, teinte et toile modifient réellement l
   await expect(drawing).toHaveAttribute("data-width-mm", "3510");
   await page.getByRole("button", { name: /^Largeur : diminuer de/ }).click();
   await expect(page.locator("#dim-width")).toHaveValue("3500");
-  // avancée : valeurs fabriquées en boutons ; une grande avancée demande une largeur minimale
+  // avancée : valeurs fabriquées en boutons ; une grande avancée demande une largeur minimale (avancée + 40 cm, liste de prix)
+  await setDim(page, "dim-width", 3400);
   await page.getByTestId("dim-depth-values").getByText("3,1 m", { exact: true }).click();
-  await expect(stepIssues(page, "dims")).toContainText("Avancée 3,1 m : largeur minimale 3,51 m");
+  await expect(stepIssues(page, "dims")).toContainText("Avancée 3,1 m : largeur minimale 3,5 m");
   await setDim(page, "dim-width", 4200);
   await expect(page.getByTestId("step-dims")).not.toContainText("Impossible");
   await expect(drawing).toHaveAttribute("data-depth-mm", "3100");

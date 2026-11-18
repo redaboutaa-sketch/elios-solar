@@ -170,9 +170,9 @@ describe("fiche retirée SB 500 (historique, ex-HELIO Panorama)", () => {
 });
 
 describe("HelioScreen (R 120 ZiiiP, ex-HELIO Ombra)", () => {
-  it("largeur > 4 m : sources contradictoires → accepté, à confirmer ; > 7 m refusé", () => {
-    expect(codes("helioscreen", { widthMm: 4000 })).not.toContain("review:dimension_to_confirm");
-    expect(codes("helioscreen", { widthMm: 4500 })).toContain("review:dimension_to_confirm");
+  it("largeur jusqu'à 7 m sans réserve (liste de prix p. 69, référence du client) ; > 7 m refusé", () => {
+    expect(codes("helioscreen", { widthMm: 4500 })).not.toContain("review:dimension_to_confirm");
+    expect(codes("helioscreen", { widthMm: 7000 })).not.toContain("blocking:dimension_out_of_bounds");
     expect(codes("helioscreen", { widthMm: 7100 })).toContain("blocking:dimension_out_of_bounds");
   });
   it("modes de commande compréhensibles (filaire, radio RTS, radio io) ; ancien code moteur → choix explicite demandé", () => {
@@ -182,9 +182,9 @@ describe("HelioScreen (R 120 ZiiiP, ex-HELIO Ombra)", () => {
     const old = evaluate(catalog, input("helioscreen", { controlCode: "electric_5" }));
     expect(old.issues.find((i) => i.code === "control_unavailable")?.message).toMatch(/n'est plus proposée.*choisissez un mode de commande/);
   });
-  it("hauteur requise, jusqu'à 4 m ; au-delà de 3 m signalée (texte fabricant)", () => {
+  it("hauteur requise, jusqu'à 4 m sans réserve (liste de prix p. 69)", () => {
     expect(codes("helioscreen", { heightMm: undefined })).toContain("blocking:dimension_missing");
-    expect(codes("helioscreen", { heightMm: 3500 })).toContain("review:dimension_to_confirm");
+    expect(codes("helioscreen", { heightMm: 3500 })).not.toContain("review:dimension_to_confirm");
     expect(codes("helioscreen", { heightMm: 4100 })).toContain("blocking:dimension_out_of_bounds");
   });
   it("toiles de la page du fabricant établies ; toiles de la seule fiche transmise à confirmer", () => {
@@ -197,9 +197,11 @@ describe("HelioScreen (R 120 ZiiiP, ex-HELIO Ombra)", () => {
 describe("HelioSun", () => {
   it("avancées documentées seulement, avec largeur minimale selon l'avancée", () => {
     expect(codes("casablanca", { depthMm: 2000 })).toContain("blocking:dimension_value");
-    expect(codes("casablanca", { depthMm: 2600, widthMm: 2900 })).toContain("blocking:depth_width_combination");
-    expect(codes("casablanca", { depthMm: 2600, widthMm: 2910 })).not.toContain("blocking:depth_width_combination");
-    expect(codes("casablanca", { depthMm: 3600, widthMm: 3500 })).toContain("blocking:depth_width_combination");
+    // liste de prix p. 96 (grille CASABLANCA) : largeur minimale = avancée + 40 cm
+    expect(codes("casablanca", { depthMm: 2600, widthMm: 2990 })).toContain("blocking:depth_width_combination");
+    expect(codes("casablanca", { depthMm: 2600, widthMm: 3000 })).not.toContain("blocking:depth_width_combination");
+    expect(codes("casablanca", { depthMm: 3600, widthMm: 3990 })).toContain("blocking:depth_width_combination");
+    expect(codes("casablanca", { depthMm: 2100, widthMm: 2490 })).toContain("blocking:depth_width_combination");
     expect(codes("casablanca", { depthMm: 1600, widthMm: 2000 })).not.toContain("blocking:depth_width_combination");
   });
   it("largeur 2 à 6 m ; aucune hypothèse héritée (LED, télécommande, câble, 230 V)", () => {
@@ -347,5 +349,19 @@ describe("HelioMax, HelioLux, HelioRoof, stores bannes, moustiquaires", () => {
       expect(codes(slug, { widthMm: 4100, heightMm: 3000 })).toContain("review:study_request");
       expect(codes(slug, { widthMm: 4100, heightMm: 3000 }).some((c) => c.startsWith("blocking:"))).toBe(false);
     }
+  });
+});
+
+describe("dimensions alignées sur la liste de prix 09.2026 (référence du client, 2026-11-18)", () => {
+  it("HelioMax : avancée minimale 1 318 mm (lame F) et largeur minimale 1 000 mm", () => {
+    expect(rules("marbella").dims.depth!.minMm).toBe(1318);
+    expect(rules("marbella").dims.width.minMm).toBe(1000);
+  });
+  it("HelioShade et HelioPro : largeur minimale 2,05 m, puis selon l'avancée (205/255/305/355/410 cm) ; HelioPro jusqu'à 3,6 m sans réserve", () => {
+    for (const slug of ["corsica", "jamaica"]) {
+      expect(rules(slug).dims.width.minMm, slug).toBe(2050);
+      expect(rules(slug).depthWidthMin!.map((d) => [d.depthMm, d.widthMinMm]), slug).toEqual([[1600, 2050], [2100, 2550], [2600, 3050], [3100, 3550], [3600, 4100]]);
+    }
+    expect(rules("jamaica").dims.depth!.confirmAboveMm).toBeUndefined();
   });
 });

@@ -92,7 +92,7 @@ test("catalogue HELIOSTORES : quatre familles, fiches sans référence fabricant
   await expectNoSupplier(page);
   await page.getByRole("tab", { name: "Dimensions et pose" }).click();
   await expect(page.getByTestId("system-dimensions")).toContainText("Largeur : de 1 m à 4 m");
-  await expect(page.getByTestId("system-dimensions")).toContainText("Avancée : de 1,39 m à 6,01 m");
+  await expect(page.getByTestId("system-dimensions")).toContainText("Avancée : de 1,318 m à 6,01 m");
   await shot(page, "fiche-pergola");
 
   // modèles retirés : page explicative (200) avec les gammes actuelles, jamais de configurateur ni de conversion

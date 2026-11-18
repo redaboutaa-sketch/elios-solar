@@ -13,8 +13,9 @@ test("screen HelioScreen : largeur contradictoire signalée, mode de commande, t
   await expect(page.getByTestId("step-dims")).not.toContainText("Impossible");
   await goStep(page, "recap");
   const issues = stepIssues(page, "recap").first();
-  await expect(issues).toContainText("Largeur supérieure à 4 m");
-  await expect(issues).toContainText("les sources du fabricant divergent au-delà de 4 m");
+  // liste de prix 09.2026 (référence du client) : jusqu'à 7 × 4 m sans réserve
+  await expect(issues).not.toContainText("Largeur supérieure à 4 m");
+  await expect(issues).not.toContainText("divergent");
   await goStep(page, "dims");
   await setDim(page, "dim-width", 700);
   await goStep(page, "pose");
@@ -62,7 +63,7 @@ test("store banne HelioSun : avancées et largeurs documentées, mode de command
   await openConfigurator(page, "casablanca");
   await setDim(page, "dim-width", 3000);
   await page.getByTestId("dim-depth-values").getByText("3,1 m", { exact: true }).click();
-  await expect(stepIssues(page, "dims")).toContainText("Avancée 3,1 m : largeur minimale 3,51 m");
+  await expect(stepIssues(page, "dims")).toContainText("Avancée 3,1 m : largeur minimale 3,5 m");
   await setDim(page, "dim-width", 4200);
   await expect(page.getByTestId("step-dims")).not.toContainText("Impossible");
   await goStep(page, "pose");

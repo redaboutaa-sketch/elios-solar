@@ -45,7 +45,15 @@ export async function listSystemFamilies(category: CategoryKey) {
   // page publique : ni fabricant, ni marque, ni référence fournisseur, ni règles brutes (sources), ni questions internes
   const entries = await Promise.all(rows.map((f) => (tables.has(f.slug) ? entryPriceFor(f.slug) : null)));
   // prix d'appel : configuration complète la moins chère (TTC), décrite ; sinon sous-total partiel signalé
-  return rows.map((f, i) => ({ ...f, brand: null, manufacturer: null, supplierRef: null, systemRules: null, openQuestions: [], rules: publicSystemRules(f.systemRules as unknown as SystemRules), hero: f.media[0]?.media ?? null, fromPrice: fromPriceOf(entries[i]!), entry: publicEntry(entries[i]!), pricedOnline: tables.has(f.slug) }));
+  const list = rows.map((f, i) => ({ ...f, brand: null, manufacturer: null, supplierRef: null, systemRules: null, openQuestions: [], rules: publicSystemRules(f.systemRules as unknown as SystemRules), hero: f.media[0]?.media ?? null, fromPrice: fromPriceOf(entries[i]!), entry: publicEntry(entries[i]!), pricedOnline: tables.has(f.slug) }));
+  // demande du client (2026-11-18) : gamme présentée par prix d'appel TTC croissant ; sans prix d'appel complet (devis,
+  // sous-total partiel) en fin de liste ; à prix égal ou sans prix, ordre éditorial (sortOrder, tri stable)
+  return list.sort((a, b) => byFromPrice(a.fromPrice, b.fromPrice));
+}
+
+/** Comparateur des prix d'appel : croissant, absence de prix en dernier. */
+export function byFromPrice(a: { amountMinor: number } | null, b: { amountMinor: number } | null): number {
+  return (a?.amountMinor ?? Number.POSITIVE_INFINITY) - (b?.amountMinor ?? Number.POSITIVE_INFINITY) || 0;
 }
 
 /** Fiche d'un système publié de la famille publique demandée (null sinon : brouillon, archive, autre famille). */
