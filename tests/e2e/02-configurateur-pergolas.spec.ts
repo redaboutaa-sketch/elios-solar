@@ -19,7 +19,7 @@ test("HelioMax : règles de cotes, options, fermeture souhaitée, 3D, projet enr
   await setDim(page, "dim-width", 4100);
   await expect(stepIssues(page, "dims")).toContainText("Largeur : de 1 m à 4 m");
   await setDim(page, "dim-depth", 6100);
-  await expect(stepIssues(page, "dims")).toContainText("Avancée : de 1,39 m à 6,01 m");
+  await expect(stepIssues(page, "dims")).toContainText("Avancée : de 1,318 m à 6,01 m");
   await setDim(page, "dim-width", 3600);
   await setDim(page, "dim-depth", 5000);
   await setDim(page, "dim-height", 2900);

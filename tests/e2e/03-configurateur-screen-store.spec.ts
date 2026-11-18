@@ -13,8 +13,9 @@ test("screen HelioScreen : largeur contradictoire signalée, mode de commande, t
   await expect(page.getByTestId("step-dims")).not.toContainText("Impossible");
   await goStep(page, "recap");
   const issues = stepIssues(page, "recap").first();
-  await expect(issues).toContainText("Largeur supérieure à 4 m");
-  await expect(issues).toContainText("les sources du fabricant divergent au-delà de 4 m");
+  // liste de prix 09.2026 (référence du client) : jusqu'à 7 × 4 m sans réserve
+  await expect(issues).not.toContainText("Largeur supérieure à 4 m");
+  await expect(issues).not.toContainText("divergent");
   await goStep(page, "dims");
   await setDim(page, "dim-width", 700);
   await goStep(page, "pose");

@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { CATEGORIES, configuratorHref, productHref, type CategoryKey } from "@/domain/categories";
 import { dimRangeText } from "@/domain/system";
 import { formatSystemPrice } from "@/domain/system-pricing";
-import { listSystemFamilies } from "@/server/catalog/systems";
+import { byFromPrice, listSystemFamilies } from "@/server/catalog/systems";
 import { defaultSceneModel } from "@/server/catalog/scene-preview";
 import { homeVisuals, publishedMediaFor } from "@/server/media/queries";
 import { FamilySketch } from "@/components/illustrations/sketches";
@@ -61,11 +61,14 @@ export default async function HomePage() {
     const f = items[0]; const h = heroOf(f);
     return f && h ? [{ id: f.slug, media: { path: h.path, alt: h.alt, width: h.width, height: h.height, smallPath: smallPathOf(h), mediumPath: mediumPathOf(h) }, label: f.name, href: productHref(c.key, f.slug), nature: NATURE[h.nature] ?? h.nature }] : [];
   });
-  // panneaux : une famille par panneau, illustrée par son dessin
-  const panels = families.map(({ c, items }) => ({ c, items }));
+  // panneaux (« avatars ») et onglets des modèles : familles par prix d'appel le plus bas, croissant ; une famille
+  // entièrement sur devis en dernier (demande du client, 2026-11-18). Le carrousel garde l'ordre des familles.
+  const minFrom = (items: Family[]) => items.map((f) => f.fromPrice).filter((p): p is NonNullable<typeof p> => !!p).sort(byFromPrice)[0] ?? null;
+  const byPrice = [...families].sort((a, b) => byFromPrice(minFrom(a.items), minFrom(b.items)));
+  const panels = byPrice.map(({ c, items }) => ({ c, items }));
 
   // aperçu 3D : configuration par défaut du premier modèle de pergola, calculée côté serveur
-  const p0 = byCat.PERGOLAS?.[0];
+  const p0 = [...(byCat.PERGOLAS ?? [])].sort((a, b) => a.sortOrder - b.sortOrder)[0];
   const sceneModel = p0 ? await defaultSceneModel(p0.slug) : null;
   const sceneShot = p0 ? productShot(media.get(p0.slug) ?? []) : null;
 
@@ -131,7 +134,7 @@ export default async function HomePage() {
         <div className="container-x">
           <h2 id="modeles" className="font-display text-display"><span className="font-normal">{t.models.titleA}</span> <span className="font-semibold">{t.models.titleB}</span></h2>
           <div className="mt-8">
-            <ModelTabs tabs={families.map(({ c, items }) => ({
+            <ModelTabs tabs={byPrice.map(({ c, items }) => ({
               key: c.key, label: lt.categories[c.key], content: (
                 <ul className={`grid grid-cols-1 gap-px border border-sand-200 bg-sand-200 ${items.length > 1 ? "md:grid-cols-2" : ""}`}>
                   {items.map((f) => {

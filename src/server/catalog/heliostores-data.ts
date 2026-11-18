@@ -439,12 +439,10 @@ const refleksol: HelioFamily = {
         label: "Largeur",
         minMm: null,
         maxMm: 7000,
-        confirmAboveMm: 4000,
-        confirmNote: "les sources du fabricant divergent au-delà de 4 m (7 m sur la page web et le catalogue, 5 m dans le supplément technique 2026, 4 m dans la documentation technique) ; au-delà de 4 m, hauteur limitée à 3 m",
-        sources: [T("p. 66 — largeur maximale 7 m"), at(SOURCES.aluprofRefleksol, "Maximum width 7.0 m"), at(SOURCES.suppScreens, "p. 39 — 5 000 mm ; au-dessus de 4 000 mm, hauteur ≤ 3 000 mm"), at(refSheet, "Spécifications — 400 cm (barre anti-vent) / 350 cm (guidage câble) ; largeur minimale selon moteur")],
-        note: "Largeur minimale non documentée par le fabricant (la fiche transmise donne 58 à 73 cm selon le moteur, à confirmer).",
+        sources: [at(PRICE_LIST, "p. 69 — largeur maximale 700 cm ; grille de 100 à 700 cm ; largeur minimale selon le moteur (61 à 80 cm)"), T("p. 66 — largeur maximale 7 m")],
+        note: "Largeur minimale selon le mode de commande (moteur), d'après la liste de prix.",
       },
-      height: { label: "Hauteur", minMm: null, maxMm: 4000, confirmAboveMm: 3000, confirmNote: "la page fabricant indique 4 m dans ses caractéristiques mais « up to 3 m » dans son texte", sources: [T("p. 66 — hauteur maximale 4 m"), at(SOURCES.aluprofRefleksol, "Maximum height 4.0 m ; texte « height of up to 3 m »"), at(refSheet, "Spécifications — 400 cm")] },
+      height: { label: "Hauteur", minMm: null, maxMm: 4000, sources: [at(PRICE_LIST, "p. 69 — grille de 100 à 400 cm de hauteur ; hauteur maximale 400 cm"), T("p. 66 — hauteur maximale 4 m")] },
     },
     mountings: [
       { code: "facade", label: "En façade", status: "established", sources: [T("p. 67 — « cassette dedicated for niche and facade installation »")] },
@@ -516,7 +514,6 @@ const refleksol: HelioFamily = {
 /* ------------------------------------------------------------------ */
 
 const casaSheet = SOURCES.ficheCasablanca;
-const casaGrid = at(casaSheet, "tableau des dimensions (projection × largeur)");
 const casablanca: HelioFamily = {
   slug: "casablanca",
   name: "HelioSun",
@@ -538,11 +535,7 @@ const casablanca: HelioFamily = {
       width: { label: "Largeur", minMm: 2000, maxMm: 6000, sources: [at(casaSheet, "Spécifications — 200 à 600 cm"), T("p. 114 — largeur maximale 6 m")] },
       depth: { label: "Avancée", minMm: 1600, maxMm: 3600, valuesMm: [1600, 2100, 2600, 3100, 3600], sources: [at(casaSheet, "Spécifications — 160 à 360 cm ; tableau des dimensions"), T("p. 114 — avancée maximale 3,6 m")], note: "Avancées proposées par le tableau de la fiche." },
     },
-    depthWidthMin: [
-      { depthMm: 2600, widthMinMm: 2910, sources: [casaGrid] },
-      { depthMm: 3100, widthMinMm: 3510, sources: [casaGrid] },
-      { depthMm: 3600, widthMinMm: 3510, sources: [casaGrid] },
-    ],
+    depthWidthMin: [1600, 2100, 2600, 3100, 3600].map((depthMm) => ({ depthMm, widthMinMm: depthMm + 400, sources: [at(PRICE_LIST, "p. 96 — grille CASABLANCA : de 200, 250, 300, 350 et 400 cm")] })),
     mountings: [
       { code: "wall", label: "Murale", status: "established", sources: [T("p. 114–115 — wall installation")] },
       { code: "ceiling", label: "Au plafond", status: "established", sources: [T("p. 114–115 — ceiling installation")] },
