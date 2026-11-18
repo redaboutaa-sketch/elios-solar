@@ -497,7 +497,7 @@ const refleksol: HelioFamily = {
   faq: [
     { q: "Le prix est-il affiché en ligne ?", a: "Oui, pour les dimensions de la grille de prix : le configurateur affiche le prix de vente HT et TTC, avec le détail des suppléments connus. Un élément sans prix établi (selon le cas : moteur, option), la livraison et la pose sont chiffrés sur devis." },
     { q: "Peut-on commander en ligne ?", a: "Non : chaque projet est établi sur devis. Configurez votre modèle puis envoyez votre demande depuis le configurateur ; elle est enregistrée avec une référence. Délai de livraison : entre 4 et 7 semaines selon le lieu de livraison." },
-    { q: "Quelle largeur maximale ?", a: "Jusqu'à 4 m, toutes les sources concordent. Au-delà, les documents du fabricant divergent (5 m ou 7 m) et la hauteur est limitée à 3 m : la faisabilité est confirmée au devis." },
+    { q: "Quelle largeur maximale ?", a: "Jusqu'à 7 m de largeur et 4 m de hauteur, d'après la liste de prix du fabricant. La largeur minimale dépend du moteur choisi." },
     { q: "Peut-on le manœuvrer à la main ?", a: "Non : HelioScreen est uniquement à commande électrique. Le moteur est défini avec vous au devis." },
     { q: "Peut-il fermer le côté d'une pergola ?", a: "Un screen vendu seul n'est pas automatiquement compatible avec une pergola : l'intégration se vérifie au devis selon les ouvertures et les fixations." },
   ],
@@ -595,13 +595,12 @@ const casablanca: HelioFamily = {
   faq: [
     { q: "Le prix est-il affiché en ligne ?", a: "Oui, pour les dimensions de la grille de prix : le configurateur affiche le prix de vente HT et TTC, avec le détail des suppléments connus. Un élément sans prix établi (selon le cas : moteur, option), la livraison et la pose sont chiffrés sur devis." },
     { q: "Peut-on commander en ligne ?", a: "Non : chaque projet est établi sur devis. Configurez votre modèle puis envoyez votre demande depuis le configurateur ; elle est enregistrée avec une référence. Délai de livraison : entre 4 et 7 semaines selon le lieu de livraison." },
-    { q: "Quelles avancées sont proposées ?", a: "1,6 m, 2,1 m, 2,6 m, 3,1 m et 3,6 m. Les grandes avancées demandent une largeur minimale : 2,91 m pour 2,6 m d'avancée, 3,51 m pour 3,1 m et 3,6 m." },
+    { q: "Quelles avancées sont proposées ?", a: "1,6 m, 2,1 m, 2,6 m, 3,1 m et 3,6 m. La largeur minimale est l'avancée plus 40 cm : de 2 m pour 1,6 m d'avancée à 4 m pour 3,6 m." },
     { q: "Existe-t-il une version motorisée ?", a: "Le catalogue cite une commande électrique ; la fiche transmise décrit la version à manivelle. La motorisation est donc étudiée au devis." },
     { q: "Où peut-on le poser ?", a: "Au mur, au plafond ou sur chevrons. Les fixations dépendent du support et se déterminent à l'étude du projet." },
   ],
   openQuestions: [
     { field: "Motorisation", question: "Moteur, commande et conditions de la version électrique citée par le catalogue.", sources: ["catalogue-thysens p. 114"], blocks: "version électrique (devis)" },
-    { field: "Largeur minimale", question: "Largeurs minimales selon l'avancée : la fiche (2,91 m pour 2,6 m ; 3,51 m pour 3,1 et 3,6 m) diffère de la documentation technique (portée + 0,4 m : 2,5 / 3 / 4 m).", sources: ["fiche-casablanca", "dte-casablanca p. 6", "supp-stores p. 46"], blocks: "aucun (la fiche s'applique, à confirmer)" },
     { field: "Motorisation", question: "Moteur (fins de course électroniques recommandées, certains moteurs déconseillés), télécommande et capteurs de la version motorisée.", sources: ["dte-casablanca p. 6", "DT-E CASABLANCA EN 2016 p. 17–18"], blocks: "version motorisée (devis)" },
     { field: "Tarifs", question: "Nature, devise (DH), HT ou TTC, validité ; transport et pose.", sources: ["fiche-casablanca", "classeur tarifaire (privé)"], blocks: "affichage d'un prix" },
   ],

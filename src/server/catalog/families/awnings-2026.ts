@@ -130,7 +130,7 @@ const corsica: HelioFamily = {
   faq: [
     { q: "HelioShade existe-t-il à la manivelle ?", a: "Non : le fabricant le propose uniquement motorisé." },
     { q: "L'éclairage LED est-il compris ?", a: "Les documents du fabricant divergent (de série ou en option) : il est confirmé et chiffré au devis. Le kit d'éclairage n'est compatible qu'avec certains moteurs, désignés par le fabricant : le moteur est choisi en conséquence au devis." },
-    { q: "Quelle largeur minimale ?", a: "L'avancée plus 0,5 m : par exemple 3,1 m de largeur pour 2,6 m d'avancée." },
+    { q: "Quelle largeur minimale ?", a: "Elle dépend de l'avancée : 2,05 m pour 1,6 m, 2,55 m pour 2,1 m, 3,05 m pour 2,6 m, 3,55 m pour 3,1 m et 4,10 m pour 3,6 m d'avancée." },
   ],
   openQuestions: [
     { field: "Éclairage", question: "LED du profil bas : de série ou en option, montage, tension (12 V ou 24 V).", sources: ["supp-stores p. 51", "aluprof-corsica", "dte-led-stores"], blocks: "inclus / option LED" },
@@ -199,7 +199,7 @@ const jamaica: HelioFamily = {
   },
   specs: [
     { key: "width_max", label: "Largeur maximale", valueNum: 7000, unit: "mm", source: "SUPPLIER_DOCUMENT", sourceRef: "DT-E 11.4 p. 6 ; supplément p. 17" },
-    { key: "projection_values", label: "Avancées", valueText: "1,6 / 2,1 / 2,6 / 3,1 / 3,6 m", source: "SUPPLIER_DOCUMENT", sourceRef: "DT-E 11.4 p. 6 ; DoP 03/M/2018", note: "le supplément p. 17 indique 3,0 m maximum" },
+    { key: "projection_values", label: "Avancées", valueText: "1,6 / 2,1 / 2,6 / 3,1 / 3,6 m", source: "SUPPLIER_DOCUMENT", sourceRef: "DT-E 11.4 p. 6 ; DoP 03/M/2018 ; liste de prix 09.2026 p. 96" },
     { key: "tilt", label: "Inclinaison", valueText: "5° à 40°", source: "SUPPLIER_DOCUMENT", sourceRef: "Brochure p. 15 ; supplément p. 17" },
     { key: "cassette", label: "Coffre", valueText: "sans coffre ; auvent en option", source: "SUPPLIER_DOCUMENT", sourceRef: "Brochure p. 15 ; supplément p. 17" },
   ],
@@ -208,7 +208,6 @@ const jamaica: HelioFamily = {
     { q: "Manivelle ou moteur ?", a: "Les deux sont possibles ; le moteur et ses commandes sont définis au devis." },
   ],
   openQuestions: [
-    { field: "Avancée", question: "Avancée maximale 3,0 m (supplément p. 17) ou 3,6 m (toutes les autres sources) ?", sources: ["supp-stores p. 17", "dte-jamaica-fr"], blocks: "3,6 m confirmé au devis" },
     { field: "Moteur", question: "Moteur, télécommande et capteurs fournis par le distributeur.", sources: [], blocks: "équipements inclus" },
     { field: "Tarifs", question: "Aucune grille de prix HelioPro.", sources: [], blocks: "prix affiché" },
   ],
