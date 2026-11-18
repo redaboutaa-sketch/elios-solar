@@ -35,6 +35,9 @@
 - `scripts/pricing-check.ts` compare encore vente = catalogue (règle du 2026-11-02) : toutes les cellules signalées
   depuis la politique du 13/11, sans anomalie de prix ; à adapter.
 - Retour arrière applicatif : `IMAGE_TAG=8d8d424d6e6a`, puis `catalogue-sync` depuis cette version.
+- Suite (PR #6) : production `00ee777` (sauvegarde `db_20261118_094725`) ; FAQ HelioScreen, HelioSun et HelioShade et
+  caractéristique HelioPro alignées sur la liste de prix ; deux questions ouvertes tranchées retirées ;
+  `catalogue-sync --apply` (4 familles). Devis et prix actifs inchangés.
 
 ## SEO / GEO B15 : métadonnées dans le `<head>` pour les robots d'IA (2026-11-17) — `seo/`
 
