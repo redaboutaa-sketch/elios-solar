@@ -5,10 +5,11 @@
 import "server-only";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { audit } from "@/server/audit";
 import { csvLine } from "@/domain/acquisition";
 import { SCOPE_KEYS, type Observation, type Scope } from "@/domain/market";
+import type { BenchObservation, ControlKind, MatchLevel } from "@/domain/market-benchmark";
 import type { Actor } from "@/server/tariffs/grids";
 import { MarketError } from "./policy";
 
@@ -48,6 +49,23 @@ export const observationSchema = z.object({
   evidence: z.string().max(4000).default(""),
   access: z.string().max(500).default(""),
   notes: z.string().max(4000).default(""),
+  // benchmark par niveaux (2026-11-19)
+  matchLevel: z.enum(["A", "B", "C", "D"]).nullable().default(null),
+  matchReason: z.string().max(2000).default(""),
+  supplierSystem: z.string().trim().max(120).default(""),
+  sellerGroup: z.string().trim().max(120).default(""),
+  language: z.string().trim().max(8).default(""),
+  collectionMethod: z.enum(["", "manual", "csv", "webfetch", "curl", "playwright"]).default(""),
+  controlKind: z.enum(["manual", "wired", "radio", "motor", "unknown"]).default("unknown"),
+  promoConditions: z.string().max(500).default(""),
+  specs: z.record(z.string().max(80), z.string().max(500)).default({}),
+  differences: z.array(z.string().max(500)).max(30).default([]),
+  unknownFields: z.array(z.string().max(120)).max(30).default([]),
+  deliversTo: z.partialRecord(z.enum(["FR", "BE"]), z.enum(["yes", "no", "unknown"])).default({}),
+  fx: z.object({ originalCurrency: z.string().regex(/^[A-Z]{3}$/), originalPriceMinor: z.number().int().min(1), rate: z.number().positive().max(1000), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), source: z.string().min(3).max(300) }).nullable().default(null),
+  capture: z.string().max(300).refine((v) => !v || /^[\w./-]+\.(png|jpg|jpeg|webp|pdf|html)$/i.test(v) && !v.includes(".."), "chemin de capture relatif attendu").default(""),
+  validation: z.enum(["TO_VALIDATE", "VALIDATED", "TO_RECHECK", "REJECTED"]).default("TO_VALIDATE"),
+  lastCheckedAt: z.coerce.date().nullable().default(null),
 });
 export type ObservationInput = z.infer<typeof observationSchema>;
 
@@ -79,20 +97,45 @@ export function toDomain(o: ObservationRow): Observation {
   };
 }
 
+const strList = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
+const CONTROL_KINDS = ["manual", "wired", "radio", "motor", "unknown"];
+
+export function toBench(o: ObservationRow): BenchObservation {
+  const d = toDomain(o);
+  const fx = o.fx as BenchObservation["fx"] | null;
+  return {
+    ...d, mounting: o.mounting, heightMm: o.heightMm, sellerGroup: o.sellerGroup, lastCheckedAt: o.lastCheckedAt,
+    controlKind: (CONTROL_KINDS.includes(o.controlKind) ? o.controlKind : "unknown") as ControlKind,
+    promoConditions: o.promoConditions, matchLevel: (o.matchLevel ?? null) as MatchLevel | null, matchReason: o.matchReason, supplierSystem: o.supplierSystem,
+    differences: strList(o.differences), unknownFields: strList(o.unknownFields), deliversTo: (o.deliversTo ?? {}) as BenchObservation["deliversTo"],
+    fx: fx && typeof fx === "object" && typeof fx.rate === "number" ? fx : null, evidence: o.evidence, capture: o.capture,
+    validation: (["TO_VALIDATE", "VALIDATED", "TO_RECHECK", "REJECTED"].includes(o.validation) ? o.validation : "TO_VALIDATE") as BenchObservation["validation"],
+    legacyComparability: o.comparability,
+  };
+}
+
 export async function observationDetail(id: string) {
   const o = await prisma.marketObservation.findUnique({ where: { id }, include: { revisions: { orderBy: { revision: "desc" } } } });
   if (!o) throw new MarketError("Relevé introuvable.");
   return o;
 }
 
+/** Relevé du benchmark sans comparabilité historique : déduite du niveau (A → forte, B → partielle, C/D → insuffisante). */
+export function withLegacyComparability(input: unknown): unknown {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return input;
+  const o = input as Record<string, unknown>;
+  if (o.comparability != null || !o.matchLevel) return input;
+  return { ...o, comparability: o.matchLevel === "A" ? "STRONG" : o.matchLevel === "B" ? "PARTIAL" : "INSUFFICIENT" };
+}
+
 function parse(input: unknown): ObservationInput {
-  const r = observationSchema.safeParse(input);
+  const r = observationSchema.safeParse(withLegacyComparability(input));
   if (!r.success) throw new MarketError(r.error.issues.slice(0, 4).map((i) => `${i.path.join(".") || "relevé"} : ${i.message}`).join(" · "));
   if (r.data.promoPriceMinor != null && r.data.regularPriceMinor != null && r.data.promoPriceMinor >= r.data.regularPriceMinor) throw new MarketError("Le prix promotionnel doit être inférieur au prix normal.");
   return r.data;
 }
 
-const data = (d: ObservationInput) => ({ ...d, scope: d.scope as Prisma.InputJsonValue });
+const data = (d: ObservationInput) => ({ ...d, scope: d.scope as Prisma.InputJsonValue, specs: d.specs as Prisma.InputJsonValue, differences: d.differences as Prisma.InputJsonValue, unknownFields: d.unknownFields as Prisma.InputJsonValue, deliversTo: d.deliversTo as Prisma.InputJsonValue, fx: d.fx == null ? Prisma.DbNull : (d.fx as Prisma.InputJsonValue) });
 
 export async function createObservation(input: unknown, actor: Actor, source = "manual", reason = "") {
   const d = parse(input);
@@ -137,6 +180,11 @@ export async function setObservationStatus(id: string, revision: number, status:
 /* ------------------------------------------------------------------ */
 
 const SCALAR = FIELDS.filter((k) => k !== "scope");
+/** listes « a | b » et objets JSON dans le CSV */
+const LIST_FIELDS: (keyof ObservationInput)[] = ["differences", "unknownFields"];
+const JSON_FIELDS: (keyof ObservationInput)[] = ["specs", "deliversTo", "fx"];
+/** colonnes ajoutées par le benchmark par niveaux (facultatives à l'import) */
+export const BENCH_CSV_COLUMNS = ["matchLevel", "matchReason", "supplierSystem", "sellerGroup", "language", "collectionMethod", "controlKind", "promoConditions", "specs", "differences", "unknownFields", "deliversTo", "fx", "capture", "validation", "lastCheckedAt"];
 export const CSV_HEADER = ["id", "statut", "revision", ...SCALAR, ...SCOPE_KEYS.flatMap((k) => [`scope_${k}`, `scope_${k}_montant`, `scope_${k}_note`])];
 
 const minorToStr = (m: number | null | undefined) => (m == null ? "" : (m / 100).toFixed(2));
@@ -145,6 +193,8 @@ export function observationCsvRow(o: ObservationRow): string {
   const scope = (o.scope ?? {}) as Scope;
   const cell = (k: keyof ObservationInput) => {
     const v = (o as unknown as Record<string, unknown>)[k];
+    if (LIST_FIELDS.includes(k)) return (Array.isArray(v) ? v : []).join(" | ");
+    if (JSON_FIELDS.includes(k)) return v == null || (typeof v === "object" && !Object.keys(v as object).length) ? "" : JSON.stringify(v);
     if (v instanceof Date) return v.toISOString().slice(0, 10);
     if (/Minor$/.test(k)) return minorToStr(v as number | null);
     return v == null ? "" : (v as string | number);
@@ -185,7 +235,10 @@ export function csvRecord(header: string[], cells: string[]): { id: string | nul
     const v = get(k);
     if (/Minor$/.test(k)) input[k] = euroToMinor(v);
     else if (/Mm$/.test(k)) input[k] = v === "" ? null : Number(v);
-    else if (k === "promoEnd") input[k] = v === "" ? null : v;
+    else if (k === "promoEnd" || k === "lastCheckedAt" || k === "matchLevel") input[k] = v === "" ? null : v;
+    else if (LIST_FIELDS.includes(k)) input[k] = v === "" ? [] : v.split("|").map((x) => x.trim()).filter(Boolean);
+    else if (JSON_FIELDS.includes(k)) { if (v === "") { if (k === "fx") input[k] = null; continue; } try { input[k] = JSON.parse(v); } catch { throw new MarketError(`${k} : JSON invalide`); } }
+    else if (header.indexOf(k) < 0 || (v === "" && (k === "validation" || k === "controlKind"))) continue; // absent : valeur par défaut
     else input[k] = v;
   }
   const scope: Scope = {};

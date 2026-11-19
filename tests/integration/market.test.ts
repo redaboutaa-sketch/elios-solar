@@ -17,7 +17,8 @@ import { evaluate } from "@/domain/engine";
 import { loadPublicSystemPrices } from "@/server/pricing/system-prices";
 import { invalidateCatalogCache } from "@/server/catalog/load";
 import { createPolicyVersion, DEFAULT_DIRECT_COSTS, policyAt } from "@/server/market/policy";
-import { createObservation, importObservations, observationDetail, setObservationStatus, updateObservation } from "@/server/market/observations";
+import { BENCH_CSV_COLUMNS, createObservation, csvRecord, CSV_HEADER, importObservations, observationCsvRow, observationDetail, observationSchema, parseCsv, setObservationStatus, toBench, updateObservation } from "@/server/market/observations";
+import { classify } from "@/domain/market-benchmark";
 import { study } from "@/server/market/study";
 import { createProposal, draftGridFromProposal } from "@/server/market/proposals";
 
@@ -128,6 +129,30 @@ describe("comparatif marché", () => {
     if ("error" in r2) throw new Error(r2.error);
     expect(r2.stats.n).toBe(2);
     expect(r2.reco!.confidence).toBe("indicative");
+  });
+
+  it("benchmark par niveaux : champs enregistrés et historisés, CSV aller-retour, ancien CSV accepté, classement par configuration", async () => {
+    const o = await createObservation(obsInput({ retailer: `Niveaux ${TAG}`, url: `https://example.invalid/${TAG}/niv`, matchLevel: "A", supplierSystem: "SYSTEME-TEST", sellerGroup: `societe-${TAG}`, controlKind: "radio", differences: ["hauteur de passage 2,35 m"], unknownFields: ["garantie"], deliversTo: { FR: "yes", BE: "unknown" }, specs: { lames: "aluminium" }, validation: "VALIDATED", collectionMethod: "playwright", promoConditions: "" }), ACTOR);
+    expect(o).toMatchObject({ matchLevel: "A", supplierSystem: "SYSTEME-TEST", controlKind: "radio", validation: "VALIDATED", collectionMethod: "playwright" });
+    const u = await updateObservation(o.id, o.revision, obsInput({ retailer: `Niveaux ${TAG}`, url: `https://example.invalid/${TAG}/niv`, matchLevel: "B", matchReason: "système non cité", controlKind: "radio", validation: "TO_RECHECK" }), "niveau revu", ACTOR);
+    const d = await observationDetail(u.id);
+    expect(d.revisions.map((x) => (x.data as { matchLevel: string | null }).matchLevel)).toEqual(["B", "A"]);
+    // CSV : l'export relit les nouveaux champs ; un ancien export (sans colonnes du benchmark) reste importable
+    const row = (await prisma.marketObservation.findUniqueOrThrow({ where: { id: o.id } }));
+    const line = parseCsv([CSV_HEADER.join(";"), observationCsvRow({ ...row, differences: ["a", "b"], deliversTo: { FR: "no" } })].join("\n"));
+    const back = csvRecord(line[0]!, line[1]!).input as Record<string, unknown>;
+    expect(back).toMatchObject({ matchLevel: "B", validation: "TO_RECHECK", controlKind: "radio", differences: ["a", "b"], deliversTo: { FR: "no" } });
+    expect(observationSchema.safeParse(back).success).toBe(true);
+    const legacyHeader = CSV_HEADER.filter((h) => !BENCH_CSV_COLUMNS.includes(h) && !h.startsWith("scope_sensors"));
+    const legacyLine = parseCsv([legacyHeader.join(";"), observationCsvRow(row).split(";").filter((_, i) => !BENCH_CSV_COLUMNS.includes(CSV_HEADER[i]!) && !CSV_HEADER[i]!.startsWith("scope_sensors")).join(";")].join("\n"));
+    const legacy = observationSchema.parse(csvRecord(legacyLine[0]!, legacyLine[1]!).input);
+    expect(legacy).toMatchObject({ matchLevel: null, validation: "TO_VALIDATE", controlKind: "unknown", differences: [] });
+    // classement : niveau A plafonné à B (système fournisseur de la configuration différent), usage indicatif
+    const cfg = { familySlug: FAM, key: "t", widthMm: 4000, dimMm: 4000, dimAxis: "depth" as const, mounting: "wall", mountingMatters: true, controlKind: "radio" as const, ours: { delivery: "extra", installation: "extra", motor: "included", remote: "absent", led: "absent", sensors: "absent", screen: "absent", glazing: "absent" } as const, supplierSystems: ["AUTRE"], allowSwap: true };
+    const e = classify(toBench(await prisma.marketObservation.findUniqueOrThrow({ where: { id: o.id } })), cfg, { now: AT, staleDays: 120, dimToleranceBps: 1000, vatBps: 2000 });
+    expect(e.level).toBe("B");
+    expect(e.usage).toBe("context"); // marqué « à revérifier » : hors calcul
+    await setObservationStatus(o.id, u.revision, "ARCHIVED", "fin du test", ACTOR);
   });
 
   it("plancher : objectif de marge 30 % sur le coût prudent ; proposition sous le plancher refusée", async () => {

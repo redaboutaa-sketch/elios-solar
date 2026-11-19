@@ -9,7 +9,7 @@ import { assertRole } from "@/lib/session";
 import { actorOf, back, fields } from "@/server/admin/form";
 import { DIRECT_COST_KEYS, SCOPE_KEYS, type DirectCostInput, type Eligibility } from "@/domain/market";
 import { createPolicyVersion, MarketError } from "@/server/market/policy";
-import { createObservation, csvRecord, importObservations, parseCsv, setObservationStatus, updateObservation, CSV_HEADER } from "@/server/market/observations";
+import { createObservation, csvRecord, importObservations, parseCsv, setObservationStatus, updateObservation, CSV_HEADER, BENCH_CSV_COLUMNS } from "@/server/market/observations";
 import { archiveProposal, createProposal, draftGridFromProposal } from "@/server/market/proposals";
 import { TariffError } from "@/server/tariffs/grids";
 import { studyInputFrom } from "@/server/market/form";
@@ -57,7 +57,18 @@ function observationFromForm(f: Record<string, string>) {
     priceMinor: euros(f.price), taxBasis: f.taxBasis, priceKind: f.priceKind, regularPriceMinor: euros(f.regularPrice), promoPriceMinor: euros(f.promoPrice), promoEnd: f.promoEnd || null,
     scope, warranty: f.warranty ?? "", material: f.material ?? "", blades: f.blades ?? "", resistance: f.resistance ?? "", sav: f.sav ?? "",
     comparability: f.comparability, comparabilityReason: f.comparabilityReason ?? "", evidence: f.evidence ?? "", access: f.access ?? "", notes: f.notes ?? "",
+    // benchmark par niveaux
+    matchLevel: f.matchLevel || null, matchReason: f.matchReason ?? "", supplierSystem: f.supplierSystem ?? "", sellerGroup: f.sellerGroup ?? "", language: f.language ?? "",
+    collectionMethod: f.collectionMethod ?? "", controlKind: f.controlKind || "unknown", promoConditions: f.promoConditions ?? "",
+    differences: lines(f.differences), unknownFields: lines(f.unknownFields),
+    specs: Object.fromEntries(lines(f.specs).map((l) => { const i = l.indexOf(":"); return i > 0 ? [l.slice(0, i).trim(), l.slice(i + 1).trim()] : [l, ""]; })),
+    deliversTo: { ...(f.deliversTo_FR ? { FR: f.deliversTo_FR } : {}), ...(f.deliversTo_BE ? { BE: f.deliversTo_BE } : {}) },
+    fx: f.fx?.trim() ? jsonOrError(f.fx, "Conversion de devise") : null, capture: f.capture ?? "", validation: f.validation || "TO_VALIDATE", lastCheckedAt: f.lastCheckedAt || null,
   };
+}
+const lines = (s: string | undefined) => (s ?? "").split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+function jsonOrError(s: string, label: string): unknown {
+  try { return JSON.parse(s); } catch { throw new MarketError(`${label} : JSON invalide`); }
 }
 
 export async function createObservationAction(formData: FormData) {
@@ -90,7 +101,8 @@ export async function importObservationsAction(formData: FormData) {
   if (file.size > 2_000_000) back(`${BASE}/releves`, "Fichier trop volumineux (2 Mo au plus).", "err");
   const rows = parseCsv(await file.text());
   const header = rows[0] ?? [];
-  const missing = CSV_HEADER.filter((h) => !["id", "statut", "revision"].includes(h) && !h.startsWith("scope_") && !header.includes(h));
+  // colonnes du benchmark par niveaux : facultatives (anciens exports acceptés, valeurs par défaut)
+  const missing = CSV_HEADER.filter((h) => !["id", "statut", "revision"].includes(h) && !h.startsWith("scope_") && !BENCH_CSV_COLUMNS.includes(h) && !header.includes(h));
   if (missing.length) back(`${BASE}/releves`, `Colonnes manquantes : ${missing.slice(0, 6).join(", ")}`, "err");
   const dry = fields(formData).dryRun === "1";
   await run(`${BASE}/releves`, async () => {

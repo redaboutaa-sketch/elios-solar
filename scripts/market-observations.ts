@@ -3,7 +3,7 @@
  * de coût. Aucun montant imprimé. Contrôle : empreinte des prix publics (grilles de vente publiées) avant et après,
  * qui doit être identique.
  *
- *   tsx scripts/market-observations.ts --file <releves.json> [--apply]
+ *   tsx scripts/market-observations.ts --file <releves.json | lot.json> [--apply]
  *   tsx scripts/market-observations.ts --policy-init <remise %> --valid-from AAAA-MM-JJ --note "<source>" [--apply]
  * La politique n'est créée que si aucune version n'existe ; ensuite elle se modifie dans l'administration.
  */
@@ -42,8 +42,10 @@ async function main() {
     const file = arg("--file");
     if (file) {
       const { importObservations } = await import("../src/server/market/observations");
-      const data = JSON.parse(readFileSync(file, "utf8")) as unknown[];
-      if (!Array.isArray(data)) { console.error("Tableau JSON attendu."); return 2; }
+      // tableau de relevés, ou lot du benchmark { lot, records: [...], sources: [...] } (scripts/market/, skill benchmark-marche-europe)
+      const raw = JSON.parse(readFileSync(file, "utf8")) as unknown;
+      const data = (Array.isArray(raw) ? raw : (raw as { records?: unknown[] })?.records) as unknown[];
+      if (!Array.isArray(data)) { console.error("Tableau JSON (ou lot avec « records ») attendu."); return 2; }
       const name = file.split("/").pop()!.replace(/[^\w.-]/g, "_");
       const r = await importObservations(data.map((input, i) => ({ line: i + 1, input })), `import:${name}`, actor, { dryRun: !apply });
       console.log(`Relevés${apply ? "" : " (aperçu)"} : ${r.created} ${apply ? "créé(s)" : "à créer"}, ${r.unchanged} déjà présent(s), ${r.rejected.length} rejeté(s)`);

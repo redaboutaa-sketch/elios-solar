@@ -77,18 +77,16 @@ Calcul serveur (`src/domain/entry-price.ts`) avec le moteur de la boutique et la
 ## 3. « Mes prix conseillés » (`/admin/tarifs/prix-conseilles`)
 
 Accès : tableau de bord et Administration → Tarifs ; administrateurs seulement (page, actions ; aucun export public).
-Une ligne par produit tarifé, sur une **configuration de référence** : dimensions les plus proposées par le marché
-(ex. 4 × 4 m pour une pergola, 4 × 3 m motorisé pour un store banne), ramenées aux valeurs autorisées et validées par le
-moteur (sinon configuration de départ). Colonnes : prix public actuel, prix à la marge cible, concurrents comparables
-retenus (et offres apparentées non retenues, à titre d'information), prix conseillé, marge brute (prudente si le coût
-est incomplet), confiance, « Comprendre » (position, marge et coûts, écarts d'équipement, données manquantes,
-fraîcheur et nombre des relevés ; lien « Voir le détail » vers le comparatif) et « Préparer ce prix ».
-
-Règle : le prix à la marge cible est le prix conseillé par défaut. Un prix aligné sur le marché n'est proposé qu'avec au
-moins trois offres fortement comparables et indépendantes, jamais sous le plancher. Sans comparable exploitable :
-« Prix calculé selon votre marge cible — comparaison marché insuffisante ». « Préparer ce prix » crée une proposition
-(ancien prix, nouveau prix, marge, périmètre) et un brouillon d'une seule cellule ; publication manuelle (Grilles
-tarifaires), historique et retour arrière. Aucune extrapolation à toute la grille.
+Depuis le 2026-11-19 : **benchmark par niveaux, configuration par configuration** (méthode, diagnostic et résultats :
+`docs/pricing/benchmark-europe.md`). Pour chaque produit, configuration d'appel et tailles courantes disponibles :
+mon prix TTC, prix à la marge cible, fourchette marché comparable, prix conseillé ou fourchette indicative, marge
+estimée (avant / après arrondi TTC), vendeurs indépendants (A / B / contexte), statut (« Comparaison directe »,
+« Positionnement indicatif — différences documentées », « Produit seul comparé — livraison inconnue », « Données à
+actualiser », « Données insuffisantes » avec les champs manquants), date de dernière vérification, « Comprendre »
+(offres A, B, C, D séparées, liens, prix normal et promotionnel, périmètre, différences, exclusions, calcul) et
+« Préparer un brouillon » (une seule cellule, affichée ; publication manuelle). Le prix conseillé reste celui de la
+marge cible tant qu'il n'y a pas au moins trois vendeurs directs indépendants ; un marché sous la marge cible est
+affiché comme conflit. Aucune collecte au chargement, aucune publication automatique.
 
 ## 4. Relevés du 2026-11-13
 

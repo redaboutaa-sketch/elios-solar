@@ -267,9 +267,9 @@ export function floorPrice(p: { costMinor: number; costPartial: boolean; costMis
 /* Relevés concurrents                                                  */
 /* ------------------------------------------------------------------ */
 
-export const SCOPE_KEYS = ["delivery", "installation", "motor", "remote", "led", "screen", "glazing"] as const;
+export const SCOPE_KEYS = ["delivery", "installation", "motor", "remote", "led", "sensors", "screen", "glazing"] as const;
 export type ScopeKey = (typeof SCOPE_KEYS)[number];
-export const SCOPE_FR: Record<ScopeKey, string> = { delivery: "Livraison", installation: "Pose", motor: "Moteur", remote: "Télécommande", led: "Éclairage LED", screen: "Screen / store", glazing: "Vitrage / fermeture" };
+export const SCOPE_FR: Record<ScopeKey, string> = { delivery: "Livraison", installation: "Pose", motor: "Moteur", remote: "Télécommande", led: "Éclairage LED", sensors: "Capteurs", screen: "Screen / store", glazing: "Vitrage / fermeture" };
 export type ScopeStatus = "included" | "extra" | "absent" | "unknown";
 export const SCOPE_STATUS_FR: Record<ScopeStatus, string> = { included: "inclus", extra: "en supplément", absent: "absent / non proposé", unknown: "inconnu" };
 export interface ScopeItem { status: ScopeStatus; /** supplément vérifiable (centimes, même base fiscale que le prix) */ extraAmountMinor?: number | null; note?: string }
@@ -366,7 +366,10 @@ export function evaluateObservation(o: Observation, ctx: StudyContext): Observat
   const gaps: ObservationEval["gaps"] = [];
   let adjust = 0;
   let gapOpen = false;
+  // capteurs : poste ajouté avec le benchmark par niveaux, inconnu sur les anciens relevés — ignoré ici quand ni
+  // nous ni le concurrent ne l'avons renseigné (l'étude détaillée garde sa règle d'origine)
   for (const key of SCOPE_KEYS) {
+    if (key === "sensors" && ctx.ours[key] !== "included" && (o.scope[key]?.status ?? "unknown") === "unknown") continue;
     const ours = ctx.ours[key];
     const it = o.scope[key] ?? { status: "unknown" as const };
     const theirs = it.status;

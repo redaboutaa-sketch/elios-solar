@@ -19,11 +19,14 @@ test("tableau de bord → Mes prix conseillés : marge cible, relevés, lignes e
   await expect(page.getByTestId("market-note")).toBeVisible();
   await expect(page.getByTestId("advice-header")).toContainText("Marge brute cible");
   await expect(page.getByTestId("advice-header")).toContainText("Produits réellement comparés");
+  // lecture : niveaux A/B/C/D séparés de la fraîcheur et du périmètre ; une ligne par configuration précise
+  await expect(page.getByTestId("advice-summary")).toContainText("même système fournisseur");
   const rows = page.locator('[data-testid^="advice-row-"]');
   const n = await rows.count();
   for (let i = 0; i < n; i++) {
     const r = rows.nth(i);
     await expect(r.getByTestId("advice-current")).toContainText(/TTC|—/);
+    await expect(r.getByTestId("advice-status")).toContainText(/Comparaison directe|Positionnement indicatif|Produit seul comparé|Données à actualiser|Données insuffisantes/);
     await r.getByTestId("advice-understand").locator("summary").click();
     await expect(r.getByTestId("advice-understand")).toContainText(/marge|Marge/);
     await expect(r.getByTestId("advice-prepare").or(r.getByTestId("advice-prepare-none"))).toBeVisible();
