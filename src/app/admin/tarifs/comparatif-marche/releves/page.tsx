@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireRole } from "@/lib/session";
-import { Flash, PageTitle, Section, Table, fmtDate } from "@/components/admin/ui";
+import { Flash, PageTitle, Section, StatusBadge, Table, fmtDate } from "@/components/admin/ui";
 import { familiesInfo } from "@/server/tariffs/queries";
 import { listObservations } from "@/server/market/observations";
 import { createObservationAction, importObservationsAction } from "@/server/actions/admin/market";
@@ -10,6 +10,8 @@ import { ComparabilityBadge, MarketNote, MOUNTING_OBS_FR, PRICE_KIND_FR, SubNav,
 import { ObservationFields } from "../observation-fields";
 
 export const metadata: Metadata = { title: "Relevés concurrents" };
+
+const VALIDATION_FR: Record<string, string> = { TO_VALIDATE: "à valider", VALIDATED: "validé", TO_RECHECK: "à revérifier", REJECTED: "rejeté" };
 
 export default async function ObservationsPage(props: PageProps<"/admin/tarifs/comparatif-marche/releves">) {
   await requireRole(["ADMIN"]);
@@ -42,20 +44,21 @@ export default async function ObservationsPage(props: PageProps<"/admin/tarifs/c
       </Section>
       <Section title={`Relevés (${rows.length})`}>
         <Table caption="Relevés">
-          <thead><tr><th>Produit comparé</th><th>Revendeur / modèle</th><th>Date · pays</th><th>Configuration</th><th>Prix</th><th>Comparabilité</th><th>Accès</th></tr></thead>
+          <thead><tr><th>Produit comparé</th><th>Revendeur / modèle</th><th>Date · pays</th><th>Configuration</th><th>Prix</th><th>Niveau proposé</th><th>Validation</th><th>Accès</th></tr></thead>
           <tbody data-testid="observations">
             {rows.map((o) => (
               <tr key={o.id} className={o.status === "ARCHIVED" ? "opacity-60" : ""}>
                 <td>{famName.get(o.familySlug) ?? o.familySlug}</td>
                 <td><Link className="underline" href={`/admin/tarifs/comparatif-marche/releves/${o.id}`}>{o.retailer}</Link><div className="text-xs">{o.model}</div><a className="text-xs underline" href={o.url} target="_blank" rel="noopener noreferrer nofollow">source</a></td>
                 <td className="text-xs">{fmtDate(o.observedAt, false)} · {o.country} · {o.currency}</td>
-                <td className="text-xs">{o.widthMm && o.depthMm ? `${fmtMm(o.widthMm)} × ${fmtMm(o.depthMm)}` : "—"} · {MOUNTING_OBS_FR[o.mounting] ?? o.mounting}<div>{o.roofType}</div></td>
+                <td className="text-xs">{o.widthMm && (o.depthMm ?? o.heightMm) ? `${fmtMm(o.widthMm)} × ${fmtMm((o.depthMm ?? o.heightMm)!)}${o.depthMm == null ? " (hauteur)" : ""}` : "—"} · {MOUNTING_OBS_FR[o.mounting] ?? o.mounting}<div>{o.roofType}</div></td>
                 <td className="text-xs">{eur(o.priceMinor)} {o.taxBasis === "UNKNOWN" ? "HT/TTC ?" : o.taxBasis}<div>{PRICE_KIND_FR[o.priceKind] ?? o.priceKind}</div></td>
-                <td><ComparabilityBadge value={o.comparability} /></td>
+                <td className="text-xs">{o.matchLevel ? <StatusBadge tone={o.matchLevel === "A" ? "ok" : o.matchLevel === "B" ? "warn" : o.matchLevel === "C" ? "neutral" : "err"}>{o.matchLevel}</StatusBadge> : <>non classé · <ComparabilityBadge value={o.comparability} /></>}{o.supplierSystem ? <div>système cité</div> : null}</td>
+                <td className="text-xs">{VALIDATION_FR[o.validation] ?? o.validation}{o.lastCheckedAt ? <div>vérifié le {fmtDate(o.lastCheckedAt, false)}</div> : null}</td>
                 <td className="text-xs">{o.access}</td>
               </tr>
             ))}
-            {!rows.length && <tr><td colSpan={7}>Aucun relevé.</td></tr>}
+            {!rows.length && <tr><td colSpan={8}>Aucun relevé.</td></tr>}
           </tbody>
         </Table>
       </Section>
@@ -72,7 +75,7 @@ export default async function ObservationsPage(props: PageProps<"/admin/tarifs/c
           <label className="flex items-center gap-1"><input type="checkbox" name="dryRun" value="1" defaultChecked /> aperçu seulement</label>
           <button className="btn-secondary min-h-0 py-1.5" type="submit">Importer</button>
         </form>
-        <p className="mt-2 text-xs text-stone-700">Format : celui de l'export (séparateur « ; », montants en euros, dates AAAA-MM-JJ). Un relevé identique (revendeur, URL, modèle, cotes, implantation, date, prix) n'est pas dupliqué. L'import ne modifie aucune grille ni aucun prix public.</p>
+        <p className="mt-2 text-xs text-stone-700">Format : celui de l'export (séparateur « ; », montants en euros, dates AAAA-MM-JJ ; colonnes du benchmark facultatives : niveau A/B/C/D, système cité, société vendeuse, commande, validation, listes « a | b », objets JSON). Chaque ligne est contrôlée (champs, montants, dates) ; une ligne invalide est rejetée avec son motif. Un relevé identique (revendeur, URL, modèle, cotes, implantation, date, prix) n'est pas dupliqué. L'import ne modifie aucune grille ni aucun prix public.</p>
       </Section>
     </div>
   );

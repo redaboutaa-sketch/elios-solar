@@ -174,7 +174,8 @@ describe("import des tarifs fournisseur", () => {
           // « Mes prix conseillés » (administrateurs) : page et actions
           || rel.startsWith("app/admin/tarifs/prix-conseilles/") || rel === "server/actions/admin/advice.ts") continue;
         const src = readFileSync(p, "utf8");
-        if (/from\s+["'][^"']*(server\/market|actions\/admin\/market)[^"']*["']|\.(costPolicyVersion|marketObservation|marketObservationRevision|marketPriceProposal)\b/.test(src)) offenders.push(rel);
+        // benchmark par niveaux (domain/market-benchmark) et transcodification fournisseur (SUPPLIER_SYSTEMS) compris
+        if (/from\s+["'][^"']*(server\/market|actions\/admin\/market|domain\/market-benchmark)[^"']*["']|\.(costPolicyVersion|marketObservation|marketObservationRevision|marketPriceProposal)\b|SUPPLIER_SYSTEMS/.test(src)) offenders.push(rel);
       }
     };
     walk(root);

@@ -27,7 +27,7 @@ export async function Footer({ settings, categories = [] }: { settings?: FooterS
           <p className="mt-3 text-sm text-sand-200">{t.tagline}.</p>
           <address className="mt-4 space-y-0.5 text-xs not-italic text-sand-300" data-testid="footer-contact">
             <p>{contact.name}</p>
-            {contact.locality && <p>{contact.locality}</p>}
+            {contact.town && <p>{contact.town}</p>}
             {contact.email && <p><a href={`mailto:${contact.email}`} className="hover:text-sage-300 hover:underline">{contact.email}</a></p>}
           </address>
         </div>

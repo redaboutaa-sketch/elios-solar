@@ -114,6 +114,29 @@ $RUN --file /import/releves.json --policy-init 37 --valid-from 2026-11-04 --note
 La politique n'est créée que si aucune version n'existe ; ensuite : Administration → Tarifs → Comparatif marché →
 Politique de coût. Détail : `docs/pricing/comparatif-marche.md`.
 
+## 2 octies. Benchmark marché par niveaux (2026-11-19)
+
+Après sauvegarde (§ 6) et déploiement (migration additive `20261119120000_benchmark_niveaux`). Lots PRIVÉS montés en
+lecture seule le temps de la commande ; aucun montant imprimé (sauf le rapport, écrit dans `private/`) ; empreinte
+des prix publics affichée avant et après (doit rester identique).
+```bash
+DC="docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod"
+M="$PWD/private/heliostores/market-2026-11-19"
+RUN="$DC run --rm --no-deps -v $M/lots:/import:ro -e NODE_OPTIONS=--require=./scripts/lib/server-only-shim.cjs migrate node_modules/.bin/tsx"
+# rapport : écrit dans le dossier privé de l'hôte (fichiers 600) → utilisateur root du conteneur
+REPORT="$DC run --rm --no-deps -u root -v $M/rapports:/out/private/rapports -e NODE_OPTIONS=--require=./scripts/lib/server-only-shim.cjs migrate node_modules/.bin/tsx scripts/market/benchmark-report.ts --out /out/private/rapports"
+$REPORT --label production-avant
+$RUN scripts/market/reclassify-legacy.ts            # aperçu, puis --apply (une fois : anciens relevés → niveaux, « à valider »)
+for l in pergolas-lames screens stores-coffre autres; do
+  $RUN scripts/market/check-lot.ts /import/$l.revu.json && $RUN scripts/market-observations.ts --file /import/$l.revu.json --apply
+done
+$REPORT --label production-apres
+```
+Ne jamais couper la sortie d'une commande qui écrit (`| head`) : le processus est interrompu avant ses écritures.
+`check-lot` signale « capture absente » dans le conteneur (captures non montées) : le contrôle complet se fait sur
+l'hôte, avant l'import.
+Actualisation suivante : manuelle, par le skill `/benchmark-marche-europe` ; aucune tâche planifiée.
+
 ## 2 septies. Politique de vente par défaut, relevés du 13/11 et mentions légales (2026-11-13)
 
 Après sauvegarde (§ 6) et déploiement (aucune migration). Aucun montant imprimé ; empreinte des prix publics affichée.
@@ -361,6 +384,8 @@ téléphone retirés aussi (restent : dénomination, forme, siège, e-mail, dire
 `mentions-legales.v4.md`, `apply-2.sql`). **Écart à la LCEN art. 6-III assumé par le propriétaire.**
 Le 2026-11-18, toujours à sa demande : section « Directeur de la publication » retirée (restent : dénomination,
 forme, siège, e-mail, hébergeur ; `mentions-legales.v5.md`, `apply-3.sql`).
+Le 2026-11-19, à sa demande : dénomination et adresse du siège retirées de la phrase « Éditeur du site » (restent : forme,
+ville du siège, e-mail, hébergeur ; `private/legal-2026-11-19/`, version précédente `mentions-legales.v6.md`, `apply.sql`).
 
 ## 7. Retour arrière
 

@@ -36,14 +36,17 @@ async function run<T>(fn: () => Promise<T>, ok: (r: T) => string, okPath?: (r: T
 
 export async function prepareAdvicePriceAction(formData: FormData) {
   const actor = await admin();
-  const p = slug.safeParse(fields(formData).familySlug);
-  if (!p.success) back(BASE, "Requête invalide", "err");
+  const f = fields(formData);
+  const p = slug.safeParse(f.familySlug);
+  const k = z.string().regex(/^[a-z0-9_-]{1,40}$/).safeParse(f.config);
+  if (!p.success || !k.success) back(BASE, "Requête invalide", "err");
   await run(async () => {
-    const row = await adviceFor(p.data);
-    if (!row?.advice || !row.canPrepare) throw new MarketError("Aucun prix à préparer : le prix conseillé est déjà en vigueur ou n'est pas établi.");
-    const proposal = await createProposal({ ...row.reference, scenario: row.advice.kind === "market" ? "aligned" : "target", proposedHtMinor: row.advice.htMinor, justification: [row.advice.title, ...row.explanation].join("\n") }, actor);
+    // prix recalculé côté serveur pour CETTE configuration ; le brouillon ne touche que sa cellule
+    const row = await adviceFor(p.data, k.data);
+    if (!row?.advice || row.advice.htMinor == null || !row.canPrepare) throw new MarketError("Aucun prix à préparer pour cette configuration : le prix conseillé est déjà en vigueur ou n'est pas établi.");
+    const proposal = await createProposal({ ...row.input, scenario: row.advice.kind === "market" ? "aligned" : "target", proposedHtMinor: row.advice.htMinor, justification: [`Configuration : ${row.text}`, row.advice.title, ...row.advice.steps, ...row.limits].join("\n") }, actor);
     return draftGridFromProposal(proposal.id, actor);
-  }, (r) => `Brouillon v${r.version} préparé (une cellule : la configuration de référence). Vérifiez-le puis publiez-le manuellement si vous le décidez.`, (r) => `/admin/tarifs/grilles/${r.draftId}`);
+  }, (r) => `Brouillon v${r.version} préparé : une seule cellule modifiée (celle de la configuration). Vérifiez-le puis publiez-le manuellement si vous le décidez.`, (r) => `/admin/tarifs/grilles/${r.draftId}`);
 }
 
 export async function prepareDefaultPricingAction() {

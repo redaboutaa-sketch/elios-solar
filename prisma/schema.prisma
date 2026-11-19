@@ -1697,6 +1697,13 @@ enum MarketComparability {
   INSUFFICIENT
 }
 
+enum MarketMatchLevel {
+  A
+  B
+  C
+  D
+}
+
 enum MarketRecordStatus {
   ACTIVE
   ARCHIVED
@@ -1748,6 +1755,34 @@ model MarketObservation {
   notes               String                      @default("")
   /// origine : manual (saisie), import:<nom> (fichier de relevés)
   source              String                      @default("manual")
+  /// niveau de comparabilité proposé par l'analyste (A même système, B équivalent technique, C alternative, D non
+  /// exploitable) ; le niveau retenu pour une configuration ne peut jamais dépasser ce que les données permettent
+  matchLevel          MarketMatchLevel?
+  matchReason         String                      @default("")
+  /// système fournisseur cité par la page (interne, jamais public) ; seul fondement d'un niveau A
+  supplierSystem      String                      @default("")
+  /// société vendeuse (déduplication : plusieurs annonces ou domaines d'une même société = un vendeur)
+  sellerGroup         String                      @default("")
+  language            String                      @default("")
+  /// manual | csv | webfetch | curl | playwright
+  collectionMethod    String                      @default("")
+  /// manual | wired | radio | motor (motorisé, commande non précisée) | unknown
+  controlKind         String                      @default("unknown")
+  promoConditions     String                      @default("")
+  /// caractéristiques techniques documentées { clé: valeur }
+  specs               Json                        @default("{}")
+  /// écarts techniques documentés et champs inconnus (listes de textes)
+  differences         Json                        @default("[]")
+  unknownFields       Json                        @default("[]")
+  /// livraison possible vers la France / la Belgique { FR: yes|no|unknown, BE: … }
+  deliversTo          Json                        @default("{}")
+  /// conversion datée d'une devise étrangère { originalCurrency, originalPriceMinor, rate, date, source }
+  fx                  Json?
+  /// capture privée (chemin relatif au dossier privé des relevés)
+  capture             String                      @default("")
+  /// TO_VALIDATE | VALIDATED | TO_RECHECK | REJECTED
+  validation          String                      @default("TO_VALIDATE")
+  lastCheckedAt       DateTime?
   createdBy           String?
   updatedBy           String?
   archivedAt          DateTime?

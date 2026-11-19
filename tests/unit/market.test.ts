@@ -86,7 +86,7 @@ describe("contribution et plancher", () => {
   });
 });
 
-const ctx: StudyContext = { familySlug: "marbella", widthMm: 4000, depthMm: 4000, mounting: "freestanding", country: "FR", vatRateBps: 2000, ours: { delivery: "extra", installation: "extra", motor: "included", remote: "included", led: "absent", screen: "absent", glazing: "absent" }, now: new Date("2026-11-04"), staleDays: 120, dimToleranceBps: 1000 };
+const ctx: StudyContext = { familySlug: "marbella", widthMm: 4000, depthMm: 4000, mounting: "freestanding", country: "FR", vatRateBps: 2000, ours: { delivery: "extra", installation: "extra", motor: "included", remote: "included", led: "absent", sensors: "absent", screen: "absent", glazing: "absent" }, now: new Date("2026-11-04"), staleDays: 120, dimToleranceBps: 1000 };
 const equalScope = { delivery: { status: "extra" as const }, installation: { status: "extra" as const }, motor: { status: "included" as const }, remote: { status: "included" as const }, led: { status: "absent" as const }, screen: { status: "absent" as const }, glazing: { status: "absent" as const } };
 const obs = (o: Partial<Observation>): Observation => ({ id: "x", retailer: "R", manufacturer: "", model: "M", url: "https://ex.test", observedAt: new Date("2026-11-01"), country: "FR", currency: "EUR", familySlug: "marbella", widthMm: 4000, depthMm: 4000, mounting: "freestanding", priceMinor: 600_000, taxBasis: "TTC", priceKind: "configured", regularPriceMinor: null, promoPriceMinor: null, promoEnd: null, scope: equalScope, comparability: "STRONG", status: "ACTIVE", ...o });
 

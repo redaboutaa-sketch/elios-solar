@@ -69,6 +69,7 @@ tests/e2e/.auth/
 !.claude/skills/recette-site/
 !.claude/skills/audit-tarifs/
 !.claude/skills/controle-production/
+!.claude/skills/benchmark-marche-europe/
 
 # Sources client et extractions confidentielles (tarifs d'achat, fiches internes) — jamais dans le dépôt public
 /inputs/

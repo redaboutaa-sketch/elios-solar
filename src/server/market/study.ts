@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { contributionOf, evaluateObservation, floorPrice, marginOf, marketStats, netCostOf, recommend, type DirectCostInput, type ObservationEval, type ScopeKey, type StudyContext } from "@/domain/market";
 import type { SystemMounting, SystemRules } from "@/domain/system";
 import { simulate } from "@/server/tariffs/queries";
-import { listObservations, toDomain } from "./observations";
+import { listObservations, toDomain, type ObservationRow } from "./observations";
 import { policyAt, type PolicyView } from "./policy";
 
 /** TVA validée par marché (FR : 20 %, décision du 2026-11-02) ; un autre marché n'est pas converti. */
@@ -35,10 +35,12 @@ export interface StudyInput {
   /** version de vente précise (brouillon compris) ; sinon celle en vigueur */
   saleVersionId?: string | null;
   at?: Date;
+  /** relevés déjà chargés (benchmark de plusieurs configurations) */
+  observations?: ObservationRow[];
 }
 
 /** Périmètre de notre panier, déduit de la configuration (modifiable par l'administrateur). */
-export function defaultOurs(rules: SystemRules, input: { controlCode?: string; options: { code: string }[] }): Record<ScopeKey, "included" | "extra" | "absent"> {
+export function defaultOurs(rules: SystemRules, input: { controlCode?: string; options: { code: string }[] }, category?: string | null): Record<ScopeKey, "included" | "extra" | "absent"> {
   const ctl = rules.controls?.find((c) => c.code === input.controlCode) ?? rules.controls?.[0];
   const chosen = new Set(input.options.map((o) => o.code));
   const incl = (rules.included ?? []) as Array<{ code?: string; label?: string; visual?: string }>;
@@ -50,7 +52,10 @@ export function defaultOurs(rules: SystemRules, input: { controlCode?: string; o
     motor: motorized ? "included" : "absent",
     remote: /t[ée]l[ée]commande|remote/.test(text) || [...chosen].some((c) => c.startsWith("remote")) ? "included" : "absent",
     led: /led/.test(text) || [...chosen].some((c) => c.startsWith("led")) ? "included" : "absent",
-    screen: "absent",
+    // capteurs : seulement une option choisie ou un équipement inclus (« compatible capteurs io » n'est pas un capteur)
+    sensors: [...chosen].some((c) => /capteur|sensor/.test(c)) || incl.some((i) => /capteur|sensor/i.test(`${i.code ?? ""} ${i.label ?? ""}`)) ? "included" : "absent",
+    // le produit lui-même est un screen : il fait partie de notre panier
+    screen: category === "SCREENS" ? "included" : "absent",
     glazing: "absent",
   };
 }
@@ -60,7 +65,7 @@ export async function study(s: StudyInput) {
   const [sim, policy, fam] = await Promise.all([
     simulate({ familySlug: s.familySlug, mounting: s.mounting, widthMm: s.widthMm, dimMm: s.dimMm, clientele: "PARTICULIER", at, versionId: s.saleVersionId ?? null, finishCode: s.finishCode ?? null, controlCode: s.controlCode ?? null, options: s.options ?? [] }),
     policyAt(at),
-    prisma.productFamily.findUnique({ where: { slug: s.familySlug }, select: { systemRules: true } }),
+    prisma.productFamily.findUnique({ where: { slug: s.familySlug }, select: { systemRules: true, category: true } }),
   ]);
   if ("error" in sim) return { error: sim.error } as const;
   const rules = fam!.systemRules as unknown as SystemRules;
@@ -79,9 +84,9 @@ export async function study(s: StudyInput) {
     const contribution = contributionOf(ht, ttc, { netMinor: cost.prudentNetMinor, partial: cost.partial }, costs);
     return { htMinor: ht, ttcMinor: ttc, known, prudent, contribution };
   };
-  const ours = { ...defaultOurs(rules, sim.input), ...(s.ours ?? {}) };
+  const ours = { ...defaultOurs(rules, sim.input, fam!.category), ...(s.ours ?? {}) };
   const ctx: StudyContext = { familySlug: s.familySlug, widthMm: s.widthMm, depthMm: s.dimMm, mounting: s.mounting, country: s.country, vatRateBps: vat, ours, now: at, staleDays: policy?.staleDays ?? 120, dimToleranceBps: policy?.dimToleranceBps ?? 1000, includeStale: !!s.includeStale };
-  const observations = (await listObservations({ familySlug: s.familySlug, status: "ALL" })).filter((o) => o.status === "ACTIVE");
+  const observations = (s.observations ?? (await listObservations({ familySlug: s.familySlug, status: "ALL" }))).filter((o) => o.status === "ACTIVE" && o.familySlug === s.familySlug);
   const evals: ObservationEval[] = observations.map((o) => evaluateObservation(toDomain(o), ctx));
   const stats = marketStats(evals);
   const floor = cost ? floorPrice({ costMinor: cost.prudentNetMinor, costPartial: cost.partial, costMissing: [...cost.unknown.map((l) => `${l.label} (éligibilité inconnue)`), ...cost.missing.map((l) => `${l.label} (à chiffrer)`)], vatRateBps: vat ?? 2000, costs, marginTargetBps: policy?.marginTargetBps ?? null, contributionTargetBps: policy?.contributionTargetBps ?? null }) : null;

@@ -27,6 +27,9 @@ up() {
     docker exec "$PROD_PG_CONTAINER" sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --no-privileges' | dev_psql "$db" >/dev/null
     dev_psql "$db" <"$ROOT/scripts/recette/anonymize.sql" >/dev/null
     log "copie de la production restaurée et anonymisée"
+    # migrations de la version testée, comme scripts/deploy-production.sh avant la bascule (additives)
+    DATABASE_URL="$(dev_db_url "$db")" pnpm -s exec prisma migrate deploy >/dev/null
+    log "migrations de la version testée appliquées à la copie"
     mkdir -p "$run/uploads"
     docker run --rm -v "$PROD_UPLOADS_VOLUME":/u:ro alpine tar -C /u -cf - . | tar -C "$run/uploads" -xf -
   else
