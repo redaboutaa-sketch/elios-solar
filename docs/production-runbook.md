@@ -384,6 +384,8 @@ téléphone retirés aussi (restent : dénomination, forme, siège, e-mail, dire
 `mentions-legales.v4.md`, `apply-2.sql`). **Écart à la LCEN art. 6-III assumé par le propriétaire.**
 Le 2026-11-18, toujours à sa demande : section « Directeur de la publication » retirée (restent : dénomination,
 forme, siège, e-mail, hébergeur ; `mentions-legales.v5.md`, `apply-3.sql`).
+Le 2026-11-19, à sa demande : dénomination et adresse du siège retirées de la phrase « Éditeur du site » (restent : forme,
+ville du siège, e-mail, hébergeur ; `private/legal-2026-11-19/`, version précédente `mentions-legales.v6.md`, `apply.sql`).
 
 ## 7. Retour arrière
 
