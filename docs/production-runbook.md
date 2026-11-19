@@ -122,14 +122,19 @@ des prix publics affichée avant et après (doit rester identique).
 ```bash
 DC="docker compose -f docker/compose.production.yml --env-file .env.heliostores-prod"
 M="$PWD/private/heliostores/market-2026-11-19"
-RUN="$DC run --rm --no-deps -v $M/lots:/import:ro -v $M/rapports:/out/private/rapports -e NODE_OPTIONS=--require=./scripts/lib/server-only-shim.cjs migrate node_modules/.bin/tsx"
-$RUN scripts/market/benchmark-report.ts --out /out/private/rapports --label production-avant
+RUN="$DC run --rm --no-deps -v $M/lots:/import:ro -e NODE_OPTIONS=--require=./scripts/lib/server-only-shim.cjs migrate node_modules/.bin/tsx"
+# rapport : écrit dans le dossier privé de l'hôte (fichiers 600) → utilisateur root du conteneur
+REPORT="$DC run --rm --no-deps -u root -v $M/rapports:/out/private/rapports -e NODE_OPTIONS=--require=./scripts/lib/server-only-shim.cjs migrate node_modules/.bin/tsx scripts/market/benchmark-report.ts --out /out/private/rapports"
+$REPORT --label production-avant
 $RUN scripts/market/reclassify-legacy.ts            # aperçu, puis --apply (une fois : anciens relevés → niveaux, « à valider »)
 for l in pergolas-lames screens stores-coffre autres; do
   $RUN scripts/market/check-lot.ts /import/$l.revu.json && $RUN scripts/market-observations.ts --file /import/$l.revu.json --apply
 done
-$RUN scripts/market/benchmark-report.ts --out /out/private/rapports --label production-apres
+$REPORT --label production-apres
 ```
+Ne jamais couper la sortie d'une commande qui écrit (`| head`) : le processus est interrompu avant ses écritures.
+`check-lot` signale « capture absente » dans le conteneur (captures non montées) : le contrôle complet se fait sur
+l'hôte, avant l'import.
 Actualisation suivante : manuelle, par le skill `/benchmark-marche-europe` ; aucune tâche planifiée.
 
 ## 2 septies. Politique de vente par défaut, relevés du 13/11 et mentions légales (2026-11-13)
