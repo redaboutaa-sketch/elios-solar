@@ -2,7 +2,7 @@
 
 ## Lancement (2026-10-26)
 
-- **Production heliostores.com publique** : pile `heliostores-prod`, image applicative **`8a0465b`** (2026-11-02 :
+- **Production heliostores.com publique** : pile `heliostores-prod`, image applicative **`8d8917d`** (2026-11-19 : section « Ancienne toile HelioLux… » ; historique : `8a0465b`, 2026-11-02 :
   dix retours client, catalogue de prix 09.2026 importé et prix affichés pour 7 produits — sections ci-dessous ;
   sauvegarde `db_/media_20261102_102908` avant déploiement ; auparavant `8434cfb`, 2026-10-31 : noms HELIO, logo, chat, configurateur, préparation SELT — section ci-dessous ; auparavant `02d4cce`, 2026-10-27 : carrousel de l'accueil en visualisations générées, WebP/AVIF, cadrage par écran, légende
   « Visualisation » ; mention « visuel du fabricant, non contractuel » retirée des légendes des photos fournisseur —
@@ -20,6 +20,23 @@
   Registre de lancement) ; procédures : `docs/production-runbook.md` ; recette : `docs/test-report.md` ;
   SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
+
+## Ancienne toile HelioLux corrigeable, sous-total pergola, recette reproductible (2026-11-19) — production `8d8917d`
+
+- Cause racine de « Ancien choix à refaire : la toile enregistrée (serge_100)… » : le modèle `sevilla` a changé de
+  système le 2026-11-02 (V ZiiiP → SOLID) sous le même identifiant ; un brouillon du navigateur antérieur garde
+  `serge_100` (aucune trace en base : 0 devis, 0 projet). Choix signalé mais peu lisible (liste déroulante).
+- Correction : toiles en cartes à échantillon ; ancien choix nommé (`retired` des règles), jamais présenté comme
+  remplacé ; remplacement en un clic ; erreur, badge et avis retirés dès la correction ; brouillon réécrit. Nouveau
+  projet : aucune toile par défaut (non documentée), prix affiché, devis après choix explicite. Fermeture souhaitée :
+  « Sous-total pergola TTC » + « à chiffrer, compatibilité à confirmer » (aucun arrondi sur un sous-total).
+- Recette : skills `/recette-site`, `/audit-tarifs`, `/controle-production` (`.claude/skills/`, `scripts/recette/`,
+  `docs/recette/`). Campagne finale sur copie anonymisée : 745 réussis, 0 échec, 0 bloqué, 1 non testé, 28 sans objet ;
+  audit PDF : 982 cellules extraites (0 anomalie, 4 incertitudes signalées), 874 cellules vendues = base = politique
+  (copie et production), 1 609 cas moteur réussis + 1 sans objet (MADEIRA 2,10 m, règle stricte), 14 parcours prix.
+- Déploiement : sauvegarde `db_/media_20261119_083817`, `deploy-production.sh 8d8917dced08`, `catalogue-sync --apply`
+  (sevilla, helioroof-screen) ; empreintes devis et prix inchangées ; contrôle production : 79 réussis, 0 échec,
+  1 non testé (en-tête noindex de la préproduction sans identifiant de revue). PR #10 non fusionnée.
 
 ## HelioLux « Prix sur devis : corrigez les points signalés » sans point visible (2026-11-18)
 
