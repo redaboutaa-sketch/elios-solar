@@ -7,7 +7,7 @@ import { HELIOSTORES_MEDIA } from "@/server/media/heliostores-media";
 import { attributionFromLocation, sanitizeAttribution } from "@/domain/attribution";
 
 const catalog = buildHeliostoresCatalog();
-const input = (slug: string, over: Partial<SystemInput> = {}): SystemInput => ({ ...defaultSystemInput(slug, catalog.families.find((f) => f.slug === slug)!.systemRules!), ...over });
+const input = (slug: string, over: Partial<SystemInput> = {}): SystemInput => ({ ...defaultSystemInput(slug, catalog.families.find((f) => f.slug === slug)!.systemRules!), fabricCode: catalog.families.find((f) => f.slug === slug)!.systemRules!.fabrics?.[0]?.code, ...over });
 const scene = (i: SystemInput) => buildSceneModel(catalog, i, evaluate(catalog, i));
 
 describe("3D des systèmes : même entrée que le devis", () => {

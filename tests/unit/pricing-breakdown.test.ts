@@ -13,7 +13,7 @@ const real = buildHeliostoresCatalog();
 const rules = (slug: string) => real.families.find((f) => f.slug === slug)!.systemRules!;
 const meta = (supplements: PriceSupplement[] = []) => ({ currency: "EUR", taxBasis: "HT" as const, dimRule: "round_up" as const, vatRateBps: 2000, listVersion: 4, supplements });
 const withTable = (slug: string, table: SystemPriceTable) => ({ ...real, families: real.families.map((f) => (f.slug === slug ? { ...f, systemPrices: table } : f)) });
-const cfg = (slug: string, over: Partial<SystemInput>): SystemInput => ({ ...defaultSystemInput(slug, rules(slug)), options: [], sides: {}, installation: "self", ...over });
+const cfg = (slug: string, over: Partial<SystemInput>): SystemInput => ({ ...defaultSystemInput(slug, rules(slug)), fabricCode: rules(slug).fabrics?.[0]?.code, options: [], sides: {}, installation: "self", ...over });
 
 // pergola (largeurs ponctuelles, projections au pas des lames) — HelioMax, deux poses
 const pergola: SystemPriceTable = {

@@ -11,7 +11,7 @@
  * Une cote hors de la plage couverte par la grille n'a pas de prix : elle reste chiffrée au devis. Les options sont
  * chiffrées au devis.
  */
-import type { DimRule, SystemInput, SystemRules } from "./system";
+import { SIDE_FR, type DimRule, type SystemInput, type SystemRules } from "./system";
 
 export interface SystemPriceCell {
   /** variante tarifaire du classeur (« murale », « autoportante ») ; vide = unique */
@@ -483,7 +483,8 @@ export function priceBreakdown(table: SystemPriceTable, rules: SystemRules, inpu
   for (const [side, slug] of Object.entries(input.sides ?? {})) {
     if (!slug) continue;
     const wish = rules.closureWishes?.find((w) => w.familySlug === slug);
-    pending.push({ code: `cote:${side}`, label: wish?.label ?? slug, reason: "fermeture souhaitée, étudiée au devis" });
+    // fermeture souhaitée : jamais chiffrée ni supposée compatible ; le montant connu reste un sous-total
+    pending.push({ code: `cote:${side}`, label: `${wish?.label ?? slug}, côté ${SIDE_FR[side as keyof typeof SIDE_FR] ?? side}`, reason: "à chiffrer, compatibilité à confirmer" });
   }
   if (input.multiModule) pending.push({ code: "modules", label: "Installation en plusieurs modules", reason: "étudiée au devis" });
   // store banne : la grille comprend les supports MURAUX (liste de prix p. 96) ; une pose au plafond (support posé sur le

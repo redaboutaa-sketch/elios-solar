@@ -222,6 +222,8 @@ const sevilla: HelioFamily = {
     type: "pergola",
     roof: "fabric",
     revision: { date: "2026-11-03", note: "caractéristiques remplacées par celles du système correspondant (dimensions, poses, toiles, équipements)" },
+    // choix de l'ancienne fiche (avant la révision) : affichés par leur nom dans un ancien projet, jamais convertis
+    retired: { serge_100: "Toile Serge 100 (ancienne fiche HelioLux)", serge_600: "Toile Serge 600 (ancienne fiche HelioLux)", wind_automation: "Automatisme de vent (ancienne fiche HelioLux)" },
     mediaWithheld: "photos enregistrées issues d'un autre système : dessin du modèle en attendant les visuels du système correspondant",
     dims: {
       width: { label: "Largeur", minMm: 1500, maxMm: 4000, sources: [at(S.suppPergolas, "p. 123 — largeur jusqu'à 4 000 mm"), at(S.brochurePergolas, "p. 7 — 1,5 à 4 m"), at(S.priceList, "p. 17 — dimensions minimales")], note: "Par module ; plusieurs modules s'assemblent pour une plus grande largeur." },

@@ -83,7 +83,7 @@ async function referenceFor(familySlug: string): Promise<{ input: StudyInput; te
     const dimRule = byHeight ? rules.dims.height! : rules.dims.depth!;
     const w = nearestAllowed(rules.dims.width, ref.widthMm), dv = dimRule ? nearestAllowed(dimRule, ref.dimMm) : ref.dimMm;
     const candidate = { ...input, widthMm: w, ...(byHeight ? { heightMm: dv } : { depthMm: dv }), ...(ref.mounting && rules.mountings.some((m) => m.code === ref.mounting) ? { mounting: ref.mounting } : {}) };
-    const ok = (c: SystemInput) => { const r = evaluate(catalog, c); return r.priceBreakdown && !r.issues.some((i) => i.severity === "blocking") ? r.priceBreakdown : null; };
+    const ok = (c: SystemInput) => { const r = evaluate(catalog, c); return r.priceBreakdown && !r.issues.some((i) => i.severity === "blocking" && i.code !== "fabric_missing") ? r.priceBreakdown : null; };
     if (ok(candidate)) { input = candidate; why = ref.why; }
     // motorisation de référence (offres du marché motorisées) : commande électrique entièrement chiffrée la moins chère
     if (ref.electric && rules.controls?.some((c) => c.kind === "electric")) {

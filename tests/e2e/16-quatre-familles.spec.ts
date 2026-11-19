@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "./fixtures";
-import { acceptNecessaryOnly, drawingAttr, goStep, openConfigurator, setDim, shot, stepIssues } from "./helpers";
+import { acceptNecessaryOnly, drawingAttr, goStep, openConfigurator, setDim, shot, stepIssues, chooseFabric } from "./helpers";
 import { PUBLIC_FORBIDDEN_NAMES, withoutSellerIdentity } from "../../src/domain/public-sanitize";
 
 /**
@@ -178,7 +178,7 @@ test("configurateur : largeur, avancée, teinte et toile modifient réellement l
   await expect(drawing).toHaveAttribute("data-width-mm", "2400");
   await goStep(page, "pose");
   const fabricBefore = await drawingAttr(page, "fabric-color");
-  await page.locator("#fabric").selectOption({ label: "Soltis VEOZIP (10 coloris)" });
+  await chooseFabric(page, /Soltis VEOZIP/);
   await expect(drawing).not.toHaveAttribute("data-fabric-color", fabricBefore!);
   await expect(page.getByTestId("view-3d-toggle")).toBeEnabled();
 
@@ -225,7 +225,7 @@ test("HelioLux : pergola à toiture toile, sans lames ; moustiquaire et screen d
   await expect(page.getByTestId("step-pose").getByRole("group", { name: "Pose", exact: true }).getByRole("radio")).toHaveCount(2);
   await page.getByRole("radio", { name: /Adossée/ }).check();
   const fabric = await drawingAttr(page, "fabric-color");
-  await page.locator("#fabric").selectOption({ label: "Toile PVC gris aluminium (702N opaque)" });
+  await chooseFabric(page, "Toile PVC gris aluminium (702N opaque)");
   await expect(drawing).not.toHaveAttribute("data-fabric-color", fabric!);
   await shot(page, "configurateur-sevilla");
 
@@ -237,8 +237,7 @@ test("HelioLux : pergola à toiture toile, sans lames ; moustiquaire et screen d
   await goStep(page, "pose");
   const mesh = await drawingAttr(page, "fabric-color");
   // toile « à confirmer » tant que la correspondance fabricant n'est pas confirmée : option choisie par son texte
-  const meshSelect = page.getByLabel("Toile moustiquaire");
-  await meshSelect.selectOption((await meshSelect.locator("option", { hasText: "Toile noire" }).getAttribute("value"))!);
+  await page.getByTestId("fabric-choices").getByRole("radio", { name: /Toile noire/ }).check();
   await expect(drawing).not.toHaveAttribute("data-fabric-color", mesh!);
   await shot(page, "configurateur-moustiquaire");
 

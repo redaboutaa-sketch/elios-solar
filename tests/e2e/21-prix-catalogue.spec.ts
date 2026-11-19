@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { acceptNecessaryOnly, fillQuote, loginAdmin, uid } from "./helpers";
+import { acceptNecessaryOnly, fillQuote, loginAdmin, uid, chooseFabric } from "./helpers";
 import { IN_FORCE_GRID_SQL, one } from "./db";
 
 /**
@@ -76,6 +76,8 @@ test("administration → modification → simulation → publication → configu
     // HelioLux (SOLID) : autoportante par défaut ; la grille de test est celle de la pose adossée
     await v.getByTestId("config-steps").getByRole("button", { name: /Pose et finitions/ }).click();
     await v.getByRole("radio", { name: /Adossée/ }).check();
+    // aucune toile présélectionnée (pas de valeur par défaut documentée) : choix explicite
+    await chooseFabric(v, "Toile PVC blanche (602N opaque)");
     await v.getByTestId("config-steps").getByRole("button", { name: /Dimensions/ }).click();
     await v.locator("#dim-width").fill("3000"); await v.locator("#dim-width").blur();
     await v.locator("#dim-depth").fill("3000"); await v.locator("#dim-depth").blur();

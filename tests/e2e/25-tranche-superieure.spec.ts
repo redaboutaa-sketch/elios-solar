@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures";
-import { fillQuote, goStep, loginAdmin, openConfigurator, setDim, shot, uid } from "./helpers";
+import { chooseFabric, fillQuote, goStep, loginAdmin, openConfigurator, setDim, shot, uid } from "./helpers";
 import { IN_FORCE_GRID_SQL, one, publicCell, publicPricesActive } from "./db";
 
 /**
@@ -24,6 +24,7 @@ for (const [pose, variant] of [[/Adossée/, "murale"], [/Autoportante/, "autopor
     await openConfigurator(page, "sevilla");
     await goStep(page, "pose");
     await page.getByRole("radio", { name: pose }).check();
+    await chooseFabric(page, "Toile PVC blanche (602N opaque)");
     await goStep(page, "dims");
     await setDim(page, "dim-width", 1500);
     await setDim(page, "dim-depth", 2000);

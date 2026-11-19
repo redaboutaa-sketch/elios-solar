@@ -91,7 +91,8 @@ export function entryPrice(catalog: CatalogSnapshot, familySlug: string): EntryP
     evaluated++;
     const r = evaluate(catalog, input);
     const b = r.priceBreakdown;
-    if (!b || r.issues.some((i) => i.severity === "blocking")) return null;
+    // toile pas encore choisie (aucune par défaut documentée) : prix inchangé, choix demandé dans le configurateur
+    if (!b || r.issues.some((i) => i.severity === "blocking" && i.code !== "fabric_missing")) return null;
     return { input, htMinor: b.totalMinor, ttcMinor: b.totalTtcMinor, breakdown: b, complete: !b.partial };
   };
   for (const shape of shapes) {

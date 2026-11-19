@@ -15,7 +15,7 @@ import { buildHeliostoresCatalog } from "@/server/catalog/heliostores-data";
 const real = buildHeliostoresCatalog();
 const rules = (slug: string) => real.families.find((f) => f.slug === slug)!.systemRules!;
 const withTable = (slug: string, table: SystemPriceTable) => ({ ...real, families: real.families.map((f) => (f.slug === slug ? { ...f, systemPrices: table } : f)) });
-const cfg = (slug: string, over: Partial<SystemInput>): SystemInput => ({ ...defaultSystemInput(slug, rules(slug)), options: [], sides: {}, installation: "self", ...over });
+const cfg = (slug: string, over: Partial<SystemInput>): SystemInput => ({ ...defaultSystemInput(slug, rules(slug)), fabricCode: rules(slug).fabrics?.[0]?.code, options: [], sides: {}, installation: "self", ...over });
 const meta = (supplements: PriceSupplement[] = [], rounding = false) => ({ currency: "EUR", taxBasis: "HT" as const, dimRule: "round_up" as const, vatRateBps: 2000, listVersion: 4, supplements, ...(rounding ? { saleRounding: "nearest_99_ttc" as const } : {}) });
 
 /* HelioLux (SOLID) : avancées 3 000 → 7 000 par 500, largeurs 1 500 → 4 000 par 500, deux poses ; minimum technique
@@ -254,5 +254,56 @@ describe("devis historiques : présentation figée", () => {
     expect(tariffNote(sp, true)).toBe("Grille tarifaire HELIOSTORES v3 : 1.5 m de largeur x 3 m (avancée), dimension de grille immediatement superieure.");
     expect(tariffNote({ ...sp, selection: "first_tranche", requested: { widthMm: 1500, dimMm: 2000 } }, true)).toBe("Grille tarifaire HELIOSTORES v3. Tarif calcule selon la tranche de dimensions superieure.");
     expect(tariffNote({ ...sp, roundedUp: false, selection: "exact" }, false)).toBe("Grille tarifaire HELIOSTORES.");
+  });
+});
+
+describe("HelioLux : toile — ancien choix, nouveau projet, fermeture à étudier", () => {
+  const r = rules("sevilla");
+  const at = (over: Partial<SystemInput>) => evaluate(withTable("sevilla", lux(true)), cfg("sevilla", { mounting: "wall", widthMm: 3700, depthMm: 3990, heightMm: 2450, finishCode: "RAL_7016_MAT", ...over }));
+
+  it("nouveau projet : aucune toile documentée par défaut → aucune présélection ; le prix (indépendant de la toile) reste affiché, le devis attend le choix", () => {
+    expect(r.defaultFabricCode).toBeUndefined();
+    expect(defaultSystemInput("sevilla", r).fabricCode).toBeUndefined();
+    const res = at({ fabricCode: undefined });
+    expect(res.issues.filter((i) => i.severity === "blocking").map((i) => i.code)).toEqual(["fabric_missing"]);
+    expect(res.priceStatus).toBe("priced");
+    expect(res.systemPrice?.grid).toMatchObject({ widthMm: 4000, dimMm: 4000 });
+    expect(res.onlineOrder?.ok).toBe(false);
+  });
+
+  it("ancienne toile serge_100 : nommée par son ancien libellé, jamais de montant pour une toile fictive", () => {
+    const res = at({ fabricCode: "serge_100" });
+    const i = res.issues.find((x) => x.code === "fabric_unavailable")!;
+    expect(i.severity).toBe("blocking");
+    expect(i.message).toContain("Toile Serge 100");
+    expect(res.systemPrice).toBeNull();
+    expect(res.priceStatus).toBe("blocked");
+  });
+
+  it("toile SOLID valide : prix de la cellule murale 4 000 × 4 000, aucun blocage", () => {
+    for (const f of r.fabrics!) {
+      const res = at({ fabricCode: f.code });
+      expect(res.issues.filter((x) => x.severity === "blocking"), f.code).toEqual([]);
+      expect(res.systemPrice).toMatchObject({ variantKey: "murale", amountMinor: luxAmount("murale", 4000, 4000), grid: { widthMm: 4000, dimMm: 4000 }, requested: { widthMm: 3700, dimMm: 3990 } });
+      expect(res.priceBreakdown?.partial).toBe(false);
+    }
+  });
+
+  it("fermeture vitrée à l'avant : même montant connu, présenté comme sous-total (fermeture à chiffrer, compatibilité à confirmer)", () => {
+    const without = at({ fabricCode: "solid_white" });
+    const withClosure = at({ fabricCode: "solid_white", sides: { front: "sliding_glass" } });
+    expect(withClosure.priceStatus).toBe("priced");
+    expect(withClosure.priceBreakdown?.partial).toBe(true);
+    // même cellule et mêmes suppléments ; un sous-total partiel n'est jamais arrondi (décision du 2026-11-13)
+    expect(withClosure.systemPrice?.amountMinor).toBe(without.systemPrice?.amountMinor);
+    expect(withClosure.priceBreakdown?.totalTtcMinor).toBe(without.priceBreakdown?.computedTtcMinor);
+    expect(withClosure.priceBreakdown?.roundingTtcMinor).toBe(0);
+    expect(withClosure.priceBreakdown?.pending).toEqual([expect.objectContaining({ code: "cote:front", reason: "à chiffrer, compatibilité à confirmer" })]);
+    expect(withClosure.priceBreakdown?.pending[0]!.label).toMatch(/fermeture vitrée.*côté avant/);
+  });
+
+  it("fermeture enregistrée inconnue : nommée, bloquante, jamais remplacée", () => {
+    const res = at({ fabricCode: "solid_white", sides: { left: "veranda_fts" } });
+    expect(res.issues.find((i) => i.code === "closure_unavailable")?.message).toMatch(/enregistrée côté gauche \(veranda_fts\)/);
   });
 });

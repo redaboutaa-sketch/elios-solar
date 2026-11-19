@@ -12,7 +12,7 @@ const base = buildHeliostoresCatalog();
  */
 const catalog = { ...base, families: base.families.map((f) => (f.status === "archived" ? { ...f, status: "quote_only" as const } : f)) };
 const rules = (slug: string) => catalog.families.find((f) => f.slug === slug)!.systemRules!;
-const input = (slug: string, over: Partial<SystemInput> = {}): SystemInput => ({ ...defaultSystemInput(slug, rules(slug)), ...over });
+const input = (slug: string, over: Partial<SystemInput> = {}): SystemInput => ({ ...defaultSystemInput(slug, rules(slug)), fabricCode: rules(slug).fabrics?.[0]?.code, ...over });
 const codes = (slug: string, over: Partial<SystemInput> = {}) => evaluate(catalog, input(slug, over)).issues.map((i) => `${i.severity}:${i.code}`);
 const realCodes = (slug: string, over: Partial<SystemInput> = {}) => evaluate(base, input(slug, over)).issues.map((i) => `${i.severity}:${i.code}`);
 
