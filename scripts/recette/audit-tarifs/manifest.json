@@ -1,0 +1,666 @@
+{
+  "$comment": "Structure ATTENDUE des grilles du catalogue fournisseur (lecture visuelle du PDF et données techniques), sans aucun montant. Sert à extraire une référence indépendante du moteur et de l'import applicatif. Pages : index PDF (1 = première page) ; numéro imprimé = index + 2. Unités : 'mm' = valeurs d'axes en millimètres (même si l'en-tête affiche [cm]) ; 'cm' = centimètres réels.",
+  "document": {
+    "file": "inputs/heliostores/selt-pricing/7254168cenniki_SOP_wyrob_gotowy_FR.pdf",
+    "sha256": "aa1e1ff93768d6a6dc589808d2828c02c6bdb07b07c2e1f096ff018b48582d7b",
+    "version": "Liste des prix des produits finis 09.2026, valable à partir du 15/09/2026",
+    "pages": 120,
+    "basis": "HT, catalogue avant remise"
+  },
+  "policy": {
+    "$comment": "Décisions du client (docs/DECISIONS.md 2026-11-13) : remise 37 % sur le catalogue éligible, marge brute cible 25 % sur la vente HT, TVA France 20 %, arrondi unique du TOTAL TTC à la terminaison 99 € la plus proche (égalité au supérieur, sous 99 € inchangé), jamais sur un sous-total partiel.",
+    "discountBps": 3700,
+    "marginBps": 2500,
+    "vatBps": 2000,
+    "rounding": "nearest_99_ttc"
+  },
+  "grids": [
+    {
+      "id": "heliomax-autoportante-F",
+      "product": "HelioMax",
+      "system": "SB 450",
+      "familySlug": "marbella",
+      "variantKey": "autoportante",
+      "module": "lame F",
+      "pageIndex": 10,
+      "kind": "matrix",
+      "anchor": "Tableau des prix pour lame F",
+      "occurrence": 1,
+      "unit": "mm",
+      "dims": [
+        1930,
+        2134,
+        2338,
+        2542,
+        2746,
+        2950,
+        3154,
+        3358,
+        3562,
+        3766,
+        3970,
+        4174,
+        4378,
+        4582,
+        4786,
+        4990,
+        5194,
+        5398,
+        5602,
+        5806,
+        6010
+      ],
+      "widths": [
+        1500,
+        2000,
+        2500,
+        3000,
+        3500,
+        4000
+      ],
+      "tech": {
+        "widthMin": 1000,
+        "widthMax": 4000,
+        "dimMin": 1318,
+        "dimMax": 6010,
+        "source": "p. 12–13 imprimées (largeur 1 000 mm, lame F 1 318 mm)"
+      },
+      "included": "moteur 24 V (centrale radio : supplément « toujours »)",
+      "visual": "non contrôlé visuellement (texte aligné, 21 × 6)"
+    },
+    {
+      "id": "heliomax-murale-F",
+      "product": "HelioMax",
+      "system": "SB 450",
+      "familySlug": "marbella",
+      "variantKey": "murale",
+      "module": "lame F",
+      "pageIndex": 11,
+      "kind": "matrix",
+      "anchor": "Tableau des prix pour lame F",
+      "occurrence": 1,
+      "unit": "mm",
+      "dims": [
+        1930,
+        2134,
+        2338,
+        2542,
+        2746,
+        2950,
+        3154,
+        3358,
+        3562,
+        3766,
+        3970,
+        4174,
+        4378,
+        4582,
+        4786,
+        4990,
+        5194,
+        5398,
+        5602,
+        5806,
+        6010
+      ],
+      "widths": [
+        1500,
+        2000,
+        2500,
+        3000,
+        3500,
+        4000
+      ],
+      "tech": {
+        "widthMin": 1000,
+        "widthMax": 4000,
+        "dimMin": 1318,
+        "dimMax": 6010,
+        "source": "p. 12–13 imprimées"
+      },
+      "included": "moteur 24 V",
+      "visual": "non contrôlé visuellement (texte aligné, 21 × 6)"
+    },
+    {
+      "id": "heliosky",
+      "product": "HelioSky",
+      "system": "SB 350",
+      "familySlug": "malaga",
+      "variantKey": "",
+      "module": "lame 195 mm",
+      "pageIndex": 16,
+      "kind": "matrix",
+      "anchor": "Avec une  lame de 195 mm",
+      "occurrence": 1,
+      "unit": "mm",
+      "dims": [
+        3400,
+        3850,
+        4300,
+        4750
+      ],
+      "widths": [
+        3500
+      ],
+      "tech": {
+        "fixedSizes": true,
+        "source": "p. 18 imprimée (dimensions fixes)"
+      },
+      "included": "moteur 24 V, récepteur, télécommande",
+      "visual": "non contrôlé visuellement (4 cellules)"
+    },
+    {
+      "id": "heliolux-autoportante-1",
+      "product": "HelioLux",
+      "system": "SOLID",
+      "familySlug": "sevilla",
+      "variantKey": "autoportante",
+      "module": "premier module",
+      "pageIndex": 17,
+      "kind": "matrix",
+      "anchor": "PERGOLA          SOLID     AUTOPORTANTE",
+      "occurrence": 1,
+      "unit": "mm",
+      "dims": [
+        3000,
+        3500,
+        4000,
+        4500,
+        5000,
+        5500,
+        6000,
+        6500,
+        7000
+      ],
+      "widths": [
+        1500,
+        2000,
+        2500,
+        3000,
+        3500,
+        4000
+      ],
+      "tech": {
+        "widthMin": 1500,
+        "widthMax": 4000,
+        "dimMin": 2000,
+        "dimMax": 7000,
+        "heightMax": 3000,
+        "heightStandard": 2500,
+        "source": "p. 19 imprimée (dimensions minimales largeur 1 500 / projection 2 000)"
+      },
+      "included": "moteur, commande radio, télécommande 5 canaux",
+      "visual": "non contrôlé visuellement"
+    },
+    {
+      "id": "heliolux-autoportante-2",
+      "product": "HelioLux",
+      "system": "SOLID",
+      "familySlug": "sevilla",
+      "variantKey": "autoportante-module-suivant",
+      "module": "module suivant",
+      "pageIndex": 17,
+      "kind": "matrix",
+      "anchor": "PERGOLA          SOLID     AUTOPORTANTE",
+      "occurrence": 2,
+      "unit": "mm",
+      "sold": false,
+      "dims": [
+        3000,
+        3500,
+        4000,
+        4500,
+        5000,
+        5500,
+        6000,
+        6500,
+        7000
+      ],
+      "widths": [
+        1500,
+        2000,
+        2500,
+        3000,
+        3500,
+        4000
+      ],
+      "visual": "non contrôlé visuellement",
+      "note": "module suivant : étudié au devis (non vendu en ligne)"
+    },
+    {
+      "id": "heliolux-murale-1",
+      "product": "HelioLux",
+      "system": "SOLID",
+      "familySlug": "sevilla",
+      "variantKey": "murale",
+      "module": "premier module",
+      "pageIndex": 17,
+      "kind": "matrix",
+      "anchor": "PERGOLA          SOLID     MURALE",
+      "occurrence": 1,
+      "unit": "mm",
+      "dims": [
+        3000,
+        3500,
+        4000,
+        4500,
+        5000,
+        5500,
+        6000,
+        6500,
+        7000
+      ],
+      "widths": [
+        1500,
+        2000,
+        2500,
+        3000,
+        3500,
+        4000
+      ],
+      "tech": {
+        "widthMin": 1500,
+        "widthMax": 4000,
+        "dimMin": 2000,
+        "dimMax": 7000,
+        "heightMax": 3000,
+        "heightStandard": 2500,
+        "source": "p. 19 imprimée"
+      },
+      "included": "moteur, commande radio, télécommande 5 canaux",
+      "visual": "contrôlé visuellement le 2026-11-19 (rendu 130 dpi) : en-têtes, ligne 4000 × colonne 4000"
+    },
+    {
+      "id": "heliolux-murale-2",
+      "product": "HelioLux",
+      "system": "SOLID",
+      "familySlug": "sevilla",
+      "variantKey": "murale-module-suivant",
+      "module": "module suivant",
+      "pageIndex": 17,
+      "kind": "matrix",
+      "anchor": "PERGOLA          SOLID     MURALE",
+      "occurrence": 2,
+      "unit": "mm",
+      "sold": false,
+      "dims": [
+        3000,
+        3500,
+        4000,
+        4500,
+        5000,
+        5500,
+        6000,
+        6500,
+        7000
+      ],
+      "widths": [
+        1500,
+        2000,
+        2500,
+        3000,
+        3500,
+        4000
+      ],
+      "visual": "contrôlé visuellement le 2026-11-19 (rendu 130 dpi)",
+      "note": "module suivant : étudié au devis (non vendu en ligne)"
+    },
+    {
+      "id": "helioroof",
+      "product": "HelioRoof",
+      "system": "VÉRANDA V ZiiiP",
+      "familySlug": "helioroof-screen",
+      "variantKey": "",
+      "module": "",
+      "pageIndex": 90,
+      "kind": "matrix",
+      "anchor": "VÉRANDA          V  ZIIIP",
+      "occurrence": 1,
+      "unit": "mm",
+      "dims": [
+        2000,
+        2500,
+        3000,
+        3500,
+        4000,
+        4500,
+        5000,
+        5500,
+        6000
+      ],
+      "widths": [
+        2000,
+        2500,
+        3000,
+        3500,
+        4000,
+        4500,
+        5000
+      ],
+      "tech": {
+        "widthMin": 2000,
+        "widthMax": 5000,
+        "dimMin": 2000,
+        "dimMax": 6000,
+        "source": "p. 92 imprimée"
+      },
+      "included": "moteur (radio io ou filaire)",
+      "visual": "non contrôlé visuellement"
+    },
+    {
+      "id": "helioscreen",
+      "product": "HelioScreen",
+      "system": "R 120 ZiiiP",
+      "familySlug": "helioscreen",
+      "variantKey": "",
+      "module": "",
+      "pageIndex": 69,
+      "kind": "matrix",
+      "anchor": "REFLEKSOL",
+      "occurrence": 1,
+      "unit": "cm",
+      "dimAxis": "hauteur",
+      "dims": [
+        100,
+        125,
+        150,
+        175,
+        200,
+        225,
+        250,
+        275,
+        300,
+        325,
+        350,
+        375,
+        400
+      ],
+      "widths": [
+        100,
+        125,
+        150,
+        175,
+        200,
+        225,
+        250,
+        275,
+        300,
+        325,
+        350,
+        375,
+        400,
+        425,
+        450,
+        475,
+        500,
+        525,
+        550,
+        575,
+        600,
+        625,
+        650,
+        675,
+        700
+      ],
+      "tech": {
+        "widthMax": 7000,
+        "heightMax": 4000,
+        "source": "p. 71 imprimée (largeur minimale selon le moteur)"
+      },
+      "included": "moteur selon le mode (inclusion à confirmer, voir questions fournisseur)",
+      "visual": "non contrôlé visuellement (cellules colorées « barre élargie » / « 20 Nm » : l'information de couleur n'est pas dans le texte)"
+    },
+    {
+      "id": "heliosun",
+      "product": "HelioSun",
+      "system": "CASABLANCA",
+      "familySlug": "casablanca",
+      "variantKey": "",
+      "module": "coffre",
+      "pageIndex": 96,
+      "kind": "awning",
+      "anchor": "Prix du store banne CASABLANCA",
+      "occurrence": 1,
+      "unit": "cm",
+      "dims": [
+        160,
+        210,
+        260,
+        310,
+        360
+      ],
+      "columns": [
+        [
+          200,
+          290
+        ],
+        [
+          291,
+          350
+        ],
+        [
+          351,
+          410
+        ],
+        [
+          411,
+          470
+        ],
+        [
+          471,
+          530
+        ],
+        [
+          531,
+          600
+        ]
+      ],
+      "tech": {
+        "widthMinRule": "avancée + 45 cm",
+        "source": "p. 98 imprimée"
+      },
+      "included": "commande manuelle (manivelle), supports muraux",
+      "visual": "contrôlé visuellement le 2026-11-19 (rendu 170 dpi) : colonnes, alignement à droite des lignes"
+    },
+    {
+      "id": "heliopro",
+      "product": "HelioPro",
+      "system": "JAMAICA",
+      "familySlug": "jamaica",
+      "variantKey": "",
+      "module": "",
+      "pageIndex": 96,
+      "kind": "awning",
+      "anchor": "JAMAICA*",
+      "occurrence": 1,
+      "unit": "cm",
+      "dims": [
+        160,
+        210,
+        260,
+        310,
+        360
+      ],
+      "columns": [
+        [
+          205,
+          290
+        ],
+        [
+          291,
+          350
+        ],
+        [
+          351,
+          410
+        ],
+        [
+          411,
+          470
+        ],
+        [
+          471,
+          530
+        ],
+        [
+          531,
+          590
+        ],
+        [
+          591,
+          650
+        ],
+        [
+          651,
+          700
+        ]
+      ],
+      "tech": {
+        "widthMinRule": "avancée + 45 cm",
+        "source": "p. 98 imprimée"
+      },
+      "included": "commande manuelle, supports muraux",
+      "visual": "non contrôlé visuellement (en-têtes lus dans le texte)"
+    },
+    {
+      "id": "helioshade",
+      "product": "HelioShade",
+      "system": "CORSICA",
+      "familySlug": "corsica",
+      "variantKey": "",
+      "module": "coffre",
+      "pageIndex": 96,
+      "kind": "awning",
+      "anchor": "Prix du store banne CORSICA",
+      "occurrence": 1,
+      "unit": "cm",
+      "dims": [
+        160,
+        210,
+        260,
+        310,
+        360
+      ],
+      "columns": [
+        [
+          205,
+          290
+        ],
+        [
+          291,
+          350
+        ],
+        [
+          351,
+          410
+        ],
+        [
+          411,
+          470
+        ],
+        [
+          471,
+          530
+        ],
+        [
+          531,
+          590
+        ],
+        [
+          591,
+          650
+        ],
+        [
+          651,
+          700
+        ]
+      ],
+      "tech": {
+        "widthMinRule": "avancée + 45 cm",
+        "source": "p. 98 imprimée"
+      },
+      "included": "supports muraux, éclairage LED ; moteur à ajouter",
+      "visual": "contrôlé visuellement le 2026-11-19 (rendu 170 dpi)"
+    },
+    {
+      "id": "heliosquare",
+      "product": "HelioSquare",
+      "system": "MADEIRA",
+      "familySlug": "madera",
+      "variantKey": "",
+      "module": "caisson",
+      "pageIndex": 96,
+      "kind": "awning",
+      "anchor": "MADEIRA  AVEC  SUPPORTS",
+      "occurrence": 1,
+      "unit": "cm",
+      "dims": [
+        160,
+        210,
+        260,
+        310,
+        360
+      ],
+      "columns": [
+        [
+          205,
+          290
+        ],
+        [
+          291,
+          350
+        ],
+        [
+          351,
+          410
+        ],
+        [
+          411,
+          470
+        ],
+        [
+          471,
+          530
+        ],
+        [
+          531,
+          590
+        ],
+        [
+          591,
+          600
+        ]
+      ],
+      "tech": {
+        "widthMinRule": "avancée + 45 cm",
+        "source": "p. 98 imprimée"
+      },
+      "included": "supports muraux, éclairage LED ; moteur à ajouter",
+      "visual": "contrôlé visuellement le 2026-11-19 (rendu 170 dpi)",
+      "knownConflicts": [
+        {
+          "dimMm": 2100,
+          "widthBelowMm": 2550,
+          "reason": "grille « de 250 cm » contre règle générale « projection + 0,45 m » (2,55 m) : règle la plus stricte conservée par décision (docs/pricing/audit-couverture-dimensions.md § 6, question fournisseur ouverte)"
+        }
+      ]
+    }
+  ],
+  "absent": [
+    {
+      "product": "HelioSlide ALU",
+      "system": "SYSTEM SLIDE",
+      "reason": "aucune grille « SYSTEM SLIDE » dans le document (seulement « parois latérales SLIDE », autre produit)"
+    },
+    {
+      "product": "HelioSlide VERRE",
+      "system": "OPEN SLIDE",
+      "reason": "grille hauteur × panneaux sans vitrage (composant obligatoire non chiffré) : jamais un prix complet"
+    },
+    {
+      "product": "Moustiquaires",
+      "system": "—",
+      "reason": "aucune moustiquaire dans le document : aucun tarif d'un autre système"
+    }
+  ]
+}

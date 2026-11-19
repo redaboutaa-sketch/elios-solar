@@ -40,7 +40,8 @@ async function main() {
         const r = report.get(key) ?? { ok: 0, ko: 0, skipped: 0 };
         report.set(key, r);
         const rules = fam.systemRules;
-        const base = { ...defaultSystemInput(fam.slug, rules), options: [], sides: {}, installation: "self" as const, ...(MOUNT[cell.variant] ? { mounting: MOUNT[cell.variant]! } : {}) };
+        const d0 = defaultSystemInput(fam.slug, rules);
+        const base = { ...d0, fabricCode: d0.fabricCode ?? rules.fabrics?.[0]?.code, options: [], sides: {}, installation: "self" as const, ...(MOUNT[cell.variant] ? { mounting: MOUNT[cell.variant]! } : {}) };
         const dims = [...new Set(cells.filter((c) => c.family === cell.family && c.variant === cell.variant).map((c) => c.dim))].sort((a, b) => a - b);
         const prev = dims[dims.indexOf(cell.dim) - 1];
         const probes = [cell.dim, ...(prev != null && cell.dim - prev > 1 ? [prev + 1] : [])];

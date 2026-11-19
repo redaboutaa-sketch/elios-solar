@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures";
-import { goStep, openConfigurator, setDim, shot } from "./helpers";
+import { goStep, openConfigurator, setDim, shot, chooseFabric } from "./helpers";
 import { publicPricesActive } from "./db";
 
 /**
@@ -16,9 +16,9 @@ test("ancien brouillon HelioLux : avis de revalidation, toile et option périmé
   await expect(page.getByTestId("revision-notice")).toContainText("enregistré avant la mise à jour des caractéristiques de HelioLux");
   await expect(page.getByTestId("revision-notice")).toContainText("n'a pas été converti");
   await goStep(page, "pose");
-  await expect(page.getByTestId("step-pose")).toContainText("La toile enregistrée (serge_600) n'est plus proposée");
-  await page.locator("#fabric").selectOption({ label: "Toile PVC blanche (602N opaque)" });
-  await expect(page.getByTestId("step-pose")).not.toContainText("n'est plus proposée");
+  await expect(page.getByTestId("fabric-stale")).toContainText("Toile enregistrée : Toile Serge 600 (ancienne fiche HelioLux)");
+  await chooseFabric(page, "Toile PVC blanche (602N opaque)");
+  await expect(page.getByTestId("fabric-stale")).toHaveCount(0);
   await goStep(page, "equip");
   const stale = page.getByTestId("stale-option-wind_automation");
   await expect(stale).toContainText("n'est plus proposée pour ce modèle");

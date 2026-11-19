@@ -11,7 +11,7 @@ import { IN_FORCE_GRID_SQL, many, one, pool } from "./db";
 const publicPrices = async () => JSON.stringify(await many(`SELECT r."listId", r.kind, r.code, r."dimAmm", r."widthMinMm", r."widthMaxMm", r."amountMinor" FROM "SupplierPriceRow" r JOIN "SupplierPriceList" l ON l.id = r."listId" WHERE ${IN_FORCE_GRID_SQL} ORDER BY 1, 2, 3, 4, 5, 6`));
 
 test("configuration → comparables → simulation → brouillon, sans changer un prix public", async ({ page }, info) => {
-  test.skip(info.project.name !== "desktop", "parcours d'écriture : une seule fois par campagne");
+  test.skip(info.project.name !== "desktop", "sans objet : parcours d'écriture exécuté une seule fois par campagne (projet desktop)");
   test.setTimeout(180_000);
   const before = await publicPrices();
   const tag = uid();

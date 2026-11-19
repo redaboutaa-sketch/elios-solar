@@ -173,6 +173,16 @@ export interface SystemRules {
    */
   palette?: { edition: string; component: string; sources: SourceRef[]; note?: string };
   fabrics?: Choice[];
+  /**
+   * toile proposée par défaut à un nouveau projet, seulement si la source la désigne ; sinon (et s'il existe plusieurs
+   * toiles) le client la choisit explicitement — jamais la première de la liste par défaut
+   */
+  defaultFabricCode?: string;
+  /**
+   * libellés des choix retirés lors d'une révision (code → libellé) : un ancien projet ou brouillon les affiche par leur
+   * nom, jamais convertis
+   */
+  retired?: Record<string, string>;
   controls?: ControlChoice[];
   included: Array<{ label: string; sources: SourceRef[]; status?: "established" | "to_confirm"; description?: string; supplierRef?: string; visual?: OptionDef["visual"] }>;
   options: OptionDef[];
@@ -300,6 +310,11 @@ export function spotsFor(table: SpotRow[] | undefined, depthMm: number | undefin
   return row ? row.points : null;
 }
 
+/** Libellé d'un choix enregistré qui n'est plus proposé : nom d'avant la révision s'il est connu, sinon son code. */
+export function retiredLabel(rules: SystemRules, code: string): string {
+  return rules.retired?.[code] ?? code;
+}
+
 /** Valeurs par défaut d'une configuration : premières valeurs documentées, jamais une valeur hors règles. */
 export function defaultSystemInput(familySlug: string, rules: SystemRules): SystemInput {
   const d = rules.dims;
@@ -314,7 +329,8 @@ export function defaultSystemInput(familySlug: string, rules: SystemRules): Syst
     mounting: rules.mountings[0]!.code,
     // première teinte standard établie (sans supplément) ; à défaut la première de la liste
     finishCode: (rules.finishes.find((f) => (f.tier ?? "standard") === "standard" && f.status === "established") ?? rules.finishes[0]!).code,
-    fabricCode: rules.fabrics?.[0]?.code,
+    // toile : valeur par défaut documentée, ou toile unique ; sinon choix explicite du client
+    fabricCode: rules.defaultFabricCode && rules.fabrics?.some((f) => f.code === rules.defaultFabricCode) ? rules.defaultFabricCode : rules.fabrics?.length === 1 ? rules.fabrics[0]!.code : undefined,
     controlCode: rules.controls?.[0]?.code,
     packCode: rules.packs?.find((p) => !p.familySlug && p.controlKinds.includes(rules.controls?.[0]?.kind ?? "manual"))?.code,
     ...(rules.fixedSizes?.length ? { sizeCode: rules.fixedSizes[0]!.code, widthMm: rules.fixedSizes[0]!.widthMm, depthMm: rules.fixedSizes[0]!.depthMm ?? (d.depth ? mid(d.depth) : undefined), heightMm: rules.fixedSizes[0]!.heightMm ?? (d.height ? Math.min(d.height.maxMm, 2500) : undefined) } : {}),
@@ -422,7 +438,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
   }
 
   const mounting = rules.mountings.find((m) => m.code === input.mounting);
-  if (!mounting) add({ code: "mounting_unavailable", severity: "blocking", message: "Pose non proposée pour ce système.", path: "mounting" });
+  if (!mounting) add({ code: "mounting_unavailable", severity: "blocking", message: input.mounting ? `La pose enregistrée (${retiredLabel(rules, input.mounting)}) n'est plus proposée pour ce modèle : choisissez une pose.` : "Choisissez une pose.", path: "mounting" });
   else if (mounting.status === "to_confirm") add({ code: "mounting_to_confirm", severity: "review", message: `Pose ${MOUNTING_FR[mounting.code]} : ${mounting.note ?? "à confirmer"}.`, path: "mounting", quoteSuggested: true });
 
   const finish = rules.finishes.find((f) => f.code === input.finishCode) ?? (rules.customFinish?.code === input.finishCode ? rules.customFinish : undefined);
@@ -432,14 +448,15 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
   let fabric: Choice | undefined;
   if (rules.fabrics?.length) {
     fabric = rules.fabrics.find((f) => f.code === input.fabricCode);
-    if (!fabric) add({ code: "fabric_unavailable", severity: "blocking", message: input.fabricCode ? `La toile enregistrée (${input.fabricCode}) n'est plus proposée pour ce modèle : choisissez une nouvelle toile.` : "Choisissez une toile.", path: "fabricCode" });
+    if (!fabric && !input.fabricCode) add({ code: "fabric_missing", severity: "blocking", message: "Choisissez une toile.", path: "fabricCode" });
+    else if (!fabric) add({ code: "fabric_unavailable", severity: "blocking", message: `La toile enregistrée (${retiredLabel(rules, input.fabricCode!)}) n'est plus proposée pour ce modèle : choisissez une nouvelle toile.`, path: "fabricCode" });
     else if (fabric.status === "to_confirm") add({ code: "fabric_to_confirm", severity: "review", message: `Toile ${fabric.label} : ${fabric.note ?? "disponibilité à confirmer"}.`, path: "fabricCode", quoteSuggested: true });
   }
 
   let control: ControlChoice | undefined;
   if (rules.controls?.length) {
     control = rules.controls.find((c) => c.code === input.controlCode);
-    if (!control) add({ code: "control_unavailable", severity: "blocking", message: input.controlCode ? "La commande enregistrée n'est plus proposée pour ce modèle : choisissez un mode de commande." : "Choisissez un mode de commande.", path: "controlCode" });
+    if (!control) add({ code: "control_unavailable", severity: "blocking", message: input.controlCode ? `La commande enregistrée (${retiredLabel(rules, input.controlCode)}) n'est plus proposée pour ce modèle : choisissez un mode de commande.` : "Choisissez un mode de commande.", path: "controlCode" });
     else {
       if (control.minWidthMm && input.widthMm < control.minWidthMm) add({ code: "control_min_width", severity: "blocking", message: `${control.label} : largeur minimale du système ${fmtM(control.minWidthMm)}.`, path: "controlCode" });
       if (control.status === "to_confirm") add({ code: "control_to_confirm", severity: "review", message: `${control.label} : ${control.note ?? "à confirmer au devis"}.`, path: "controlCode", quoteSuggested: true });
@@ -451,7 +468,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
   input.options.forEach((o, idx) => {
     const def = rules.options.find((d) => d.code === o.code);
     const path = `options.${idx}`;
-    if (!def) { add({ code: "option_unknown", severity: "blocking", message: "Une option enregistrée n'est plus proposée pour ce modèle : retirez-la ou choisissez un équipement de la liste.", path }); return; }
+    if (!def) { add({ code: "option_unknown", severity: "blocking", message: `L'option enregistrée (${retiredLabel(rules, o.code)}) n'est plus proposée pour ce modèle : retirez-la ou choisissez un équipement de la liste.`, path }); return; }
     if (chosen.has(def.code)) { add({ code: "option_duplicate", severity: "blocking", message: `${def.label} : sélectionnée deux fois.`, path }); return; }
     chosen.add(def.code);
     if (def.maxQty != null && (!Number.isInteger(o.qty ?? 1) || (o.qty ?? 1) < 1 || (o.qty ?? 1) > def.maxQty)) add({ code: "option_qty", severity: "blocking", message: `${def.label} : quantité entre 1 et ${def.maxQty}.`, path });
@@ -501,7 +518,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
     const sides = Object.entries(input.sides ?? {}).filter(([, v]) => !!v) as Array<[SideKey, string]>;
     for (const [side, slug] of sides) {
       const wish = rules.closureWishes?.find((w) => w.familySlug === slug);
-      if (!wish) add({ code: "closure_unavailable", severity: "blocking", message: "Fermeture latérale non proposée pour ce système.", path: `sides.${side}` });
+      if (!wish) add({ code: "closure_unavailable", severity: "blocking", message: `La fermeture enregistrée côté ${SIDE_FR[side]} (${retiredLabel(rules, slug)}) n'est plus proposée pour ce modèle : choisissez « ouvert » ou une fermeture de la liste.`, path: `sides.${side}` });
       else add({ code: "closure_to_confirm", severity: "review", message: `${wish.label} côté ${SIDE_FR[side]} : ${wish.note}`, path: `sides.${side}`, quoteSuggested: true });
       if (input.mounting === "wall" && side === "back") add({ code: "closure_on_wall", severity: "blocking", message: "Côté mur : aucune fermeture en pose murale.", path: `sides.${side}` });
     }
@@ -555,7 +572,7 @@ export function evaluateSystemRules(rules: SystemRules, input: SystemInput, fami
   return { issues, recap, geometry: { widthMm: input.widthMm, depthMm: depth, heightMm: height }, spots };
 }
 
-const SIDE_FR: Record<SideKey, string> = { back: "arrière", front: "avant", left: "gauche", right: "droit" };
+export const SIDE_FR: Record<SideKey, string> = { back: "arrière", front: "avant", left: "gauche", right: "droit" };
 
 /** Le système est-il représentable en 3D (dimensions valides) ? Retourne le motif sinon. */
 export function systemSceneBlocker(rules: SystemRules, input: SystemInput): string | null {

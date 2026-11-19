@@ -38,6 +38,8 @@ const helioroof: HelioFamily = {
   rules: {
     type: "roof_blind",
     revision: { date: "2026-11-03", note: "caractéristiques remplacées par celles du système correspondant (dimensions, pose, toiles, moteur)" },
+    // choix de l'ancienne fiche (avant la révision) : affichés par leur nom dans un ancien projet, jamais convertis
+    retired: { soltis_92: "Soltis 92 (ancienne fiche)", acrylic: "Toile acrylique (ancienne fiche)", waterproof: "Toile imperméable (ancienne fiche)", ceiling: "Sous la toiture, suspendu (ancienne fiche)", facade: "Verticale (ancienne fiche)", electric: "Motorisation électrique (ancienne fiche)", remote_control: "Télécommande radio (ancienne fiche)", weather_automation: "Automatisme météo (ancienne fiche)" },
     mediaWithheld: "photos enregistrées issues d'un autre système : dessin du modèle en attendant les visuels du système correspondant",
     dims: {
       width: { label: "Largeur", minMm: 2000, maxMm: 5000, sources: [at(S.supp, "p. 230–231 — largeur 2 000 à 5 000 mm"), at(S.priceList, "p. 90 — grille 2 000 à 5 000")] },

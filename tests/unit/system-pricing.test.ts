@@ -21,7 +21,7 @@ const real = buildHeliostoresCatalog();
 const base = { ...real, families: real.families.map((f) => (f.status === "archived" ? { ...f, status: "quote_only" as const } : f)) };
 const withPrices = (slug: string, table: SystemPriceTable) => ({ ...base, families: base.families.map((f) => (f.slug === slug ? { ...f, systemPrices: table } : f)) });
 const rules = (slug: string) => base.families.find((f) => f.slug === slug)!.systemRules!;
-const input = (slug: string, over: Partial<SystemInput>): SystemInput => ({ ...defaultSystemInput(slug, rules(slug)), ...over });
+const input = (slug: string, over: Partial<SystemInput>): SystemInput => ({ ...defaultSystemInput(slug, rules(slug)), fabricCode: rules(slug).fabrics?.[0]?.code, ...over });
 
 describe("prix publics des systèmes (grille « Prix final HELIOSTORES »)", () => {
   it("cote exacte de la grille : montant de la cellule, variante selon la pose", () => {

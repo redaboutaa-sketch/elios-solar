@@ -1,5 +1,5 @@
 import { test, expect, newClientContext } from "./fixtures";
-import { acceptNecessaryOnly, createAccount, fillQuote, goStep, loginAdmin, openConfigurator, setDim, shot, stepIssues, uid } from "./helpers";
+import { acceptNecessaryOnly, createAccount, fillQuote, goStep, loginAdmin, openConfigurator, setDim, shot, stepIssues, uid, chooseFabric } from "./helpers";
 import { one, publicCell, publicPricesActive } from "./db";
 import { PUBLIC_FORBIDDEN_NAMES, withoutSellerIdentity } from "../../src/domain/public-sanitize";
 
@@ -187,7 +187,7 @@ test("HelioLux sans WebGL : toiture toile en modules, souhait d'automatisme ; le
   await expect(p.getByTestId("step-dims")).not.toContainText("Impossible");
   await goStep(p, "pose");
   await p.getByRole("radio", { name: /Adossée/ }).check();
-  await p.locator("#fabric").selectOption({ label: "Toile PVC beige (602N opaque)" });
+  await chooseFabric(p, "Toile PVC beige (602N opaque)");
   await goStep(p, "equip");
   await p.getByTestId("option-led_all").getByRole("checkbox").check();
   await p.getByTestId("option-wishes").getByTestId("option-weather_automation").getByRole("checkbox").check();

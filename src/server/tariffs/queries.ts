@@ -182,7 +182,8 @@ export async function simulate(s: SimulationInput) {
   if (!fam?.systemRules) return { error: "Produit sans règles de configuration." } as const;
   const rules = fam.systemRules as unknown as SystemRules;
   const d = defaultSystemInput(fam.slug, rules);
-  const input: SystemInput = { ...d, kind: "system", familySlug: fam.slug, mounting: s.mounting, widthMm: s.widthMm, ...(rules.dims.depth ? { depthMm: s.dimMm } : {}), ...(rules.dims.height && !rules.dims.depth ? { heightMm: s.dimMm } : {}), ...(s.finishCode ? { finishCode: s.finishCode } : {}), ...(s.controlCode ? { controlCode: s.controlCode } : {}), ...(s.options?.length ? { options: s.options.map((o) => { const [code, value] = o.split("="); return value ? { code: code!, value } : { code: code! }; }) } : {}) };
+  // simulation : toile sans effet sur la grille ; première toile retenue si le client doit la choisir
+  const input: SystemInput = { ...d, fabricCode: d.fabricCode ?? rules.fabrics?.[0]?.code, kind: "system", familySlug: fam.slug, mounting: s.mounting, widthMm: s.widthMm, ...(rules.dims.depth ? { depthMm: s.dimMm } : {}), ...(rules.dims.height && !rules.dims.depth ? { heightMm: s.dimMm } : {}), ...(s.finishCode ? { finishCode: s.finishCode } : {}), ...(s.controlCode ? { controlCode: s.controlCode } : {}), ...(s.options?.length ? { options: s.options.map((o) => { const [code, value] = o.split("="); return value ? { code: code!, value } : { code: code! }; }) } : {}) };
   const { table, used } = await tableFor(fam.slug, s.at, s.clientele, s.versionId);
   const lookup = lookupSystemPrice(table, rules, input);
   const catalog = await loadCatalog();

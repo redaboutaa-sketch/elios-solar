@@ -129,6 +129,11 @@ jobs:
         run: |
           pnpm exec playwright install --with-deps chromium
           scripts/e2e-docker.sh .env.prod
+      # contrôles publics et visuels de /recette-site (390 / 768 / 1440 px, médias, prix d'appel rouverts) : mêmes
+      # tests que /controle-production, sans référence PDF (prix-pdf « non testé » : le PDF privé n'est pas en CI)
+      - name: Contrôles publics et visuels (tests/recette)
+        if: success() || failure()
+        run: E2E_BASE_URL=http://127.0.0.1:3401 RECETTE_MODE=isolated RECETTE_REPORT_DIR=recette-report pnpm exec playwright test -c playwright.recette.config.ts tests/recette/controle-public.spec.ts tests/recette/visuel.spec.ts
       - name: Journaux de la pile (en cas d'échec)
         if: failure()
         run: docker compose -f docker/compose.prod.yml --env-file .env.prod logs --tail 200 app worker migrate
@@ -136,5 +141,7 @@ jobs:
         if: always()
         with:
           name: playwright-report-docker
-          path: playwright-report
+          path: |
+            playwright-report
+            recette-report
           retention-days: 14

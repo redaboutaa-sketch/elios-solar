@@ -713,8 +713,12 @@ function evaluateSystem(catalog: CatalogSnapshot, input: SystemInput): Evaluatio
     }
   }
   const blocked = b.issues.some((i) => i.severity === "blocking");
-  // prix de la grille publique : seulement pour une cote sans blocage, couverte par la grille
-  const lookup = blocked || input.sizeCode === "custom" ? null : lookupSystemPrice(family.systemPrices, rules, input);
+  // prix de la grille publique : seulement pour une cote sans blocage, couverte par la grille. Une toile pas encore
+  // choisie (nouveau projet sans toile documentée par défaut) ne bloque pas le prix quand aucun supplément de la grille
+  // ne dépend de la toile : la demande de devis et la commande restent bloquées jusqu'au choix explicite. Une toile
+  // enregistrée devenue invalide bloque toujours le prix (jamais de montant pour une toile fictive).
+  const priceBlocked = b.issues.some((i) => i.severity === "blocking" && !(i.code === "fabric_missing" && !priceDependsOnFabric(family.systemPrices)));
+  const lookup = priceBlocked || input.sizeCode === "custom" ? null : lookupSystemPrice(family.systemPrices, rules, input);
   const systemPrice = lookup?.ok ? lookup.price : null;
   // décomposition : cellule + suppléments connus ; éléments sans prix listés (sous-total partiel)
   const priceBreakdownResult = systemPrice && family.systemPrices ? priceBreakdown(family.systemPrices, rules, input, systemPrice, catalog.taxRateBps, family.name) : null;
@@ -752,6 +756,15 @@ function evaluateSystem(catalog: CatalogSnapshot, input: SystemInput): Evaluatio
 }
 
 const fmtM = (mm: number) => `${(mm / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 3 })} m`;
+
+const fabricDependency = new WeakMap<object, boolean>();
+/** La grille contient-elle un supplément ciblant une toile (« toile:<code> ») ? */
+function priceDependsOnFabric(table: unknown): boolean {
+  if (!table || typeof table !== "object") return false;
+  let v = fabricDependency.get(table);
+  if (v === undefined) { v = /["&]toile:/.test(JSON.stringify(table)); fabricDependency.set(table, v); }
+  return v;
+}
 
 /**
  * Motifs pour lesquels une configuration de système ne peut pas être commandée en ligne : seule une configuration

@@ -28,8 +28,8 @@ type T = AreaMessages<"configurator">;
 
 /** Prix de la grille publique pour la cote saisie, ou renvoi au devis avec son motif. */
 /** Nature d'un point bloquant : ancien choix devenu invalide, saisie, configuration non réalisable, panne du calcul. */
-const STALE_CODES = new Set(["fabric_unavailable", "finish_unavailable", "control_unavailable", "option_unknown", "pack_unavailable", "size_unavailable", "closure_unavailable"]);
-const INPUT_CODES = new Set(["dimension_missing", "dimension_invalid", "dimension_step", "dimension_value", "option_qty", "option_value", "size_missing", "size_mismatch", "option_duplicate"]);
+const STALE_CODES = new Set(["mounting_unavailable", "fabric_unavailable", "finish_unavailable", "control_unavailable", "option_unknown", "pack_unavailable", "size_unavailable", "closure_unavailable"]);
+const INPUT_CODES = new Set(["fabric_missing", "dimension_missing", "dimension_invalid", "dimension_step", "dimension_value", "option_qty", "option_value", "size_missing", "size_mismatch", "option_duplicate"]);
 function blockingKind(i: { code: string; message: string }): "stale" | "input" | "forbidden" | "error" {
   if (i.code === "calculation_error") return "error";
   // un choix enregistré qui n'est plus proposé (projet ou brouillon antérieur à une révision) ; sans valeur : saisie
@@ -37,7 +37,7 @@ function blockingKind(i: { code: string; message: string }): "stale" | "input" |
   return INPUT_CODES.has(i.code) ? "input" : "forbidden";
 }
 
-function SystemPriceBox({ result, onFix }: { result: EvaluationResult; onFix?: (step: StepId) => void }) {
+function SystemPriceBox({ result, onFix, pergola = false }: { result: EvaluationResult; onFix?: (step: StepId) => void; /** sous-total partiel nommé « sous-total pergola » */ pergola?: boolean }) {
   const t = useT("configurator").price;
   const ts = useT("configurator").steps;
   const intl = useIntl();
@@ -73,9 +73,10 @@ function SystemPriceBox({ result, onFix }: { result: EvaluationResult; onFix?: (
   const total = b?.totalMinor ?? p.amountMinor;
   // particuliers en France : TTC en principal (montant commercial, arrondi compris), HT et TVA en second
   const ttcFirst = b?.totalTtcMinor != null && p.taxBasis === "HT";
+  const required = result.issues.filter((i) => i.severity === "blocking");
   return (
     <div data-testid="system-price" data-priced="true" data-price-status="priced" data-partial={b?.partial ? "true" : "false"} className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink">
-      <p className="flex flex-wrap items-baseline justify-between gap-2"><span>{b?.partial ? (ttcFirst ? t.totalPartialTtc : t.totalPartial) : b && b.lines.length > 1 ? (ttcFirst ? t.totalTtc : t.total) : t.structure}</span><strong className="font-display text-2xl font-semibold tabular-nums" data-testid="system-price-amount">{ttcFirst ? formatSystemPrice(b!.totalTtcMinor!, p.currency, "TTC") : money(total)}</strong></p>
+      <p className="flex flex-wrap items-baseline justify-between gap-2"><span data-testid="system-price-label">{b?.partial ? (pergola ? (ttcFirst ? t.totalPergolaTtc : t.totalPergola) : ttcFirst ? t.totalPartialTtc : t.totalPartial) : b && b.lines.length > 1 ? (ttcFirst ? t.totalTtc : t.total) : t.structure}</span><strong className="font-display text-2xl font-semibold tabular-nums" data-testid="system-price-amount">{ttcFirst ? formatSystemPrice(b!.totalTtcMinor!, p.currency, "TTC") : money(total)}</strong></p>
       {ttcFirst && <p className="text-right text-xs text-stone-700 tabular-nums" data-testid="system-price-ht">{fmt(t.htLine, { amount: formatSystemPrice(total, p.currency, null), vat: formatSystemPrice(b!.totalTtcMinor! - total, p.currency, null), rate: (b!.vatRateBps / 100).toLocaleString(intl) })}</p>}
       {/* tranche facturée : détail administrateur ; public : mention simple, cotes réelles conservées partout ailleurs */}
       {(p.roundedUp || (p.selection != null && p.selection !== "exact")) && <p className="mt-1 text-xs text-stone-700" data-testid="system-price-tier">{t.tierNote}</p>}
@@ -85,6 +86,13 @@ function SystemPriceBox({ result, onFix }: { result: EvaluationResult; onFix?: (
           <ul className="mt-1 space-y-0.5">{b.lines.map((l) => <li key={l.code} className="flex justify-between gap-3"><span>{l.label}{l.detail ? ` (${l.detail})` : ""}</span><span className="tabular-nums">{money(l.amountMinor)}</span></li>)}</ul>
         </details>
       )}
+      {/* prix établi, choix encore à faire (ex. toile sans valeur par défaut documentée) : nommé, avec son étape */}
+      {required.length ? (
+        <div className="mt-2 text-xs" data-testid="price-required">
+          <p className="font-medium">{t.choicesRequired}</p>
+          <ul className="list-disc pl-4">{required.map((i) => { const stepId = stepOf(i.path); return <li key={`${i.code}-${i.path ?? ""}`} data-code={i.code}>{i.message}{onFix ? <> <button type="button" className="link-brand underline" onClick={() => onFix(stepId)} data-testid="price-required-fix">{fmt(t.goToStep, { step: ts[stepId] })}</button></> : null}</li>; })}</ul>
+        </div>
+      ) : null}
       {b?.pending.length ? (
         <div className="mt-2 text-xs" data-testid="price-pending">
           <p className="font-medium">{t.pending}</p>
@@ -217,6 +225,20 @@ function clearDraft(key: string) {
   try { window.localStorage.removeItem(key); } catch { /* idem */ }
 }
 
+/**
+ * Champs sans objet pour ce modèle (ex. toile ou commande enregistrée par un brouillon d'un autre système, alors que ce
+ * modèle n'en propose pas) : retirés, car invisibles mais transmis avec la demande. Un champ que le modèle propose
+ * n'est jamais modifié : une valeur devenue invalide reste visible et se corrige explicitement.
+ */
+function withoutInapplicable(input: SystemInput, rules: SystemRules): SystemInput {
+  const next = { ...input };
+  if (!rules.fabrics?.length) delete next.fabricCode;
+  if (!rules.controls?.length) delete next.controlCode;
+  if (!rules.packs?.length) delete next.packCode;
+  if (rules.type !== "pergola") next.sides = {};
+  return next;
+}
+
 /** Empreinte stable d'une configuration (ordre des clés indifférent, champs vides ignorés) : détection des modifications. */
 export function inputKey(v: unknown): string {
   const norm = (x: unknown): unknown => {
@@ -288,7 +310,6 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
   const [peek, setPeek] = useState(false);
   const [step, setStep] = useState(0);
   const [restored, setRestored] = useState(false);
-  const [restoredAt, setRestoredAt] = useState<string | null>(null);
   const key = draftKey(familySlug, existing?.id, cartLineId);
   // empreinte de la configuration telle qu'ouverte (valeurs par défaut, projet ou ligne de panier)
   const [openedKey] = useState(() => inputKey({ ...defaults, ...initial, kind: "system", familySlug }));
@@ -307,12 +328,13 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
       restoredFor.current = key;
       const draft = readDraft(key, familySlug);
       const d = draft?.input;
-      if (d && inputKey({ ...defaults, ...d, kind: "system", familySlug }) !== openedKey) { setInput({ ...defaults, ...d, kind: "system", familySlug }); setRestored(true); setRestoredAt(draft.since); draftSince.current = draft.since; }
+      const restoredInput = d ? withoutInapplicable({ ...defaults, ...d, kind: "system", familySlug }, rules) : null;
+      if (restoredInput && inputKey(restoredInput) !== openedKey) { setInput(restoredInput); setRestored(true); draftSince.current = draft!.since; }
       setStep(stepFromUrl());
       setDraftReady(true);
     }, 0);
     return () => window.clearTimeout(t);
-  }, [key, familySlug, defaults, openedKey]);
+  }, [key, familySlug, defaults, openedKey, rules]);
   useEffect(() => {
     if (!draftReady) return;
     draftSince.current ??= new Date().toISOString();
@@ -367,7 +389,8 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
   };
   // projet, ligne de panier ou brouillon enregistré avant la révision des caractéristiques du modèle : revalidation
   // explicite (aucune conversion ; les choix devenus invalides sont signalés par l'évaluation)
-  const revisedSince = !!rules.revision && [savedAt, restored ? restoredAt : null].some((d) => !!d && d.slice(0, 10) < rules.revision!.date);
+  // avis retiré dès qu'aucun ancien choix ne reste à refaire
+  const revisedSince = !!rules.revision && (!!savedAt || restored) && result.issues.some((i) => i.severity === "blocking" && blockingKind(i) === "stale");
   // comparatif des modes de commande : supplément réel du moteur (montant établi), fourchette documentée quand plusieurs
   // moteurs conviennent, ou indisponibilité — calculé par le moteur de prix, pour les dimensions et la pose choisies
   const modeComparison = useMemo(() => {
@@ -440,7 +463,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
               <div key={`${r.label}-${i}`} className="contents"><dt className="text-stone-700">{r.label}</dt><dd>{r.value}{r.status === "to_confirm" ? <span className="badge-warn ml-2">{t.recap.toConfirm}</span> : null}</dd></div>
             ))}
           </dl>
-          <div className="mt-4"><SystemPriceBox result={result} onFix={(id) => goStep(STEPS.indexOf(id))} /></div>
+          <div className="mt-4"><SystemPriceBox result={result} pergola={rules.type === "pergola"} onFix={(id) => goStep(STEPS.indexOf(id))} /></div>
           <p className="mt-3 text-xs text-stone-700" data-testid="recap-delivery-lead-time">{t.deliveryLeadTime} {t.deliveryTermsInQuote}</p>
         </section>
       </div>
@@ -540,18 +563,39 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
               <p className="mt-1 text-xs text-stone-700">{t.pose.finishSelected}<strong data-testid="finish-selected">{finish ? colourLabel(finish.label) : "—"}</strong>{t.pose.finishNote}{finish?.note ? ` ${finish.note}` : ""}</p>
               {rules.palette ? <p className="mt-1 text-xs text-stone-700" data-testid="finish-palette">{t.pose.paletteRef}{rules.palette.edition}.{rules.palette.note ? ` ${rules.palette.note.charAt(0).toUpperCase()}${rules.palette.note.slice(1)}.` : ""}</p> : null}
             </fieldset>
-            {rules.fabrics?.length ? (
-              <div className="mt-4">
-                <label className="label" htmlFor="fabric">{rules.type === "insect_screen" ? t.pose.insectFabric : t.pose.fabric}</label>
-                <select id="fabric" className="input" aria-invalid={!rules.fabrics.some((f) => f.code === input.fabricCode) || undefined} value={input.fabricCode ?? ""} onChange={(e) => set({ fabricCode: e.target.value })}>
-                  {/* choix enregistré plus proposé : affiché comme tel (jamais la première toile par défaut, sinon impossible à corriger) */}
-                  {!rules.fabrics.some((f) => f.code === input.fabricCode) && <option value={input.fabricCode ?? ""} disabled>{t.price.staleChoice}</option>}
-                  {rules.fabrics.map((f) => <option key={f.code} value={f.code}>{f.label}{f.status === "to_confirm" ? t.pose.toConfirmDash : ""}</option>)}
-                </select>
-                {(() => { const f = rules.fabrics!.find((x) => x.code === input.fabricCode); return f?.description ? <p className="mt-1 text-xs text-stone-700">{f.description}</p> : null; })()}
-                <p className="mt-1 text-xs text-stone-700"><Link href="/guides/choisir-toile-et-motorisation" className="underline">{t.pose.fabricGuide}</Link></p>
-              </div>
-            ) : null}
+            {rules.fabrics?.length ? (() => {
+              const fabric = rules.fabrics.find((f) => f.code === input.fabricCode);
+              const stale = !fabric && !!input.fabricCode;
+              return (
+                <fieldset className="mt-4" data-testid="fabric-choices" aria-invalid={!fabric || undefined}>
+                  <legend className="label">{rules.type === "insect_screen" ? t.pose.insectFabric : t.pose.fabric}</legend>
+                  {/* choix enregistré plus proposé : nommé tel quel, jamais remplacé ni présenté comme sélectionné */}
+                  {stale ? (
+                    <p className="mb-2 rounded-lg border border-danger/40 bg-danger/5 px-3 py-2 text-sm text-danger" role="alert" data-testid="fabric-stale" data-code={input.fabricCode}>
+                      {fmt(t.pose.fabricStale, { label: rules.retired?.[input.fabricCode!] ?? input.fabricCode! })}
+                    </p>
+                  ) : !fabric ? <p className="mb-2 text-sm text-stone-800" data-testid="fabric-required">{t.pose.fabricRequired}</p> : null}
+                  <div role="radiogroup" aria-label={t.pose.fabric} className="grid grid-cols-1 gap-2 sm:grid-cols-2 2xl:grid-cols-3">
+                    {rules.fabrics.map((f) => {
+                      const checked = input.fabricCode === f.code;
+                      return (
+                        <label key={f.code} className={`relative flex cursor-pointer items-center gap-2.5 rounded-lg border bg-white p-2 pr-7 text-left text-sm transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-700 ${checked ? "border-anthracite ring-1 ring-anthracite" : "border-sand-300 hover:border-stone-700"}`} data-fabric={f.code} data-selected={checked || undefined}>
+                          <input type="radio" name="fabric" value={f.code} checked={checked} onChange={() => set({ fabricCode: f.code })} className="absolute inset-0 z-10 m-0 cursor-pointer appearance-none opacity-0" aria-label={`${f.label}${f.status === "to_confirm" ? t.pose.toConfirmDash : ""}`} />
+                          <span aria-hidden="true" className="size-8 shrink-0 rounded-full border border-black/15 shadow-inner" style={{ background: f.swatch ?? "repeating-linear-gradient(45deg,#ddd,#ddd 4px,#fff 4px,#fff 8px)" }} />
+                          <span className="min-w-0 leading-tight">
+                            <span className="block font-medium [overflow-wrap:anywhere]">{f.label}</span>
+                            {f.description || f.status === "to_confirm" || !f.swatch ? <span className="block text-xs text-stone-700">{[f.description, f.swatch ? null : t.pose.noPreview, f.status === "to_confirm" ? t.pose.toConfirm : null].filter(Boolean).join(" · ")}</span> : null}
+                          </span>
+                          {checked && <Check aria-hidden="true" className="absolute top-1.5 right-1.5 size-4 text-anthracite" />}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-1 text-xs text-stone-700">{t.pose.fabricSelected}<strong data-testid="fabric-selected">{fabric ? fabric.label : "—"}</strong></p>
+                  <p className="mt-1 text-xs text-stone-700"><Link href="/guides/choisir-toile-et-motorisation" className="underline">{t.pose.fabricGuide}</Link></p>
+                </fieldset>
+              );
+            })() : null}
             {rules.packs?.length ? (
               <fieldset className="mt-4" data-testid="packs">
                 <legend className="label">{t.pose.packs}</legend>
@@ -638,6 +682,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
                     <div key={k}><label className="label" htmlFor={`side-${k}`}>{t.sides[k]}</label>
                       <select id={`side-${k}`} className="input" value={input.sides?.[k] ?? ""} onChange={(e) => set({ sides: { ...input.sides, [k]: e.target.value || null } })}>
                         <option value="">{t.equip.open}</option>
+                        {input.sides?.[k] && !rules.closureWishes!.some((w) => w.familySlug === input.sides?.[k]) ? <option value={input.sides[k]!} disabled>{t.price.staleChoice}</option> : null}
                         {rules.closureWishes!.map((w) => <option key={w.familySlug} value={w.familySlug}>{fmt(t.equip.toStudy, { label: w.label })}</option>)}
                       </select>
                       {input.sides?.[k] ? <p className="mt-1 text-xs text-stone-700" data-testid={`side-status-${k}`}>{t.equip.sideStatus}</p> : null}
@@ -688,7 +733,7 @@ export function SystemConfigurator({ catalog, familySlug, art, initial, existing
       </div>
       {/* barre mobile compacte : prix et action prioritaire ; masquée pendant la saisie (clavier virtuel), voir globals.css */}
       <div className="cfg-bar fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-sand-300 bg-white/95 px-3 py-2 backdrop-blur lg:hidden" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }} data-testid="config-price-bar">
-        <a href="#recap" onClick={() => setRecapOpen(true)} className="min-w-0"><span className="block text-xs text-stone-700">{fmt(t.bar.step, { label: t.steps[STEPS[step]!], n: step + 1, total: STEPS.length })}</span><span className="block truncate text-sm font-semibold tabular-nums">{result.priceBreakdown?.totalTtcMinor != null && result.systemPrice?.taxBasis === "HT" ? `${result.priceBreakdown.partial ? `${t.price.totalPartialTtc} : ` : ""}${formatSystemPrice(result.priceBreakdown.totalTtcMinor, result.systemPrice.currency, "TTC")}` : result.systemPrice ? formatSystemPrice(result.systemPrice.amountMinor, result.systemPrice.currency, result.systemPrice.taxBasis) : t.price.onQuote}</span></a>
+        <a href="#recap" onClick={() => setRecapOpen(true)} className="min-w-0"><span className="block text-xs text-stone-700">{fmt(t.bar.step, { label: t.steps[STEPS[step]!], n: step + 1, total: STEPS.length })}</span><span className="block truncate text-sm font-semibold tabular-nums">{result.priceBreakdown?.totalTtcMinor != null && result.systemPrice?.taxBasis === "HT" ? `${result.priceBreakdown.partial ? `${rules.type === "pergola" ? t.price.totalPergolaTtc : t.price.totalPartialTtc} : ` : ""}${formatSystemPrice(result.priceBreakdown.totalTtcMinor, result.systemPrice.currency, "TTC")}` : result.systemPrice ? formatSystemPrice(result.systemPrice.amountMinor, result.systemPrice.currency, result.systemPrice.taxBasis) : t.price.onQuote}</span></a>
         <button type="button" className="btn-secondary shrink-0 px-3" aria-pressed={peek} onClick={() => setPeek((v) => !v)} data-testid="drawing-peek-toggle"><Eye className="size-4" aria-hidden="true" /> {t.bar.peek}</button>
         {step < STEPS.length - 1 ? <button type="button" className="btn-accent shrink-0" onClick={() => goStep(step + 1)}>{t.next}</button> : <a href={result.onlineOrder?.ok ? "#order-title" : "#quote-title"} className="btn-accent shrink-0">{result.onlineOrder?.ok ? t.bar.order : t.final.quoteTitle}</a>}
       </div>

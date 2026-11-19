@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures";
-import { fillQuote, goStep, openConfigurator, setDim, shot, stepIssues, uid } from "./helpers";
+import { fillQuote, goStep, openConfigurator, setDim, shot, stepIssues, uid, chooseFabric } from "./helpers";
 import { one, publicCell, publicPricesActive } from "./db";
 
 test.use({ launchOptions: { args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] } });
@@ -31,11 +31,11 @@ test("screen HelioScreen : largeur contradictoire signalée, mode de commande, t
   await expect(page.getByTestId("step-dims")).not.toContainText("Impossible");
   await goStep(page, "pose");
   await page.getByRole("radio", { name: "En niche" }).check();
-  await page.locator("#fabric").selectOption({ label: "Polyscreen — à confirmer" });
+  await chooseFabric(page, /Polyscreen/);
   await goStep(page, "recap");
   await expect(issues).toContainText("Toile Polyscreen");
   await goStep(page, "pose");
-  await page.locator("#fabric").selectOption({ label: "Serge 600 (14 coloris)" });
+  await chooseFabric(page, "Serge 600 (14 coloris)");
   // télécommande io : réservée à une commande radio io (prérequis affiché), modèle au choix
   await goStep(page, "equip");
   await expect(page.getByTestId("prereq-remote_io")).toContainText("nécessite une commande radio io");

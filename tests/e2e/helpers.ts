@@ -96,3 +96,12 @@ export const stepIssues = (page: Page, step: keyof typeof STEP) => page.getByTes
 
 /** Attribut data-* du dessin paramétrique du projet. */
 export const drawingAttr = (page: Page, name: string) => page.getByTestId("project-drawing").getAttribute(`data-${name}`);
+
+/**
+ * Choix explicite d'une toile (cartes à échantillon de l'étape « Pose et finitions ») : aucune toile n'est présélectionnée
+ * quand la source n'en désigne pas par défaut. `name` : libellé (ou début de libellé) de la toile.
+ */
+export async function chooseFabric(page: Page, name: string | RegExp) {
+  if (!(await page.getByTestId(STEP.pose).isVisible())) await goStep(page, "pose");
+  await page.getByTestId("fabric-choices").getByRole("radio", { name }).check();
+}
