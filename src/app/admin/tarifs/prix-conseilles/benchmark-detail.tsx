@@ -6,6 +6,9 @@ import { MOUNTING_OBS_FR, eur, pctFr } from "../comparatif-marche/labels";
 const LEVEL_TONE = { A: "ok", B: "warn", C: "neutral", D: "err" } as const;
 const TAX_FR = { HT: "HT", TTC: "TTC", UNKNOWN: "HT/TTC non indiqué" } as const;
 const MARKET_FR = { direct: "marché direct", local_accessible: "prix local, livre FR/BE", local_unknown: "prix local, accès FR/BE inconnu", separate: "groupe distinct (GB)" } as const;
+/** noms de champs saisis par la collecte → libellés lisibles */
+const FIELD_FR: Record<string, string> = { warranty: "garantie", sav: "SAV", resistance: "résistance au vent", promoEnd: "fin de promotion", manufacturer: "fabricant", supplierSystem: "système fournisseur", "deliversTo.FR": "livraison vers la France", "deliversTo.BE": "livraison vers la Belgique", "delivery.extraAmountMinor": "montant de la livraison", "installation.extraAmountMinor": "montant de la pose", material: "matériau", blades: "lames / toile", heightMm: "hauteur", depthMm: "avancée", widthMm: "largeur", taxBasis: "HT ou TTC", mounting: "implantation", controlKind: "type de commande" };
+const fieldFr = (k: string) => FIELD_FR[k] ?? k;
 const date = (d: Date | null) => (d ? d.toLocaleDateString("fr-FR", { timeZone: "UTC" }) : "—");
 const mm = (v: number | null) => (v == null ? "?" : (v / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 2 }));
 
@@ -26,7 +29,7 @@ function Offer({ e, vat }: { e: BenchEval; vat: number }) {
       <td className="tabular-nums">{e.promoMinor != null ? <>{e.regularMinor != null ? <s>{eur(e.regularMinor)}</s> : null} <strong>{eur(e.promoMinor)}</strong>{cur} <span className="block">promotion{o.promoEnd ? ` jusqu'au ${date(o.promoEnd)}` : ""}{o.promoConditions ? ` (${o.promoConditions})` : ""}</span></> : <>{eur(e.observedMinor)}{cur}</>} <span className="block text-stone-700">{TAX_FR[e.tax]}{o.fx ? ` · converti au ${o.fx.date} (${o.fx.source})` : ""}</span></td>
       <td>{PRICE_SCOPE_FR[e.priceScope]}{e.adjustments.length > 0 && <span className="block text-stone-700">{e.adjustments.map((a) => `${a.note} (${a.amountMinor > 0 ? "+" : ""}${eur(a.amountMinor)})`).join(" ; ")}</span>}</td>
       <td className="tabular-nums">{e.comparableHtMinor != null ? <>{eur(ttcOf(e.comparableHtMinor, vat))} TTC<span className="block text-stone-700">{eur(e.comparableHtMinor)} HT</span></> : "non établi"}</td>
-      <td className="max-w-72">{[...e.differences.map((d) => `écart : ${d}`), ...e.unknown.map((u) => `inconnu : ${u}`)].join(" ; ") || "—"}</td>
+      <td className="max-w-72">{[...e.differences.map((d) => `écart : ${d}`), ...e.unknown.map((u) => `inconnu : ${fieldFr(u)}`)].join(" ; ") || "—"}</td>
       <td className="max-w-72"><LevelBadge level={e.level} /> {USAGE_FR[e.usage]}<span className="block text-stone-700">{[...e.levelWhy.slice(1), ...e.usageWhy].join(" ; ")}</span></td>
       <td>{date(o.observedAt)}<span className="block text-stone-700">{FRESHNESS_FR[e.freshness]} · {EVIDENCE_FR[e.evidence]}</span></td>
     </tr>
