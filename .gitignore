@@ -39,6 +39,7 @@ exports/
 coverage/
 test-results/
 playwright-report/
+recette-report/
 playwright/.cache/
 blob-report/
 tests/e2e/screenshots/**/*.diff.png
@@ -61,7 +62,13 @@ Thumbs.db
 docker-compose.override.yml
 src/generated/
 tests/e2e/.auth/
-.claude/
+# configuration locale de Claude Code ignorée, sauf les trois skills de projet de la recette
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/recette-site/
+!.claude/skills/audit-tarifs/
+!.claude/skills/controle-production/
 
 # Sources client et extractions confidentielles (tarifs d'achat, fiches internes) — jamais dans le dépôt public
 /inputs/

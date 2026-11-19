@@ -25,7 +25,7 @@ test("consultation des grilles importées", async ({ page }) => {
 });
 
 test("modifier une cellule (nouveau brouillon), comparer, simuler, puis rejeter le brouillon", async ({ page }, info) => {
-  test.skip(info.project.name !== "desktop", "parcours d'écriture : une seule fois par campagne");
+  test.skip(info.project.name !== "desktop", "sans objet : parcours d'écriture exécuté une seule fois par campagne (projet desktop)");
   // grille de vente importée, en vigueur ou désactivée (le 2026-10-26, HelioScreen est passé sur devis : grille désactivée)
   await loginAdmin(page, "/admin/tarifs?produit=helioscreen&nature=SALE");
   const row = page.getByTestId("tariff-list").getByRole("row").filter({ hasText: "HelioScreen" }).filter({ hasText: "Prix final" });
@@ -64,7 +64,7 @@ test("modifier une cellule (nouveau brouillon), comparer, simuler, puis rejeter 
 });
 
 test("grille de test : incomplète refusée, complète publiée puis désactivée", async ({ page }, info) => {
-  test.skip(info.project.name !== "desktop", "parcours d'écriture : une seule fois par campagne");
+  test.skip(info.project.name !== "desktop", "sans objet : parcours d'écriture exécuté une seule fois par campagne (projet desktop)");
   await loginAdmin(page, "/admin/tarifs");
   const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Créer le brouillon" }) });
   // HelioMax (sans grille) : variante propre au test, qui ne correspond à aucune pose (murale / autoportante) → jamais affichée

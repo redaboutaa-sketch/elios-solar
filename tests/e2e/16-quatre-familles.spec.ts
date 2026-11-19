@@ -38,7 +38,7 @@ test("accueil : quatre familles dans le premier écran, cartes entièrement cliq
 });
 
 test("navigation latérale (ordinateur) : familles, modèles et rubrique active", async ({ page }) => {
-  test.skip(!isDesktop(page), "navigation latérale affichée à partir de 1024 px (menu mobile vérifié à part)");
+  test.skip(!isDesktop(page), "sans objet : navigation latérale affichée à partir de 1024 px (menu mobile vérifié à part)");
   await page.goto("/stores-bannes");
   await acceptNecessaryOnly(page);
   const side = page.getByTestId("site-sidebar");
@@ -68,7 +68,7 @@ test("navigation latérale (ordinateur) : familles, modèles et rubrique active"
 });
 
 test("menu mobile : familles, modèles et services ; un modèle s'ouvre depuis le menu", async ({ page }) => {
-  test.skip(isDesktop(page), "menu mobile affiché sous 1024 px (navigation latérale vérifiée à part)");
+  test.skip(isDesktop(page), "sans objet : menu mobile affiché sous 1024 px (navigation latérale vérifiée à part)");
   await page.goto("/");
   await acceptNecessaryOnly(page);
   await expect(page.getByTestId("site-sidebar")).toBeHidden();
