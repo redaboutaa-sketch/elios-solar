@@ -2,7 +2,7 @@
 
 ## Lancement (2026-10-26)
 
-- **Production heliostores.com publique** : pile `heliostores-prod`, image applicative **`8d8917d`** (2026-11-19 : section « Ancienne toile HelioLux… » ; historique : `8a0465b`, 2026-11-02 :
+- **Production heliostores.com publique** : pile `heliostores-prod`, image applicative **`7ff90a8`** (2026-11-19 : Next.js 16.4.6, correctif de sécurité, PR #11 ; auparavant `8d8917d`, 2026-11-19 : section « Ancienne toile HelioLux… » ; historique : `8a0465b`, 2026-11-02 :
   dix retours client, catalogue de prix 09.2026 importé et prix affichés pour 7 produits — sections ci-dessous ;
   sauvegarde `db_/media_20261102_102908` avant déploiement ; auparavant `8434cfb`, 2026-10-31 : noms HELIO, logo, chat, configurateur, préparation SELT — section ci-dessous ; auparavant `02d4cce`, 2026-10-27 : carrousel de l'accueil en visualisations générées, WebP/AVIF, cadrage par écran, légende
   « Visualisation » ; mention « visuel du fabricant, non contractuel » retirée des légendes des photos fournisseur —
@@ -20,6 +20,14 @@
   Registre de lancement) ; procédures : `docs/production-runbook.md` ; recette : `docs/test-report.md` ;
   SEO/GEO : `docs/seo-geo-plan-90-days.md` et `docs/seo/` (audit, matrice, validation, contenus, partenariats).
 
+
+## Next.js 16.4.2 → 16.4.6, correctif de sécurité (2026-11-19) — production `7ff90a8`
+
+- `next` et `eslint-config-next` 16.4.6, `experimental.agentUpgrade: "security"` ; aucun changement applicatif (PR #11).
+- CI verte (verify, e2e-docker). `/recette-site` (copie isolée anonymisée, 7ff90a8) : 745 réussis, 0 échoué, 1 non testé
+  (parcours d'écriture 21 sur grille réelle), 28 sans objet ; aucune `SecurityFatalError` à la compilation.
+- Déploiement : sauvegarde `db_/media_20261119_104532`, `deploy-production.sh 7ff90a8ea195` ; `/controle-production` :
+  79 réussis, 0 échoué, 1 non testé (en-tête noindex de la préproduction sans identifiant de revue).
 
 ## Ancienne toile HelioLux corrigeable, sous-total pergola, recette reproductible (2026-11-19) — production `8d8917d`
 

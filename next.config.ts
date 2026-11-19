@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
   // métadonnées dans le <head> (rendu bloquant) aussi pour les robots d'IA, en plus de la liste Next.js (SEO B15)
   htmlLimitedBots: HTML_LIMITED_BOTS,
   // Téléversement de médias (8 Mo max. + marge multipart) via server action.
-  experimental: { serverActions: { bodySizeLimit: "9mb" } },
+  experimental: { serverActions: { bodySizeLimit: "9mb" }, agentUpgrade: "security" },
   images: {
     formats: ["image/avif", "image/webp"],
     qualities: [60, 75, 90],
